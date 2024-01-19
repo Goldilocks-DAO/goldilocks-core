@@ -8,3 +8,4 @@ coverage
 whitelist/node_modules
 
 .env
+lib/
