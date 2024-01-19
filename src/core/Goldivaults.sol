@@ -13,7 +13,7 @@ pragma solidity ^0.8.19;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ======================================= YieldSplitter ========================================
+// ======================================== Goldivaults =========================================
 // ==============================================================================================
 
 
@@ -24,11 +24,11 @@ import { OT } from "./OT.sol";
 import { YT } from "./YT.sol";
 
 
-/// @title YieldSplitter
+/// @title Goldivaults
 /// @notice Splits yield bearing tokens in yield and principal tokens
 /// @author ampnoob
 /// @author geeb
-contract YieldSplitter {
+contract Goldivaults {
 
   OT ot;
   YT yt;
