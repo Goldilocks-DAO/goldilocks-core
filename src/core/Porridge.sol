@@ -23,7 +23,7 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { IBorrow } from "../interfaces/IBorrow.sol";
-import { IGAMM } from "../interfaces/IGAMM.sol";
+import { IGoldiswap } from "../interfaces/IGoldiswap.sol";
 
 
 /// @title Porridge
@@ -184,8 +184,8 @@ contract Porridge is ERC20 {
   /// @param amount Amount of $PRG to burn
   function realize(uint256 amount) external {
     _burn(msg.sender, amount);
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, gamm, FixedPointMathLib.mulWad(amount, IGAMM(gamm).floorPrice()));
-    IGAMM(gamm).porridgeMint(msg.sender, amount);
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, gamm, FixedPointMathLib.mulWad(amount, IGoldiswap(gamm).floorPrice()));
+    IGoldiswap(gamm).porridgeMint(msg.sender, amount);
     emit Realized(msg.sender, amount);
   }
 

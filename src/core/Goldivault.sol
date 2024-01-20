@@ -20,18 +20,33 @@ pragma solidity ^0.8.19;
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
-import { OT } from "./OT.sol";
-import { YT } from "./YT.sol";
+
+interface iBGTVault {
+  function stake(uint256 amount) external;
+  function getReward() external;
+}
+
+interface BendVault {
+  function stake(uint256 amount) external;
+}
+
+interface IOT {
+  function mint(address user, uint256 amount) external;
+  function burn(address user, uint256 amount) external;
+}
+
+interface IYT {
+  function mint(address user, uint256 amount) external;
+  function burn(address user, uint256 amount) external;
+}
 
 
 /// @title Goldivaults
 /// @notice Splits yield bearing tokens in yield and principal tokens
 /// @author ampnoob
 /// @author geeb
-contract Goldivaults {
+contract Goldivault {
 
-  OT ot;
-  YT yt;
   uint256 startTime;
   uint256 endTime;
   uint256 concludeTime;
@@ -39,6 +54,8 @@ contract Goldivaults {
   address treasury;
   address honey;
   address ibgt;
+  address ot;
+  address yt;
   bool concluded = false;
 
   error InsufficientTime();
@@ -54,8 +71,8 @@ contract Goldivaults {
     address _honey,
     address _ibgt
   ) {
-    ot = OT(_ot);
-    yt = YT(_yt);
+    ot = _ot;
+    yt = _yt;
     treasury = _treasury;
     honey = _honey;
     ibgt = _ibgt;
@@ -69,8 +86,8 @@ contract Goldivaults {
     uint256 timeshare = remainingTime / 365 days;
     _claim();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), amount);
-    ot.mint(msg.sender, amount);
-    yt.mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    IOT(ot).mint(msg.sender, amount);
+    IYT(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
   }
 
   /// @notice Concludes the vault at expiry
@@ -91,7 +108,7 @@ contract Goldivaults {
     if(block.timestamp < concludeTime + 36 hours || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.mulWad(amount, ERC20(yt).totalSupply());
     uint256 claimable = FixedPointMathLib.divWad(finalYield, yieldShare);
-    YT(yt).burn(msg.sender, amount);
+    IYT(yt).burn(msg.sender, amount);
     SafeTransferLib.safeTransferFrom(ibgt, address(this), msg.sender, claimable);
   }
 
@@ -101,8 +118,8 @@ contract Goldivaults {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 totalTimeDurationRatio = FixedPointMathLib.divWad(remainingTime, endTime - startTime);
     if(ERC20(yt).balanceOf(msg.sender) < FixedPointMathLib.mulWad(amount, totalTimeDurationRatio)) revert ExcessiveRedeem();
-    OT(ot).burn(msg.sender, amount);
-    YT(yt).burn(msg.sender, FixedPointMathLib.divWad(amount, totalTimeDurationRatio));
+    IOT(ot).burn(msg.sender, amount);
+    IYT(yt).burn(msg.sender, FixedPointMathLib.divWad(amount, totalTimeDurationRatio));
     if(remainingTime == 0) {
       SafeTransferLib.safeTransfer(honey, msg.sender, (amount / 1000) * 995);
       SafeTransferLib.safeTransfer(honey, treasury, (amount / 1000) * 5);
