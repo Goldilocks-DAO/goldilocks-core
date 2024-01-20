@@ -30,12 +30,12 @@ interface BendVault {
   function stake(uint256 amount) external;
 }
 
-interface IOT {
+interface IOwnershipToken {
   function mint(address user, uint256 amount) external;
   function burn(address user, uint256 amount) external;
 }
 
-interface IYT {
+interface IYieldToken {
   function mint(address user, uint256 amount) external;
   function burn(address user, uint256 amount) external;
 }
@@ -83,11 +83,11 @@ contract Goldivault {
   function deposit(uint256 amount) external {
     uint256 remainingTime = endTime - block.timestamp;
     if(remainingTime < 30 days) revert InsufficientTime();
-    uint256 timeshare = remainingTime / 365 days;
-    _claim();
+    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, 365 days);
+    _claimRewards();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), amount);
-    IOT(ot).mint(msg.sender, amount);
-    IYT(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    IOwnershipToken(ot).mint(msg.sender, amount);
+    IYieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
   }
 
   /// @notice Concludes the vault at expiry
@@ -97,6 +97,7 @@ contract Goldivault {
     concluded = true;
     concludeTime = block.timestamp;
     SafeTransferLib.safeTransfer(ibgt, treasury, (ERC20(ibgt).balanceOf(address(this)) / 100) * 2);
+    _concludeVaultRewards();
     //code to unstake all honey from the vault (and, if not done automatically, claim outstanding yield and convert it to IBGT)
     //code to unstake all the contract's IBGT (and send any outstanding IBGT staking rewards to treasury)
     finalYield = ERC20(ibgt).balanceOf(address(this));
@@ -108,7 +109,7 @@ contract Goldivault {
     if(block.timestamp < concludeTime + 36 hours || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.mulWad(amount, ERC20(yt).totalSupply());
     uint256 claimable = FixedPointMathLib.divWad(finalYield, yieldShare);
-    IYT(yt).burn(msg.sender, amount);
+    IYieldToken(yt).burn(msg.sender, amount);
     SafeTransferLib.safeTransferFrom(ibgt, address(this), msg.sender, claimable);
   }
 
@@ -118,8 +119,8 @@ contract Goldivault {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 totalTimeDurationRatio = FixedPointMathLib.divWad(remainingTime, endTime - startTime);
     if(ERC20(yt).balanceOf(msg.sender) < FixedPointMathLib.mulWad(amount, totalTimeDurationRatio)) revert ExcessiveRedeem();
-    IOT(ot).burn(msg.sender, amount);
-    IYT(yt).burn(msg.sender, FixedPointMathLib.divWad(amount, totalTimeDurationRatio));
+    IOwnershipToken(ot).burn(msg.sender, amount);
+    IYieldToken(yt).burn(msg.sender, FixedPointMathLib.divWad(amount, totalTimeDurationRatio));
     if(remainingTime == 0) {
       SafeTransferLib.safeTransfer(honey, msg.sender, (amount / 1000) * 995);
       SafeTransferLib.safeTransfer(honey, treasury, (amount / 1000) * 5);
@@ -129,20 +130,16 @@ contract Goldivault {
     }
   }
 
-  /// @notice Renews a concluded vault after users have chance to claim
-  function renew() external {
-    if(block.timestamp < concludeTime + 2 weeks || !concluded) revert NotConcluded();
-    startTime = block.timestamp;
-    endTime = startTime + 365 days;
-    concluded = false;
-  }
+  function directBGTEmissions() external virtual {}
+  function _vaultDeposit() internal virtual {}
+  function _claimRewards() internal virtual {}
+  function _concludeVaultRewards() internal virtual {}
 
-  function _claim() internal {
+  // function _claim() internal {
     //code for claiming BGT yield from vaults
     //code for using BGT to mint IBGT and stake it
     //code for claiming IBGT staking rewards and sending them to the treasury
     //use yield earned to vote
-  }
+  // }
 
-  // function directBGTEmissions() external onlyGoldiGov {}
 }
