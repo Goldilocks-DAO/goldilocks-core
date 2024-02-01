@@ -21,7 +21,7 @@ contract GoldiswapTest is Test {
   uint256 txAmount = 10e18;
   // uint256 costOf10Locks = 5641049601535046139648;
   // uint256 costOf10Locks = 5627518081751651091792;
-  uint256 costOf10Locks = 6432980390823551401440;
+  uint256 costOf10Locks = 6413739173303640480000;
   // uint256 proceedsof10Locks = 5300673535135953225736;
   // uint256 proceedsof10Locks = 5313319664425536973008;
   uint256 proceedsof10Locks = 6073810997118547534560;

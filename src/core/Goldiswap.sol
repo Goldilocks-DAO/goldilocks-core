@@ -174,10 +174,11 @@ contract Goldiswap is ERC20 {
     ) = _buyLoop(_psl, _fsl, _supply, amount);
     uint256 tax = (__buyPrice / 1000) * 3;
     if(__buyPrice + tax > maxAmount) revert ExcessiveSlippage();
-    fsl = __fsl + tax;
+    fsl = __fsl;
     psl = __psl;
     _floorRaise();
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), __buyPrice + tax);
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), __buyPrice);
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
     _mint(msg.sender, amount);
     emit Buy(msg.sender, amount);
   }
@@ -208,7 +209,6 @@ contract Goldiswap is ERC20 {
   /// @param amount Amount of $LOCKS to redeem
   function redeem(uint256 amount) public {
     uint256 _rawTotal = FixedPointMathLib.mulWad(amount, _floorPrice(fsl, totalSupply()));
-    // supply -= amount;
     fsl -= _rawTotal;
     _floorRaise();
     _burn(msg.sender, amount);

@@ -49,7 +49,7 @@ def buy(amount, fsl, psl, supply, floor_price, market_price):
     fsl += floor_price * amount
     psl += (market_price - floor_price) * amount
   tax = purchase_price*0.003
-  fsl += tax
+  # fsl += tax
   floor_price = fsl/supply
   market_price = floor_price + ((psl/max(supply, 1))*((psl+fsl)/max(fsl, 1))**6)
   return fsl, psl, supply, floor_price, market_price
