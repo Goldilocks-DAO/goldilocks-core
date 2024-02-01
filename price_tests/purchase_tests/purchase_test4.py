@@ -7,7 +7,7 @@ fsl = 8700000
 psl = 1900000
 supply = 2364
 floor_price = fsl/supply
-market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**5)
+market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**6)
 target = 0.36
 
 bought = 0

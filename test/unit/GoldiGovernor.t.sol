@@ -41,7 +41,7 @@ contract GoldiGovernorTest is Test {
     GoldiGovernor goldigovComputed = GoldiGovernor(address(this).computeAddress(4));
     govLOCKS govlocksComputed = govLOCKS(address(this).computeAddress(5));
     honey = new Honey();
-    goldiswap = new Goldiswap(address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     timelock = new Timelock(address(goldigovComputed), 5 days);
     goldigov = new GoldiGovernor(address(timelock), address(govlocksComputed), address(this), 5761, 69, 4e18);
     govlocks = new govLOCKS(address(goldiswap), address(goldigov));

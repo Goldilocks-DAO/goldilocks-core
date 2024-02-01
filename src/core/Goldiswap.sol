@@ -37,8 +37,8 @@ contract Goldiswap is ERC20 {
   uint256 public immutable DAYS_SECONDS = 86400;
   uint256 public immutable MAX_FLOOR_REDUCE = 5e18;
 
-  uint256 public fsl = 1400000e18;
-  uint256 public psl = 400000e18;
+  uint256 public fsl;
+  uint256 public psl;
   uint256 public targetRatio = 360e15;
 
   uint256 public lastFloorRaise;
@@ -56,16 +56,22 @@ contract Goldiswap is ERC20 {
 
 
   /// @notice Constructor of this contract
+  /// @param _fsl Initial value of FSL
+  /// @param _psl Initial value of PSL
   /// @param _multisig Address of the GoldilocksDAO multisig
   /// @param _porridge Address of Porridge
   /// @param _borrow Address of Borrow
   /// @param _honey Address of $HONEY
   constructor(
+    uint256 _fsl,
+    uint256 _psl,
     address _multisig,
     address _porridge,
     address _borrow,
     address _honey
   ) {
+    fsl = _fsl;
+    psl = _psl;
     multisig = _multisig;
     porridge = _porridge;
     borrow = _borrow;
@@ -164,14 +170,12 @@ contract Goldiswap is ERC20 {
     (
       uint256 __psl, 
       uint256 __fsl, 
-      uint256 __supply, 
       uint256 __buyPrice
     ) = _buyLoop(_psl, _fsl, _supply, amount);
     uint256 tax = (__buyPrice / 1000) * 3;
     if(__buyPrice + tax > maxAmount) revert ExcessiveSlippage();
     fsl = __fsl + tax;
     psl = __psl;
-    // supply = __supply;
     _floorRaise();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), __buyPrice + tax);
     _mint(msg.sender, amount);
@@ -188,7 +192,6 @@ contract Goldiswap is ERC20 {
     (
       uint256 __psl,
       uint256 __fsl,
-      uint256 __supply,
       uint256 __saleAmount
     ) = _sellLoop(_psl, _fsl, _supply, amount);
     uint256 tax = (__saleAmount / 1000) * 53;
@@ -197,7 +200,6 @@ contract Goldiswap is ERC20 {
     // fsl = _fsl + (tax * fsl / (_fsl + _psl));
     psl = __psl + (tax / 2);
     // psl = _psl + (tax * psl / (_fsl + _psl));
-    // supply = __supply;
     _floorReduce();
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransfer(honey, msg.sender, __saleAmount - tax);
@@ -232,13 +234,13 @@ contract Goldiswap is ERC20 {
   }
   
   /// @notice Calculates market price of $LOCKS
-  /// @dev (fsl / supply) + ((psl / supply) * ((psl + fsl) / fsl)**5)
+  /// @dev (fsl / supply) + ((psl / supply) * ((psl + fsl) / fsl)**6)
   /// @param _fsl Current fsl
   /// @param _psl Current psl
   /// @param _supply Current supply
   /// @return market $LOCKS market price
   function _marketPrice(uint256 _fsl, uint256 _psl, uint256 _supply) internal pure returns (uint256 market) {
-    market = FixedPointMathLib.divWad(_fsl, _supply) + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(_psl, _supply), _pow(FixedPointMathLib.divWad(_psl + _fsl, _fsl), 5));
+    market = FixedPointMathLib.divWad(_fsl, _supply) + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(_psl, _supply), _pow(FixedPointMathLib.divWad(_psl + _fsl, _fsl), 6));
   }
 
   /// @notice Loops through the amount of $LOCKS tokens to buy and calculates total price
@@ -247,7 +249,7 @@ contract Goldiswap is ERC20 {
   /// @param _supply Temporary variable for Supply
   /// @param _leftover Temporary variable for amount of $LOCKS tokens
   /// @return (PSL, FSL, supply and buy price)
-  function _buyLoop(uint256 _psl, uint256 _fsl, uint256 _supply, uint256 _leftover) internal pure returns (uint256, uint256, uint256, uint256) {
+  function _buyLoop(uint256 _psl, uint256 _fsl, uint256 _supply, uint256 _leftover) internal pure returns (uint256, uint256, uint256) {
     uint256 _market;
     uint256 _floor;
     uint256 _buyPrice;
@@ -278,7 +280,7 @@ contract Goldiswap is ERC20 {
         _fsl += FixedPointMathLib.mulWad(_floor, _leftover);
       }
     }
-    return (_psl, _fsl, _supply, _buyPrice);
+    return (_psl, _fsl, _buyPrice);
   }
 
   /// @notice Loops through the amount of $LOCKS tokens to sell and calculates sale amount
@@ -287,7 +289,7 @@ contract Goldiswap is ERC20 {
   /// @param _supply Temporary variable for Supply
   /// @param _leftover Temporary variable for amount of $LOCKS tokens to sell
   /// @return (PSL, FSL, supply and sale amount)
-  function _sellLoop(uint256 _psl, uint256 _fsl, uint256 _supply, uint256 _leftover) internal pure returns (uint256, uint256, uint256, uint256) {
+  function _sellLoop(uint256 _psl, uint256 _fsl, uint256 _supply, uint256 _leftover) internal pure returns (uint256, uint256, uint256) {
     uint256 _market;
     uint256 _floor;
     uint256 _saleAmount;
@@ -308,7 +310,7 @@ contract Goldiswap is ERC20 {
       _fsl -= FixedPointMathLib.mulWad(_floor, _leftover); 
       _supply -= _leftover;
     }
-    return (_psl, _fsl, _supply, _saleAmount);
+    return (_psl, _fsl, _saleAmount);
   }
 
   /// @notice from PRBMath (https://github.com/PaulRBerg/prb-math) by @PaulRBerg

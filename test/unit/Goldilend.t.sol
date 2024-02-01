@@ -70,7 +70,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     bandbear = new BandBear();
     consensusvault = new ConsensusVault(address(bera));
   
-    goldiswap = new Goldiswap(address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
     porridge = new Porridge(address(goldiswap), address(borrow), address(goldilendComputed), address(honey));
 

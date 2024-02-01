@@ -49,7 +49,7 @@ contract PorridgeTest is Test {
     Borrow borrowComputed = Borrow(address(this).computeAddress(3));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(11));
     honey = new Honey();
-    goldiswap = new Goldiswap(address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
     porridge = new Porridge(address(goldiswap), address(borrow), address(goldilendComputed), address(honey));
 

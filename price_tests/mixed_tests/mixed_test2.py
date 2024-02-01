@@ -7,7 +7,7 @@ fsl = 1400000
 psl = 400000
 supply = 5000
 floor_price = fsl/supply
-market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**5)
+market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**6)
 target = 0.36
 
 transactions = [
