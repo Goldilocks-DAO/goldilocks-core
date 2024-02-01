@@ -36,10 +36,11 @@ contract Goldiswap is ERC20 {
   
   uint256 public immutable DAYS_SECONDS = 86400;
   uint256 public immutable MAX_FLOOR_REDUCE = 5e18;
+  uint256 public immutable MAX_RATIO = 45e16;
 
   uint256 public fsl;
   uint256 public psl;
-  uint256 public targetRatio = 360e15;
+  uint256 public targetRatio = 36e16;
 
   uint256 public lastFloorRaise;
   uint256 public lastFloorDecrease;
@@ -330,8 +331,9 @@ contract Goldiswap is ERC20 {
   /// @dev raiseAmount = (psl / fsl) * (psl / 32)
   /// @dev targetRatio increases by targetRatio / 50
   function _floorRaise() internal {
-    if(FixedPointMathLib.divWad(psl, fsl) >= targetRatio) {
-      uint256 raiseAmount = FixedPointMathLib.mulWad(FixedPointMathLib.divWad(psl, fsl), psl / 32);
+    uint256 currentRatio = FixedPointMathLib.divWad(psl, fsl);
+    if(currentRatio >= targetRatio && currentRatio < MAX_RATIO) {
+      uint256 raiseAmount = FixedPointMathLib.mulWad(currentRatio, psl / 32);
       psl -= raiseAmount;
       fsl += raiseAmount;
       targetRatio += targetRatio / 50;

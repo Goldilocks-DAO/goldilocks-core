@@ -56,7 +56,7 @@ def buy(amount, fsl, psl, supply, floor_price, market_price):
 
 def floor_raise(target, fsl, psl, supply, floor_price, market_price):  
   ratio = psl/fsl
-  if ratio >= target:
+  if ratio >= target and ratio < 0.45:
     multiplier = (0.01*ratio)/0.32                   
     transfer = psl*multiplier
     psl -= transfer
