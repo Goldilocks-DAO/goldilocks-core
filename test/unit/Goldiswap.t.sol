@@ -9,7 +9,7 @@ import { Borrow } from "../../src/core/Borrow.sol";
 import { Porridge } from "../../src/core/Porridge.sol";
 import { Goldilend } from "../../src/core/Goldilend.sol";
 
-contract GAMMTest is Test {
+contract GoldiswapTest is Test {
 
   using LibRLP for address;
 
@@ -104,7 +104,7 @@ contract GAMMTest is Test {
   function testRandomFloorPrice() public {
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(23457745e18)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(8340957e18)));
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(4374e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(4374e18)));
     uint256 floorPrice = goldiswap.floorPrice();
     string[] memory inputs = new string[](2);
     inputs[0] = "python3";
@@ -131,7 +131,7 @@ contract GAMMTest is Test {
   function testRandomMarketPrice() public {
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(23457745e18)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(8340957e18)));
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(4374e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(4374e18)));
     uint256 marketPrice = goldiswap.marketPrice();
     string[] memory inputs = new string[](2);
     inputs[0] = "python3";
@@ -148,8 +148,9 @@ contract GAMMTest is Test {
 
     uint256 userLocksBalance = goldiswap.balanceOf(address(this));
     uint256 userHoneyBalance = honey.balanceOf(address(this));
+    uint256 constructorMintAmt = 5000e18;
 
-    assertEq(userLocksBalance, txAmount);
+    assertEq(userLocksBalance, txAmount + constructorMintAmt);
     assertEq(userHoneyBalance, (type(uint256).max / 2) - costOf10Locks);
   }
 
@@ -185,7 +186,7 @@ contract GAMMTest is Test {
   function testFloorReduce() public {
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(12424533327755417665454800)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(6069210257394481945730874)));
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(8402860035123450385400)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(8402860035123450385400)));
     vm.store(address(goldiswap), bytes32(uint256(4)), bytes32(uint256(1692551675)));
 
     deal(address(honey), address(this), 1251210488977958997148919);
@@ -195,13 +196,13 @@ contract GAMMTest is Test {
     vm.warp(1692836841);
     goldiswap.sell(5000000000000000000, 9886383387107016000000);
 
-    assertEq(goldiswap.targetRatio(), 348118083333333333);
+    assertEq(goldiswap.targetRatio(), 342000000000000000);
   }
 
   function testMaxFloorReduce() public {
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(12424533327755417665454800)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(6069210257394481945730874)));
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(8402860035123450385400)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(8402860035123450385400)));
     vm.store(address(goldiswap), bytes32(uint256(4)), bytes32(uint256(1692551675)));
 
     deal(address(honey), address(this), 1251210488977958997148919);

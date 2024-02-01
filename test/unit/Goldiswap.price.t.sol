@@ -9,7 +9,7 @@ import { Borrow } from "../../src/core/Borrow.sol";
 import { Porridge } from "../../src/core/Porridge.sol";
 import { Goldilend } from "../../src/core/Goldilend.sol";
 
-contract GAMMPriceTest is Test {
+contract GoldiswapPriceTest is Test {
 
   using LibRLP for address;
 
@@ -98,7 +98,7 @@ contract GAMMPriceTest is Test {
   function testPurchase4() public dealandApproveUserHoney {
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(8700000e18)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(1900000e18)));
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(2364e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(2364e18)));
     uint256 bought;
     while(bought < 8000) {
       goldiswap.buy(40e18, type(uint256).max);
@@ -116,7 +116,7 @@ contract GAMMPriceTest is Test {
   }
 
   function testMixed1() public dealandApproveUserHoney dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     goldiswap.buy(38e18, type(uint256).max);
     goldiswap.sell(45e18, 0);
     goldiswap.sell(30e18, 0);
@@ -149,7 +149,7 @@ contract GAMMPriceTest is Test {
   }
 
   function testMixed2() public dealandApproveUserHoney dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     goldiswap.buy(65e17, type(uint256).max);
     goldiswap.redeem(71e17);
     goldiswap.buy(32e17, type(uint256).max);
@@ -173,10 +173,9 @@ contract GAMMPriceTest is Test {
   }
 
   function testMixed3() public dealandApproveUserHoney dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(973000e18)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(360000e18)));
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(6780e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(6780e18)));
     goldiswap.buy(6523e17, type(uint256).max);
     goldiswap.redeem(719e17);
     goldiswap.buy(32e18, type(uint256).max);
@@ -200,7 +199,7 @@ contract GAMMPriceTest is Test {
   }
 
   function testRedeem1() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(5000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     uint256 redeemed;
     while(redeemed < 400) {
       goldiswap.redeem(10e18);
@@ -218,7 +217,7 @@ contract GAMMPriceTest is Test {
   }
 
   function testRedeem2() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(5000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     uint256 redeemed;
     while(redeemed < 50e18) {
       goldiswap.redeem(25e17);
@@ -236,7 +235,7 @@ contract GAMMPriceTest is Test {
   }
 
   function testSale1() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(5000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     uint256 sold;
     while(sold < 900e18) {
       goldiswap.sell(10e18, 0);
@@ -254,7 +253,7 @@ contract GAMMPriceTest is Test {
   }
 
   function testSale2() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(5000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     uint256 sold;
     while(sold < 100e18) {
       goldiswap.sell(25e17, 0);
@@ -272,10 +271,9 @@ contract GAMMPriceTest is Test {
   }
 
   function testSale3() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(25000e18)));
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(800000e18)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(200000e18)));
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(1000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(1000e18)));
     uint256 sold;
     while(sold < 975e18) {
       goldiswap.sell(25e18, 0);
@@ -293,10 +291,9 @@ contract GAMMPriceTest is Test {
   }
 
   function testSale4() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(25000e18)));
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(6300000e18)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(3100000e18)));
-    vm.store(address(goldiswap), bytes32(uint256(2)), bytes32(uint256(3124e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(3124e18)));
     uint256 sold;
     while(sold < 2000e18) {
       goldiswap.sell(285e17, 0);

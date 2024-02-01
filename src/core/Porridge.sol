@@ -18,6 +18,7 @@ pragma solidity ^0.8.19;
 
 
 //todo: fix unweighted stake bug
+//    could have a variable in struct that is claimable, add current claimable balance to it when staking on a staked position. will solve reentrancy and unweighted stake bug 
 //todo: add checkpoints
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";

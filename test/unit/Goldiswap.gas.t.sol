@@ -9,7 +9,7 @@ import { Borrow } from "../../src/core/Borrow.sol";
 import { Porridge } from "../../src/core/Porridge.sol";
 import { Goldilend } from "../../src/core/Goldilend.sol";
 
-contract GAMMGasTest is Test {
+contract GoldiswapGasTest is Test {
 
   using LibRLP for address;
 

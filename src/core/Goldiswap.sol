@@ -39,7 +39,6 @@ contract Goldiswap is ERC20 {
 
   uint256 public fsl = 1400000e18;
   uint256 public psl = 400000e18;
-  uint256 public supply = 5000e18;
   uint256 public targetRatio = 360e15;
 
   uint256 public lastFloorRaise;
@@ -73,6 +72,7 @@ contract Goldiswap is ERC20 {
     honey = _honey;
     lastFloorRaise = block.timestamp;
     lastFloorDecrease = block.timestamp;
+    _mint(msg.sender, 5000e18);
   }
 
   /// @notice Returns the name of the $LOCKS token
@@ -139,13 +139,13 @@ contract Goldiswap is ERC20 {
   /// @notice Returns the $LOCKS floor price
   /// @return $LOCKS floor price
   function floorPrice() external view returns (uint256) {
-    return _floorPrice(fsl, supply);
+    return _floorPrice(fsl, totalSupply());
   }
 
   /// @notice Returns the $LOCKS market price
   /// @return $LOCKS market price
   function marketPrice() external view returns (uint256) {
-    return _marketPrice(fsl, psl, supply);
+    return _marketPrice(fsl, psl, totalSupply());
   }
 
 
@@ -158,7 +158,7 @@ contract Goldiswap is ERC20 {
   /// @param amount Amount of $LOCKS to buy
   /// @param maxAmount Maximum amount of $HONEY to spend
   function buy(uint256 amount, uint256 maxAmount) external {
-    uint256 _supply = supply;
+    uint256 _supply = totalSupply();
     uint256 _fsl = fsl;
     uint256 _psl = psl;
     (
@@ -171,7 +171,7 @@ contract Goldiswap is ERC20 {
     if(__buyPrice + tax > maxAmount) revert ExcessiveSlippage();
     fsl = __fsl + tax;
     psl = __psl;
-    supply = __supply;
+    // supply = __supply;
     _floorRaise();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), __buyPrice + tax);
     _mint(msg.sender, amount);
@@ -182,7 +182,7 @@ contract Goldiswap is ERC20 {
   /// @param amount Amount of $LOCKS to sell
   /// @param minAmount Minimum amount of $HONEY to receive
   function sell(uint256 amount, uint256 minAmount) external {
-    uint256 _supply = supply;
+    uint256 _supply = totalSupply();
     uint256 _fsl = fsl;
     uint256 _psl = psl;
     (
@@ -194,8 +194,10 @@ contract Goldiswap is ERC20 {
     uint256 tax = (__saleAmount / 1000) * 53;
     if(__saleAmount - tax < minAmount) revert ExcessiveSlippage();
     fsl = __fsl + (tax / 2);
+    // fsl = _fsl + (tax * fsl / (_fsl + _psl));
     psl = __psl + (tax / 2);
-    supply = __supply;
+    // psl = _psl + (tax * psl / (_fsl + _psl));
+    // supply = __supply;
     _floorReduce();
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransfer(honey, msg.sender, __saleAmount - tax);
@@ -205,8 +207,8 @@ contract Goldiswap is ERC20 {
   /// @notice Redeems $LOCKS tokens for floor value
   /// @param amount Amount of $LOCKS to redeem
   function redeem(uint256 amount) public {
-    uint256 _rawTotal = FixedPointMathLib.mulWad(amount, _floorPrice(fsl, supply));
-    supply -= amount;
+    uint256 _rawTotal = FixedPointMathLib.mulWad(amount, _floorPrice(fsl, totalSupply()));
+    // supply -= amount;
     fsl -= _rawTotal;
     _floorRaise();
     _burn(msg.sender, amount);
@@ -324,7 +326,7 @@ contract Goldiswap is ERC20 {
     }
   }
 
-  /// @notice If targetRatio of PSL and FSL is exceeded, increases the FSL and target ratio and decrease the FSL
+  /// @notice If targetRatio of PSL and FSL is exceeded, increases the FSL and target ratio and decrease the PSL
   /// @dev raiseAmount = (psl / fsl) * (psl / 32)
   /// @dev targetRatio increases by targetRatio / 50
   function _floorRaise() internal {
@@ -393,16 +395,6 @@ contract Goldiswap is ERC20 {
   /// @param _multisig Address of the multisig
   function setMultisig(address _multisig) external onlyMultisig {
     multisig = _multisig;
-  }
-
-  //todo: check the msg.sender
-  /// @notice Allows someone? to initiate the presale
-  function initiatePresaleClaim(uint256 fslLiq, uint256 pslLiq) external {
-    uint256 presale = 10000e18;
-    fsl = fslLiq;
-    psl = pslLiq;
-    supply = presale;
-    _mint(msg.sender, presale);
   }
 
 }
