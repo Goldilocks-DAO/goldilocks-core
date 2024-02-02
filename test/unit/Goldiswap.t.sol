@@ -18,13 +18,18 @@ contract GoldiswapTest is Test {
   Borrow borrow;
   Porridge porridge;
 
+  uint256 initialFSL = 1050000e18;
+  uint256 initialPSL = 320000e18;
+
   uint256 txAmount = 10e18;
   // uint256 costOf10Locks = 5641049601535046139648;
   // uint256 costOf10Locks = 5627518081751651091792;
-  uint256 costOf10Locks = 6413739173303640480000;
+  // uint256 costOf10Locks = 6413739173303640480000;
+  uint256 costOf10Locks = 262883805905681940;
   // uint256 proceedsof10Locks = 5300673535135953225736;
   // uint256 proceedsof10Locks = 5313319664425536973008;
-  uint256 proceedsof10Locks = 6073810997118547534560;
+  // uint256 proceedsof10Locks = 6073810997118547534560;
+  uint256 proceedsof10Locks = 248950964192680847;
 
   bytes4 NotMultisigSelector = 0xf05e412b;
   bytes4 NotPorridgeSelector = 0x0da7dbfb;
@@ -36,7 +41,7 @@ contract GoldiswapTest is Test {
     Borrow borrowComputed = Borrow(address(this).computeAddress(3));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(11));
     honey = new Honey();
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
     porridge = new Porridge(address(goldiswap), address(borrow), address(goldilendComputed), address(honey));
   }
@@ -150,7 +155,7 @@ contract GoldiswapTest is Test {
 
     uint256 userLocksBalance = goldiswap.balanceOf(address(this));
     uint256 userHoneyBalance = honey.balanceOf(address(this));
-    uint256 constructorMintAmt = 5000e18;
+    uint256 constructorMintAmt = 100000000e18;
 
     assertEq(userLocksBalance, txAmount + constructorMintAmt);
     assertEq(userHoneyBalance, (type(uint256).max / 2) - costOf10Locks);

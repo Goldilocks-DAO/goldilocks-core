@@ -32,6 +32,9 @@ contract PorridgeTest is Test {
   BondBear bondbear;
   BandBear bandbear;
 
+  uint256 initialFSL = 1050000e18;
+  uint256 initialPSL = 320000e18;
+
   uint256 locksAmount = 100e18;
   uint256 borrowAmount = 280e20;
   uint256 HalfDayofYield = 68493150684931500;
@@ -49,7 +52,7 @@ contract PorridgeTest is Test {
     Borrow borrowComputed = Borrow(address(this).computeAddress(3));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(11));
     honey = new Honey();
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
     porridge = new Porridge(address(goldiswap), address(borrow), address(goldilendComputed), address(honey));
 
@@ -125,8 +128,11 @@ contract PorridgeTest is Test {
     porridge.unstake(locksAmount + 1);
   }
 
-  function testLocksBorrowedAgainst() public dealandStake100Locks dealGammMaxHoney {
-    borrow.borrow(borrowAmount);
+  function testLocksBorrowedAgainst() public dealGammMaxHoney {
+    deal(address(goldiswap), address(this), 100000e18);
+    goldiswap.approve(address(porridge), 100000e18);
+    porridge.stake(100000e18);
+    borrow.borrow(1050e18);
     vm.expectRevert(LocksBorrowedAgainstSelector);
     porridge.unstake(1e18);
   }
@@ -219,8 +225,8 @@ contract PorridgeTest is Test {
 
     assertEq(userBalanceofPrg, 0);
     assertEq(userBalanceofLocks, 100273972602739726000);
-    assertEq(userBalanceofHoney, 203287671232876720000);
-    assertEq(goldiswapBalanceofHoney, 76712328767123280000);
+    assertEq(userBalanceofHoney, 279997123287671232877);
+    assertEq(goldiswapBalanceofHoney, 2876712328767123);
   }
 
   function testClaim() public dealandStake100Locks {

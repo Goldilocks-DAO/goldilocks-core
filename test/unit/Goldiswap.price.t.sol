@@ -18,12 +18,15 @@ contract GoldiswapPriceTest is Test {
   Borrow borrow;
   Porridge porridge;
 
+  uint256 initialFSL = 1050000e18;
+  uint256 initialPSL = 320000e18;
+
   function setUp() public {
     Porridge porridgeComputed = Porridge(address(this).computeAddress(4));
     Borrow borrowComputed = Borrow(address(this).computeAddress(3));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(11));
     honey = new Honey();
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
     porridge = new Porridge(address(goldiswap), address(borrow), address(goldilendComputed), address(honey));
   }
@@ -116,7 +119,6 @@ contract GoldiswapPriceTest is Test {
   }
 
   function testMixed1() public dealandApproveUserHoney dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     goldiswap.buy(38e18, type(uint256).max);
     goldiswap.sell(45e18, 0);
     goldiswap.sell(30e18, 0);
@@ -149,7 +151,6 @@ contract GoldiswapPriceTest is Test {
   }
 
   function testMixed2() public dealandApproveUserHoney dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     goldiswap.buy(65e17, type(uint256).max);
     goldiswap.redeem(71e17);
     goldiswap.buy(32e17, type(uint256).max);
@@ -199,7 +200,6 @@ contract GoldiswapPriceTest is Test {
   }
 
   function testRedeem1() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     uint256 redeemed;
     while(redeemed < 400) {
       goldiswap.redeem(10e18);
@@ -217,7 +217,6 @@ contract GoldiswapPriceTest is Test {
   }
 
   function testRedeem2() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     uint256 redeemed;
     while(redeemed < 50e18) {
       goldiswap.redeem(25e17);
@@ -235,7 +234,6 @@ contract GoldiswapPriceTest is Test {
   }
 
   function testSale1() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     uint256 sold;
     while(sold < 900e18) {
       goldiswap.sell(10e18, 0);
@@ -253,7 +251,6 @@ contract GoldiswapPriceTest is Test {
   }
 
   function testSale2() public dealUserLocks dealGammHoney {
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(5000e18)));
     uint256 sold;
     while(sold < 100e18) {
       goldiswap.sell(25e17, 0);

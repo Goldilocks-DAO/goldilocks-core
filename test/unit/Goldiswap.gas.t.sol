@@ -18,6 +18,9 @@ contract GoldiswapGasTest is Test {
   Borrow borrow;
   Porridge porridge;
 
+  uint256 initialFSL = 1050000e18;
+  uint256 initialPSL = 320000e18;
+
   uint256 txAmount = 10e18;
   uint256 mediumTxAmount = 100e18;
   uint256 largeTxAmount = 1000e18;
@@ -31,7 +34,7 @@ contract GoldiswapGasTest is Test {
     Borrow borrowComputed = Borrow(address(this).computeAddress(3));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(11));
     honey = new Honey();
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
     porridge = new Porridge(address(goldiswap), address(borrow), address(goldilendComputed), address(honey));
   }
@@ -110,14 +113,14 @@ contract GoldiswapGasTest is Test {
     assert(gasUsed <= 323893);
   }
 
-  // gasused = 2344399, actual = 2263778
+  // gasused = 2474233, actual = 2263778
   function testnew1000000Buy() public dealandApproveUserHoney {
     uint256 gasStart = gasleft();
     goldiswap.buy(largeTxAmount*1000, type(uint256).max);
     uint256 gasEnd = gasleft();
     uint256 gasUsed = gasStart - gasEnd;
     console.log(gasUsed);
-    assert(gasUsed <= 2344399);
+    assert(gasUsed <= 2474233);
   }
 
 }

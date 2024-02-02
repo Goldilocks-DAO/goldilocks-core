@@ -18,8 +18,11 @@ contract BorrowTest is Test {
   Borrow borrow;
   Porridge porridge;
 
-  uint256 locksAmount = 100e18;
-  uint256 borrowAmount = 280e20;
+  uint256 initialFSL = 1050000e18;
+  uint256 initialPSL = 320000e18;
+
+  uint256 locksAmount = 100000e18;
+  uint256 borrowAmount = 1050e18;
 
   bytes4 NotAdminSelector = 0x7bfa4b9f;
   bytes4 InsufficientBorrowLimitSelector = 0xda392797;
@@ -30,12 +33,12 @@ contract BorrowTest is Test {
     Borrow borrowComputed = Borrow(address(this).computeAddress(3));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(13));
     honey = new Honey();
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
     porridge = new Porridge(address(goldiswap), address(borrow), address(goldilendComputed), address(honey));
   }
 
-  modifier dealandStake100Locks() {
+  modifier dealandStake100000Locks() {
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(porridge), locksAmount);
     porridge.stake(locksAmount);
@@ -47,24 +50,24 @@ contract BorrowTest is Test {
     _;
   }
 
-  function testInsufficientBorrowLimit() public dealandStake100Locks dealGammMaxHoney {
+  function testInsufficientBorrowLimit() public dealandStake100000Locks dealGammMaxHoney {
     vm.expectRevert(InsufficientBorrowLimitSelector);
     borrow.borrow(borrowAmount + 1);
   }
 
-  function testExcessiveRepay() public dealandStake100Locks dealGammMaxHoney {
+  function testExcessiveRepay() public dealandStake100000Locks dealGammMaxHoney {
     borrow.borrow(borrowAmount);
     vm.expectRevert(ExcessiveRepaySelector);
     borrow.repay(borrowAmount + 1);
   }
 
-  function testBorrowLimitCalculation() public dealandStake100Locks {
+  function testBorrowLimitCalculation() public dealandStake100000Locks {
     uint256 limit = borrow.borrowLimit(address(this));
 
     assertEq(limit, borrowAmount);
   }
 
-  function testBorrow() public dealandStake100Locks dealGammMaxHoney{
+  function testBorrowLocks() public dealandStake100000Locks dealGammMaxHoney{
     borrow.borrow(borrowAmount);
 
     uint256 goldiswapHoneyBalance = honey.balanceOf(address(goldiswap));
@@ -78,7 +81,7 @@ contract BorrowTest is Test {
     assertEq(borrowed, borrowAmount);
   }
 
-  function testRepay() public dealandStake100Locks dealGammMaxHoney {
+  function testRepay() public dealandStake100000Locks dealGammMaxHoney {
     borrow.borrow(borrowAmount);
     honey.approve(address(borrow), borrowAmount);
     borrow.repay(borrowAmount);
@@ -94,13 +97,10 @@ contract BorrowTest is Test {
     assertEq(userStakedLocksBalance, locksAmount);
   }
 
-  function testLockedAfterRepay() public dealGammMaxHoney {
-    deal(address(goldiswap), address(this), locksAmount);
-    goldiswap.approve(address(porridge), locksAmount);
-    porridge.stake(locksAmount);
-    borrow.borrow(locksAmount);
+  function testLockedAfterRepay() public dealandStake100000Locks dealGammMaxHoney {
+    borrow.borrow(borrowAmount);
     honey.approve(address(borrow), type(uint256).max);
-    borrow.repay(locksAmount);
+    borrow.repay(borrowAmount);
 
     uint256 locked = borrow.getLocked(address(this));
 

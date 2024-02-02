@@ -79,7 +79,7 @@ contract Goldiswap is ERC20 {
     honey = _honey;
     lastFloorRaise = block.timestamp;
     lastFloorDecrease = block.timestamp;
-    _mint(msg.sender, 5000e18);
+    _mint(msg.sender, 100000000e18);
   }
 
   /// @notice Returns the name of the $LOCKS token

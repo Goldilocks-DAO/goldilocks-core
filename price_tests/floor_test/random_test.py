@@ -1,8 +1,8 @@
 from eth_abi import encode
 
 fsl = 23457745
-supply = 4374
 psl = 8340957
+supply = 4374
 floor_price = fsl/supply
 
 floor_price *= (10 ** 18)
