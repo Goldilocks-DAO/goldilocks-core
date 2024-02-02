@@ -7,17 +7,17 @@ import { Honey } from "../../src/mock/Honey.sol";
 import { Goldiswap } from "../../src/core/Goldiswap.sol";
 import { Borrow } from "../../src/core/Borrow.sol";
 import { Porridge } from "../../src/core/Porridge.sol";
-import { GoldiGovernor } from "../../src/governance/GoldiGovernor.sol";
+import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
 import { Timelock } from "../../src/governance/Timelock.sol";
 import { govLOCKS } from "../../src/governance/govLOCKS.sol";
 
-contract GoldiGovernorTest is Test {
+contract GoldigovernorTest is Test {
 
   using LibRLP for address;
 
   Honey honey;
   Goldiswap goldiswap;
-  GoldiGovernor goldigov;
+  Goldigovernor goldigov;
   govLOCKS govlocks;
   Timelock timelock;
 
@@ -38,12 +38,12 @@ contract GoldiGovernorTest is Test {
   function setUp() public {
     Porridge porridgeComputed = Porridge(address(this).computeAddress(4));
     Borrow borrowComputed = Borrow(address(this).computeAddress(3));
-    GoldiGovernor goldigovComputed = GoldiGovernor(address(this).computeAddress(4));
+    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(4));
     govLOCKS govlocksComputed = govLOCKS(address(this).computeAddress(5));
     honey = new Honey();
     goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
     timelock = new Timelock(address(goldigovComputed), 5 days);
-    goldigov = new GoldiGovernor(address(timelock), address(govlocksComputed), address(this), 5761, 69, 4e18);
+    goldigov = new Goldigovernor(address(timelock), address(govlocksComputed), address(this), 5761, 69, 4e18);
     govlocks = new govLOCKS(address(goldiswap), address(goldigov));
   }
 
@@ -287,7 +287,7 @@ contract GoldiGovernorTest is Test {
     vm.roll(2);    
     goldigov.propose(targets, signatures, calldatas, values, "");
     vm.roll(72);
-    GoldiGovernor.ProposalState state = goldigov.getProposalState(1);
+    Goldigovernor.ProposalState state = goldigov.getProposalState(1);
 
     assertEq(uint256(state), 1);
   }
@@ -306,7 +306,7 @@ contract GoldiGovernorTest is Test {
     goldigov.propose(targets, signatures, calldatas, values, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    GoldiGovernor.Receipt memory receipt = goldigov.getReceipt(1, address(this));
+    Goldigovernor.Receipt memory receipt = goldigov.getReceipt(1, address(this));
 
     assertEq(receipt.support, 1);
     assertEq(receipt.votes, 5e18);
@@ -425,7 +425,7 @@ contract GoldiGovernorTest is Test {
     goldigov.propose(targets, signatures, calldatas, values, "");
     vm.roll(72);
     goldigov.castVote(1, 0);
-    GoldiGovernor.Receipt memory receipt = goldigov.getReceipt(1, address(this));
+    Goldigovernor.Receipt memory receipt = goldigov.getReceipt(1, address(this));
 
     assertEq(receipt.support, 0);
     assertEq(receipt.votes, 5e18);
@@ -446,7 +446,7 @@ contract GoldiGovernorTest is Test {
     goldigov.propose(targets, signatures, calldatas, values, "");
     vm.roll(72);
     goldigov.castVote(1, 2);
-    GoldiGovernor.Receipt memory receipt = goldigov.getReceipt(1, address(this));
+    Goldigovernor.Receipt memory receipt = goldigov.getReceipt(1, address(this));
 
     assertEq(receipt.support, 2);
     assertEq(receipt.votes, 5e18);
@@ -483,7 +483,7 @@ contract GoldiGovernorTest is Test {
     bytes32 s = 0x6613e63d75d423834a24b707d13a34304f3b66c6f2eaacb611b327550761215d;
     vm.prank(admin);
     goldigov.castVoteBySig(1, 1, v, r, s);
-    GoldiGovernor.Receipt memory receipt = goldigov.getReceipt(1, address(admin));
+    Goldigovernor.Receipt memory receipt = goldigov.getReceipt(1, address(admin));
 
     assertEq(receipt.support, 1);
     assertEq(receipt.votes, 5e18);
@@ -592,7 +592,7 @@ contract GoldiGovernorTest is Test {
     goldigov.castVote(1, 1);
     vm.roll(5900);
     goldigov.queue(1);
-    GoldiGovernor.ProposalState state = goldigov.getProposalState(1);
+    Goldigovernor.ProposalState state = goldigov.getProposalState(1);
 
     assertEq(uint256(state), 3);
   }
@@ -620,7 +620,7 @@ contract GoldiGovernorTest is Test {
     vm.roll(5900);
     goldigov.queue(1);
     vm.warp(69 days);
-    GoldiGovernor.ProposalState state = goldigov.getProposalState(1);
+    Goldigovernor.ProposalState state = goldigov.getProposalState(1);
 
     assertEq(uint256(state), 6);
   }
@@ -733,7 +733,7 @@ contract GoldiGovernorTest is Test {
     goldigov.cancel(1);
 
     (, , uint256 eta, , , uint256 forVotes, uint256 againstVotes, , bool cancelled, bool executed) = goldigov.proposals(1);
-    GoldiGovernor.ProposalState state = goldigov.getProposalState(1);
+    Goldigovernor.ProposalState state = goldigov.getProposalState(1);
 
     assertEq(cancelled, true);
     assertEq(uint256(state), 2);
