@@ -113,14 +113,14 @@ contract GoldiswapGasTest is Test {
     assert(gasUsed <= 323893);
   }
 
-  // gasused = 2474233, actual = 2263778
+  // gasused = 2477458, actual = 2263778
   function testnew1000000Buy() public dealandApproveUserHoney {
     uint256 gasStart = gasleft();
     goldiswap.buy(largeTxAmount*1000, type(uint256).max);
     uint256 gasEnd = gasleft();
     uint256 gasUsed = gasStart - gasEnd;
     console.log(gasUsed);
-    assert(gasUsed <= 2474233);
+    assert(gasUsed <= 2477458);
   }
 
 }

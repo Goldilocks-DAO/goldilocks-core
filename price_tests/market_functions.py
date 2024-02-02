@@ -7,12 +7,15 @@ def redeem(amount, fsl, psl, supply, floor_price, market_price):
 
 def sell(amount, fsl, psl, supply, floor_price, market_price):
   sale_price = 0
-  while amount >= 1000:
-    amount -= 1000
-    supply -= 1000
-    sale_price += market_price*1000
-    fsl -= floor_price*1000
-    psl -= (market_price - floor_price)*1000
+  increment = supply / 100000
+  if increment < 1:
+    increment = 1000
+  while amount >= increment:
+    amount -= increment
+    supply -= increment
+    sale_price += market_price*increment
+    fsl -= floor_price*increment
+    psl -= (market_price - floor_price)*increment
     floor_price = fsl/supply
     market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**6)
   supply -= amount
@@ -28,16 +31,19 @@ def sell(amount, fsl, psl, supply, floor_price, market_price):
 
 def buy(amount, fsl, psl, supply, floor_price, market_price):
   purchase_price = 0
-  while amount >= 1000:
-    amount -= 1000
-    supply += 1000
-    purchase_price += market_price*1000
+  increment = supply / 100000
+  if increment < 1:
+    increment = 1000
+  while amount >= increment:
+    amount -= increment
+    supply += increment
+    purchase_price += market_price*increment
     if psl/fsl >= 0.5:
-      fsl += market_price*1000
+      fsl += market_price*increment
       floor_price = fsl/supply
     else:
-      fsl += floor_price*1000
-      psl += (market_price - floor_price)*1000
+      fsl += floor_price*increment
+      psl += (market_price - floor_price)*increment
     floor_price = fsl/supply
     market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**6)
   supply += amount

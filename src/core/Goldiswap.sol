@@ -252,19 +252,25 @@ contract Goldiswap is ERC20 {
     uint256 _market;
     uint256 _floor;
     uint256 _buyPrice;
-    while(_leftover >= 1000e18) {
+    uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
+    uint256 incrementUnit = increment / 1e18;
+    if(increment == 0 || incrementUnit == 0) {
+      increment = 1000e18;
+      incrementUnit = 1000;
+    }
+    while(_leftover >= increment) {
       _market = _marketPrice(_fsl, _psl, _supply);
       _floor = _floorPrice(_fsl, _supply);
-      _buyPrice += _market*1000;
-      _supply += 1000e18;
+      _buyPrice += _market * incrementUnit;
+      _supply += increment;
       if (_psl * 100 >= _fsl * 50) {
-        _fsl += _market*1000;
+        _fsl += _market * incrementUnit;
       }
       else {
-        _psl += (_market - _floor)*1000;
-        _fsl += _floor*1000;
+        _psl += (_market - _floor) * incrementUnit;
+        _fsl += _floor * incrementUnit;
       }
-      _leftover -= 1000e18;
+      _leftover -= increment;
     }
     if (_leftover > 0) {
       _market = _marketPrice(_fsl, _psl, _supply);
@@ -292,14 +298,20 @@ contract Goldiswap is ERC20 {
     uint256 _market;
     uint256 _floor;
     uint256 _saleAmount;
-    while(_leftover >= 1000e18) {
+    uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
+    uint256 incrementUnit = increment / 1e18;
+    if(increment == 0 || incrementUnit == 0) {
+      increment = 1000e18;
+      incrementUnit = 1000;
+    }
+    while(_leftover >= increment) {
       _market = _marketPrice(_fsl, _psl, _supply);
       _floor = _floorPrice(_fsl, _supply);
-      _saleAmount += _market*1000;
-      _psl -= (_market - _floor)*1000;
-      _fsl -= _floor*1000;
-      _supply -= 1000e18;
-      _leftover -= 1000e18;
+      _saleAmount += _market * incrementUnit;
+      _psl -= (_market - _floor) * incrementUnit;
+      _fsl -= _floor * incrementUnit;
+      _supply -= increment;
+      _leftover -= increment;
     }
     if (_leftover > 0) {
       _market = _marketPrice(_fsl, _psl, _supply);
