@@ -107,7 +107,7 @@ contract Porridge is ERC20 {
 
   event Staked(address indexed user, uint256 amount);
   event Unstaked(address indexed user, uint256 amount);
-  event Realized(address indexed user, uint256 amount);
+  event Stirred(address indexed user, uint256 amount);
   event Claimed(address indexed user, uint256 amount);
 
 
@@ -183,11 +183,11 @@ contract Porridge is ERC20 {
 
   /// @notice Burns $PRG to buy $LOCKS at floor price
   /// @param amount Amount of $PRG to burn
-  function realize(uint256 amount) external {
+  function stir(uint256 amount) external {
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransferFrom(honey, msg.sender, gamm, FixedPointMathLib.mulWad(amount, IGoldiswap(gamm).floorPrice()));
     IGoldiswap(gamm).porridgeMint(msg.sender, amount);
-    emit Realized(msg.sender, amount);
+    emit Stirred(msg.sender, amount);
   }
 
   /// @notice Claim $PRG rewards

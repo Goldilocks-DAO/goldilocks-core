@@ -9,7 +9,7 @@ interface IPorridge {
   
   function stake(uint256 amount) external;
   function unstake(uint256 amount) external;
-  function realize(uint256 amount) external;
+  function stir(uint256 amount) external;
   function claim() external;
 
   function goldilendMint(address to, uint256 amount) external;

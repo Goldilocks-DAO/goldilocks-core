@@ -213,10 +213,10 @@ contract PorridgeTest is Test {
     assertEq(getStakedUserBalance, 0);
   }
 
-  function testRealize() public dealandStake100Locks dealUser280Honey {
+  function testStir() public dealandStake100Locks dealUser280Honey {
     vm.warp(block.timestamp + (2 * 1 days));
     porridge.unstake(locksAmount);
-    porridge.realize(TwoDaysofYield);
+    porridge.stir(TwoDaysofYield);
 
     uint256 userBalanceofPrg = porridge.balanceOf(address(this));
     uint256 userBalanceofLocks = goldiswap.balanceOf(address(this));

@@ -387,7 +387,7 @@ contract Goldiswap is ERC20 {
     SafeTransferLib.safeTransfer(honey, multisig, fee);
   }
 
-  /// @notice Mints $PRG tokens from $PRG token realization
+  /// @notice Mints $PRG tokens from $PRG token stirring
   /// @dev Only Porridge contract can call this function
   /// @param to Recipient of minted $LOCKS tokens
   /// @param amount Amount of minted $LOCKS tokens
