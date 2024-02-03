@@ -8,7 +8,6 @@ import { Goldiswap } from "../../src/core/Goldiswap.sol";
 import { Borrow } from "../../src/core/Borrow.sol";
 import { Porridge } from "../../src/core/Porridge.sol";
 import { Goldilend } from "../../src/core/Goldilend.sol";
-import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 
 contract GoldiswapPriceTest is Test {
 

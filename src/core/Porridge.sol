@@ -47,14 +47,15 @@ contract Porridge is ERC20 {
 
   // uint32 public immutable DAYS_SECONDS = 86400;
   // uint16 public immutable DAILY_EMISSISION_RATE = 600;
-  uint256 public immutable ANNUAL_PORRIDGE_EMISSIONS = 5e17;
 
   mapping(address => Stake) public stakes;
 
+  uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
   address public gamm;
   address public borrow;
   address public goldilend;
   address public honey;
+  address public multisig;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -77,6 +78,7 @@ contract Porridge is ERC20 {
     borrow = _borrow;
     goldilend = _goldilend;
     honey = _honey;
+    multisig = msg.sender;
   }
 
   /// @notice Returns the name of the $PRG token
@@ -96,6 +98,7 @@ contract Porridge is ERC20 {
 
 
   error NotGoldilend();
+  error NotMultisig();
   error InvalidUnstake();
   error LocksBorrowedAgainst();
 
@@ -119,6 +122,12 @@ contract Porridge is ERC20 {
   /// @notice Ensures msg.sender is the goldilend address
   modifier onlyGoldilend() {
     if(msg.sender != goldilend) revert NotGoldilend();
+    _;
+  }
+
+  /// @notice Ensures msg.sender is the multisig address
+  modifier onlyMultisig() {
+    if(msg.sender != multisig) revert NotMultisig();
     _;
   }
 
@@ -249,6 +258,14 @@ contract Porridge is ERC20 {
   /// @param amount Amount of minted $PRG tokens
   function goldilendMint(address to, uint256 amount) external onlyGoldilend {
     _mint(to, amount);
+  }
+
+  function changeEmissions(uint256 newEmissions) external onlyMultisig {
+    ANNUAL_PORRIDGE_EMISSIONS = newEmissions;
+  }
+
+  function mintPorridge(uint256 newPorridge) external onlyMultisig {
+    _mint(msg.sender, newPorridge);
   }
 
 }
