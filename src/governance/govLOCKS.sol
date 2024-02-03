@@ -46,6 +46,7 @@ contract govLOCKS is ERC20 {
 
   address public locks;
   address public goldigov;
+  address public goldilocked;
 
   mapping(address => uint256) public deposits;
   mapping(address => address) public delegates;
@@ -61,12 +62,15 @@ contract govLOCKS is ERC20 {
   /// @notice Constructor of this contract
   /// @param _locks Address of $LOCKS  
   /// @param _goldigov Address of the Goldigovernor contract
+  /// @param _goldilocked Address of the Goldilocked contract
   constructor(
     address _locks,
-    address _goldigov
+    address _goldigov,
+    address _goldilocked
   ) {
     locks = _locks;
     goldigov = _goldigov;
+    goldilocked = _goldilocked;
   }
 
   /// @notice Returns the name of the $LOCKS token
@@ -86,6 +90,7 @@ contract govLOCKS is ERC20 {
 
 
   error NoSuchBlock();
+  error NotGoldilocked();
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -208,6 +213,16 @@ contract govLOCKS is ERC20 {
       numCheckpoints[delegatee] = nCheckpoints + 1;
     }
     emit DelegateVotesChanged(delegatee, oldVotes, newVotes);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                    PERMISSIONED FUNCTIONS                  */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  function updateStakedBalance(address from, address to, uint256 amt) external {
+    if(msg.sender != goldilocked) revert NotGoldilocked();
+    _moveDelegates(delegates[from], delegates[to], amt);
   }
 
 

@@ -5,8 +5,8 @@ import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { Honey } from "../../src/mock/Honey.sol";
 import { Goldiswap } from "../../src/core/Goldiswap.sol";
-import { Borrow } from "../../src/core/Borrow.sol";
-import { Porridge } from "../../src/core/Porridge.sol";
+import { Goldilocked } from "../../src/core/Goldilocked.sol";
+import { Goldilend } from "../../src/core/Goldilend.sol";
 import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
 import { Timelock } from "../../src/governance/Timelock.sol";
 import { govLOCKS } from "../../src/governance/govLOCKS.sol";
@@ -18,20 +18,23 @@ contract govLOCKSTest is Test {
   Honey honey;
   Goldiswap goldiswap;
   Goldigovernor goldigov;
+  Goldilocked goldilocked;
   Timelock timelock;
   govLOCKS govlocks;
 
   bytes4 NoSuchBlockSelector = 0xfd8d4168;
 
   function setUp() public {
-    Porridge porridgeComputed = Porridge(address(this).computeAddress(4));
-    Borrow borrowComputed = Borrow(address(this).computeAddress(3));
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(4));
+    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(5));
+    govLOCKS govlocksComputed = govLOCKS(address(this).computeAddress(6));
+    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(10));
     honey = new Honey();
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(goldilockedComputed), address(goldilockedComputed), address(honey));
     timelock = new Timelock(address(goldigovComputed), 5 days);
-    goldigov = new Goldigovernor(address(timelock), address(goldiswap), address(this), 5761, 69, 1000000e18);
-    govlocks = new govLOCKS(address(goldiswap), address(goldigov));
+    goldigov = new Goldigovernor(address(timelock), address(govlocksComputed), address(this), 5761, 69, 1000000e18);
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilendComputed), address(honey));
+    govlocks = new govLOCKS(address(goldiswap), address(goldigov), address(goldilocked));
   }
 
   function testLocksName() public {
@@ -214,6 +217,22 @@ contract govLOCKSTest is Test {
     address currentDelegate = govlocks.delegates(address(this));
     uint256 balance = govlocks.balanceOf(address(this));
     govlocks.delegate(user2);
+  }
+
+  function testAss() public {
+    uint256 amt = 69e18;
+    deal(address(goldiswap), address(this), amt + 5e18);
+    goldiswap.approve(address(govlocks), amt);
+    govlocks.deposit(amt);
+    goldiswap.approve(address(goldilocked), 5e18);
+    goldilocked.stake(5e18);
+    vm.roll(2);
+
+    uint256 votes = govlocks.getPriorVotes(address(this), 1);
+    uint256 staked = goldilocked.getStaked(address(this));
+
+    console.log(votes);
+    console.log(staked);
   }
 
 }

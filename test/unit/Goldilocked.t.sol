@@ -48,14 +48,10 @@ contract GoldilockedTest is Test {
   bytes4 ExcessiveRepaySelector = 0x7bc3c3ef;
 
   function setUp() public {
-    // Porridge porridgeComputed = Porridge(address(this).computeAddress(4));
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(3));
-    // Borrow borrowComputed = Borrow(address(this).computeAddress(3));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(10));
     honey = new Honey();
     goldiswap = new Goldiswap(initialFSL, initialPSL, address(this), address(goldilockedComputed), address(goldilockedComputed), address(honey));
-    // borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
-    // porridge = new Porridge(address(goldiswap), address(goldilocked), address(goldilendComputed), address(honey));
     goldilocked = new Goldilocked(address(goldiswap), address(goldilendComputed), address(honey));
 
     bera = new Bera();

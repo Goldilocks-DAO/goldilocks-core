@@ -5,8 +5,7 @@ import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { Honey } from "../../src/mock/Honey.sol";
 import { Goldiswap } from "../../src/core/Goldiswap.sol";
-import { Borrow } from "../../src/core/Borrow.sol";
-import { Porridge } from "../../src/core/Porridge.sol";
+import { Goldilocked } from "../../src/core/Goldilocked.sol";
 import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
 import { Timelock } from "../../src/governance/Timelock.sol";
 import { govLOCKS } from "../../src/governance/govLOCKS.sol";
@@ -18,6 +17,7 @@ contract GoldigovernorTest is Test {
   Honey honey;
   Goldiswap goldiswap;
   Goldigovernor goldigov;
+  Goldilocked goldilocked;
   govLOCKS govlocks;
   Timelock timelock;
 
@@ -36,15 +36,14 @@ contract GoldigovernorTest is Test {
   bytes4 NotProposerSelector = 0x7d1b73b9;
 
   function setUp() public {
-    Porridge porridgeComputed = Porridge(address(this).computeAddress(4));
-    Borrow borrowComputed = Borrow(address(this).computeAddress(3));
+    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(5));
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(4));
     govLOCKS govlocksComputed = govLOCKS(address(this).computeAddress(5));
     honey = new Honey();
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
+    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(goldilockedComputed), address(goldilockedComputed), address(honey));
     timelock = new Timelock(address(goldigovComputed), 5 days);
     goldigov = new Goldigovernor(address(timelock), address(govlocksComputed), address(this), 5761, 69, 4e18);
-    govlocks = new govLOCKS(address(goldiswap), address(goldigov));
+    govlocks = new govLOCKS(address(goldiswap), address(goldigov), address(goldilockedComputed));
   }
 
   function proposy() public returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {

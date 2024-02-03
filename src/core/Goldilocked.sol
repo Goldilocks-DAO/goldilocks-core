@@ -329,8 +329,12 @@ contract Goldilocked is ERC20 {
   }
 
 
+  function updateGovlocksBalance(address from, address to, uint256 amt) internal {
+    // govlocks.updateStakedBalance(from, to, amt);
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                   PERMISSIONED FUNCTION                    */
+  /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
