@@ -24,7 +24,6 @@ contract BorrowTest is Test {
   uint256 locksAmount = 100000e18;
   uint256 borrowAmount = 1050e18;
 
-  bytes4 NotAdminSelector = 0x7bfa4b9f;
   bytes4 InsufficientBorrowLimitSelector = 0xda392797;
   bytes4 ExcessiveRepaySelector = 0x7bc3c3ef;
 
