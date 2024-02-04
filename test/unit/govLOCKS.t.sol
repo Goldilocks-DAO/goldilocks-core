@@ -22,6 +22,9 @@ contract govLOCKSTest is Test {
   Timelock timelock;
   govLOCKS govlocks;
 
+  uint256 initialFSL = 1050000e18;
+  uint256 initialPSL = 320000e18;
+
   bytes4 NoSuchBlockSelector = 0xfd8d4168;
 
   function setUp() public {
@@ -30,10 +33,10 @@ contract govLOCKSTest is Test {
     govLOCKS govlocksComputed = govLOCKS(address(this).computeAddress(6));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(10));
     honey = new Honey();
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(goldilockedComputed), address(goldilockedComputed), address(honey));
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(this), address(goldilockedComputed), address(goldilockedComputed), address(honey));
     timelock = new Timelock(address(goldigovComputed), 5 days);
     goldigov = new Goldigovernor(address(timelock), address(govlocksComputed), address(this), 5761, 69, 1000000e18);
-    goldilocked = new Goldilocked(address(goldiswap), address(goldilendComputed), address(honey));
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilendComputed), address(govlocksComputed), address(honey));
     govlocks = new govLOCKS(address(goldiswap), address(goldigov), address(goldilocked));
   }
 
@@ -219,7 +222,7 @@ contract govLOCKSTest is Test {
     govlocks.delegate(user2);
   }
 
-  function testAss() public {
+  function testUpdatedStakedBalance() public {
     uint256 amt = 69e18;
     deal(address(goldiswap), address(this), amt + 5e18);
     goldiswap.approve(address(govlocks), amt);
@@ -231,8 +234,7 @@ contract govLOCKSTest is Test {
     uint256 votes = govlocks.getPriorVotes(address(this), 1);
     uint256 staked = goldilocked.getStaked(address(this));
 
-    console.log(votes);
-    console.log(staked);
+    assertEq(votes, staked + amt);
   }
 
 }

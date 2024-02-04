@@ -7,6 +7,9 @@ import { Honey } from "../../src/mock/Honey.sol";
 import { Goldiswap } from "../../src/core/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/Goldilocked.sol";
 import { Goldilend } from "../../src/core/Goldilend.sol";
+import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
+import { Timelock } from "../../src/governance/Timelock.sol";
+import { govLOCKS } from "../../src/governance/govLOCKS.sol";
 import { ConsensusVault } from "../../src/mock/ConsensusVault.sol";
 import { Bera } from "../../src/mock/Bera.sol";
 import { HoneyComb } from "../../src/mock/HoneyComb.sol";
@@ -22,6 +25,9 @@ contract GoldilockedTest is Test {
   Goldiswap goldiswap;
   Goldilocked goldilocked;
   Goldilend goldilend;
+  Goldigovernor goldigov;
+  Timelock timelock;
+  govLOCKS govlocks;
   Bera bera;
   ConsensusVault consensusvault;
   HoneyComb honeycomb;
@@ -48,11 +54,16 @@ contract GoldilockedTest is Test {
   bytes4 ExcessiveRepaySelector = 0x7bc3c3ef;
 
   function setUp() public {
-    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(3));
-    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(10));
+    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(4));
+    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(5));
+    govLOCKS govlocksComputed = govLOCKS(address(this).computeAddress(6));
+    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(13));
     honey = new Honey();
     goldiswap = new Goldiswap(initialFSL, initialPSL, address(this), address(goldilockedComputed), address(goldilockedComputed), address(honey));
-    goldilocked = new Goldilocked(address(goldiswap), address(goldilendComputed), address(honey));
+    timelock = new Timelock(address(goldigovComputed), 5 days);
+    goldigov = new Goldigovernor(address(timelock), address(govlocksComputed), address(this), 5761, 69, 1000000e18);
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilendComputed), address(govlocksComputed), address(honey));
+    govlocks = new govLOCKS(address(goldiswap), address(goldigov), address(goldilocked));
 
     bera = new Bera();
     honeycomb = new HoneyComb();

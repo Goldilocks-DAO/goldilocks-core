@@ -222,7 +222,7 @@ contract govLOCKS is ERC20 {
 
   function updateStakedBalance(address from, address to, uint256 amt) external {
     if(msg.sender != goldilocked) revert NotGoldilocked();
-    _moveDelegates(delegates[from], delegates[to], amt);
+    _moveDelegates(from, to, amt);
   }
 
 

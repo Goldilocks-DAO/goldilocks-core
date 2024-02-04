@@ -24,6 +24,7 @@ pragma solidity ^0.8.19;
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { govLOCKS } from "../governance/govLOCKS.sol";
 import { IGoldiswap } from "../interfaces/IGoldiswap.sol";
 
 
@@ -53,6 +54,7 @@ contract Goldilocked is ERC20 {
   uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
   address public goldiswap;
   address public goldilend;
+  address public govlocks;
   address public honey;
   address public multisig;
 
@@ -64,15 +66,18 @@ contract Goldilocked is ERC20 {
 
   /// @notice Constructor of this contract
   /// @param _goldiswap Address of Goldiswap  
-  /// @param _goldilend Address of the Goldilend contract
+  /// @param _goldilend Address of Goldilend contract
+  /// @param _govlocks Address of govLOCKS contract
   /// @param _honey Address of the HONEY contract
   constructor(
     address _goldiswap,
     address _goldilend,
+    address _govlocks,
     address _honey
   ) {
     goldiswap = _goldiswap;
     goldilend = _goldilend;
+    govlocks = _govlocks;
     honey = _honey;
     multisig = msg.sender;
   }
@@ -195,6 +200,7 @@ contract Goldilocked is ERC20 {
       stakedBalance: stakes[msg.sender].stakedBalance + amount
     });
     stakes[msg.sender] = userStake;
+    govLOCKS(govlocks).updateStakedBalance(address(0), msg.sender, amount);
     SafeTransferLib.safeTransferFrom(goldiswap, msg.sender, address(this), amount);
     emit Staked(msg.sender, amount);
   }
@@ -207,6 +213,7 @@ contract Goldilocked is ERC20 {
     if(amount > userStake.stakedBalance - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
     uint256 stakedAmount = userStake.stakedBalance;
     stakes[msg.sender].stakedBalance -= amount;
+    govLOCKS(govlocks).updateStakedBalance(msg.sender, address(0), amount);
     _claim(stakedAmount);
     SafeTransferLib.safeTransfer(goldiswap, msg.sender, amount);
     emit Unstaked(msg.sender, amount);
@@ -330,7 +337,7 @@ contract Goldilocked is ERC20 {
 
 
   function updateGovlocksBalance(address from, address to, uint256 amt) internal {
-    // govlocks.updateStakedBalance(from, to, amt);
+    govLOCKS(govlocks).updateStakedBalance(from, to, amt);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
