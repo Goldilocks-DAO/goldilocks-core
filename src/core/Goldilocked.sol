@@ -120,24 +120,6 @@ contract Goldilocked is ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                         MODIFIERS                          */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @notice Ensures msg.sender is the goldilend address
-  modifier onlyGoldilend() {
-    if(msg.sender != goldilend) revert NotGoldilend();
-    _;
-  }
-
-  /// @notice Ensures msg.sender is the multisig address
-  modifier onlyMultisig() {
-    if(msg.sender != multisig) revert NotMultisig();
-    _;
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -336,10 +318,6 @@ contract Goldilocked is ERC20 {
   }
 
 
-  function updateGovlocksBalance(address from, address to, uint256 amt) internal {
-    govLOCKS(govlocks).updateStakedBalance(from, to, amt);
-  }
-
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -349,15 +327,18 @@ contract Goldilocked is ERC20 {
   /// @dev Only Goldilend contract can call this function
   /// @param to Recipient of minted $PRG tokens
   /// @param amount Amount of minted $PRG tokens
-  function goldilendMint(address to, uint256 amount) external onlyGoldilend {
+  function goldilendMint(address to, uint256 amount) external {
+    if(msg.sender != goldilend) revert NotGoldilend();
     _mint(to, amount);
   }
 
-  function changeEmissions(uint256 newEmissions) external onlyMultisig {
+  function changeEmissions(uint256 newEmissions) external {
+    if(msg.sender != multisig) revert NotMultisig();
     ANNUAL_PORRIDGE_EMISSIONS = newEmissions;
   }
 
-  function mintPorridge(uint256 newPorridge) external onlyMultisig {
+  function mintPorridge(uint256 newPorridge) external {
+    if(msg.sender != multisig) revert NotMultisig();
     _mint(msg.sender, newPorridge);
   }
 

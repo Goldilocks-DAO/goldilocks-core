@@ -165,9 +165,9 @@ contract govLOCKS is ERC20 {
 
   /// @notice Delegates votes from msg.sender to delegatee
   /// @param delegatee Address to delegate votes to
-  function delegate(address delegatee) external {
-    _delegate(msg.sender, delegatee);
-  }
+  // function delegate(address delegatee) external {
+  //   _delegate(msg.sender, delegatee);
+  // }
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -232,7 +232,9 @@ contract govLOCKS is ERC20 {
 
 
   function _afterTokenTransfer(address from, address to, uint256 amt) internal override {
-    _moveDelegates(delegates[from], delegates[to], amt);
+    if(from != address(0) && to != address(0)) {
+      _moveDelegates(from, to, amt);
+    }
   }
 
 }

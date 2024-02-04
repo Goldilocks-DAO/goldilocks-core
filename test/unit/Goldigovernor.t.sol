@@ -46,7 +46,7 @@ contract GoldigovernorTest is Test {
     govlocks = new govLOCKS(address(goldiswap), address(goldigov), address(goldilockedComputed));
   }
 
-  function proposy() public returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {
+  function proposy() public pure returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {
     address[] memory targets = new address[](2);
     targets[0] = address(0x69);
     targets[1] = address(0x69);
@@ -564,7 +564,7 @@ contract GoldigovernorTest is Test {
     goldigov.queue(1);
     vm.warp(6 days);
     goldigov.execute(1);
-    (, , uint256 eta, , , uint256 forVotes, uint256 againstVotes, , , bool executed) = goldigov.proposals(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
     assertEq(executed, true);
   }
@@ -731,7 +731,7 @@ contract GoldigovernorTest is Test {
     vm.roll(5903);
     goldigov.cancel(1);
 
-    (, , uint256 eta, , , uint256 forVotes, uint256 againstVotes, , bool cancelled, bool executed) = goldigov.proposals(1);
+    (, , , , , , , , bool cancelled, ) = goldigov.proposals(1);
     Goldigovernor.ProposalState state = goldigov.getProposalState(1);
 
     assertEq(cancelled, true);
