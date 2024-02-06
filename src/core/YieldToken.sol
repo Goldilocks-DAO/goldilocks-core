@@ -26,7 +26,7 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 /// @notice Tokenized yield token for use in Goldivaults
 /// @author ampnoob
 /// @author geeb
-contract YieldToken is ERC20 {
+abstract contract YieldToken is ERC20 {
 
   string public tokenName;
   string public tokenSymbol;

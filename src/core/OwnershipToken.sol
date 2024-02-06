@@ -26,7 +26,7 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 /// @notice Tokenized ownership token for use in Goldivaults
 /// @author ampnoob
 /// @author geeb
-contract OwnershipToken is ERC20 {
+abstract contract OwnershipToken is ERC20 {
 
   string public tokenName;
   string public tokenSymbol;

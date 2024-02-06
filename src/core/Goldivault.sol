@@ -45,7 +45,7 @@ interface IYieldToken {
 /// @notice Splits yield bearing tokens in yield and principal tokens
 /// @author ampnoob
 /// @author geeb
-contract Goldivault {
+abstract contract Goldivault {
 
   uint256 startTime;
   uint256 endTime;
