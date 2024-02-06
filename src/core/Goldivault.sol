@@ -84,8 +84,8 @@ contract Goldivault {
     uint256 remainingTime = endTime - block.timestamp;
     if(remainingTime < 30 days) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, 365 days);
-    _claimRewards();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), amount);
+    _depositHoney();
     IOwnershipToken(ot).mint(msg.sender, amount);
     IYieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
   }
@@ -134,6 +134,7 @@ contract Goldivault {
   function _vaultDeposit() internal virtual {}
   function _claimRewards() internal virtual {}
   function _concludeVaultRewards() internal virtual {}
+  function _depositHoney() internal virtual {}
 
   // function _claim() internal {
     //code for claiming BGT yield from vaults
