@@ -185,36 +185,6 @@ contract Goldilend is ERC20, IERC721Receiver {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                         MODIFIERS                          */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @notice Ensures msg.sender is the treasury address
-  modifier onlyMultisig() {
-    if(msg.sender != multisig) revert NotMultisig();
-    _;
-  }
-
-  /// @notice Ensures a boost is created with only partner NFTs
-  /// @param partnerNFTs Array of NFTs to validate as partner NFTs
-  modifier validateBoost(address[] calldata partnerNFTs) {
-    for(uint256 i; i < partnerNFTs.length; i++) {
-      if(partnerNFTBoosts[partnerNFTs[i]] == 0) revert InvalidBoostNFT();
-    }
-    _;
-  }
-
-  /// @notice Ensures a loan is created with only bera NFTs
-  /// @param collateralNFTs Array of NFTs to validate as bera NFTs
-  modifier validateBorrow(address[] calldata collateralNFTs) {
-    for(uint256 i; i < collateralNFTs.length; i++) {
-      if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
-    }
-    _;
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -284,7 +254,10 @@ contract Goldilend is ERC20, IERC721Receiver {
     address[] calldata partnerNFTs, 
     uint256[] calldata partnerNFTIds, 
     uint256 expiry
-  ) external validateBoost(partnerNFTs) {
+  ) external {
+    for(uint256 i; i < partnerNFTs.length; i++) {
+      if(partnerNFTBoosts[partnerNFTs[i]] == 0) revert InvalidBoostNFT();
+    }
     if(expiry < block.timestamp + MONTH_DAYS) revert InvalidDuration();
     if(partnerNFTs.length != partnerNFTIds.length) revert ArrayMismatch();    
     boosts[msg.sender] = _buildBoost(partnerNFTs, partnerNFTIds, expiry);
@@ -422,7 +395,10 @@ contract Goldilend is ERC20, IERC721Receiver {
     uint256 duration, 
     address[] calldata collateralNFTs, 
     uint256[] calldata collateralNFTIds
-  ) external validateBorrow(collateralNFTs) {
+  ) external {
+    for(uint256 i; i < collateralNFTs.length; i++) {
+      if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
+    }
     if(duration < FORTNITE || duration > ONE_YEAR) revert InvalidDuration();
     if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
     if(collateralNFTs.length != collateralNFTIds.length) revert ArrayMismatch();
@@ -705,7 +681,8 @@ contract Goldilend is ERC20, IERC721Receiver {
     uint256 _totalValuation, 
     address[] calldata _nfts,
     uint256[] calldata _nftFairValues
-  ) external onlyMultisig {
+  ) external {
+    if(msg.sender != multisig) revert NotMultisig();
     totalValuation = _totalValuation;
     for(uint256 i; i < _nftFairValues.length; i++) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
@@ -714,18 +691,21 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   /// @notice Allows the DAO to adjust the interest rate for the protocol
   /// @param _protocolInterestRate New interest rate
-  function setProtocolInterestRate(uint256 _protocolInterestRate) external onlyMultisig {
+  function setProtocolInterestRate(uint256 _protocolInterestRate) external {
+    if(msg.sender != multisig) revert NotMultisig();
     protocolInterestRate = _protocolInterestRate;
   }
 
   /// @notice Allows the DAO to withdraw $BERA in case of emergency
-  function emergencyWithdraw() external onlyMultisig {
+  function emergencyWithdraw() external {
+    if(msg.sender != multisig) revert NotMultisig();
     SafeTransferLib.safeTransfer(bera, multisig, poolSize - outstandingDebt);
   }
 
   /// @notice Allows the multisig to claim interest
   /// @dev 4.5% of all protocol interest
-  function multisigInterestClaim() external onlyMultisig {
+  function multisigInterestClaim() external {
+    if(msg.sender != multisig) revert NotMultisig();
     uint256 interestClaim = multisigClaims;
     multisigClaims = 0;
     SafeTransferLib.safeTransfer(bera, multisig, interestClaim);
@@ -734,7 +714,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Changes the address of the multisig address
   /// @dev Used after deployment by deployment address
   /// @param _multisig Address of the multisig
-  function setMultisig(address _multisig) external onlyMultisig {
+  function setMultisig(address _multisig) external {
+    if(msg.sender != multisig) revert NotMultisig();
     multisig = _multisig;
   }
 

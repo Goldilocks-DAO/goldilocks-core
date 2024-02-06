@@ -862,7 +862,6 @@ contract GoldilendTest is Test, IERC721Receiver {
   }
 
   function testMultipleBorrowRepayTransfers() public dealUserBera dealUserBeras {
-    uint256 startingPoolSize = 1000e18;
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);

@@ -115,30 +115,6 @@ contract Goldiswap is ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                         MODIFIERS                          */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @notice Ensures msg.sender is GoldilocksDAO multisig
-  modifier onlyMultisig() {
-    if(msg.sender != multisig) revert NotMultisig();
-    _;
-  }
-
-  /// @notice Ensures msg.sender is the porridge address
-  modifier onlyPorridge() {
-    if(msg.sender != porridge) revert NotPorridge();
-    _;
-  }
-
-  /// @notice Ensures msg.sender is the borrow address
-  modifier onlyBorrow() {
-    if(msg.sender != borrow) revert NotBorrow();
-    _;
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -382,7 +358,8 @@ contract Goldiswap is ERC20 {
   /// @param to Address to transfer $HONEY to
   /// @param amount Amount of $HONEY to transfer
   /// @param fee Fee that is sent to treasury
-  function borrowTransfer(address to, uint256 amount, uint256 fee) external onlyBorrow {
+  function borrowTransfer(address to, uint256 amount, uint256 fee) external {
+    if(msg.sender != borrow) revert NotBorrow();
     SafeTransferLib.safeTransfer(honey, to, amount - fee);
     SafeTransferLib.safeTransfer(honey, multisig, fee);
   }
@@ -391,14 +368,16 @@ contract Goldiswap is ERC20 {
   /// @dev Only Porridge contract can call this function
   /// @param to Recipient of minted $LOCKS tokens
   /// @param amount Amount of minted $LOCKS tokens
-  function porridgeMint(address to, uint256 amount) external onlyPorridge {
+  function porridgeMint(address to, uint256 amount) external {
+    if(msg.sender != porridge) revert NotPorridge();
     _mint(to, amount);
   }
 
   /// @notice Allows the DAO to inject liquidity into the contract
   /// @param fslLiq Liquidity added to FSL
   /// @param pslLiq Liquidity added to PSL
-  function injectLiquidity(uint256 fslLiq, uint256 pslLiq) external onlyMultisig {
+  function injectLiquidity(uint256 fslLiq, uint256 pslLiq) external {
+    if(msg.sender != multisig) revert NotMultisig();
     fsl += fslLiq;
     psl += pslLiq;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), fslLiq + pslLiq);
@@ -407,7 +386,8 @@ contract Goldiswap is ERC20 {
   /// @notice Changes the address of the multisig address
   /// @dev Used after deployment by deployment address
   /// @param _multisig Address of the multisig
-  function setMultisig(address _multisig) external onlyMultisig {
+  function setMultisig(address _multisig) external {
+    if(msg.sender != multisig) revert NotMultisig();
     multisig = _multisig;
   }
 
