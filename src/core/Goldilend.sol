@@ -95,6 +95,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   uint256 public porridgeMultiple;
   uint256 public multisigClaims;
   uint256 public honeyjarClaims;
+  uint256 public multisigShare;
+  uint256 public honeyjarShare;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -663,8 +665,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @dev Multisig can claim 4.5% and honeyjar can claim 0.5% of interest paid
   /// @param interest Interest paid during repayment
   function _updateInterestClaims(uint256 interest) internal {
-    multisigClaims += (interest / 1000) * 45;
-    honeyjarClaims += (interest / 1000) * 5;
+    multisigClaims += (interest / 1000) * multisigShare;
+    honeyjarClaims += (interest / 1000) * honeyjarShare;
   }
 
 
@@ -694,6 +696,15 @@ contract Goldilend is ERC20, IERC721Receiver {
   function setProtocolInterestRate(uint256 _protocolInterestRate) external {
     if(msg.sender != multisig) revert NotMultisig();
     protocolInterestRate = _protocolInterestRate;
+  }
+
+  /// @notice Allows the DAO to adjust shares of interest payment
+  /// @param _multisigShare New share for multisig
+  /// @param _honeyjarShare New share for honeyjar
+  function setShareRates(uint256 _multisigShare, uint256 _honeyjarShare) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    multisigShare = _multisigShare;
+    honeyjarShare = _honeyjarShare;
   }
 
   /// @notice Allows the DAO to withdraw $BERA in case of emergency

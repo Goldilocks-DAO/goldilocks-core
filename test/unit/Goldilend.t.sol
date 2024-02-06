@@ -108,6 +108,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     values[1] = 50;
 
     goldilend.setValue(100e18, nfts, values);
+    goldilend.setShareRates(45, 5);
     deal(address(bera), address(goldilend), startingPoolSize);
     deal(address(bera), address(consensusvault), type(uint256).max / 2);
   }
