@@ -33,11 +33,6 @@ import { IGoldiswap } from "../interfaces/IGoldiswap.sol";
 /// @author ampnoob
 contract Goldilocked is ERC20 {
 
-  struct Stake {
-    uint256 lastClaim;
-    uint256 stakedBalance;
-  }
-
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      STATE VARIABLES                       */
@@ -47,7 +42,8 @@ contract Goldilocked is ERC20 {
   // uint32 public immutable DAYS_SECONDS = 86400;
   // uint16 public immutable DAILY_EMISSISION_RATE = 600;
 
-  mapping(address => Stake) public stakes;
+  mapping(address => uint256) public stakedLocks;
+  mapping(address => uint256) public prgRewardDebt;
   mapping(address => uint256) public lockedLocks;
   mapping(address => uint256) public borrowedHoney;
 
@@ -127,23 +123,26 @@ contract Goldilocked is ERC20 {
   /// @notice Returns the staked $LOCKS of an address
   /// @param user Address to view staked $LOCKS
   function getStaked(address user) external view returns (uint256) {
-    Stake memory userStake = stakes[user];
-    return userStake.stakedBalance;
+    // Stake memory userStake = stakes[user];
+    // return userStake.stakedBalance;
+    return 69;
   }
 
   /// @notice Returns the stake start time of an address
   /// @param user Address to view stake start time
   function getStakeStartTime(address user) external view returns (uint256) {
-    Stake memory userStake = stakes[user];
-    return userStake.lastClaim;
+    // Stake memory userStake = stakes[user];
+    // return userStake.lastClaim;
+    return 69;
   }
 
   /// @notice Returns the claimable yield of an address
   /// @param user Address to view claimable yield
   function getClaimable(address user) external view returns (uint256) {
-    Stake memory userStake = stakes[user];
-    uint256 stakedAmount = userStake.stakedBalance;
-    return _calculateClaimable(user, stakedAmount);
+    // Stake memory userStake = stakes[user];
+    // uint256 stakedAmount = userStake.stakedBalance;
+    // return _calculateClaimable(user, stakedAmount);
+    return 69;
   }
 
   /// @notice Returns the locked $LOCKS of a user
@@ -177,11 +176,12 @@ contract Goldilocked is ERC20 {
   /// @notice Stakes $LOCKS and begins earning $PRG
   /// @param amount Amount of $LOCKS to stake
   function stake(uint256 amount) external {
-    Stake memory userStake = Stake({
-      lastClaim: block.timestamp,
-      stakedBalance: stakes[msg.sender].stakedBalance + amount
-    });
-    stakes[msg.sender] = userStake;
+    // Stake memory userStake = Stake({
+    //   lastClaim: block.timestamp,
+    //   stakedBalance: stakes[msg.sender].stakedBalance + amount
+    // });
+    // stakes[msg.sender] = userStake;
+    
     govLOCKS(govlocks).updateStakedBalance(address(0), msg.sender, amount);
     SafeTransferLib.safeTransferFrom(goldiswap, msg.sender, address(this), amount);
     emit Staked(msg.sender, amount);
@@ -190,13 +190,13 @@ contract Goldilocked is ERC20 {
   /// @notice Unstakes $LOCKS and claims $PRG 
   /// @param amount Amount of $LOCKS to unstake
   function unstake(uint256 amount) external {
-    Stake memory userStake = stakes[msg.sender];
-    if(amount > userStake.stakedBalance) revert InvalidUnstake();
-    if(amount > userStake.stakedBalance - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
-    uint256 stakedAmount = userStake.stakedBalance;
-    stakes[msg.sender].stakedBalance -= amount;
+    // Stake memory userStake = stakes[msg.sender];
+    // if(amount > userStake.stakedBalance) revert InvalidUnstake();
+    // if(amount > userStake.stakedBalance - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
+    // uint256 stakedAmount = userStake.stakedBalance;
+    // stakes[msg.sender].stakedBalance -= amount;
     govLOCKS(govlocks).updateStakedBalance(msg.sender, address(0), amount);
-    _claim(stakedAmount);
+    // _claim(stakedAmount);
     SafeTransferLib.safeTransfer(goldiswap, msg.sender, amount);
     emit Unstaked(msg.sender, amount);
   }
@@ -212,8 +212,8 @@ contract Goldilocked is ERC20 {
 
   /// @notice Claim $PRG rewards
   function claim() external {
-    Stake memory userStake = stakes[msg.sender];
-    _claim(userStake.stakedBalance);
+    // Stake memory userStake = stakes[msg.sender];
+    // _claim(userStake.stakedBalance);
   }
 
   /// @notice Lends out $HONEY using staked $LOCKS as collateral
@@ -251,7 +251,7 @@ contract Goldilocked is ERC20 {
   function _claim(uint256 stakedAmount) internal {
     uint256 claimable = _calculateClaimable(msg.sender, stakedAmount);
     if(claimable > 0) {
-      stakes[msg.sender].lastClaim = block.timestamp;
+      // stakes[msg.sender].lastClaim = block.timestamp;
       _mint(msg.sender, claimable);
       emit Claimed(msg.sender, claimable);
     }
@@ -277,8 +277,9 @@ contract Goldilocked is ERC20 {
   /// @param user Address of staker to find time staked
   /// @return timeStaked staked of an address
   function _timeStaked(address user) internal view returns (uint256 timeStaked) {
-    Stake memory userStake = stakes[user];
-    timeStaked = block.timestamp - userStake.lastClaim;
+    // Stake memory userStake = stakes[user];
+    // timeStaked = block.timestamp - userStake.lastClaim;
+    timeStaked = 69;
   }
 
   /// @notice Calculates the amount of $LOCKS to return to users
@@ -304,7 +305,8 @@ contract Goldilocked is ERC20 {
   /// @param floorPrice Current floor price of $LOCKS
   /// @return limit Returns the borrowing power of the user
   function _borrowLimit(address user, uint256 floorPrice) internal view returns (uint256 limit) {
-    uint256 staked = stakes[user].stakedBalance;
+    // uint256 staked = stakes[user].stakedBalance;
+    uint256 staked = 69;
     uint256 locked = lockedLocks[user];
     limit = FixedPointMathLib.mulWad(floorPrice, staked - locked);
   }
