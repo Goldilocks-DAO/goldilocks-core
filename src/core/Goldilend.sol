@@ -19,11 +19,11 @@ pragma solidity ^0.8.19;
 
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
+import { Goldilocked } from "./Goldilocked.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import { IPorridge } from "../interfaces/IPorridge.sol";
 import { IConsensusVault } from "../mock/IConsensusVault.sol";
 
 
@@ -74,7 +74,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   uint32 public constant SIX_MONTHS = MONTH_DAYS * 6;
   uint32 public constant ONE_YEAR = MONTH_DAYS * 12;
 
-  address public porridge;
+  address public goldilocked;
   address public multisig;
   address public hj;
   address public bera;
@@ -108,7 +108,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param _startingPoolSize Starting size of the lending pool
   /// @param _protocolInterestRate Interest rate of the protocol
   /// @param _porridgeMultiple Emissions rate of $PRG for $BERA in lending pool
-  /// @param _porridge Address of $PRG
+  /// @param _goldilocked Address of Goldilocked
   /// @param _multisig Address of the GoldilocksDAO multisig
   /// @param _hj Address of Honeyjar
   /// @param _bera Address of $BERA
@@ -119,7 +119,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     uint256 _startingPoolSize,
     uint256 _protocolInterestRate,
     uint256 _porridgeMultiple,
-    address _porridge,
+    address _goldilocked,
     address _multisig,
     address _hj,
     address _bera, 
@@ -130,7 +130,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     poolSize = _startingPoolSize;
     protocolInterestRate = _protocolInterestRate;
     porridgeMultiple = _porridgeMultiple;
-    porridge = _porridge;
+    goldilocked = _goldilocked;
     multisig = _multisig;
     hj = _hj;
     bera = _bera;
@@ -488,7 +488,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     Stake memory userStake = stakes[msg.sender];
     uint256 claimed = _calculateClaim(userStake);
     stakes[msg.sender].lastClaim = block.timestamp;
-    IPorridge(porridge).goldilendMint(msg.sender, claimed);
+    Goldilocked(goldilocked).goldilendMint(msg.sender, claimed);
   }
 
   /// @notice Calculates claimable $PRG

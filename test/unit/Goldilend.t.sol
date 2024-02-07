@@ -6,33 +6,40 @@ import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
 import { INFT } from "../../src/mock/INFT.sol";
-import { Goldilend } from "../../src/core/Goldilend.sol";
-import { Porridge } from "../../src/core/Porridge.sol";
 import { Goldiswap } from "../../src/core/Goldiswap.sol";
-import { Borrow } from "../../src/core/Borrow.sol"; 
+import { Goldilocked } from "../../src/core/Goldilocked.sol";
+import { Goldilend } from "../../src/core/Goldilend.sol";
+import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
+import { Timelock } from "../../src/governance/Timelock.sol";
+import { govLOCKS } from "../../src/governance/govLOCKS.sol";
 import { Honey } from "../../src/mock/Honey.sol";
-import { ConsensusVault } from "../../src/mock/ConsensusVault.sol";
 import { Bera } from "../../src/mock/Bera.sol";
 import { HoneyComb } from "../../src/mock/HoneyComb.sol";
 import { Beradrome } from "../../src/mock/Beradrome.sol";
 import { BondBear } from "../../src/mock/BondBear.sol";
 import { BandBear } from "../../src/mock/BandBear.sol";
+import { ConsensusVault } from "../../src/mock/ConsensusVault.sol";
 
 contract GoldilendTest is Test, IERC721Receiver {
 
   using LibRLP for address;
 
-  Goldilend goldilend;
   Goldiswap goldiswap;
-  Borrow borrow;
-  Porridge porridge;
+  Goldilend goldilend;
+  govLOCKS govlocks;
+  Timelock timelock;
+  Goldilocked goldilocked;
+  Goldigovernor goldigov;
   Honey honey;
   Bera bera;
-  ConsensusVault consensusvault;
   HoneyComb honeycomb;
   Beradrome beradrome;
   BondBear bondbear;
   BandBear bandbear;
+  ConsensusVault consensusvault;
+
+  uint256 initialFSL = 1050000e18;
+  uint256 initialPSL = 320000e18;
 
   bytes4 NotMultisigSelector = 0xf05e412b;
   bytes4 NotHoneyjarSelector = 0x10f6cbdb;
@@ -59,9 +66,9 @@ contract GoldilendTest is Test, IERC721Receiver {
   address honeyjar = address(0x69420);
 
   function setUp() public {
-    Porridge porridgeComputed = Porridge(address(this).computeAddress(10));
-    Borrow borrowComputed = Borrow(address(this).computeAddress(9));
-    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(11));
+    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(12));
+    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(13));
+
     honey = new Honey();
     bera = new Bera();
     honeycomb = new HoneyComb();
@@ -69,16 +76,14 @@ contract GoldilendTest is Test, IERC721Receiver {
     bondbear = new BondBear();
     bandbear = new BandBear();
     consensusvault = new ConsensusVault(address(bera));
-  
-    goldiswap = new Goldiswap(1400000e18, 400000e18, address(this), address(porridgeComputed), address(borrowComputed), address(honey));
-    borrow = new Borrow(address(goldiswap), address(porridgeComputed), address(honey));
-    porridge = new Porridge(address(goldiswap), address(borrow), address(goldilendComputed), address(honey));
 
-    uint256 startingPoolSize = 1000e18;
-    uint256 protocolInterestRate = 1e17;
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this));
+
     // amount of porridge earned per gbera per second
     // depends on what we want the initial apr
     // apr will be a function of the bera and porridge prices
+    uint256 startingPoolSize = 1000e18;
+    uint256 protocolInterestRate = 1e17;
     uint256 porridgeMultiple = 1e13;
     address[] memory boostNfts = new address[](2);
     boostNfts[0] = address(honeycomb);
@@ -86,12 +91,11 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint8[] memory boosts = new uint8[](2);
     boosts[0] = 6;
     boosts[1] = 9;
-    
     goldilend = new Goldilend(
       startingPoolSize,
       protocolInterestRate,
       porridgeMultiple,
-      address(porridge),
+      address(goldilockedComputed),
       address(this),
       honeyjar,
       address(bera),
@@ -99,6 +103,10 @@ contract GoldilendTest is Test, IERC721Receiver {
       boostNfts,
       boosts
     );
+    govlocks = new govLOCKS(address(goldiswap), address(goldigovComputed), address(goldilockedComputed));
+    timelock = new Timelock(address(goldigovComputed), 5 days);
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey));
+    goldigov = new Goldigovernor(address(timelock), address(govlocks), address(this), 5761, 69, 4e18);
 
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
@@ -106,7 +114,6 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
-
     goldilend.setValue(100e18, nfts, values);
     goldilend.setShareRates(45, 5);
     deal(address(bera), address(goldilend), startingPoolSize);
@@ -371,7 +378,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 2));
     goldilend.stake(1e18);
 
-    uint256 prgBalance = porridge.balanceOf(address(this));
+    uint256 prgBalance = goldilocked.balanceOf(address(this));
 
     assertEq(prgBalance, twoMonthsOfYield);
   }
@@ -384,7 +391,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     goldilend.unstake(1e18);
 
     uint256 usergBeraBalance = goldilend.balanceOf(address(this));
-    uint256 userPrgBalance = porridge.balanceOf(address(this));
+    uint256 userPrgBalance = goldilocked.balanceOf(address(this));
     uint256 goldilendgBeraBalance = goldilend.balanceOf(address(goldilend));
     (uint256 claim, uint256 staked) = goldilend.stakes(address(this));
 

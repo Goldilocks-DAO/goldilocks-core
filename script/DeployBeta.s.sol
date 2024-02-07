@@ -2,9 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { Script } from "../lib/forge-std/src/Script.sol";
-import { Porridge } from "../src/core/Porridge.sol";
 import { Goldiswap } from  "../src/core/Goldiswap.sol";
-import { Borrow } from "../src/core/Borrow.sol";
 import { Goldilend } from "../src/core/Goldilend.sol";
 import { Honey } from "../src/mock/Honey.sol";
 import { ConsensusVault } from "../src/mock/ConsensusVault.sol";
@@ -18,9 +16,9 @@ import { BeraFaucet } from "../src/mock/BeraFaucet.sol";
 contract DeployBetaScript is Script {
 
   Goldilend goldilend;
-  Porridge porridge;
+  // Porridge porridge;
   Goldiswap goldiswap;
-  Borrow borrow;
+  // Borrow borrow;
   Honey honey;
   Bera bera;
   ConsensusVault consensusvault;

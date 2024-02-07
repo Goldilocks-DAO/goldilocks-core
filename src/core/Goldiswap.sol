@@ -45,10 +45,9 @@ contract Goldiswap is ERC20 {
   uint256 public lastFloorRaise;
   uint256 public lastFloorDecrease;
 
-  address public multisig;
-  address public porridge;
-  address public borrow;  
+  address public goldilocked;
   address public honey;
+  address public multisig;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -59,24 +58,21 @@ contract Goldiswap is ERC20 {
   /// @notice Constructor of this contract
   /// @param _fsl Initial value of FSL
   /// @param _psl Initial value of PSL
-  /// @param _multisig Address of the GoldilocksDAO multisig
-  /// @param _porridge Address of Porridge
-  /// @param _borrow Address of Borrow
+  /// @param _goldilocked Address of Goldilocked
   /// @param _honey Address of $HONEY
+  /// @param _multisig Address of the GoldilocksDAO multisig
   constructor(
     uint256 _fsl,
     uint256 _psl,
-    address _multisig,
-    address _porridge,
-    address _borrow,
-    address _honey
+    address _goldilocked,
+    address _honey,
+    address _multisig
   ) {
     fsl = _fsl;
     psl = _psl;
-    multisig = _multisig;
-    porridge = _porridge;
-    borrow = _borrow;
+    goldilocked = _goldilocked;
     honey = _honey;
+    multisig = _multisig;
     lastFloorRaise = block.timestamp;
     lastFloorDecrease = block.timestamp;
     _mint(msg.sender, 100000000e18);
@@ -98,9 +94,8 @@ contract Goldiswap is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  error NotGoldilocked();
   error NotMultisig();
-  error NotPorridge();
-  error NotBorrow();
   error ExcessiveSlippage();
 
 
@@ -359,7 +354,7 @@ contract Goldiswap is ERC20 {
   /// @param amount Amount of $HONEY to transfer
   /// @param fee Fee that is sent to treasury
   function borrowTransfer(address to, uint256 amount, uint256 fee) external {
-    if(msg.sender != borrow) revert NotBorrow();
+    if(msg.sender != goldilocked) revert NotGoldilocked();
     SafeTransferLib.safeTransfer(honey, to, amount - fee);
     SafeTransferLib.safeTransfer(honey, multisig, fee);
   }
@@ -369,7 +364,7 @@ contract Goldiswap is ERC20 {
   /// @param to Recipient of minted $LOCKS tokens
   /// @param amount Amount of minted $LOCKS tokens
   function porridgeMint(address to, uint256 amount) external {
-    if(msg.sender != porridge) revert NotPorridge();
+    if(msg.sender != goldilocked) revert NotGoldilocked();
     _mint(to, amount);
   }
 
