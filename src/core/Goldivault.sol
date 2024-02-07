@@ -56,6 +56,7 @@ abstract contract Goldivault {
   address ibgt;
   address ot;
   address yt;
+  uint256 fee;
   bool concluded = false;
 
   error InsufficientTime();
@@ -69,13 +70,15 @@ abstract contract Goldivault {
     address _yt,
     address _treasury,
     address _honey,
-    address _ibgt
+    address _ibgt,
+    uint256 _fee
   ) {
     ot = _ot;
     yt = _yt;
     treasury = _treasury;
     honey = _honey;
     ibgt = _ibgt;
+    fee = _fee;
   }
 
   /// @notice Deposits $HONEY into vault to receive ownership and yield tokens
@@ -96,7 +99,7 @@ abstract contract Goldivault {
     if(concluded) revert AlreadyConcluded();
     concluded = true;
     concludeTime = block.timestamp;
-    SafeTransferLib.safeTransfer(ibgt, treasury, (ERC20(ibgt).balanceOf(address(this)) / 100) * 2);
+    SafeTransferLib.safeTransfer(ibgt, treasury, (ERC20(ibgt).balanceOf(address(this)) / 100) * fee);
     _concludeVaultRewards();
     //code to unstake all honey from the vault (and, if not done automatically, claim outstanding yield and convert it to IBGT)
     //code to unstake all the contract's IBGT (and send any outstanding IBGT staking rewards to treasury)
@@ -107,8 +110,8 @@ abstract contract Goldivault {
   /// @param amount Amount of tokens to redeem
   function redeemYield(uint256 amount) external {
     if(block.timestamp < concludeTime + 36 hours || !concluded) revert NotConcluded();
-    uint256 yieldShare = FixedPointMathLib.mulWad(amount, ERC20(yt).totalSupply());
-    uint256 claimable = FixedPointMathLib.divWad(finalYield, yieldShare);
+    uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
+    uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
     IYieldToken(yt).burn(msg.sender, amount);
     SafeTransferLib.safeTransferFrom(ibgt, address(this), msg.sender, claimable);
   }
@@ -118,10 +121,9 @@ abstract contract Goldivault {
   function redeemOwnership(uint256 amount) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 totalTimeDurationRatio = FixedPointMathLib.divWad(remainingTime, endTime - startTime);
-    if(ERC20(yt).balanceOf(msg.sender) < FixedPointMathLib.mulWad(amount, totalTimeDurationRatio)) revert ExcessiveRedeem();
     IOwnershipToken(ot).burn(msg.sender, amount);
-    IYieldToken(yt).burn(msg.sender, FixedPointMathLib.divWad(amount, totalTimeDurationRatio));
-    if(remainingTime == 0) {
+    IYieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, totalTimeDurationRatio));
+    if(remainingTime > 0) {
       SafeTransferLib.safeTransfer(honey, msg.sender, (amount / 1000) * 995);
       SafeTransferLib.safeTransfer(honey, treasury, (amount / 1000) * 5);
     }
