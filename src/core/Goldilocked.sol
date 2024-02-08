@@ -22,8 +22,8 @@ pragma solidity ^0.8.19;
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { Goldiswap } from "./Goldiswap.sol";
 import { govLOCKS } from "../governance/govLOCKS.sol";
-import { IGoldiswap } from "../interfaces/IGoldiswap.sol";
 
 
 /// @title Goldilocked
@@ -151,7 +151,7 @@ contract Goldilocked is ERC20 {
   /// @param user Address of user
   /// @return limit Limit of user
   function borrowLimit(address user) external view returns (uint256) {
-    uint256 floorPrice = IGoldiswap(goldiswap).floorPrice();
+    uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
     return _borrowLimit(user, floorPrice);
   }
 
@@ -189,8 +189,8 @@ contract Goldilocked is ERC20 {
   /// @param amount Amount of $PRG to burn
   function stir(uint256 amount) external {
     _burn(msg.sender, amount);
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, goldiswap, FixedPointMathLib.mulWad(amount, IGoldiswap(goldiswap).floorPrice()));
-    IGoldiswap(goldiswap).porridgeMint(msg.sender, amount);
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, goldiswap, FixedPointMathLib.mulWad(amount, Goldiswap(goldiswap).floorPrice()));
+    Goldiswap(goldiswap).porridgeMint(msg.sender, amount);
     emit Stirred(msg.sender, amount);
   }
 
@@ -204,12 +204,12 @@ contract Goldilocked is ERC20 {
   /// @dev borrowLimit is floor price of $LOCKS * amount of available staked $LOCKS
   /// @param amount Amount of $HONEY to borrow
   function borrow(uint256 amount) external {
-    uint256 floorPrice = IGoldiswap(goldiswap).floorPrice();
+    uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
     if(!_borrowLimitCheck(amount, floorPrice)) revert InsufficientBorrowLimit();
     lockedLocks[msg.sender] += FixedPointMathLib.divWad(amount, floorPrice);
     borrowedHoney[msg.sender] += amount;
     uint256 fee = _calcFee(amount);
-    IGoldiswap(goldiswap).borrowTransfer(msg.sender, amount, fee);
+    Goldiswap(goldiswap).borrowTransfer(msg.sender, amount, fee);
     emit Borrowed(msg.sender, amount);
   }
 
