@@ -226,6 +226,26 @@ contract GoldilockedTest is Test {
     assertEq(getStakedUserBalance, 0);
   }
 
+  function testStakeUnstakeClaim() public dealandStake100Locks {
+    goldiswap.approve(address(goldilocked), locksAmountPrg);
+    vm.warp(block.timestamp + 180 days);
+    goldilocked.unstake(locksAmountPrg);
+    vm.warp(block.timestamp + 180 days);
+    goldilocked.stake(100e18);
+    vm.warp(block.timestamp + 180 days);
+
+    uint256 stakedLocks = goldilocked.getStaked(address(this));
+    uint256 claimablePrg = goldilocked.getClaimable(address(this));
+    uint256 prgRewardDebt = goldilocked.prgRewardDebt(address(this));
+    uint256 prgBalance = goldilocked.balanceOf(address(this));
+
+    assertEq(stakedLocks, 100000000000000000000);
+    assertEq(claimablePrg, 24657534246575342450);
+    assertEq(prgRewardDebt, 49315068493150684900);
+    assertEq(prgBalance, 24657534246575342450);
+  }
+
+
   function testStir() public dealandStake100Locks dealUser280Honey {
     vm.warp(block.timestamp + (2 * 1 days));
     goldilocked.unstake(locksAmountPrg);
@@ -257,17 +277,6 @@ contract GoldilockedTest is Test {
     uint256 userStakedLocks = goldilocked.getStaked(address(this));
 
     assertEq(userStakedLocks, locksAmountPrg);
-  }
-
-  function testGetStakeStartTime() public {
-    vm.warp(69);
-    deal(address(goldiswap), address(this), locksAmountPrg);
-    goldiswap.approve(address(goldilocked), locksAmountPrg);
-    goldilocked.stake(locksAmountPrg);
-
-    uint256 timestamp = goldilocked.getStakeStartTime(address(this));
-
-    assertEq(timestamp, 69);
   }
 
   function testGetClaimable() public dealandStake100Locks {

@@ -17,8 +17,6 @@ pragma solidity ^0.8.19;
 // ==============================================================================================
 
 
-//todo: fix unweighted stake bug
-//    could have a variable in struct that is claimable, add current claimable balance to it when staking on a staked position. will solve reentrancy and unweighted stake bug 
 //todo: add checkpoints
 //todo: fix balanceOf check to use checkpoints instead
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
@@ -48,6 +46,7 @@ contract Goldilocked is ERC20 {
   mapping(address => uint256) public borrowedHoney;
 
   uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
+  uint256 public deployTime;
   address public goldiswap;
   address public goldilend;
   address public govlocks;
@@ -76,6 +75,7 @@ contract Goldilocked is ERC20 {
     govlocks = _govlocks;
     honey = _honey;
     multisig = msg.sender;
+    deployTime = block.timestamp;
   }
 
   /// @notice Returns the name of the $PRG token
@@ -123,26 +123,14 @@ contract Goldilocked is ERC20 {
   /// @notice Returns the staked $LOCKS of an address
   /// @param user Address to view staked $LOCKS
   function getStaked(address user) external view returns (uint256) {
-    // Stake memory userStake = stakes[user];
-    // return userStake.stakedBalance;
-    return 69;
-  }
-
-  /// @notice Returns the stake start time of an address
-  /// @param user Address to view stake start time
-  function getStakeStartTime(address user) external view returns (uint256) {
-    // Stake memory userStake = stakes[user];
-    // return userStake.lastClaim;
-    return 69;
+    return stakedLocks[user];
   }
 
   /// @notice Returns the claimable yield of an address
   /// @param user Address to view claimable yield
   function getClaimable(address user) external view returns (uint256) {
-    // Stake memory userStake = stakes[user];
-    // uint256 stakedAmount = userStake.stakedBalance;
-    // return _calculateClaimable(user, stakedAmount);
-    return 69;
+    uint256 currentRewards = _calculateCurrentRewards(stakedLocks[user]);
+    return currentRewards - prgRewardDebt[user];
   }
 
   /// @notice Returns the locked $LOCKS of a user
@@ -176,12 +164,8 @@ contract Goldilocked is ERC20 {
   /// @notice Stakes $LOCKS and begins earning $PRG
   /// @param amount Amount of $LOCKS to stake
   function stake(uint256 amount) external {
-    // Stake memory userStake = Stake({
-    //   lastClaim: block.timestamp,
-    //   stakedBalance: stakes[msg.sender].stakedBalance + amount
-    // });
-    // stakes[msg.sender] = userStake;
-    
+    stakedLocks[msg.sender] += amount;
+    prgRewardDebt[msg.sender] += _calculateCurrentRewards(amount);
     govLOCKS(govlocks).updateStakedBalance(address(0), msg.sender, amount);
     SafeTransferLib.safeTransferFrom(goldiswap, msg.sender, address(this), amount);
     emit Staked(msg.sender, amount);
@@ -190,14 +174,14 @@ contract Goldilocked is ERC20 {
   /// @notice Unstakes $LOCKS and claims $PRG 
   /// @param amount Amount of $LOCKS to unstake
   function unstake(uint256 amount) external {
-    // Stake memory userStake = stakes[msg.sender];
-    // if(amount > userStake.stakedBalance) revert InvalidUnstake();
-    // if(amount > userStake.stakedBalance - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
-    // uint256 stakedAmount = userStake.stakedBalance;
-    // stakes[msg.sender].stakedBalance -= amount;
+    uint256 userStakedLocks = stakedLocks[msg.sender];
+    if(amount > userStakedLocks) revert InvalidUnstake();
+    if(amount > userStakedLocks - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
+    uint256 claimablePrg = _calculateClaimablePrg(msg.sender);
+    stakedLocks[msg.sender] -= amount;
     govLOCKS(govlocks).updateStakedBalance(msg.sender, address(0), amount);
-    // _claim(stakedAmount);
     SafeTransferLib.safeTransfer(goldiswap, msg.sender, amount);
+    _claim(msg.sender, claimablePrg);
     emit Unstaked(msg.sender, amount);
   }
 
@@ -212,8 +196,8 @@ contract Goldilocked is ERC20 {
 
   /// @notice Claim $PRG rewards
   function claim() external {
-    // Stake memory userStake = stakes[msg.sender];
-    // _claim(userStake.stakedBalance);
+    uint256 claimable = _calculateClaimablePrg(msg.sender);
+    _claim(msg.sender, claimable);
   }
 
   /// @notice Lends out $HONEY using staked $LOCKS as collateral
@@ -247,39 +231,28 @@ contract Goldilocked is ERC20 {
 
 
   /// @notice Calculates and distributes yield
-  /// @param stakedAmount Amount of $LOCKS the user has staked in the contract
-  function _claim(uint256 stakedAmount) internal {
-    uint256 claimable = _calculateClaimable(msg.sender, stakedAmount);
+  /// @param claimer User that is claiming $PRG
+  /// @param claimable Amoutn of $PRG to be claimed
+  function _claim(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
-      // stakes[msg.sender].lastClaim = block.timestamp;
-      _mint(msg.sender, claimable);
+      _mint(claimer, claimable);
       emit Claimed(msg.sender, claimable);
     }
   }
     
   /// @notice Calculates claimable yield
   /// @dev claimablePRG = (staked $LOCKS * 0.5 $PRG) * (days staked / 365 days)
-  /// @param user Address of staker to calculate yield
-  /// @param stakedAmount Amount of $LOCKS the user has staked in the contract
+  /// @param claimer Address of staker to calculate yield
   /// @return yield Amount of $PRG earned by staker
-  function _calculateClaimable(
-    address user, 
-    uint256 stakedAmount
-  ) public view returns (uint256 yield) {
-    uint256 timeStaked = _timeStaked(user);
-    uint256 claimablePRG = FixedPointMathLib.mulWad(ANNUAL_PORRIDGE_EMISSIONS, stakedAmount);
-    yield = FixedPointMathLib.mulWad(claimablePRG, FixedPointMathLib.divWad(timeStaked, 365 days));
-    // uint256 yieldPortion = stakedAmount / DAILY_EMISSISION_RATE;
-    // yield = FixedPointMathLib.mulWad(yieldPortion, FixedPointMathLib.divWad(timeStaked, DAYS_SECONDS));
+  function _calculateClaimablePrg(address claimer) internal view returns (uint256 yield) {
+    uint256 currentRewards = _calculateCurrentRewards(stakedLocks[claimer]);
+    return currentRewards - prgRewardDebt[claimer];
   }
 
-  /// @notice Calculates time staked of a staker
-  /// @param user Address of staker to find time staked
-  /// @return timeStaked staked of an address
-  function _timeStaked(address user) internal view returns (uint256 timeStaked) {
-    // Stake memory userStake = stakes[user];
-    // timeStaked = block.timestamp - userStake.lastClaim;
-    timeStaked = 69;
+  function _calculateCurrentRewards(uint256 amount) internal view returns (uint256) {
+    uint256 timeSinceDeploy = block.timestamp - deployTime;
+    uint256 prgAmount = FixedPointMathLib.mulWad(ANNUAL_PORRIDGE_EMISSIONS, amount);
+    return FixedPointMathLib.mulWad(prgAmount, FixedPointMathLib.divWad(timeSinceDeploy, 365 days));
   }
 
   /// @notice Calculates the amount of $LOCKS to return to users
@@ -305,8 +278,7 @@ contract Goldilocked is ERC20 {
   /// @param floorPrice Current floor price of $LOCKS
   /// @return limit Returns the borrowing power of the user
   function _borrowLimit(address user, uint256 floorPrice) internal view returns (uint256 limit) {
-    // uint256 staked = stakes[user].stakedBalance;
-    uint256 staked = 69;
+    uint256 staked = stakedLocks[msg.sender];
     uint256 locked = lockedLocks[user];
     limit = FixedPointMathLib.mulWad(floorPrice, staked - locked);
   }
