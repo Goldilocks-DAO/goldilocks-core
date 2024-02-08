@@ -20,25 +20,10 @@ pragma solidity ^0.8.19;
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
-
-interface iBGTVault {
-  function stake(uint256 amount) external;
-  function getReward() external;
-}
-
-interface BendVault {
-  function stake(uint256 amount) external;
-}
-
-interface IOwnershipToken {
-  function mint(address user, uint256 amount) external;
-  function burn(address user, uint256 amount) external;
-}
-
-interface IYieldToken {
-  function mint(address user, uint256 amount) external;
-  function burn(address user, uint256 amount) external;
-}
+import { OwnershipToken } from "./OwnershipToken.sol";
+import { YieldToken } from "./YieldToken.sol";
+import { IBGTVault } from "../mock/IBGTVault.sol";
+import { IBendVault } from "../mock/IBendVault.sol";
 
 
 /// @title Goldivaults
@@ -46,6 +31,12 @@ interface IYieldToken {
 /// @author ampnoob
 /// @author geeb
 abstract contract Goldivault {
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      STATE VARIABLES                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
 
   uint256 startTime;
   uint256 endTime;
@@ -57,13 +48,13 @@ abstract contract Goldivault {
   address ot;
   address yt;
   uint256 fee;
-  bool concluded = false;
+  bool concluded;
 
-  error InsufficientTime();
-  error NotExpired();
-  error NotConcluded();
-  error AlreadyConcluded();
-  error ExcessiveRedeem();
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          CONSTRUCTOR                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
 
   constructor(
     address _ot, 
@@ -73,6 +64,9 @@ abstract contract Goldivault {
     address _ibgt,
     uint256 _fee
   ) {
+    concluded = false;
+    startTime = block.timestamp;
+    endTime = block.timestamp + 365 days;
     ot = _ot;
     yt = _yt;
     treasury = _treasury;
@@ -81,6 +75,24 @@ abstract contract Goldivault {
     fee = _fee;
   }
 
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           ERRORS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  error InsufficientTime();
+  error NotExpired();
+  error NotConcluded();
+  error AlreadyConcluded();
+  error ExcessiveRedeem();
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                    EXTERNAL FUNCTIONS                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
   /// @notice Deposits $HONEY into vault to receive ownership and yield tokens
   /// @param amount Amount of tokens to deposit
   function deposit(uint256 amount) external {
@@ -88,22 +100,9 @@ abstract contract Goldivault {
     if(remainingTime < 30 days) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, 365 days);
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), amount);
-    _depositHoney();
-    IOwnershipToken(ot).mint(msg.sender, amount);
-    IYieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
-  }
-
-  /// @notice Concludes the vault at expiry
-  function conclude() external {
-    if(block.timestamp < endTime) revert NotExpired();
-    if(concluded) revert AlreadyConcluded();
-    concluded = true;
-    concludeTime = block.timestamp;
-    SafeTransferLib.safeTransfer(ibgt, treasury, (ERC20(ibgt).balanceOf(address(this)) / 100) * fee);
-    _concludeVaultRewards();
-    //code to unstake all honey from the vault (and, if not done automatically, claim outstanding yield and convert it to IBGT)
-    //code to unstake all the contract's IBGT (and send any outstanding IBGT staking rewards to treasury)
-    finalYield = ERC20(ibgt).balanceOf(address(this));
+    _vaultDeposit();
+    OwnershipToken(ot).mint(msg.sender, amount);
+    YieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
   }
 
   /// @notice Redeems yield tokens for share of yield accrued to vault
@@ -112,7 +111,7 @@ abstract contract Goldivault {
     if(block.timestamp < concludeTime + 36 hours || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
     uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
-    IYieldToken(yt).burn(msg.sender, amount);
+    YieldToken(yt).burn(msg.sender, amount);
     SafeTransferLib.safeTransferFrom(ibgt, address(this), msg.sender, claimable);
   }
 
@@ -121,8 +120,8 @@ abstract contract Goldivault {
   function redeemOwnership(uint256 amount) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 totalTimeDurationRatio = FixedPointMathLib.divWad(remainingTime, endTime - startTime);
-    IOwnershipToken(ot).burn(msg.sender, amount);
-    IYieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, totalTimeDurationRatio));
+    OwnershipToken(ot).burn(msg.sender, amount);
+    YieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, totalTimeDurationRatio));
     if(remainingTime > 0) {
       SafeTransferLib.safeTransfer(honey, msg.sender, (amount / 1000) * 995);
       SafeTransferLib.safeTransfer(honey, treasury, (amount / 1000) * 5);
@@ -132,11 +131,35 @@ abstract contract Goldivault {
     }
   }
 
+
+  /// @notice Concludes the vault at expiry
+  function conclude() external {
+    if(block.timestamp < endTime) revert NotExpired();
+    if(concluded) revert AlreadyConcluded();
+    concluded = true;
+    concludeTime = block.timestamp;
+    SafeTransferLib.safeTransfer(ibgt, treasury, (ERC20(ibgt).balanceOf(address(this)) / 100) * fee);
+    _concludeVaultRewards();
+    finalYield = ERC20(ibgt).balanceOf(address(this));
+  }
+
+  function compound() external {
+    
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                   INHERITABLE FUNCTIONS                    */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
   function directBGTEmissions() external virtual {}
   function _vaultDeposit() internal virtual {}
-  function _claimRewards() internal virtual {}
-  function _concludeVaultRewards() internal virtual {}
-  function _depositHoney() internal virtual {}
+  function _concludeVaultRewards() internal virtual {
+    //code to unstake all honey from the vault (and, if not done automatically, claim outstanding yield and convert it to IBGT)
+    //code to unstake all the contract's IBGT (and send any outstanding IBGT staking rewards to treasury)
+  }
+  
 
   // function _claim() internal {
     //code for claiming BGT yield from vaults

@@ -30,6 +30,9 @@ abstract contract YieldToken is ERC20 {
 
   string public tokenName;
   string public tokenSymbol;
+  address public vault;
+
+  error NotVault();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                         CONSTRUCTOR                        */
@@ -37,9 +40,14 @@ abstract contract YieldToken is ERC20 {
   
 
   /// @notice Constructor of this contract
-  constructor(string memory _tokenName, string memory _tokenSymbol) {
+  constructor(
+    string memory _tokenName,
+    string memory _tokenSymbol,
+    address _vault
+  ) {
     tokenName = _tokenName;
     tokenSymbol = _tokenSymbol;
+    vault = _vault;
   }
 
   /// @notice Returns the name of the $gBERA token
@@ -50,5 +58,15 @@ abstract contract YieldToken is ERC20 {
   /// @notice Returns the symbol of the $gBERA token
   function symbol() public view override returns (string memory) {
     return tokenSymbol;
+  }
+
+  function mint(address to, uint256 amount) external {
+    if(msg.sender != vault) revert NotVault();
+    _mint(to, amount);
+  }
+
+  function burn(address to, uint256 amount) external {
+    if(msg.sender != vault) revert NotVault();
+    _burn(to, amount);
   }
 }
