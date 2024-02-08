@@ -23,7 +23,6 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { OwnershipToken } from "./OwnershipToken.sol";
 import { YieldToken } from "./YieldToken.sol";
 import { IBGTVault } from "../mock/IBGTVault.sol";
-import { IBendVault } from "../mock/IBendVault.sol";
 
 
 /// @title Goldivaults
@@ -143,8 +142,11 @@ abstract contract Goldivault {
     finalYield = ERC20(ibgt).balanceOf(address(this));
   }
 
+  /// @notice Compounds yield from vault and restakes it
   function compound() external {
-    
+    IBGTVault(ibgt).getReward();
+    uint256 rewards = ERC20(ibgt).balanceOf(address(this));
+    IBGTVault(ibgt).stake(rewards);
   }
 
 
@@ -156,6 +158,7 @@ abstract contract Goldivault {
   function directBGTEmissions() external virtual {}
   function _vaultDeposit() internal virtual {}
   function _concludeVaultRewards() internal virtual {
+    IBGTVault(ibgt).exit();
     //code to unstake all honey from the vault (and, if not done automatically, claim outstanding yield and convert it to IBGT)
     //code to unstake all the contract's IBGT (and send any outstanding IBGT staking rewards to treasury)
   }
