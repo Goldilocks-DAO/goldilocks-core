@@ -150,7 +150,7 @@ contract Goldiswap is ERC20 {
     psl = __psl;
     _floorRaise();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), __buyPrice);
-    // SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
     _mint(msg.sender, amount);
     emit Buy(msg.sender, amount);
   }

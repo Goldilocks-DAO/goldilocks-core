@@ -41,12 +41,14 @@ abstract contract Goldivault {
   uint256 endTime;
   uint256 concludeTime;
   uint256 finalYield;
-  address treasury;
-  address honey;
-  address ibgt;
+  uint256 fee;
+  uint256 delay;
   address ot;
   address yt;
-  uint256 fee;
+  address depositAsset;
+  address yieldAsset;
+  address vault;
+  address treasury;
   bool concluded;
 
 
@@ -56,22 +58,26 @@ abstract contract Goldivault {
 
 
   constructor(
-    address _ot, 
+    uint256 _fee,
+    uint256 _delay,
+    address _ot,
     address _yt,
-    address _treasury,
-    address _honey,
-    address _ibgt,
-    uint256 _fee
+    address _depositAsset,
+    address _yieldAsset,
+    address _vault,
+    address _treasury
   ) {
     concluded = false;
     startTime = block.timestamp;
     endTime = block.timestamp + 365 days;
+    fee = _fee;
+    delay = _delay;
     ot = _ot;
     yt = _yt;
+    depositAsset = _depositAsset;
+    yieldAsset = _yieldAsset;
+    vault = _vault;
     treasury = _treasury;
-    honey = _honey;
-    ibgt = _ibgt;
-    fee = _fee;
   }
 
 
@@ -98,7 +104,7 @@ abstract contract Goldivault {
     uint256 remainingTime = endTime - block.timestamp;
     if(remainingTime < 30 days) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, 365 days);
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), amount);
+    SafeTransferLib.safeTransferFrom(depositAsset, msg.sender, address(this), amount);
     _vaultDeposit();
     OwnershipToken(ot).mint(msg.sender, amount);
     YieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
@@ -107,11 +113,11 @@ abstract contract Goldivault {
   /// @notice Redeems yield tokens for share of yield accrued to vault
   /// @param amount Amount of tokens to redeem
   function redeemYield(uint256 amount) external {
-    if(block.timestamp < concludeTime + 36 hours || !concluded) revert NotConcluded();
+    if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
     uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
     YieldToken(yt).burn(msg.sender, amount);
-    SafeTransferLib.safeTransferFrom(ibgt, address(this), msg.sender, claimable);
+    SafeTransferLib.safeTransferFrom(yieldAsset, address(this), msg.sender, claimable);
   }
 
   /// @notice Withdraws assets from the vault 
@@ -122,14 +128,13 @@ abstract contract Goldivault {
     OwnershipToken(ot).burn(msg.sender, amount);
     YieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, totalTimeDurationRatio));
     if(remainingTime > 0) {
-      SafeTransferLib.safeTransfer(honey, msg.sender, (amount / 1000) * 995);
-      SafeTransferLib.safeTransfer(honey, treasury, (amount / 1000) * 5);
+      SafeTransferLib.safeTransfer(depositAsset, msg.sender, (amount / 1000) * 995);
+      SafeTransferLib.safeTransfer(depositAsset, treasury, (amount / 1000) * 5);
     }
     else {
-      SafeTransferLib.safeTransfer(honey, msg.sender, amount);
+      SafeTransferLib.safeTransfer(depositAsset, msg.sender, amount);
     }
   }
-
 
   /// @notice Concludes the vault at expiry
   function conclude() external {
@@ -137,16 +142,14 @@ abstract contract Goldivault {
     if(concluded) revert AlreadyConcluded();
     concluded = true;
     concludeTime = block.timestamp;
-    SafeTransferLib.safeTransfer(ibgt, treasury, (ERC20(ibgt).balanceOf(address(this)) / 100) * fee);
+    SafeTransferLib.safeTransfer(yieldAsset, treasury, (ERC20(yieldAsset).balanceOf(address(this)) / 100) * fee);
     _concludeVaultRewards();
-    finalYield = ERC20(ibgt).balanceOf(address(this));
+    finalYield = ERC20(yieldAsset).balanceOf(address(this));
   }
 
   /// @notice Compounds yield from vault and restakes it
   function compound() external {
-    IBGTVault(ibgt).getReward();
-    uint256 rewards = ERC20(ibgt).balanceOf(address(this));
-    IBGTVault(ibgt).stake(rewards);
+    _compoundVaultRewards();
   }
 
 
@@ -158,17 +161,14 @@ abstract contract Goldivault {
   function directBGTEmissions() external virtual {}
   function _vaultDeposit() internal virtual {}
   function _concludeVaultRewards() internal virtual {
-    IBGTVault(ibgt).exit();
+    IBGTVault(vault).exit();
     //code to unstake all honey from the vault (and, if not done automatically, claim outstanding yield and convert it to IBGT)
     //code to unstake all the contract's IBGT (and send any outstanding IBGT staking rewards to treasury)
   }
-  
-
-  // function _claim() internal {
-    //code for claiming BGT yield from vaults
-    //code for using BGT to mint IBGT and stake it
-    //code for claiming IBGT staking rewards and sending them to the treasury
-    //use yield earned to vote
-  // }
+  function _compoundVaultRewards() internal virtual {
+    // IBGTVault(ibgt).getReward();
+    // uint256 rewards = ERC20(ibgt).balanceOf(address(this));
+    // IBGTVault(ibgt).stake(rewards);
+  }
 
 }
