@@ -92,7 +92,7 @@ abstract contract Goldivault {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Deposits $HONEY into vault to receive ownership and yield tokens
+  /// @notice Deposits asset into vault to receive ownership and yield tokens
   /// @param amount Amount of tokens to deposit
   function deposit(uint256 amount) external {
     uint256 remainingTime = endTime - block.timestamp;
