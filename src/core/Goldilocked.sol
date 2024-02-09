@@ -64,11 +64,15 @@ contract Goldilocked is ERC20 {
   /// @param _goldilend Address of Goldilend contract
   /// @param _govlocks Address of govLOCKS contract
   /// @param _honey Address of the HONEY contract
+  /// @param allocationsAddress Addresses receiving $LOCKS
+  /// @param allocationsAmt Amounts of $LOCKS to stake and lock
   constructor(
     address _goldiswap,
     address _goldilend,
     address _govlocks,
-    address _honey
+    address _honey,
+    address[] memory allocationsAddress,
+    uint256[] memory allocationsAmt
   ) {
     goldiswap = _goldiswap;
     goldilend = _goldilend;
@@ -76,6 +80,13 @@ contract Goldilocked is ERC20 {
     honey = _honey;
     multisig = msg.sender;
     deployTime = block.timestamp;
+    uint256 floor = Goldiswap(goldiswap).floorPrice();
+    for(uint8 i; i < allocationsAddress.length; i++) {
+      stakedLocks[allocationsAddress[i]] = allocationsAmt[i];
+      lockedLocks[allocationsAddress[i]] = allocationsAmt[i];
+      borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
+    }
+    _mint(multisig, 200000000e18);
   }
 
   /// @notice Returns the name of the $PRG token

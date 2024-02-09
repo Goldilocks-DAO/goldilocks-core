@@ -78,7 +78,15 @@ contract govLOCKSTest is Test {
     );
     govlocks = new govLOCKS(address(goldiswap), address(goldigovComputed), address(goldilockedComputed));
     timelock = new Timelock(address(goldigovComputed), 5 days);
-    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey));
+    address[] memory allocationsAddress = new address[](3);
+    allocationsAddress[0] = address(0x69);
+    allocationsAddress[1] = address(0x420);
+    allocationsAddress[2] = address(0x42069);
+    uint256[] memory allocationsAmt = new uint256[](3);
+    allocationsAmt[0] = 12000000e18;
+    allocationsAmt[1] = 12000000e18;
+    allocationsAmt[2] = 12000000e18;
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt);
     goldigov = new Goldigovernor(address(timelock), address(govlocks), address(this), 5761, 69, 4e18);
 
     address[] memory nfts = new address[](2);

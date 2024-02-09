@@ -105,7 +105,15 @@ contract GoldilendTest is Test, IERC721Receiver {
     );
     govlocks = new govLOCKS(address(goldiswap), address(goldigovComputed), address(goldilockedComputed));
     timelock = new Timelock(address(goldigovComputed), 5 days);
-    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey));
+    address[] memory allocationsAddress = new address[](3);
+    allocationsAddress[0] = address(0x69);
+    allocationsAddress[1] = address(0x420);
+    allocationsAddress[2] = address(0x42069);
+    uint256[] memory allocationsAmt = new uint256[](3);
+    allocationsAmt[0] = 12000000e18;
+    allocationsAmt[1] = 12000000e18;
+    allocationsAmt[2] = 12000000e18;
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt);
     goldigov = new Goldigovernor(address(timelock), address(govlocks), address(this), 5761, 69, 4e18);
 
     address[] memory nfts = new address[](2);
@@ -379,8 +387,9 @@ contract GoldilendTest is Test, IERC721Receiver {
     goldilend.stake(1e18);
 
     uint256 prgBalance = goldilocked.balanceOf(address(this));
+    uint256 mintAmount = 200000000e18;
 
-    assertEq(prgBalance, twoMonthsOfYield);
+    assertEq(prgBalance, twoMonthsOfYield + mintAmount);
   }
 
   function testUnstake() public {
@@ -392,11 +401,12 @@ contract GoldilendTest is Test, IERC721Receiver {
 
     uint256 usergBeraBalance = goldilend.balanceOf(address(this));
     uint256 userPrgBalance = goldilocked.balanceOf(address(this));
+    uint256 mintAmount = 200000000e18;
     uint256 goldilendgBeraBalance = goldilend.balanceOf(address(goldilend));
     (uint256 claim, uint256 staked) = goldilend.stakes(address(this));
 
     assertEq(goldilendgBeraBalance, 0);
-    assertEq(userPrgBalance, twoMonthsOfYield);
+    assertEq(userPrgBalance, twoMonthsOfYield + mintAmount);
     assertEq(usergBeraBalance, 1e18);
     assertEq(staked, 0);
     assertEq(claim, goldilend.MONTH_DAYS() * 2 + 1);

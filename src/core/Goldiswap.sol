@@ -75,7 +75,7 @@ contract Goldiswap is ERC20 {
     multisig = _multisig;
     lastFloorRaise = block.timestamp;
     lastFloorDecrease = block.timestamp;
-    _mint(msg.sender, 100000000e18);
+    _mint(goldilocked, 100000000e18);
   }
 
   /// @notice Returns the name of the $LOCKS token
@@ -150,7 +150,7 @@ contract Goldiswap is ERC20 {
     psl = __psl;
     _floorRaise();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), __buyPrice);
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
+    // SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
     _mint(msg.sender, amount);
     emit Buy(msg.sender, amount);
   }
