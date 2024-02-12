@@ -36,20 +36,20 @@ abstract contract Goldivault {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  uint256 startTime;
-  uint256 endTime;
-  uint256 concludeTime;
-  uint256 finalYield;
-  uint256 fee;
-  uint256 delay;
-  uint256 duration;
-  address ot;
-  address yt;
-  address depositAsset;
-  address yieldAsset;
-  address vault;
-  address ired;
-  address treasury;
+  uint256 public startTime;
+  uint256 public endTime;
+  uint256 public concludeTime;
+  uint256 public finalYield;
+  uint256 public fee;
+  uint256 public delay;
+  uint256 public duration;
+  address public ot;
+  address public yt;
+  address public depositAsset;
+  address public yieldAsset;
+  address public vault;
+  address public ired;
+  address public treasury;
   bool concluded;
 
 
@@ -110,7 +110,7 @@ abstract contract Goldivault {
     if(remainingTime < 1 days) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositAsset, msg.sender, address(this), amount);
-    _vaultDeposit();
+    _vaultDeposit(amount, msg.sender);
     OwnershipToken(ot).mint(msg.sender, amount);
     YieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
   }
@@ -147,7 +147,6 @@ abstract contract Goldivault {
     if(concluded) revert AlreadyConcluded();
     concluded = true;
     concludeTime = block.timestamp;
-    SafeTransferLib.safeTransfer(yieldAsset, treasury, (ERC20(yieldAsset).balanceOf(address(this)) / 100) * fee);
     _concludeVaultRewards();
     finalYield = ERC20(yieldAsset).balanceOf(address(this));
   }
@@ -155,6 +154,7 @@ abstract contract Goldivault {
   /// @notice Compounds yield from vault and restakes it
   function compound() external {
     _compoundVaultRewards();
+  // SafeTransferLib.safeTransfer(yieldAsset, treasury, (ERC20(yieldAsset).balanceOf(address(this)) / 100) * fee);
   }
 
 
@@ -165,7 +165,7 @@ abstract contract Goldivault {
 
   function directBGTEmissions() external virtual {}
   function directIREDEmissions() external virtual {}
-  function _vaultDeposit() internal virtual {}
+  function _vaultDeposit(uint256 amount, address user) internal virtual {}
   function _concludeVaultRewards() internal virtual {}
   function _compoundVaultRewards() internal virtual {}
 
