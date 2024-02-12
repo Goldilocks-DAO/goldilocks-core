@@ -17,8 +17,6 @@ pragma solidity ^0.8.19;
 // ==============================================================================================
 
 
-//todo: add checkpoints
-//todo: fix balanceOf check to use checkpoints instead
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
@@ -36,9 +34,6 @@ contract Goldilocked is ERC20 {
   /*                      STATE VARIABLES                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-
-  // uint32 public immutable DAYS_SECONDS = 86400;
-  // uint16 public immutable DAILY_EMISSISION_RATE = 600;
 
   mapping(address => uint256) public stakedLocks;
   mapping(address => uint256) public prgRewardDebt;

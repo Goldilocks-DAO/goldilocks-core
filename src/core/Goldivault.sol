@@ -22,8 +22,6 @@ import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol"
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { OwnershipToken } from "./OwnershipToken.sol";
 import { YieldToken } from "./YieldToken.sol";
-import { IBGTVault } from "../mock/IBGTVault.sol";
-import { IRedVault } from "../mock/IRedVault.sol";
 
 
 /// @title Goldivaults
@@ -44,6 +42,7 @@ abstract contract Goldivault {
   uint256 finalYield;
   uint256 fee;
   uint256 delay;
+  uint256 duration;
   address ot;
   address yt;
   address depositAsset;
@@ -62,6 +61,7 @@ abstract contract Goldivault {
   constructor(
     uint256 _fee,
     uint256 _delay,
+    uint256 _duration,
     address _ot,
     address _yt,
     address _depositAsset,
@@ -70,11 +70,9 @@ abstract contract Goldivault {
     address _ired,
     address _treasury
   ) {
-    concluded = false;
-    startTime = block.timestamp;
-    endTime = block.timestamp + 365 days;
     fee = _fee;
     delay = _delay;
+    duration = _duration;
     ot = _ot;
     yt = _yt;
     depositAsset = _depositAsset;
@@ -82,6 +80,9 @@ abstract contract Goldivault {
     vault = _vault;
     ired = _ired;
     treasury = _treasury;
+    concluded = false;
+    startTime = block.timestamp;
+    endTime = block.timestamp + duration;
   }
 
 
@@ -106,8 +107,8 @@ abstract contract Goldivault {
   /// @param amount Amount of tokens to deposit
   function deposit(uint256 amount) external {
     uint256 remainingTime = endTime - block.timestamp;
-    if(remainingTime < 30 days) revert InsufficientTime();
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, 365 days);
+    if(remainingTime < 1 days) revert InsufficientTime();
+    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositAsset, msg.sender, address(this), amount);
     _vaultDeposit();
     OwnershipToken(ot).mint(msg.sender, amount);
@@ -165,18 +166,7 @@ abstract contract Goldivault {
   function directBGTEmissions() external virtual {}
   function directIREDEmissions() external virtual {}
   function _vaultDeposit() internal virtual {}
-  function _concludeVaultRewards() internal virtual {
-    IBGTVault(vault).exit();
-    //code to unstake all honey from the vault (and, if not done automatically, claim outstanding yield and convert it to IBGT)
-    //code to unstake all the contract's IBGT (and send any outstanding IBGT staking rewards to treasury)
-  }
-  function _compoundVaultRewards() internal virtual {
-    // IRedVault(ired).getReward();
-    // uint256 iredRewards = ERC20(ired).balanceOf(address(this));
-    // IRedVault(ired).stake(iredRewards);
-    // IBGTVault(ibgt).getReward();
-    // uint256 ibgtRewards = ERC20(ibgt).balanceOf(address(this));
-    // IBGTVault(ibgt).stake(ibgtRewards);
-  }
+  function _concludeVaultRewards() internal virtual {}
+  function _compoundVaultRewards() internal virtual {}
 
 }
