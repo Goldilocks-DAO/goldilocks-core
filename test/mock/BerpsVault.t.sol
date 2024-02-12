@@ -50,9 +50,9 @@ contract BerpsVaultTest is Test {
   Vault vault;
 
   function setUp() public {
+    BerpsVault berpsvaultComputed = BerpsVault(address(this).computeAddress(5));
     vault = new Vault();
     honey = new Honey();
-    BerpsVault berpsvaultComputed = BerpsVault(address(this).computeAddress(3));
     ot = new BerpsOwnershipToken("ot-bHONEY", "ot-bHONEY", address(berpsvaultComputed));
     yt = new BerpsYieldToken("yt-bHONEY", "yt-bHONEY", address(berpsvaultComputed));
     berpsvault = new BerpsVault(
@@ -74,10 +74,11 @@ contract BerpsVaultTest is Test {
     console.log(num);
   }
 
-  function testDeposit() public {
+  function testBerpsVaultDeposit() public {
     uint256 txamt = 5e18;
     deal(address(honey), address(this), txamt);
-    Vault(vault).deposit(txamt, address(this));
+    honey.approve(address(berpsvault), txamt);
+    berpsvault.deposit(txamt);
   }
 
 }
