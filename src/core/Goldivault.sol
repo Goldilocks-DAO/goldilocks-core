@@ -23,6 +23,7 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { OwnershipToken } from "./OwnershipToken.sol";
 import { YieldToken } from "./YieldToken.sol";
 import { IBGTVault } from "../mock/IBGTVault.sol";
+import { IRedVault } from "../mock/IRedVault.sol";
 
 
 /// @title Goldivaults
@@ -48,6 +49,7 @@ abstract contract Goldivault {
   address depositAsset;
   address yieldAsset;
   address vault;
+  address ired;
   address treasury;
   bool concluded;
 
@@ -65,6 +67,7 @@ abstract contract Goldivault {
     address _depositAsset,
     address _yieldAsset,
     address _vault,
+    address _ired,
     address _treasury
   ) {
     concluded = false;
@@ -77,6 +80,7 @@ abstract contract Goldivault {
     depositAsset = _depositAsset;
     yieldAsset = _yieldAsset;
     vault = _vault;
+    ired = _ired;
     treasury = _treasury;
   }
 
@@ -159,6 +163,7 @@ abstract contract Goldivault {
 
 
   function directBGTEmissions() external virtual {}
+  function directIREDEmissions() external virtual {}
   function _vaultDeposit() internal virtual {}
   function _concludeVaultRewards() internal virtual {
     IBGTVault(vault).exit();
@@ -166,9 +171,12 @@ abstract contract Goldivault {
     //code to unstake all the contract's IBGT (and send any outstanding IBGT staking rewards to treasury)
   }
   function _compoundVaultRewards() internal virtual {
+    // IRedVault(ired).getReward();
+    // uint256 iredRewards = ERC20(ired).balanceOf(address(this));
+    // IRedVault(ired).stake(iredRewards);
     // IBGTVault(ibgt).getReward();
-    // uint256 rewards = ERC20(ibgt).balanceOf(address(this));
-    // IBGTVault(ibgt).stake(rewards);
+    // uint256 ibgtRewards = ERC20(ibgt).balanceOf(address(this));
+    // IBGTVault(ibgt).stake(ibgtRewards);
   }
 
 }
