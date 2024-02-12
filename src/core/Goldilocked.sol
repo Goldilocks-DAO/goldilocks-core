@@ -189,12 +189,11 @@ contract Goldilocked is ERC20 {
     emit Staked(msg.sender, amount);
   }
 
-  //todo: can use another mapping and set in constructor, if mapping is greater than 0. then vesting logic
   /// @notice Unstakes $LOCKS and claims $PRG 
   /// @param amount Amount of $LOCKS to unstake
   function unstake(uint256 amount) external {
-    // uint256 vest = _vestingCheck(msg.sender, amount);
-    // if(vest > amount) revert NotVested();
+    uint256 vest = _vestingCheck(msg.sender, amount);
+    if(amount > vest) revert NotVested();
     uint256 userStakedLocks = stakedLocks[msg.sender];
     if(amount > userStakedLocks) revert InvalidUnstake();
     if(amount > userStakedLocks - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
@@ -312,10 +311,12 @@ contract Goldilocked is ERC20 {
     return (amount / 100) * 3;
   }
 
+  /// @notice Calculates the amount of vested tokens for the user
+  /// @param user Address of unstaker
+  /// @param amount Amount of $LOCKS to unstake
   function _vestingCheck(address user, uint256 amount) public view returns (uint256) {
     uint256 teamAllocation = 10000000e18;
-    // uint256 initialAllocation = initialAllocations[user];
-    uint256 initialAllocation = 1000000e18;
+    uint256 initialAllocation = initialAllocations[user];
     if(initialAllocation > 0) {
       if(initialAllocation >= teamAllocation) {
         return 0;
