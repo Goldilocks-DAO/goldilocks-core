@@ -44,9 +44,12 @@ contract Goldilocked is ERC20 {
   mapping(address => uint256) public prgRewardDebt;
   mapping(address => uint256) public lockedLocks;
   mapping(address => uint256) public borrowedHoney;
+  mapping(address => uint256) public initialAllocations;
 
   uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
   uint256 public deployTime;
+  uint256 public vestingStart;
+  uint256 public vestingEnd;
   address public goldiswap;
   address public goldilend;
   address public govlocks;
@@ -80,11 +83,14 @@ contract Goldilocked is ERC20 {
     honey = _honey;
     multisig = msg.sender;
     deployTime = block.timestamp;
+    vestingStart = block.timestamp + 90 days;
+    vestingEnd = block.timestamp + 90 days + 365 days;
     uint256 floor = Goldiswap(goldiswap).floorPrice();
     for(uint8 i; i < allocationsAddress.length; i++) {
       stakedLocks[allocationsAddress[i]] = allocationsAmt[i];
       lockedLocks[allocationsAddress[i]] = allocationsAmt[i];
       borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
+      initialAllocations[allocationsAddress[i]] = allocationsAmt[i];
     }
     _mint(multisig, 200000000e18);
   }
@@ -107,6 +113,7 @@ contract Goldilocked is ERC20 {
 
   error NotGoldilend();
   error NotMultisig();
+  error NotVested();
   error InvalidUnstake();
   error LocksBorrowedAgainst();
   error InsufficientBorrowLimit();
@@ -182,9 +189,12 @@ contract Goldilocked is ERC20 {
     emit Staked(msg.sender, amount);
   }
 
+  //todo: can use another mapping and set in constructor, if mapping is greater than 0. then vesting logic
   /// @notice Unstakes $LOCKS and claims $PRG 
   /// @param amount Amount of $LOCKS to unstake
   function unstake(uint256 amount) external {
+    // uint256 vest = _vestingCheck(msg.sender, amount);
+    // if(vest > amount) revert NotVested();
     uint256 userStakedLocks = stakedLocks[msg.sender];
     if(amount > userStakedLocks) revert InvalidUnstake();
     if(amount > userStakedLocks - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
@@ -300,6 +310,25 @@ contract Goldilocked is ERC20 {
   /// @return fee Fee that user pays for borrowing
   function _calcFee(uint256 amount) internal pure returns (uint256 fee) {
     return (amount / 100) * 3;
+  }
+
+  function _vestingCheck(address user, uint256 amount) public view returns (uint256) {
+    uint256 teamAllocation = 10000000e18;
+    // uint256 initialAllocation = initialAllocations[user];
+    uint256 initialAllocation = 1000000e18;
+    if(initialAllocation > 0) {
+      if(initialAllocation >= teamAllocation) {
+        return 0;
+      }
+      else {
+        if(block.timestamp < vestingStart) return 0;
+        uint256 vestPortion = FixedPointMathLib.divWad(block.timestamp - vestingStart, vestingEnd - vestingStart);
+        return FixedPointMathLib.mulWad(vestPortion, initialAllocation);
+      }
+    }
+    else {
+      return amount;
+    }
   }
 
 
