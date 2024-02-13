@@ -135,6 +135,7 @@ abstract contract Goldivault {
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).burn(msg.sender, amount);
     YieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    _unstakeDepositToken();
     if(remainingTime > 0) {
       SafeTransferLib.safeTransfer(depositAsset, msg.sender, (amount / 1000) * 995);
       SafeTransferLib.safeTransfer(depositAsset, treasury, (amount / 1000) * 5);
@@ -170,5 +171,6 @@ abstract contract Goldivault {
   function _vaultDeposit(uint256 amount) internal virtual {}
   function _concludeVaultRewards() internal virtual {}
   function _compoundVaultRewards() internal virtual {}
+  function _unstakeDepositToken() internal virtual {}
 
 }

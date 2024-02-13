@@ -66,12 +66,14 @@ contract IBGTVault is Goldivault {
 
   function _concludeVaultRewards() internal override {
     iBGTVault(vault).exit();
+    iBGTVault(ibgtvault).exit();
   }
 
   function _compoundVaultRewards() internal override {
     iBGTVault(vault).getReward();
+    iBGTVault(ibgtvault).getReward();
     uint256 ibgtrewards = ERC20(yieldAsset).balanceOf(address(this));
-    iBGTVault(vault).stake(ibgtrewards);
+    iBGTVault(ibgtvault).stake(ibgtrewards);
   }
 
 }
