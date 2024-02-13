@@ -17,7 +17,9 @@ pragma solidity ^0.8.19;
 // ==============================================================================================
 
 
+import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { Goldivault } from "../core/Goldivault.sol";
+
 
 contract iBGTVault {
   function stake(uint256 amount) external {}
@@ -66,6 +68,8 @@ contract IBGTVault is Goldivault {
 
   function _compoundVaultRewards() internal override {
     iBGTVault(vault).getReward();
+    uint256 ibgtrewards = ERC20(yieldAsset).balanceOf(address(this));
+    iBGTVault(vault).stake(ibgtrewards);
   }
 
 }
