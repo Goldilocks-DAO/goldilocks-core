@@ -129,9 +129,9 @@ abstract contract Goldivault {
   /// @param amount Amount of tokens to redeem
   function redeemOwnership(uint256 amount) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    uint256 totalTimeDurationRatio = FixedPointMathLib.divWad(remainingTime, endTime - startTime);
+    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).burn(msg.sender, amount);
-    YieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, totalTimeDurationRatio));
+    YieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     if(remainingTime > 0) {
       SafeTransferLib.safeTransfer(depositAsset, msg.sender, (amount / 1000) * 995);
       SafeTransferLib.safeTransfer(depositAsset, treasury, (amount / 1000) * 5);
