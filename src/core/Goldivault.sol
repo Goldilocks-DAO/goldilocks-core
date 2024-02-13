@@ -110,7 +110,7 @@ abstract contract Goldivault {
     if(remainingTime < 1 days) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositAsset, msg.sender, address(this), amount);
-    _vaultDeposit(amount, msg.sender);
+    _vaultDeposit(amount);
     OwnershipToken(ot).mint(msg.sender, amount);
     YieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
   }
@@ -154,7 +154,6 @@ abstract contract Goldivault {
   /// @notice Compounds yield from vault and restakes it
   function compound() external {
     _compoundVaultRewards();
-  // SafeTransferLib.safeTransfer(yieldAsset, treasury, (ERC20(yieldAsset).balanceOf(address(this)) / 100) * fee);
   }
 
 
@@ -165,7 +164,7 @@ abstract contract Goldivault {
 
   function directBGTEmissions() external virtual {}
   function directIREDEmissions() external virtual {}
-  function _vaultDeposit(uint256 amount, address user) internal virtual {}
+  function _vaultDeposit(uint256 amount) internal virtual {}
   function _concludeVaultRewards() internal virtual {}
   function _compoundVaultRewards() internal virtual {}
 

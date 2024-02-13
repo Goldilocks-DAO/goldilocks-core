@@ -56,9 +56,9 @@ contract BerpsVault is Goldivault {
     endTime = block.timestamp + duration;
   }
 
-  function _vaultDeposit(uint256 amount, address user) internal override {
-    Vault(vault).deposit(amount, user);
-  }
+  // function _vaultDeposit(uint256 amount, address user) internal override {
+  //   Vault(vault).deposit(amount, user);
+  // }
 
   function _concludeVaultRewards() internal override {
 
