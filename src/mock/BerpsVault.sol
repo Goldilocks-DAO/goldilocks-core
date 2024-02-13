@@ -37,6 +37,7 @@ contract BerpsVault is Goldivault {
     address _depositAsset,
     address _yieldAsset,
     address _vault,
+    address _ibgtvault,
     address _ired,
     address _treasury
   ) Goldivault(
@@ -48,6 +49,7 @@ contract BerpsVault is Goldivault {
     _depositAsset,
     _yieldAsset,
     _vault,
+    _ibgtvault,
     _ired,
     _treasury
   ) {

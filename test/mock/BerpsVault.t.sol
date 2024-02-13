@@ -64,6 +64,7 @@ contract BerpsVaultTest is Test {
       address(honey),
       address(honey),
       address(vault),
+      address(vault),
       address(0x420),
       address(this)
     );

@@ -39,6 +39,7 @@ contract IBGTVault is Goldivault {
     address _depositAsset,
     address _yieldAsset,
     address _vault,
+    address _ibgtvault,
     address _ired,
     address _treasury
   ) Goldivault(
@@ -50,6 +51,7 @@ contract IBGTVault is Goldivault {
     _depositAsset,
     _yieldAsset,
     _vault,
+    _ibgtvault,
     _ired,
     _treasury
   ) {
