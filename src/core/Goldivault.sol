@@ -48,6 +48,7 @@ abstract contract Goldivault {
   address public depositAsset;
   address public yieldAsset;
   address public vault;
+  address public ibgtvault;
   address public ired;
   address public treasury;
   bool concluded;
@@ -67,6 +68,7 @@ abstract contract Goldivault {
     address _depositAsset,
     address _yieldAsset,
     address _vault,
+    address _ibgtvault,
     address _ired,
     address _treasury
   ) {
@@ -78,6 +80,7 @@ abstract contract Goldivault {
     depositAsset = _depositAsset;
     yieldAsset = _yieldAsset;
     vault = _vault;
+    ibgtvault = _ibgtvault;
     ired = _ired;
     treasury = _treasury;
     concluded = false;
