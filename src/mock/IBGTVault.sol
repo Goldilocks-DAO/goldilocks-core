@@ -13,10 +13,11 @@ pragma solidity ^0.8.19;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ======================================== Goldivaults =========================================
+// ========================================= IBGTVault ==========================================
 // ==============================================================================================
 
 
+import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { Goldivault } from "../core/Goldivault.sol";
 
@@ -41,7 +42,7 @@ contract IBGTVault is Goldivault {
     address _vault,
     address _ibgtvault,
     address _ired,
-    address _treasury
+    address _multisig
   ) Goldivault(
     _fee,
     _delay,
@@ -53,7 +54,7 @@ contract IBGTVault is Goldivault {
     _vault,
     _ibgtvault,
     _ired,
-    _treasury
+    _multisig
   ) {
     concluded = false;
     startTime = block.timestamp;
@@ -74,6 +75,7 @@ contract IBGTVault is Goldivault {
     iBGTVault(ibgtvault).getReward();
     uint256 ibgtrewards = ERC20(yieldAsset).balanceOf(address(this));
     iBGTVault(ibgtvault).stake(ibgtrewards);
+    SafeTransferLib.safeTransfer(yieldAsset, multisig, (ERC20(yieldAsset).balanceOf(address(this)) / 100) * fee);
   }
 
 }

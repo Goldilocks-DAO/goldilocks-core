@@ -50,7 +50,7 @@ abstract contract Goldivault {
   address public vault;
   address public ibgtvault;
   address public ired;
-  address public treasury;
+  address public multisig;
   bool concluded;
 
 
@@ -70,7 +70,7 @@ abstract contract Goldivault {
     address _vault,
     address _ibgtvault,
     address _ired,
-    address _treasury
+    address _multisig
   ) {
     fee = _fee;
     delay = _delay;
@@ -82,7 +82,7 @@ abstract contract Goldivault {
     vault = _vault;
     ibgtvault = _ibgtvault;
     ired = _ired;
-    treasury = _treasury;
+    multisig = _multisig;
     concluded = false;
     startTime = block.timestamp;
     endTime = block.timestamp + duration;
@@ -97,6 +97,7 @@ abstract contract Goldivault {
   error InsufficientTime();
   error NotExpired();
   error NotConcluded();
+  error NotMultisig();
   error AlreadyConcluded();
   error ExcessiveRedeem();
 
@@ -138,7 +139,7 @@ abstract contract Goldivault {
     _unstakeDepositToken();
     if(remainingTime > 0) {
       SafeTransferLib.safeTransfer(depositAsset, msg.sender, (amount / 1000) * 995);
-      SafeTransferLib.safeTransfer(depositAsset, treasury, (amount / 1000) * 5);
+      SafeTransferLib.safeTransfer(depositAsset, multisig, (amount / 1000) * fee);
     }
     else {
       SafeTransferLib.safeTransfer(depositAsset, msg.sender, amount);
@@ -158,6 +159,12 @@ abstract contract Goldivault {
   /// @notice Compounds yield from vault and restakes it
   function compound() external {
     _compoundVaultRewards();
+  }
+
+  /// @notice Allows DAO to set early withdrawal fee
+  function setEarlyWithdrawalFee(uint256 _fee) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    fee = _fee;
   }
 
 
