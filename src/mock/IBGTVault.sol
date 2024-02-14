@@ -34,7 +34,7 @@ contract IBGTVault is Goldivault {
   constructor(
     address _ot,
     address _yt,
-    address _depositAsset,
+    address _ibgt,
     address[] memory _yieldAssets,
     address _vault,
     address _ibgtvault,
@@ -43,7 +43,7 @@ contract IBGTVault is Goldivault {
   ) Goldivault(
     _ot,
     _yt,
-    _depositAsset,
+    _ibgt,
     _yieldAssets,
     _vault,
     _ibgtvault,
@@ -67,12 +67,12 @@ contract IBGTVault is Goldivault {
   function _compoundVaultRewards() internal override {
     iBGTVault(vault).getReward();
     iBGTVault(ibgtvault).getReward();
+    uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
     uint256 yieldAssetsLength = yieldAssets.length;
-    uint256 ibgtrewards = ERC20(depositAsset).balanceOf(address(this));
-    iBGTVault(ibgtvault).stake(ibgtrewards);
     for(uint8 i; i < yieldAssetsLength; ++i) {
       SafeTransferLib.safeTransfer(yieldAssets[i], multisig, (ERC20(yieldAssets[i]).balanceOf(address(this)) / 100) * fee);
     }
+    iBGTVault(ibgtvault).stake(ibgtrewards);
   }
 
 }

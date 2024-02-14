@@ -44,7 +44,7 @@ abstract contract Goldivault {
   uint256 public duration;
   address public ot;
   address public yt;
-  address public depositAsset;
+  address public ibgt;
   address[] public yieldAssets;
   address public vault;
   address public ibgtvault;
@@ -62,7 +62,7 @@ abstract contract Goldivault {
   constructor(
     address _ot,
     address _yt,
-    address _depositAsset,
+    address _ibgt,
     address[] memory _yieldAssets,
     address _vault,
     address _ibgtvault,
@@ -71,7 +71,7 @@ abstract contract Goldivault {
   ) {
     ot = _ot;
     yt = _yt;
-    depositAsset = _depositAsset;
+    ibgt = _ibgt;
     vault = _vault;
     ibgtvault = _ibgtvault;
     ired = _ired;
@@ -109,7 +109,7 @@ abstract contract Goldivault {
     uint256 remainingTime = endTime - block.timestamp;
     if(remainingTime < 1 days) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
-    SafeTransferLib.safeTransferFrom(depositAsset, msg.sender, address(this), amount);
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
     _vaultDeposit(amount);
     OwnershipToken(ot).mint(msg.sender, amount);
     YieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
@@ -139,11 +139,11 @@ abstract contract Goldivault {
     _unstakeDepositToken();
     uint256 _fee = fee;
     if(remainingTime > 0) {
-      SafeTransferLib.safeTransfer(depositAsset, msg.sender, (amount / 1000) * (1000 - _fee));
-      SafeTransferLib.safeTransfer(depositAsset, multisig, (amount / 1000) * _fee);
+      SafeTransferLib.safeTransfer(ibgt, msg.sender, (amount / 1000) * (1000 - _fee));
+      SafeTransferLib.safeTransfer(ibgt, multisig, (amount / 1000) * _fee);
     }
     else {
-      SafeTransferLib.safeTransfer(depositAsset, msg.sender, amount);
+      SafeTransferLib.safeTransfer(ibgt, msg.sender, amount);
     }
   }
 
