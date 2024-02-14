@@ -39,19 +39,19 @@ abstract contract Goldivault {
   uint256 public startTime;
   uint256 public endTime;
   uint256 public concludeTime;
-  uint256 public finalYield;
   uint256 public fee;
   uint256 public delay;
   uint256 public duration;
   address public ot;
   address public yt;
   address public depositAsset;
-  address public yieldAsset;
+  address[] public yieldAssets;
   address public vault;
   address public ibgtvault;
   address public ired;
   address public multisig;
   bool concluded;
+
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -60,25 +60,18 @@ abstract contract Goldivault {
 
 
   constructor(
-    uint256 _fee,
-    uint256 _delay,
-    uint256 _duration,
     address _ot,
     address _yt,
     address _depositAsset,
-    address _yieldAsset,
+    address[] memory _yieldAssets,
     address _vault,
     address _ibgtvault,
     address _ired,
     address _multisig
   ) {
-    fee = _fee;
-    delay = _delay;
-    duration = _duration;
     ot = _ot;
     yt = _yt;
     depositAsset = _depositAsset;
-    yieldAsset = _yieldAsset;
     vault = _vault;
     ibgtvault = _ibgtvault;
     ired = _ired;
@@ -86,6 +79,9 @@ abstract contract Goldivault {
     concluded = false;
     startTime = block.timestamp;
     endTime = block.timestamp + duration;
+    for(uint8 i; i < _yieldAssets.length; ++i) {
+      yieldAssets.push(_yieldAssets[i]);
+    }
   }
 
 
@@ -124,9 +120,13 @@ abstract contract Goldivault {
   function redeemYield(uint256 amount) external {
     if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
-    uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
     YieldToken(yt).burn(msg.sender, amount);
-    SafeTransferLib.safeTransferFrom(yieldAsset, address(this), msg.sender, claimable);
+    uint256 yieldAssetsLength = yieldAssets.length;
+    for(uint8 i; i < yieldAssetsLength; ++i) {
+      uint256 finalYield = ERC20(yieldAssets[i]).balanceOf(address(this));
+      uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
+      SafeTransferLib.safeTransfer(yieldAssets[i], msg.sender, claimable);
+    }
   }
 
   /// @notice Withdraws assets from the vault 
@@ -137,9 +137,10 @@ abstract contract Goldivault {
     OwnershipToken(ot).burn(msg.sender, amount);
     YieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken();
+    uint256 _fee = fee;
     if(remainingTime > 0) {
-      SafeTransferLib.safeTransfer(depositAsset, msg.sender, (amount / 1000) * 995);
-      SafeTransferLib.safeTransfer(depositAsset, multisig, (amount / 1000) * fee);
+      SafeTransferLib.safeTransfer(depositAsset, msg.sender, (amount / 1000) * (1000 - _fee));
+      SafeTransferLib.safeTransfer(depositAsset, multisig, (amount / 1000) * _fee);
     }
     else {
       SafeTransferLib.safeTransfer(depositAsset, msg.sender, amount);
@@ -153,7 +154,6 @@ abstract contract Goldivault {
     concluded = true;
     concludeTime = block.timestamp;
     _concludeVaultRewards();
-    finalYield = ERC20(yieldAsset).balanceOf(address(this));
   }
 
   /// @notice Compounds yield from vault and restakes it
@@ -161,10 +161,26 @@ abstract contract Goldivault {
     _compoundVaultRewards();
   }
 
+  /// @notice Allows DAO to add yield assets to vault
+  function addYieldAssets(address[] calldata _yieldAssets) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    for(uint8 i; i < _yieldAssets.length; ++i) {
+      yieldAssets.push(_yieldAssets[i]);
+    }
+  }
+
   /// @notice Allows DAO to set early withdrawal fee
   function setEarlyWithdrawalFee(uint256 _fee) external {
     if(msg.sender != multisig) revert NotMultisig();
     fee = _fee;
+  }
+
+  /// @notice Allows DAO to set protocol parameters
+  function setParameters(uint256 _fee, uint256 _delay, uint256 _duration) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    fee = _fee;
+    delay = _delay;
+    duration = _duration;
   }
 
 
