@@ -163,8 +163,8 @@ contract govLOCKS is ERC20 {
     SafeTransferLib.safeTransfer(locks, msg.sender, amount);
   }
 
-  /// @notice Delegates votes from msg.sender to delegatee
-  /// @param delegatee Address to delegate votes to
+  // /// @notice Delegates votes from msg.sender to delegatee
+  // /// @param delegatee Address to delegate votes to
   // function delegate(address delegatee) external {
   //   _delegate(msg.sender, delegatee);
   // }
@@ -175,13 +175,13 @@ contract govLOCKS is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  function _delegate(address delegator, address delegatee) internal {
-    address currentDelegate = delegates[delegator];
-    uint256 delegatorBalance = balanceOf(delegator);
-    delegates[delegator] = delegatee;
-    _moveDelegates(currentDelegate, delegatee, delegatorBalance);
-    emit DelegateChanged(delegator, currentDelegate, delegatee);
-  }
+  // function _delegate(address delegator, address delegatee) internal {
+  //   address currentDelegate = delegates[delegator];
+  //   uint256 delegatorBalance = balanceOf(delegator);
+  //   delegates[delegator] = delegatee;
+  //   _moveDelegates(currentDelegate, delegatee, delegatorBalance);
+  //   emit DelegateChanged(delegator, currentDelegate, delegatee);
+  // }
 
   function _moveDelegates(address srcRep, address dstRep, uint256 amt) internal {
     if (srcRep != dstRep && amt > 0) {
