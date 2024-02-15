@@ -1,46 +1,69 @@
 #define function floorPrice(uint256,uint256) view returns (uint256)
-// #define function floorPriceWad(uint256,uint256) view returns (uint256)
-// #define function marketPrice(uint256,uint256,uint256) view returns (uint256)
+#define function floorPriceWad(uint256,uint256) view returns (uint256)
 
-// #define error FloorPriceFailed()
-
-// #define constant WAD = 0xDE0B6B3A7640000
+#define constant WAD = 0xde0b6b3a7640000
+#define constant DivWadFailed = 0x7c5f487d
 
 #define macro FLOOR_PRICE() = takes (0) returns (0) {
-  0x24 calldataload         // [supply]
-  0x04 calldataload         // [fsl, supply]
+  0x24                      // [0x24]
+  calldataload              // [supply]
+  0x04                      // [0x04, supply]
+  calldataload              // [fsl, supply]
   div                       // [fsl / supply]
-  0x00 mstore               // []
-  0x20 0x00                 // []   
+  0x00                      // [0x00, fsl / supply]
+  mstore                    // []
+  0x20                      // [0x20]
+  0x00                      // [0x00, 0x20]
   return                    // []
 }
 
-// #define macro FLOOR_PRICE_WAD() = takes (0) returns (0) {
-//  0x24 calldataload         // [supply]
-//  0x04 calldataload         // [fsl, supply]
-
-
-//   __ERRROR(FloorPriceFailed)
-//   0x00 mstore
-//   0x20 0x00 revert
-// }
-
-// #define macro MARKET_PRICE() = takes (0) returns (0) {
-
-// }
+#define macro FLOOR_PRICE_WAD() = takes (0) returns (0) {
+  [WAD]                     // [WAD]
+  0x00                      // [0x00, WAD]
+  not                       // [not(0x00), WAD]
+  div                       // [not(0x00) / WAD]
+  0x04                      // [0x04, not(0x00) / WAD]
+  calldataload              // [fsl, not(0x00) / WAD]
+  gt                        // [fsl > not(0x00) / WAD]
+  [WAD]                     // [WAD, fsl > not(0x00) / WAD]
+  mul                       // [WAD * fsl > not(0x00) / WAD]
+  iszero                    // [iszero(WAD * fsl > not(0x00) / WAD)]
+  0x24                      // [0x24, iszero(WAD * fsl > not(0x00) / WAD)]
+  calldataload              // [supply, iszero(WAD * fsl > not(0x00) / WAD)]
+  mul                       // [supply * iszero(WAD * fsl > not(0x00) / WAD)]
+  iszero                    // [iszero(supply * iszero(WAD * fsl > not(0x00) / WAD))]
+  err                       // [err, iszero(supply * iszero(WAD * fsl > not(0x00) / WAD))]
+  jumpi                     // []
+  0x24                      // [0x24]
+  calldataload              // [supply]
+  [WAD]                     // [WAD, supply]
+  0x04                      // [0x04, WAD, supply]
+  calldataload              // [fsl, WAD, supply]
+  mul                       // [fsl * WAD, supply]
+  div                       // [(fsl * WAD) / supply]
+  0x00                      // [0x00, (fsl * WAD) / supply]
+  mstore                    // []
+  0x20                      // [0x20]
+  0x00                      // [0x00, 0x20]
+  return                    // []
+  err:
+    [DivWadFailed]          // [DivWadFailed]
+    0x00                    // [0x00, DivWadFailed]
+    mstore                  // []
+    0x20                    // [0x20]
+    0x00                    // [0x00, 0x20]
+    revert                  // []
+}
 
 #define macro MAIN() = takes (0) returns (0) {
   0x00 calldataload 0xE0 shr
   dup1 __FUNC_SIG(floorPrice) eq floor jumpi
-  // dup1 __FUNC_SIG(floorPriceWad) eq floorwad jumpi
-  // dup1 __FUNC_SIG(marketPrice) eq market jumpi
+  dup1 __FUNC_SIG(floorPriceWad) eq floorwad jumpi
 
   0x00 0x00 revert
 
   floor:
     FLOOR_PRICE()
-  // floorwad:
-  //   FLOOR_PRICE_WAD()
-  // market:
-  //   MARKET_PRICE()
+  floorwad:
+    FLOOR_PRICE_WAD()
 }

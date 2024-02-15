@@ -167,7 +167,7 @@ contract GoldiswapGasTest is Test {
     uint256 gasEnd = gasleft();
     uint256 gasUsed = gasStart   - gasEnd;
     console.log(gasUsed);
-    // assert(gasUsed <= 128109);
+    assert(gasUsed <= 128109);
   }
 
   // gasused = 323893, actual = 318682

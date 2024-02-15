@@ -3,40 +3,59 @@ pragma solidity ^0.8.19;
 
 import "../../lib/foundry-huff/src/HuffDeployer.sol";
 import "../../lib/forge-std/src/Test.sol";
+import { Goldiswap } from "./../../src/core/Goldiswap.sol";
+
+interface Goldihuff {
+  function floorPrice(uint256,uint256) external returns (uint256);
+  function floorPriceWad(uint256,uint256) external returns (uint256);
+}
+
+contract Math {
+  function divide(uint256 a, uint256 b) public returns (uint256) {
+    return a / b;
+  }
+}
 
 contract GoldihuffTest is Test {
 
   Goldihuff goldihuff;
+  Math math;
+  Goldiswap goldiswap;
 
   function setUp() public {
     goldihuff = Goldihuff(HuffDeployer.deploy("mock/Goldihuff"));
+    math = new Math();
+    goldiswap = new Goldiswap(69, 69, address(0x69), address(0x69), address(0x69));
   }
 
-  function testHuffDivide() public {
+  function testDivideHuff() public {
     uint256 result = goldihuff.floorPrice(15, 5);
     console.log(result);
   }
 
-  function testNormalDivide() public {
-    uint256 result = divide(15, 5);
+  function testDivideNormal() public {
+    uint256 result = math.divide(15, 5);
     console.log(result);
   }
 
-  function testHuffDivideGas() public {
-    goldihuff.floorPrice(10, 5);
+  function testDivideGasHuff() public {
+    goldihuff.floorPrice(15, 5);
   }
 
-  function testNormalDivideGas() public {
-    divide(10, 5);
+  function testDivideGasNormal() public {
+    math.divide(15, 5);
   }
 
-  function divide(uint256 a, uint256 b) public returns (uint256) {
-    return a / b;
+  function testFloorPriceHuff() public {
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(4827588e17)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100000000e18)));
+
+    uint256 resultNormal = goldiswap.floorPrice();
+    uint256 resultHuff = goldihuff.floorPriceWad(4827588e17, 100000000e18);
+    console.log(resultNormal);
+    console.log(resultHuff);
+
+    assertEq(resultNormal, resultHuff);
   }
 
-}
-
-interface Goldihuff {
-  function floorPrice(uint256,uint256) external returns (uint256);
-  function marketPrice(uint256,uint256,uint256) external returns (uint256);
 }
