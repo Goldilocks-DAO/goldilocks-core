@@ -263,11 +263,11 @@ contract GoldilendTest is Test, IERC721Receiver {
     goldilend.liquidate(address(this), 1);
   }
 
-  function testLocksName() public {
+  function testgBERAName() public {
     assertEq(goldilend.name(), "gBERA Token");
   }
 
-  function testLocksSymbol() public {
+  function testgBERASymbol() public {
     assertEq(goldilend.symbol(), "gBERA");
   }
 

@@ -17,8 +17,6 @@ pragma solidity ^0.8.19;
 // ==============================================================================================
 
 
-import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
-import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 
 
@@ -28,8 +26,8 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 /// @author geeb
 abstract contract YieldToken is ERC20 {
 
-  string public tokenName;
-  string public tokenSymbol;
+  string private tokenName;
+  string private tokenSymbol;
   address public vault;
 
   error NotVault();
@@ -50,22 +48,22 @@ abstract contract YieldToken is ERC20 {
     vault = _vault;
   }
 
-  /// @notice Returns the name of the $gBERA token
+  /// @notice Returns the name of the YieldToken token
   function name() public view override returns (string memory) {
     return tokenName;
   }
 
-  /// @notice Returns the symbol of the $gBERA token
+  /// @notice Returns the symbol of the YieldToken token
   function symbol() public view override returns (string memory) {
     return tokenSymbol;
   }
 
-  function mint(address to, uint256 amount) external {
+  function mintYT(address to, uint256 amount) external {
     if(msg.sender != vault) revert NotVault();
     _mint(to, amount);
   }
 
-  function burn(address to, uint256 amount) external {
+  function burnYT(address to, uint256 amount) external {
     if(msg.sender != vault) revert NotVault();
     _burn(to, amount);
   }

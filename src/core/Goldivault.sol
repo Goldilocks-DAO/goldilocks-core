@@ -111,8 +111,8 @@ abstract contract Goldivault {
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
     _vaultDeposit(amount);
-    OwnershipToken(ot).mint(msg.sender, amount);
-    YieldToken(yt).mint(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    OwnershipToken(ot).mintOT(msg.sender, amount);
+    YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
   }
 
   /// @notice Redeems yield tokens for share of yield accrued to vault
@@ -120,7 +120,7 @@ abstract contract Goldivault {
   function redeemYield(uint256 amount) external {
     if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
-    YieldToken(yt).burn(msg.sender, amount);
+    YieldToken(yt).burnYT(msg.sender, amount);
     uint256 yieldAssetsLength = yieldAssets.length;
     for(uint8 i; i < yieldAssetsLength; ++i) {
       uint256 finalYield = ERC20(yieldAssets[i]).balanceOf(address(this));
@@ -134,8 +134,8 @@ abstract contract Goldivault {
   function redeemOwnership(uint256 amount) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
-    OwnershipToken(ot).burn(msg.sender, amount);
-    YieldToken(yt).burn(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    OwnershipToken(ot).burnOT(msg.sender, amount);
+    YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken();
     uint256 _fee = fee;
     if(remainingTime > 0) {

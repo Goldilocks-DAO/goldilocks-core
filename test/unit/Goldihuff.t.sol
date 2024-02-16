@@ -3,17 +3,12 @@ pragma solidity ^0.8.19;
 
 import "../../lib/foundry-huff/src/HuffDeployer.sol";
 import "../../lib/forge-std/src/Test.sol";
-import { Goldiswap } from "./../../src/core/Goldiswap.sol";
+import { Goldiswap } from "../../src/core/Goldiswap.sol";
+import { Math } from "../../src/mock/Math.sol";
 
 interface Goldihuff {
   function floorPrice(uint256,uint256) external returns (uint256);
   function floorPriceWad(uint256,uint256) external returns (uint256);
-}
-
-contract Math {
-  function divide(uint256 a, uint256 b) public returns (uint256) {
-    return a / b;
-  }
 }
 
 contract GoldihuffTest is Test {
