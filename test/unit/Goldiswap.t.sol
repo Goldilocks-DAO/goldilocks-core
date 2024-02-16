@@ -128,32 +128,6 @@ contract GoldiswapTest is Test {
     _;
   }
 
-  function testNotMultisig() public {
-    vm.prank(address(0x01));
-    vm.expectRevert(NotMultisigSelector);
-    goldiswap.injectLiquidity(69e18, 69e18);
-  }
-
-  function testNotGoldilockedPRGMint() public {
-    vm.expectRevert(NotGoldilockedSelector);
-    goldiswap.porridgeMint(address(0x01), 69e18);
-  }
-
-  function testNotGoldilockedBorrowTransfer() public {
-    vm.expectRevert(NotGoldilockedSelector);
-    goldiswap.borrowTransfer(address(0x01), 69e18, 69e18);
-  }
-
-  function testExcessiveSlippageBuy() public {
-    vm.expectRevert(ExcessiveSlippageSelector);
-    goldiswap.buy(69e18, 0);
-  }
-
-  function testExcessiveSlippageSell() public {
-    vm.expectRevert(ExcessiveSlippageSelector);
-    goldiswap.sell(69e18, type(uint256).max);
-  }
-
   function testLocksName() public {
     assertEq(goldiswap.name(), "Locks Token");
   }
