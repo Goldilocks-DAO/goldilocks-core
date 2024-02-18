@@ -121,7 +121,7 @@ contract GoldilockedFuzzTest is Test {
 
     assertEq(goldiswap.balanceOf(address(this)), 0);
     assertEq(goldiswap.balanceOf(address(goldilocked)), txAmount + 100000000e18);
-    assertEq(goldilocked.getStaked(address(this)), txAmount);
+    assertEq(goldilocked.userStakedLocks(address(this)), txAmount);
   }
 
 }

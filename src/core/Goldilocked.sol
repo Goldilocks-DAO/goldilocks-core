@@ -92,7 +92,7 @@ contract Goldilocked is ERC20 {
 
   /// @notice Returns the name of the $PRG token
   function name() public pure override returns (string memory) {
-    return "Porridge Token";
+    return "Porridge";
   }
 
   /// @notice Returns the symbol of the $PRG token
@@ -135,13 +135,13 @@ contract Goldilocked is ERC20 {
 
   /// @notice Returns the staked $LOCKS of an address
   /// @param user Address to view staked $LOCKS
-  function getStaked(address user) external view returns (uint256) {
+  function userStakedLocks(address user) external view returns (uint256) {
     return stakedLocks[user];
   }
 
   /// @notice Returns the claimable yield of an address
   /// @param user Address to view claimable yield
-  function getClaimable(address user) external view returns (uint256) {
+  function userClaimablePrg(address user) external view returns (uint256) {
     uint256 currentRewards = _calculateCurrentRewards(stakedLocks[user]);
     return currentRewards - prgRewardDebt[user];
   }
@@ -149,21 +149,21 @@ contract Goldilocked is ERC20 {
   /// @notice Returns the locked $LOCKS of a user
   /// @param user Address of user
   /// @return locked $LOCKS of user
-  function getLocked(address user) external view returns (uint256) {
+  function userLockedLocks(address user) external view returns (uint256) {
     return lockedLocks[user];
   }
 
   /// @notice Returns the borrowed $HONEY of a user
   /// @param user Address of user
   /// @return borrowed $HONEY of user
-  function getBorrowed(address user) external view returns (uint256) {
+  function userBorrowedHoney(address user) external view returns (uint256) {
     return borrowedHoney[user];
   }
 
   /// @notice Returns the borrow limit of a user
   /// @param user Address of user
   /// @return limit Limit of user
-  function borrowLimit(address user) external view returns (uint256) {
+  function userBorrowLimit(address user) external view returns (uint256) {
     uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
     return _borrowLimit(user, floorPrice);
   }
@@ -189,9 +189,9 @@ contract Goldilocked is ERC20 {
   function unstake(uint256 amount) external {
     uint256 vest = _vestingCheck(msg.sender, amount);
     if(amount > vest) revert NotVested();
-    uint256 userStakedLocks = stakedLocks[msg.sender];
-    if(amount > userStakedLocks) revert InvalidUnstake();
-    if(amount > userStakedLocks - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
+    uint256 _stakedLocks = stakedLocks[msg.sender];
+    if(amount > _stakedLocks) revert InvalidUnstake();
+    if(amount > _stakedLocks - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
     uint256 claimablePrg = _calculateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] -= amount;
     govLOCKS(govlocks).updateStakedBalance(msg.sender, address(0), amount);

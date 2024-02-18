@@ -320,7 +320,7 @@ contract govLOCKSTest is Test {
     vm.roll(2);
 
     uint256 votes = govlocks.getPriorVotes(address(this), 1);
-    uint256 staked = goldilocked.getStaked(address(this));
+    uint256 staked = goldilocked.userStakedLocks(address(this));
 
     assertEq(votes, staked + amt);
   }
