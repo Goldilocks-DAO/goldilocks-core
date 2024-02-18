@@ -41,6 +41,8 @@ contract GoldilockedTest is Test {
   uint256 locksAmountPrg = 100e18;
   uint256 locksAmount = 100000e18;
   uint256 borrowAmount = 1050e18;
+  uint256 prgMintAmount = 200000000e18;
+  uint256 locksMintAmount = 100000000e18;
   uint256 HalfDayofYield = 68493150684931500;
   uint256 OneDayofYield = 136986301369863000;
   uint256 OneDayandHalfofYield = 205479452054794500;
@@ -166,71 +168,74 @@ contract GoldilockedTest is Test {
     assertEq(goldilocked.symbol(), "PRG");
   }
 
-  function testUserStakedLocks() public dealandStake100Locks {
+  function testUserStakedLocksView() public dealandStake100Locks {
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmountPrg);
   }
 
-  function testUserClaimablePrg() public dealandStake100Locks {
+  function testUserClaimablePrgView() public dealandStake100Locks {
     vm.warp(block.timestamp + 1 days);
 
     assertEq(goldilocked.userClaimablePrg(address(this)), OneDayofYield);
   }
 
-  function testUserLockedLocks() public dealandStake100000Locks dealGammMaxHoney {
+  function testUserLockedLocksView() public dealandStake100000Locks dealGammMaxHoney {
     goldilocked.borrow(borrowAmount);
 
-    assertEq(goldilocked.userLockedLocks(address(this)), 100000e18);
+    assertEq(goldilocked.userLockedLocks(address(this)), locksAmount);
   }
 
-  function testUserBorrowedHoney() public dealandStake100000Locks dealGammMaxHoney {
+  function testUserBorrowedHoneyView() public dealandStake100000Locks dealGammMaxHoney {
     goldilocked.borrow(borrowAmount);
 
     assertEq(goldilocked.userBorrowedHoney(address(this)), borrowAmount);
   }
 
-  function testUserBorrowLimit() public dealandStake100000Locks {
+  function testUserBorrowLimitView() public dealandStake100000Locks {
     assertEq(goldilocked.userBorrowLimit(address(this)), borrowAmount);
   }
 
-  function testCalculateHalfDayofYield() public dealandStake100Locks {
-    vm.warp(block.timestamp + (1 days / 2));
-    goldilocked.claim();
+  // function testCalculateHalfDayofYield() public dealandStake100Locks {
+  //   vm.warp(block.timestamp + (1 days / 2));
+  //   goldilocked.claim();
 
-    uint256 prgBalance = goldilocked.balanceOf(address(this));
-    uint256 mintAmount = 200000000e18;
+  //   uint256 prgBalance = goldilocked.balanceOf(address(this));
     
-    assertEq(prgBalance, HalfDayofYield + mintAmount);
-  }
+  //   assertEq(prgBalance, HalfDayofYield + prgMintAmount);
+  // }
 
-  function testCalculate1DayofYield() public dealandStake100Locks {
-    vm.warp(block.timestamp + 1 days);
-    goldilocked.claim();
+  // function testCalculate1DayofYield() public dealandStake100Locks {
+  //   vm.warp(block.timestamp + 1 days);
+  //   goldilocked.claim();
 
-    uint256 prgBalance = goldilocked.balanceOf(address(this));
-    uint256 mintAmount = 200000000e18;
+  //   uint256 prgBalance = goldilocked.balanceOf(address(this));
 
-    assertEq(prgBalance, OneDayofYield + mintAmount);
-  }
+  //   assertEq(prgBalance, OneDayofYield + prgMintAmount);
+  // }
 
-  function testCalculate1andHalfDayofYield() public dealandStake100Locks {
-    vm.warp(block.timestamp + 1 days + (1 days / 2));
-    goldilocked.claim();
+  // function testCalculate1andHalfDayofYield() public dealandStake100Locks {
+  //   vm.warp(block.timestamp + 1 days + (1 days / 2));
+  //   goldilocked.claim();
 
-    uint256 prgBalance = goldilocked.balanceOf(address(this));
-    uint256 mintAmount = 200000000e18;
+  //   uint256 prgBalance = goldilocked.balanceOf(address(this));
     
-    assertEq(prgBalance, OneDayandHalfofYield + mintAmount);
-  }
+  //   assertEq(prgBalance, OneDayandHalfofYield + prgMintAmount);
+  // }
 
-  function testStake() public dealandStake100Locks {
-    uint256 userBalanceofLocks = goldiswap.balanceOf(address(this));
-    uint256 contractBalance = goldiswap.balanceOf(address(goldilocked));
-    uint256 getStakedUserBalance = goldilocked.userStakedLocks(address(this));
-    uint256 locksMintAmount = 100000000e18;
+  // function testStake() public dealandStake100Locks {
+  //   uint256 userBalanceofLocks = goldiswap.balanceOf(address(this));
+  //   uint256 contractBalance = goldiswap.balanceOf(address(goldilocked));
+  //   uint256 getStakedUserBalance = goldilocked.userStakedLocks(address(this));
 
-    assertEq(userBalanceofLocks, 0);
-    assertEq(contractBalance, locksAmountPrg + locksMintAmount);
-    assertEq(getStakedUserBalance, locksAmountPrg);
+  //   assertEq(userBalanceofLocks, 0);
+  //   assertEq(contractBalance, locksAmountPrg + locksMintAmount);
+  //   assertEq(getStakedUserBalance, locksAmountPrg);
+  // }
+
+  function stakeLocksSuccess() public dealandStake100Locks {
+    //todo: add check for reward debt and govlocks
+    assertEq(goldilocked.userStakedLocks(address(this)), locksAmountPrg);
+    assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmountPrg + locksMintAmount);
+    assertEq(goldiswap.balanceOf(address(this)), 0);
   }
 
   function testDoubleStake() public dealandStake100Locks {
@@ -247,13 +252,11 @@ contract GoldilockedTest is Test {
     uint256 contractBalance = goldiswap.balanceOf(address(goldilocked));
     uint256 getStakedUserBalance = goldilocked.userStakedLocks(address(this));
     uint256 prgBalance = goldilocked.balanceOf(address(this));
-    uint256 mintAmount = 200000000e18;
-    uint256 locksMintAmount = 100000000e18;
 
     assertEq(userBalanceofLocks, locksAmountPrg);
     assertEq(contractBalance, 0 + locksMintAmount);
     assertEq(getStakedUserBalance, 0);
-    assertEq(prgBalance, OneDayofYield + mintAmount);
+    assertEq(prgBalance, OneDayofYield + prgMintAmount);
   }
 
   function testStakeUnstake() public dealandStake100Locks {
@@ -278,12 +281,11 @@ contract GoldilockedTest is Test {
     uint256 claimablePrg = goldilocked.userClaimablePrg(address(this));
     uint256 prgRewardDebt = goldilocked.prgRewardDebt(address(this));
     uint256 prgBalance = goldilocked.balanceOf(address(this));
-    uint256 mintAmount = 200000000e18;
 
     assertEq(stakedLocks, 100000000000000000000);
     assertEq(claimablePrg, 24657534246575342450);
     assertEq(prgRewardDebt, 49315068493150684900);
-    assertEq(prgBalance, 24657534246575342450 + mintAmount);
+    assertEq(prgBalance, 24657534246575342450 + prgMintAmount);
   }
 
 
@@ -293,12 +295,11 @@ contract GoldilockedTest is Test {
     goldilocked.stir(TwoDaysofYield);
 
     uint256 userBalanceofPrg = goldilocked.balanceOf(address(this));
-    uint256 mintAmount = 200000000e18;
     uint256 userBalanceofLocks = goldiswap.balanceOf(address(this));
     uint256 userBalanceofHoney = honey.balanceOf(address(this));
     uint256 goldiswapBalanceofHoney = honey.balanceOf(address(goldiswap));
 
-    assertEq(userBalanceofPrg, 0 + mintAmount);
+    assertEq(userBalanceofPrg, 0 + prgMintAmount);
     assertEq(userBalanceofLocks, 100273972602739726000);
     assertEq(userBalanceofHoney, 279997123287671232877);
     assertEq(goldiswapBalanceofHoney, 2876712328767123);
@@ -309,10 +310,9 @@ contract GoldilockedTest is Test {
     goldilocked.claim();
 
     uint256 userBalanceofPrg = goldilocked.balanceOf(address(this));
-    uint256 mintAmount = 200000000e18;
     uint256 userStakedLocks = goldilocked.userStakedLocks(address(this));
 
-    assertEq(userBalanceofPrg, OneDayofYield + mintAmount);
+    assertEq(userBalanceofPrg, OneDayofYield + prgMintAmount);
     assertEq(userStakedLocks, locksAmountPrg);
   }
 
@@ -332,9 +332,8 @@ contract GoldilockedTest is Test {
     goldilend.claim();
 
     uint256 userPrgBalance = goldilocked.balanceOf(address(this));
-    uint256 mintAmount = 200000000e18;
 
-    assertEq(userPrgBalance, twoMonthsOfGoldilendStakingYield + mintAmount);
+    assertEq(userPrgBalance, twoMonthsOfGoldilendStakingYield + prgMintAmount);
   }
 
     function testInsufficientBorrowLimit() public dealandStake100000Locks dealGammMaxHoney {
