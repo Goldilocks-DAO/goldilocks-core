@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
+import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { Goldivault } from "./../../src/core/Goldivault.sol";
 import { iBGTGoldivault } from "./../../src/core/iBGTGoldivault.sol";
 import { OwnershipToken } from "./../../src/core/OwnershipToken.sol";
@@ -33,6 +34,16 @@ contract yiBGT is YieldToken {
   ) {}
 }
 
+contract Vault {
+  mapping(address => uint256) public deposits;
+  address ibgt;
+  constructor(address _ibgt) { ibgt = _ibgt; }
+  function stake(uint256 amount) external {
+    deposits[msg.sender] += amount;
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
+  }
+}
+
 contract iBGTGoldivaultTest is Test {
 
   using LibRLP for address;
@@ -41,13 +52,15 @@ contract iBGTGoldivaultTest is Test {
   oiBGT ot;
   yiBGT yt;
   iBGT ibgt;
+  Vault vault;
 
   function setUp() public {
-    iBGTGoldivault ibgtgoldivaultComputed = iBGTGoldivault(address(this).computeAddress(3));
+    iBGTGoldivault ibgtgoldivaultComputed = iBGTGoldivault(address(this).computeAddress(5));
 
     ot = new oiBGT("oiBGT", "oiBGT", address(ibgtgoldivaultComputed));
     yt = new yiBGT("yiBGT", "yiBGT", address(ibgtgoldivaultComputed));
     ibgt = new iBGT();
+    vault = new Vault(address(ibgt));
     address[] memory yieldAssets = new address[](2);
     yieldAssets[0] = address(0x69);
     yieldAssets[0] = address(0x69);
@@ -56,11 +69,12 @@ contract iBGTGoldivaultTest is Test {
       address(yt),
       address(ibgt),
       yieldAssets,
-      address(69),
+      address(vault),
       address(69),
       address(69),
       address(this)
     );
+    ibgtgoldivault.setParameters(2, 2 days, 365 days);
   }
 
   function testsetEarlyWithdrawalFeeSuccess() public {
@@ -91,5 +105,10 @@ contract iBGTGoldivaultTest is Test {
     ibgtgoldivault.setParameters(69, 69, 69);
   }
 
+  function testVaultDeposit() public {
+    deal(address(ibgt), address(this), 69e18);
+    ibgt.approve(address(ibgtgoldivault), 69e18);
+    ibgtgoldivault.deposit(69e18);
+  }
 
 }

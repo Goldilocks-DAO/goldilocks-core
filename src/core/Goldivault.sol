@@ -78,7 +78,7 @@ abstract contract Goldivault {
     multisig = _multisig;
     concluded = false;
     startTime = block.timestamp;
-    endTime = block.timestamp + duration;
+    ERC20(_ibgt).approve(_vault, type(uint256).max);
     for(uint8 i; i < _yieldAssets.length; ++i) {
       yieldAssets.push(_yieldAssets[i]);
     }
@@ -181,6 +181,7 @@ abstract contract Goldivault {
     fee = _fee;
     delay = _delay;
     duration = _duration;
+    endTime = block.timestamp + _duration;
   }
 
 

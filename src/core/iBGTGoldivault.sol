@@ -49,11 +49,7 @@ contract iBGTGoldivault is Goldivault {
     _ibgtvault,
     _ired,
     _multisig
-  ) {
-    concluded = false;
-    startTime = block.timestamp;
-    endTime = block.timestamp + duration;
-  }
+  ) {}
 
   function _vaultDeposit(uint256 amount) internal override {
     iBGTVault(vault).stake(amount);
