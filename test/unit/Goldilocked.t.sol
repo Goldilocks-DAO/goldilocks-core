@@ -176,7 +176,7 @@ contract GoldilockedTest is Test {
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount + locksAmount);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksAmount + locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), 0);
-    assertEq(goldilocked.prgRewardDebt(address(this)), twoDaysPrg);
+    assertEq(goldilocked.prgRewardDebt(address(this)), oneDayPrg);
     assertEq(govlocks.getCurrentVotes(address(this)), locksAmount + locksAmount);
   }
 

@@ -86,6 +86,8 @@ contract Goldilocked is ERC20 {
       lockedLocks[allocationsAddress[i]] = allocationsAmt[i];
       borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
       initialAllocations[allocationsAddress[i]] = allocationsAmt[i];
+      govLOCKS(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
+
     }
     _mint(multisig, 200000000e18);
   }
