@@ -48,6 +48,7 @@ abstract contract Goldivault {
   address[] public yieldTokens;
   address public depositVault;
   address public iBGTVault;
+  address public ibgt;
   address public ired;
   address public multisig;
   bool public concluded;
@@ -66,6 +67,7 @@ abstract contract Goldivault {
     address[] memory _yieldTokens,
     address _depositVault,
     address _iBGTVault,
+    address _ibgt,
     address _ired,
     address _multisig
   ) {
@@ -74,6 +76,7 @@ abstract contract Goldivault {
     depositToken = _depositToken;
     depositVault = _depositVault;
     iBGTVault = _iBGTVault;
+    ibgt = _ibgt;
     ired = _ired;
     multisig = _multisig;
     concluded = false;

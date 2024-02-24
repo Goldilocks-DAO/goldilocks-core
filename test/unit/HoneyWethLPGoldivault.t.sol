@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
-import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { Goldivault } from "./../../src/core/Goldivault.sol";
 import { HoneyWethLPGoldivault } from "./../../src/core/HoneyWethLPGoldivault.sol";
 import { OwnershipToken } from "./../../src/core/OwnershipToken.sol";
@@ -34,16 +33,6 @@ contract yHWLP is YieldToken {
   ) {}
 }
 
-contract Vault {
-  mapping(address => uint256) public deposits;
-  address ibgt;
-  constructor(address _ibgt) { ibgt = _ibgt; }
-  function stake(uint256 amount) external {
-    deposits[msg.sender] += amount;
-    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
-  }
-}
-
 contract HoneyWethLPGoldivaultTest is Test {
 
   using LibRLP for address;
@@ -52,7 +41,6 @@ contract HoneyWethLPGoldivaultTest is Test {
   oHWLP ot;
   yHWLP yt;
   iBGT ibgt;
-  Vault vault;
 
   function setUp() public {
     HoneyWethLPGoldivault honeywethlpgoldivaultComputed = HoneyWethLPGoldivault(address(this).computeAddress(5));
@@ -60,7 +48,6 @@ contract HoneyWethLPGoldivaultTest is Test {
     ot = new oHWLP("oHWLP", "oHWLP", address(honeywethlpgoldivaultComputed));
     yt = new yHWLP("yHWLP", "yHWLP", address(honeywethlpgoldivaultComputed));
     ibgt = new iBGT();
-    vault = new Vault(address(ibgt));
     address[] memory yieldTokens = new address[](2);
     yieldTokens[0] = address(0x69);
     yieldTokens[0] = address(0x69);
@@ -69,7 +56,8 @@ contract HoneyWethLPGoldivaultTest is Test {
       address(yt),
       address(ibgt),
       yieldTokens,
-      address(vault),
+      address(69),
+      address(ibgt),
       address(69),
       address(69),
       address(this)
@@ -103,12 +91,6 @@ contract HoneyWethLPGoldivaultTest is Test {
     vm.expectRevert(abi.encodeWithSelector(Goldivault.NotMultisig.selector));
 
     honeywethlpgoldivault.setParameters(69, 69, 69);
-  }
-
-  function testVaultDeposit() public {
-    deal(address(ibgt), address(this), 69e18);
-    ibgt.approve(address(honeywethlpgoldivault), 69e18);
-    honeywethlpgoldivault.deposit(69e18);
   }
 
 }

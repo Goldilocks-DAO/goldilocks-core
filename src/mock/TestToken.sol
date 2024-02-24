@@ -2,12 +2,12 @@
 pragma solidity ^0.8.19;
 import { ERC20 } from "./../../lib/solady/src/tokens/ERC20.sol";
 
-contract iBGT is ERC20 {
+contract TestToken is ERC20 {
   function name() public pure override returns (string memory) {
-    return "Infrared Berachain Governance Token";
+    return "Test Token";
   }
   function symbol() public pure override returns (string memory) {
-    return "iBGT";
+    return "TEST";
   }
   function mint(address _to, uint256 _amount) external {
     _mint(_to, _amount);
