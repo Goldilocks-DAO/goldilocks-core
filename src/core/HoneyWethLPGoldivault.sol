@@ -13,7 +13,7 @@ pragma solidity ^0.8.19;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ==================================== iBGTGoldivault ==========================================
+// ================================= HoneyWethLPGoldivault ======================================
 // ==============================================================================================
 
 
@@ -22,53 +22,64 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { Goldivault } from "../core/Goldivault.sol";
 
 
-contract iBGTVault {
+contract HoneyWethLPVault {
   function stake(uint256 amount) external {}
   function getReward() external {}
   function withdraw(uint256 amount) external {}
   function exit() external {}
 }
 
-contract iBGTGoldivault is Goldivault {
+contract InfraredBGTVault {
+  function stake(uint256 amount) external {}
+  function getReward() external {}
+  function withdraw(uint256 amount) external {}
+  function exit() external {}
+}
+
+contract HoneyWethLPGoldivault is Goldivault {
 
   constructor(
     address _ot,
     address _yt,
-    address _ibgt,
-    address[] memory _yieldAssets,
-    address _vault,
-    address _ibgtvault,
+    address _depositToken,
+    address[] memory _yieldTokens,
+    address _depositVault,
+    address _iBGTVault,
     address _ired,
     address _multisig
   ) Goldivault(
     _ot,
     _yt,
-    _ibgt,
-    _yieldAssets,
-    _vault,
-    _ibgtvault,
+    _depositToken,
+    _yieldTokens,
+    _depositVault,
+    _iBGTVault,
     _ired,
     _multisig
   ) {}
 
   function _vaultDeposit(uint256 amount) internal override {
-    iBGTVault(vault).stake(amount);
+    HoneyWethLPVault(depositVault).stake(amount);
+  }
+
+  function _unstakeDepositToken(uint256 amount) internal override {
+    HoneyWethLPVault(depositVault).withdraw(amount);
   }
 
   function _concludeVaultRewards() internal override {
-    iBGTVault(vault).exit();
-    iBGTVault(ibgtvault).exit();
+    HoneyWethLPVault(depositVault).exit();
+    HoneyWethLPVault(iBGTVault).exit();
   }
 
   function _compoundVaultRewards() internal override {
-    iBGTVault(vault).getReward();
-    iBGTVault(ibgtvault).getReward();
-    uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
-    uint256 yieldAssetsLength = yieldAssets.length;
-    for(uint8 i; i < yieldAssetsLength; ++i) {
-      SafeTransferLib.safeTransfer(yieldAssets[i], multisig, (ERC20(yieldAssets[i]).balanceOf(address(this)) / 100) * fee);
+    HoneyWethLPVault(depositVault).getReward();
+    InfraredBGTVault(iBGTVault).getReward();
+    uint256 ibgtrewards = ERC20(depositToken).balanceOf(address(this));
+    uint256 yieldTokensLength = yieldTokens.length;
+    for(uint8 i; i < yieldTokensLength; ++i) {
+      SafeTransferLib.safeTransfer(yieldTokens[i], multisig, (ERC20(yieldTokens[i]).balanceOf(address(this)) / 100) * fee);
     }
-    iBGTVault(ibgtvault).stake(ibgtrewards);
+    InfraredBGTVault(iBGTVault).stake(ibgtrewards);
   }
 
 }

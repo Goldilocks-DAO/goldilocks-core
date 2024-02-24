@@ -5,12 +5,12 @@ import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { Goldivault } from "./../../src/core/Goldivault.sol";
-import { iBGTGoldivault } from "./../../src/core/iBGTGoldivault.sol";
+import { HoneyWethLPGoldivault } from "./../../src/core/HoneyWethLPGoldivault.sol";
 import { OwnershipToken } from "./../../src/core/OwnershipToken.sol";
 import { YieldToken } from "./../../src/core/YieldToken.sol";
 import { iBGT } from "./../../src/mock/iBGT.sol";
 
-contract oiBGT is OwnershipToken {
+contract oHWLP is OwnershipToken {
   constructor(
     string memory _tokenName,
     string memory _tokenSymbol,
@@ -22,7 +22,7 @@ contract oiBGT is OwnershipToken {
   ) {}
 }
 
-contract yiBGT is YieldToken {
+contract yHWLP is YieldToken {
   constructor(
     string memory _tokenName,
     string memory _tokenSymbol,
@@ -44,71 +44,71 @@ contract Vault {
   }
 }
 
-contract iBGTGoldivaultTest is Test {
+contract HoneyWethLPGoldivaultTest is Test {
 
   using LibRLP for address;
 
-  iBGTGoldivault ibgtgoldivault;
-  oiBGT ot;
-  yiBGT yt;
+  HoneyWethLPGoldivault honeywethlpgoldivault;
+  oHWLP ot;
+  yHWLP yt;
   iBGT ibgt;
   Vault vault;
 
   function setUp() public {
-    iBGTGoldivault ibgtgoldivaultComputed = iBGTGoldivault(address(this).computeAddress(5));
+    HoneyWethLPGoldivault honeywethlpgoldivaultComputed = HoneyWethLPGoldivault(address(this).computeAddress(5));
 
-    ot = new oiBGT("oiBGT", "oiBGT", address(ibgtgoldivaultComputed));
-    yt = new yiBGT("yiBGT", "yiBGT", address(ibgtgoldivaultComputed));
+    ot = new oHWLP("oHWLP", "oHWLP", address(honeywethlpgoldivaultComputed));
+    yt = new yHWLP("yHWLP", "yHWLP", address(honeywethlpgoldivaultComputed));
     ibgt = new iBGT();
     vault = new Vault(address(ibgt));
-    address[] memory yieldAssets = new address[](2);
-    yieldAssets[0] = address(0x69);
-    yieldAssets[0] = address(0x69);
-    ibgtgoldivault = new iBGTGoldivault(
+    address[] memory yieldTokens = new address[](2);
+    yieldTokens[0] = address(0x69);
+    yieldTokens[0] = address(0x69);
+    honeywethlpgoldivault = new HoneyWethLPGoldivault(
       address(ot),
       address(yt),
       address(ibgt),
-      yieldAssets,
+      yieldTokens,
       address(vault),
       address(69),
       address(69),
       address(this)
     );
-    ibgtgoldivault.setParameters(2, 2 days, 365 days);
+    honeywethlpgoldivault.setParameters(2, 2 days, 365 days);
   }
 
   function testsetEarlyWithdrawalFeeSuccess() public {
-    ibgtgoldivault.setEarlyWithdrawalFee(69);
+    honeywethlpgoldivault.setEarlyWithdrawalFee(69);
 
-    assertEq(ibgtgoldivault.fee(), 69);
+    assertEq(honeywethlpgoldivault.fee(), 69);
   }
 
   function testSetEarlyWithdrawalFeeFailCaller() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(Goldivault.NotMultisig.selector));
 
-    ibgtgoldivault.setEarlyWithdrawalFee(69);
+    honeywethlpgoldivault.setEarlyWithdrawalFee(69);
   }
 
   function testSetParametersSuccess() public {
-    ibgtgoldivault.setParameters(69, 69, 69);
+    honeywethlpgoldivault.setParameters(69, 69, 69);
     
-    assertEq(ibgtgoldivault.fee(), 69);
-    assertEq(ibgtgoldivault.delay(), 69);
-    assertEq(ibgtgoldivault.duration(), 69);
+    assertEq(honeywethlpgoldivault.fee(), 69);
+    assertEq(honeywethlpgoldivault.delay(), 69);
+    assertEq(honeywethlpgoldivault.duration(), 69);
   }
 
   function testSetParametersFailCaller() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(Goldivault.NotMultisig.selector));
 
-    ibgtgoldivault.setParameters(69, 69, 69);
+    honeywethlpgoldivault.setParameters(69, 69, 69);
   }
 
   function testVaultDeposit() public {
     deal(address(ibgt), address(this), 69e18);
-    ibgt.approve(address(ibgtgoldivault), 69e18);
-    ibgtgoldivault.deposit(69e18);
+    ibgt.approve(address(honeywethlpgoldivault), 69e18);
+    honeywethlpgoldivault.deposit(69e18);
   }
 
 }

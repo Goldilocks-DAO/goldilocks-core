@@ -44,13 +44,13 @@ abstract contract Goldivault {
   uint256 public duration;
   address public ot;
   address public yt;
-  address public ibgt;
-  address[] public yieldAssets;
-  address public vault;
-  address public ibgtvault;
+  address public depositToken;
+  address[] public yieldTokens;
+  address public depositVault;
+  address public iBGTVault;
   address public ired;
   address public multisig;
-  bool concluded;
+  bool public concluded;
 
 
 
@@ -62,25 +62,25 @@ abstract contract Goldivault {
   constructor(
     address _ot,
     address _yt,
-    address _ibgt,
-    address[] memory _yieldAssets,
-    address _vault,
-    address _ibgtvault,
+    address _depositToken,
+    address[] memory _yieldTokens,
+    address _depositVault,
+    address _iBGTVault,
     address _ired,
     address _multisig
   ) {
     ot = _ot;
     yt = _yt;
-    ibgt = _ibgt;
-    vault = _vault;
-    ibgtvault = _ibgtvault;
+    depositToken = _depositToken;
+    depositVault = _depositVault;
+    iBGTVault = _iBGTVault;
     ired = _ired;
     multisig = _multisig;
     concluded = false;
     startTime = block.timestamp;
-    ERC20(_ibgt).approve(_vault, type(uint256).max);
-    for(uint8 i; i < _yieldAssets.length; ++i) {
-      yieldAssets.push(_yieldAssets[i]);
+    ERC20(_depositToken).approve(_depositVault, type(uint256).max);
+    for(uint8 i; i < _yieldTokens.length; ++i) {
+      yieldTokens.push(_yieldTokens[i]);
     }
   }
 
@@ -109,7 +109,7 @@ abstract contract Goldivault {
     uint256 remainingTime = endTime - block.timestamp;
     if(remainingTime < 1 days) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
-    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
     _vaultDeposit(amount);
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
@@ -121,11 +121,11 @@ abstract contract Goldivault {
     if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
     YieldToken(yt).burnYT(msg.sender, amount);
-    uint256 yieldAssetsLength = yieldAssets.length;
-    for(uint8 i; i < yieldAssetsLength; ++i) {
-      uint256 finalYield = ERC20(yieldAssets[i]).balanceOf(address(this));
+    uint256 yieldTokensLength = yieldTokens.length;
+    for(uint8 i; i < yieldTokensLength; ++i) {
+      uint256 finalYield = ERC20(yieldTokens[i]).balanceOf(address(this));
       uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
-      SafeTransferLib.safeTransfer(yieldAssets[i], msg.sender, claimable);
+      SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
     }
   }
 
@@ -136,14 +136,14 @@ abstract contract Goldivault {
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).burnOT(msg.sender, amount);
     YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
-    _unstakeDepositToken();
+    _unstakeDepositToken(amount);
     uint256 _fee = fee;
     if(remainingTime > 0) {
-      SafeTransferLib.safeTransfer(ibgt, msg.sender, (amount / 1000) * (1000 - _fee));
-      SafeTransferLib.safeTransfer(ibgt, multisig, (amount / 1000) * _fee);
+      SafeTransferLib.safeTransfer(depositToken, msg.sender, (amount / 1000) * (1000 - _fee));
+      SafeTransferLib.safeTransfer(depositToken, multisig, (amount / 1000) * _fee);
     }
     else {
-      SafeTransferLib.safeTransfer(ibgt, msg.sender, amount);
+      SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
     }
   }
 
@@ -162,10 +162,10 @@ abstract contract Goldivault {
   }
 
   /// @notice Allows DAO to add yield assets to vault
-  function addYieldAssets(address[] calldata _yieldAssets) external {
+  function addYieldAssets(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
-    for(uint8 i; i < _yieldAssets.length; ++i) {
-      yieldAssets.push(_yieldAssets[i]);
+    for(uint8 i; i < _yieldTokens.length; ++i) {
+      yieldTokens.push(_yieldTokens[i]);
     }
   }
 
@@ -195,6 +195,6 @@ abstract contract Goldivault {
   function _vaultDeposit(uint256 amount) internal virtual {}
   function _concludeVaultRewards() internal virtual {}
   function _compoundVaultRewards() internal virtual {}
-  function _unstakeDepositToken() internal virtual {}
+  function _unstakeDepositToken(uint256 amount) internal virtual {}
 
 }
