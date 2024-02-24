@@ -231,10 +231,10 @@ contract govLOCKS is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  function _afterTokenTransfer(address from, address to, uint256 amt) internal override {
-    if(from != address(0) && to != address(0)) {
-      _moveDelegates(from, to, amt);
-    }
-  }
+  // function _afterTokenTransfer(address from, address to, uint256 amt) internal override {
+  //   if(from != address(0) && to != address(0)) {
+  //     _moveDelegates(from, to, amt);
+  //   }
+  // }
 
 }
