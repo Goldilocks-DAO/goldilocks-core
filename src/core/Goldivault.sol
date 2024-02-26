@@ -159,6 +159,14 @@ abstract contract Goldivault {
     _concludeVaultRewards();
   }
 
+  /// @notice Renews concluded vault
+  function renew() external {
+    if(concludeTime + duration < block.timestamp || !concluded) revert NotConcluded();
+    startTime = block.timestamp;
+    endTime = block.timestamp + duration;
+    concluded = false;
+  }
+
   /// @notice Compounds yield from vault and restakes it
   function compound() external {
     _compoundVaultRewards();
