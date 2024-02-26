@@ -93,6 +93,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   uint256 public outstandingDebt;
   uint256 public poolSize;
   uint256 public porridgeMultiple;
+  uint256 public slope;
   uint256 public multisigClaims;
   uint256 public honeyjarClaims;
   uint256 public multisigShare;
@@ -108,6 +109,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param _startingPoolSize Starting size of the lending pool
   /// @param _protocolInterestRate Interest rate of the protocol
   /// @param _porridgeMultiple Emissions rate of $PRG for $BERA in lending pool
+  /// @param _slope Degree of protocol interest rate
   /// @param _goldilocked Address of Goldilocked
   /// @param _multisig Address of the GoldilocksDAO multisig
   /// @param _hj Address of Honeyjar
@@ -119,6 +121,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     uint256 _startingPoolSize,
     uint256 _protocolInterestRate,
     uint256 _porridgeMultiple,
+    uint256 _slope,
     address _goldilocked,
     address _multisig,
     address _hj,
@@ -130,6 +133,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     poolSize = _startingPoolSize;
     protocolInterestRate = _protocolInterestRate;
     porridgeMultiple = _porridgeMultiple;
+    slope = _slope;
     goldilocked = _goldilocked;
     multisig = _multisig;
     hj = _hj;
@@ -543,7 +547,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   ) internal view returns (uint256 interest) {
     uint256 rate = protocolInterestRate;
     uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + 5e17;
-    uint256 interestRate = rate + FixedPointMathLib.mulWad(10 * rate, FixedPointMathLib.mulWad(ratio, FixedPointMathLib.divWad(duration, ONE_YEAR)));
+    uint256 interestRate = rate + FixedPointMathLib.mulWad(slope * rate, FixedPointMathLib.mulWad(ratio, FixedPointMathLib.divWad(duration, ONE_YEAR)));
     interest = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), FixedPointMathLib.divWad(duration, ONE_YEAR));
   }
 
@@ -574,7 +578,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @return mintAmount Total supply of $gBERA divided by the lending pool size multiplied by lockAmount
   function _gberaMintAmount(uint256 lockAmount) internal view returns (uint256 mintAmount) {
     uint256 ratio = _gberaRatio();
-    mintAmount = totalSupply() > 0 ? FixedPointMathLib.mulWad(lockAmount, ratio) : lockAmount;
+    mintAmount = poolSize > 0 ? FixedPointMathLib.mulWad(lockAmount, ratio) : lockAmount;
   }
 
   /// @notice Calculates the current $gBERA ratio

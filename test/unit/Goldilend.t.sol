@@ -95,6 +95,7 @@ contract GoldilendTest is Test, IERC721Receiver {
       startingPoolSize,
       protocolInterestRate,
       porridgeMultiple,
+      10,
       address(goldilockedComputed),
       address(this),
       honeyjar,
@@ -599,13 +600,14 @@ contract GoldilendTest is Test, IERC721Receiver {
   }
 
   function testSuccessfulLock() public {
+    vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(1000e18)));
     deal(address(bera), address(this), 100e18);
     bera.approve(address(goldilend), type(uint256).max);
     goldilend.lock(100e18);
 
     uint256 gberaBalance = goldilend.balanceOf(address(this));
 
-    assertEq(gberaBalance, 100e18);
+    assertEq(gberaBalance, 90497737556561085900);
   }
 
   function testSetValue() public {

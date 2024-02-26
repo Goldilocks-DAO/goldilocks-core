@@ -79,6 +79,7 @@ contract GoldigovernorTest is Test {
       startingPoolSize,
       protocolInterestRate,
       porridgeMultiple,
+      10,
       address(goldilockedComputed),
       address(this),
       honeyjar,
