@@ -13,7 +13,7 @@ import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
 import { Timelock } from "../../src/governance/Timelock.sol";
 import { govLOCKS } from "../../src/governance/govLOCKS.sol";
 import { Honey } from "../../src/mock/Honey.sol";
-import { Bera } from "../../src/mock/Bera.sol";
+import { iBGT } from "../../src/mock/iBGT.sol";
 import { HoneyComb } from "../../src/mock/HoneyComb.sol";
 import { Beradrome } from "../../src/mock/Beradrome.sol";
 import { BondBear } from "../../src/mock/BondBear.sol";
@@ -31,7 +31,7 @@ contract GoldilendTest is Test, IERC721Receiver {
   Goldilocked goldilocked;
   Goldigovernor goldigov;
   Honey honey;
-  Bera bera;
+  iBGT ibgt;
   HoneyComb honeycomb;
   Beradrome beradrome;
   BondBear bondbear;
@@ -70,12 +70,12 @@ contract GoldilendTest is Test, IERC721Receiver {
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(13));
 
     honey = new Honey();
-    bera = new Bera();
+    ibgt = new iBGT();
     honeycomb = new HoneyComb();
     beradrome = new Beradrome();
     bondbear = new BondBear();
     bandbear = new BandBear();
-    consensusvault = new ConsensusVault(address(bera));
+    consensusvault = new ConsensusVault(address(ibgt));
 
     goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this));
 
@@ -99,7 +99,7 @@ contract GoldilendTest is Test, IERC721Receiver {
       address(goldilockedComputed),
       address(this),
       honeyjar,
-      address(bera),
+      address(ibgt),
       address(consensusvault),
       boostNfts,
       boosts
@@ -125,13 +125,13 @@ contract GoldilendTest is Test, IERC721Receiver {
     values[1] = 50;
     goldilend.setValue(100e18, nfts, values);
     goldilend.setShareRates(45, 5);
-    deal(address(bera), address(goldilend), startingPoolSize);
-    deal(address(bera), address(consensusvault), type(uint256).max / 2);
+    deal(address(ibgt), address(goldilend), startingPoolSize);
+    deal(address(ibgt), address(consensusvault), type(uint256).max / 2);
   }
 
   modifier dealUserBera() {
-    deal(address(bera), address(this), type(uint256).max / 2);
-    bera.approve(address(goldilend), type(uint256).max / 2);
+    deal(address(ibgt), address(this), type(uint256).max / 2);
+    ibgt.approve(address(goldilend), type(uint256).max / 2);
     _;
   }
 
@@ -264,12 +264,12 @@ contract GoldilendTest is Test, IERC721Receiver {
     goldilend.liquidate(address(this), 1);
   }
 
-  function testgBERAName() public {
-    assertEq(goldilend.name(), "gBERA Token");
+  function testgiBGTName() public {
+    assertEq(goldilend.name(), "giBGT Token");
   }
 
-  function testgBERASymbol() public {
-    assertEq(goldilend.symbol(), "gBERA");
+  function testgiBGTSymbol() public {
+    assertEq(goldilend.symbol(), "giBGT");
   }
 
   function testLookupLoans() public dealUserBeras {
@@ -285,16 +285,16 @@ contract GoldilendTest is Test, IERC721Receiver {
     assertEq(userDuration2, duration);
   }
 
-  function testGetgBERARatio() public {
-    deal(address(bera), address(this), 11157e16);
-    bera.approve(address(goldilend), type(uint256).max);
+  function testGetgiBGTRatio() public {
+    deal(address(ibgt), address(this), 11157e16);
+    ibgt.approve(address(goldilend), type(uint256).max);
     goldilend.lock(100e18);
     vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
     vm.store(address(goldilend), bytes32(uint256(14)), bytes32(uint256(1000e18)));
 
-    uint256 gBERARatio = goldilend.getgBERARatio();
+    uint256 giBGTRatio = goldilend.getgiBGTRatio();
 
-    assertEq(gBERARatio, 10e16);
+    assertEq(giBGTRatio, 10e16);
   }
 
   function testTransferBeras() public dealUserBeras {
@@ -601,8 +601,8 @@ contract GoldilendTest is Test, IERC721Receiver {
 
   function testSuccessfulLock() public {
     vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(1000e18)));
-    deal(address(bera), address(this), 100e18);
-    bera.approve(address(goldilend), type(uint256).max);
+    deal(address(ibgt), address(this), 100e18);
+    ibgt.approve(address(goldilend), type(uint256).max);
     goldilend.lock(100e18);
 
     uint256 gberaBalance = goldilend.balanceOf(address(this));
@@ -641,8 +641,8 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256 transferAmount = goldilend.poolSize() - goldilend.outstandingDebt();
     goldilend.emergencyWithdraw();
 
-    uint256 goldilendBeraBalance = bera.balanceOf(address(goldilend));
-    uint256 thisBeraBalance = bera.balanceOf(address(this));
+    uint256 goldilendBeraBalance = ibgt.balanceOf(address(goldilend));
+    uint256 thisBeraBalance = ibgt.balanceOf(address(this));
 
     assertEq(goldilendBeraBalance, 0);
     assertEq(thisBeraBalance, transferAmount);
@@ -964,15 +964,15 @@ contract GoldilendTest is Test, IERC721Receiver {
     goldilend.borrow(1e18, 1209600, address(bondbear), 1);
     Goldilend.Loan memory userLoanBefore = goldilend.lookupLoan(address(this), 1);
     goldilend.repay(1e18+userLoanBefore.interest, 1);
-    uint256 goldilendBeraBalance = bera.balanceOf(address(goldilend));
-    uint256 multisigBeraBalance = bera.balanceOf(address(this));
+    uint256 goldilendBeraBalance = ibgt.balanceOf(address(goldilend));
+    uint256 multisigBeraBalance = ibgt.balanceOf(address(this));
 
     uint256 claim = 209095833333330;
     goldilend.multisigInterestClaim();
     
     assertEq(goldilend.multisigClaims(), 0);
-    assertEq(bera.balanceOf(address(this)), multisigBeraBalance + claim);
-    assertEq(bera.balanceOf(address(goldilend)), goldilendBeraBalance - claim);
+    assertEq(ibgt.balanceOf(address(this)), multisigBeraBalance + claim);
+    assertEq(ibgt.balanceOf(address(goldilend)), goldilendBeraBalance - claim);
     
   }
 
@@ -980,16 +980,16 @@ contract GoldilendTest is Test, IERC721Receiver {
     goldilend.borrow(1e18, 1209600, address(bondbear), 1);
     Goldilend.Loan memory userLoanBefore = goldilend.lookupLoan(address(this), 1);
     goldilend.repay(1e18+userLoanBefore.interest, 1);
-    uint256 goldilendBeraBalance = bera.balanceOf(address(goldilend));
-    uint256 honeyjarBeraBalance = bera.balanceOf(honeyjar);
+    uint256 goldilendBeraBalance = ibgt.balanceOf(address(goldilend));
+    uint256 honeyjarBeraBalance = ibgt.balanceOf(honeyjar);
 
     uint256 claim = 23232870370370;
     vm.prank(honeyjar);
     goldilend.honeyjarInterestClaim();
 
     assertEq(goldilend.honeyjarClaims(), 0);
-    assertEq(bera.balanceOf(honeyjar), honeyjarBeraBalance + claim);
-    assertEq(bera.balanceOf(address(goldilend)), goldilendBeraBalance - claim);
+    assertEq(ibgt.balanceOf(honeyjar), honeyjarBeraBalance + claim);
+    assertEq(ibgt.balanceOf(address(goldilend)), goldilendBeraBalance - claim);
   }
 
   function onERC721Received(

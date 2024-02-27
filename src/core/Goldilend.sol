@@ -77,7 +77,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   address public goldilocked;
   address public multisig;
   address public hj;
-  address public bera;
+  address public ibgt;
   address public vault;
 
   mapping(address => Boost) public boosts;
@@ -108,12 +108,12 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Constructor of this contract
   /// @param _startingPoolSize Starting size of the lending pool
   /// @param _protocolInterestRate Interest rate of the protocol
-  /// @param _porridgeMultiple Emissions rate of $PRG for $BERA in lending pool
+  /// @param _porridgeMultiple Emissions rate of $PRG for $iBGT in lending pool
   /// @param _slope Degree of protocol interest rate
   /// @param _goldilocked Address of Goldilocked
   /// @param _multisig Address of the GoldilocksDAO multisig
   /// @param _hj Address of Honeyjar
-  /// @param _bera Address of $BERA
+  /// @param _ibgt Address of $iBGT
   /// @param _vault Address of Consensus Vault
   /// @param _partnerNFTs Partnership NFTs
   /// @param _partnerNFTBoosts Partnership NFTs Boosts
@@ -125,7 +125,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     address _goldilocked,
     address _multisig,
     address _hj,
-    address _bera, 
+    address _ibgt, 
     address _vault,
     address[] memory _partnerNFTs, 
     uint8[] memory _partnerNFTBoosts
@@ -137,7 +137,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     goldilocked = _goldilocked;
     multisig = _multisig;
     hj = _hj;
-    bera = _bera;
+    ibgt = _ibgt;
     vault = _vault;
     emissionsStart = block.timestamp;
     for(uint8 i; i < _partnerNFTs.length; i++) {
@@ -145,14 +145,14 @@ contract Goldilend is ERC20, IERC721Receiver {
     }
   }
 
-  /// @notice Returns the name of the $gBERA token
+  /// @notice Returns the name of the $giBGT token
   function name() public pure override returns (string memory) {
-    return "gBERA Token";
+    return "giBGT Token";
   }
 
-  /// @notice Returns the symbol of the $gBERA token
+  /// @notice Returns the symbol of the $giBGT token
   function symbol() public pure override returns (string memory) {
-    return "gBERA";
+    return "giBGT";
   }
 
 
@@ -183,8 +183,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  event BeraLock(address indexed user, uint256 amount);
-  event gBeraStake(address indexed user, uint256 amount);
+  event iBGTLock(address indexed user, uint256 amount);
+  event giBGTStake(address indexed user, uint256 amount);
   event Borrow(address indexed user, uint256 amount);
   event Repay(address indexed user, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount);
@@ -214,15 +214,15 @@ contract Goldilend is ERC20, IERC721Receiver {
     userBoost = boosts[user];
   }
 
-  /// @notice Returns the claimable $PRG of $gBERA staker
-  /// @param user $gBERA staker
+  /// @notice Returns the claimable $PRG of $giBGT staker
+  /// @param user $giBGT staker
   function getClaimable(address user) external view returns (uint256) {
     return _calculateClaim(stakes[user]);
   }
 
-  /// @notice Returns the current $gBERA ratio
-  function getgBERARatio() external view returns (uint256) {
-    return _gberaRatio();
+  /// @notice Returns the current $giBGT ratio
+  function getgiBGTRatio() external view returns (uint256) {
+    return _giBGTRatio();
   }
 
   /// @notice Returns the fair value of NFTs
@@ -299,18 +299,18 @@ contract Goldilend is ERC20, IERC721Receiver {
     }
   }
   
-  /// @notice Locks $BERA and mints $gBERA
-  /// @param lockAmount Amount of $BERA to lock
+  /// @notice Locks $iBGT and mints $giBGT
+  /// @param lockAmount Amount of $iBGT to lock
   function lock(uint256 lockAmount) external {
     poolSize += lockAmount;
-    SafeTransferLib.safeTransferFrom(bera, msg.sender, address(this), lockAmount);
-    _refreshBera(lockAmount);
-    _mint(msg.sender, _gberaMintAmount(lockAmount));
-    emit BeraLock(msg.sender, lockAmount);
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), lockAmount);
+    _refreshiBGT(lockAmount);
+    _mint(msg.sender, _giBGTMintAmount(lockAmount));
+    emit iBGTLock(msg.sender, lockAmount);
   }
 
-  /// @notice Stakes $gBERA
-  /// @param stakeAmount Amount of $gBERA to stake
+  /// @notice Stakes $giBGT
+  /// @param stakeAmount Amount of $giBGT to stake
   function stake(uint256 stakeAmount) external {
     if(stakes[msg.sender].lastClaim > 0) {
       _claim();
@@ -321,11 +321,11 @@ contract Goldilend is ERC20, IERC721Receiver {
     });
     stakes[msg.sender] = userStake;
     SafeTransferLib.safeTransferFrom(address(this), msg.sender, address(this), stakeAmount);
-    emit gBeraStake(msg.sender, stakeAmount);
+    emit giBGTStake(msg.sender, stakeAmount);
   }
 
-  /// @notice Unstakes $gBERA
-  /// @param unstakeAmount Amount of $gBERA to unstake
+  /// @notice Unstakes $giBGT
+  /// @param unstakeAmount Amount of $giBGT to unstake
   function unstake(uint256 unstakeAmount) external {
     uint256 stakedBalance = stakes[msg.sender].stakedBalance;
     if(stakedBalance < unstakeAmount) revert InvalidUnstake();
@@ -338,14 +338,14 @@ contract Goldilend is ERC20, IERC721Receiver {
     SafeTransferLib.safeTransfer(address(this), msg.sender, unstakeAmount);
   }
 
-  /// @notice Claims $gBERA staking rewards
+  /// @notice Claims $giBGT staking rewards
   function claim() external {
     _claim();
     stakes[msg.sender].lastClaim = block.timestamp;
   }
 
-  /// @notice Borrows $BERA against value of NFT
-  /// @param borrowAmount Amount of $BERA to borrow
+  /// @notice Borrows $iBGT against value of NFT
+  /// @param borrowAmount Amount of $iBGT to borrow
   /// @param duration Duration of loan
   /// @param collateralNFT NFT collection to use as collateral
   /// @param collateralNFTId Token Id of NFT to use as collateral
@@ -387,12 +387,12 @@ contract Goldilend is ERC20, IERC721Receiver {
     });
     loans[msg.sender].push(loan);
     IERC721(collateralNFT).safeTransferFrom(msg.sender, address(this), collateralNFTId);
-    SafeTransferLib.safeTransfer(bera, msg.sender, borrowAmount);
+    SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
     emit Borrow(msg.sender, borrowAmount);
   }
 
-  /// @notice Borrows $BERA against value of NFTs
-  /// @param borrowAmount Amount of $BERA to borrow
+  /// @notice Borrows $iBGT against value of NFTs
+  /// @param borrowAmount Amount of $iBGT to borrow
   /// @param duration Duration of loan
   /// @param collateralNFTs NFT collections to use as collateral
   /// @param collateralNFTIds Token IDs of NFTs to use as collateral
@@ -435,12 +435,12 @@ contract Goldilend is ERC20, IERC721Receiver {
     for(uint256 i; i < collateralNFTs.length; i++) {
       IERC721(collateralNFTs[i]).safeTransferFrom(msg.sender, address(this), collateralNFTIds[i]);
     } 
-    SafeTransferLib.safeTransfer(bera, msg.sender, borrowAmount);
+    SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
     emit Borrow(msg.sender, borrowAmount);
   }
 
-  /// @notice Repays loan of $BERA
-  /// @param repayAmount Amount of $BERA to repay
+  /// @notice Repays loan of $iBGT
+  /// @param repayAmount Amount of $iBGT to repay
   /// @param userLoanId ID of loan to repay
   function repay(uint256 repayAmount, uint256 userLoanId) external {
     (Loan memory userLoan, uint256 index) = _lookupLoan(msg.sender, userLoanId);
@@ -457,13 +457,13 @@ contract Goldilend is ERC20, IERC721Receiver {
         IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
       }
     }
-    _refreshBera(repayAmount);
+    _refreshiBGT(repayAmount);
     _updateInterestClaims(interest);
-    SafeTransferLib.safeTransferFrom(bera, msg.sender, address(this), repayAmount);
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), repayAmount);
     emit Repay(msg.sender, repayAmount);
   }
 
-  /// @notice Liquidates overdue loans by paying $BERA to purchase collateral
+  /// @notice Liquidates overdue loans by paying $iBGT to purchase collateral
   /// @param user Owner of loan to be liquidated
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external {
@@ -477,7 +477,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
     }
     _updateInterestClaims(userLoan.interest);
-    SafeTransferLib.safeTransferFrom(bera, msg.sender, address(this), userLoan.borrowedAmount);
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), userLoan.borrowedAmount);
     emit Liquidation(msg.sender, user, userLoan.borrowedAmount);
   }
 
@@ -564,27 +564,28 @@ contract Goldilend is ERC20, IERC721Receiver {
     revert LoanNotFound();
   }
 
-  /// @notice Stakes $BERA in Berachain Consensus Vault, 
+  //todo: not berachain consensus vault
+  /// @notice Stakes $iBGT in Berachain Consensus Vault, 
   /// @dev Claims existing vault rewards and updates poolSize
-  /// @param beraAmount Amount of $BERA to stake
-  function _refreshBera(uint256 beraAmount) internal {
-    IERC20(bera).approve(vault, beraAmount);
-    uint256 rewards = IConsensusVault(vault).deposit(beraAmount);
+  /// @param ibgtAmount Amount of $iBGT to stake
+  function _refreshiBGT(uint256 ibgtAmount) internal {
+    IERC20(ibgt).approve(vault, ibgtAmount);
+    uint256 rewards = IConsensusVault(vault).deposit(ibgtAmount);
     poolSize += rewards;
   }
 
-  /// @notice Calculates the amount of $gBERA to mint
-  /// @param lockAmount Amount of $BERA to lock
-  /// @return mintAmount Total supply of $gBERA divided by the lending pool size multiplied by lockAmount
-  function _gberaMintAmount(uint256 lockAmount) internal view returns (uint256 mintAmount) {
-    uint256 ratio = _gberaRatio();
+  /// @notice Calculates the amount of $giBGT to mint
+  /// @param lockAmount Amount of $iBGT to lock
+  /// @return mintAmount Total supply of $giBGT divided by the lending pool size multiplied by lockAmount
+  function _giBGTMintAmount(uint256 lockAmount) internal view returns (uint256 mintAmount) {
+    uint256 ratio = _giBGTRatio();
     mintAmount = poolSize > 0 ? FixedPointMathLib.mulWad(lockAmount, ratio) : lockAmount;
   }
 
-  /// @notice Calculates the current $gBERA ratio
-  /// @return gberaRatio Total supply of $gBERA divided by the lending pool size
-  function _gberaRatio() internal view returns (uint256 gberaRatio) {
-    gberaRatio = FixedPointMathLib.divWad(totalSupply(), poolSize);
+  /// @notice Calculates the current $giBGT ratio
+  /// @return gibgtRatio Total supply of $giBGT divided by the lending pool size
+  function _giBGTRatio() internal view returns (uint256 gibgtRatio) {
+    gibgtRatio = FixedPointMathLib.divWad(totalSupply(), poolSize);
   }
 
   /// @notice Creates the struct containing the details of the boost
@@ -711,10 +712,10 @@ contract Goldilend is ERC20, IERC721Receiver {
     honeyjarShare = _honeyjarShare;
   }
 
-  /// @notice Allows the DAO to withdraw $BERA in case of emergency
+  /// @notice Allows the DAO to withdraw $iBGT in case of emergency
   function emergencyWithdraw() external {
     if(msg.sender != multisig) revert NotMultisig();
-    SafeTransferLib.safeTransfer(bera, multisig, poolSize - outstandingDebt);
+    SafeTransferLib.safeTransfer(ibgt, multisig, poolSize - outstandingDebt);
   }
 
   /// @notice Allows the multisig to claim interest
@@ -723,7 +724,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     if(msg.sender != multisig) revert NotMultisig();
     uint256 interestClaim = multisigClaims;
     multisigClaims = 0;
-    SafeTransferLib.safeTransfer(bera, multisig, interestClaim);
+    SafeTransferLib.safeTransfer(ibgt, multisig, interestClaim);
   }
 
   /// @notice Changes the address of the multisig address
@@ -740,7 +741,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     if(msg.sender != hj) revert NotHoneyjar();
     uint256 interestClaim = honeyjarClaims;
     honeyjarClaims = 0;
-    SafeTransferLib.safeTransfer(bera, hj, interestClaim);
+    SafeTransferLib.safeTransfer(ibgt, hj, interestClaim);
   }
 
 
