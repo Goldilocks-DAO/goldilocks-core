@@ -58,10 +58,10 @@ contract GoldilendTest is Test, IERC721Receiver {
   bytes4 UnliquidatableSelector = 0x13d94799;
 
   uint256 twoMonthsOfYield = 43e18;
-  uint256 twoMonthsOfBoostedYield = 4945e16;
+  uint256 twoMonthsOfBoostedYield = 43645e15;
   uint256 singleBorrowInterest = 4572685306811784;
-  uint256 singleBorrowInterestBoosted = 4298324188402998;
-  uint256 singleBorrowInterestMaxBoost = 2286342653405850;
+  uint256 singleBorrowInterestBoosted = 4545249194970134;
+  uint256 singleBorrowInterestMaxBoost = 228634265340550;
 
   address honeyjar = address(0x69420);
 

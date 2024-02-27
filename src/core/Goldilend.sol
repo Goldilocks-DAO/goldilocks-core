@@ -362,9 +362,9 @@ contract Goldilend is ERC20, IERC721Receiver {
     if(userBoost.expiry > block.timestamp + duration) {
       uint256 discount = 50;
       if(userBoost.boostMagnitude < discount) {
-        discount = 100 - userBoost.boostMagnitude;
+        discount = 1000 - userBoost.boostMagnitude;
       }
-      interest = (interest / 100) * discount;
+      interest = (interest / 1000) * discount;
     }
     outstandingDebt = debt + borrowAmount;
     address[] memory collateralNFTs = new address[](1);
@@ -412,9 +412,9 @@ contract Goldilend is ERC20, IERC721Receiver {
     if(userBoost.expiry > block.timestamp + duration) {
       uint256 discount = 50;
       if(userBoost.boostMagnitude < discount) {
-        discount = 100 - userBoost.boostMagnitude;
+        discount = 1000 - userBoost.boostMagnitude;
       }
-      interest = (interest / 100) * discount;
+      interest = (interest / 1000) * discount;
     }
     outstandingDebt = debt + borrowAmount;
     Loan memory loan = Loan({
@@ -506,7 +506,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       if(userBoost.boostMagnitude < porridgeBoost) {
         porridgeBoost = userBoost.boostMagnitude;
       }
-      porridgeEarned = (porridgeEarned / 100) * (100 + porridgeBoost);
+      porridgeEarned = (porridgeEarned / 1000) * (1000 + porridgeBoost);
     }
   }
 
