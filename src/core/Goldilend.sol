@@ -95,6 +95,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   uint256 public multisigShare;
   uint256 public honeyjarShare;
 
+  bool public borrowingActive;
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                         CONSTRUCTOR                        */
@@ -159,6 +161,7 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   error NotMultisig();
   error NotHoneyjar();
+  error NotActive();
   error ArrayMismatch();
   error InvalidBoost();
   error InvalidBoostNFT();
@@ -351,6 +354,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     address collateralNFT,
     uint256 collateralNFTId
   ) external {
+    if(!borrowingActive) revert NotActive();
     if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
     if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
     if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
@@ -398,6 +402,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     address[] calldata collateralNFTs, 
     uint256[] calldata collateralNFTIds
   ) external {
+    if(!borrowingActive) revert NotActive();
     for(uint256 i; i < collateralNFTs.length; i++) {
       if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
     }
@@ -757,6 +762,13 @@ contract Goldilend is ERC20, IERC721Receiver {
     if(msg.sender != multisig) revert NotMultisig();
     minDuration = _minDuration;
     maxDuration = _maxDuration;
+  }
+
+  /// @notice Allows the DAO to activate or inactivate the protocol
+  /// @param _borrowingActive Value that activates or inactivates
+  function setBorrowingActive(bool _borrowingActive) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    borrowingActive = _borrowingActive;
   }
 
 
