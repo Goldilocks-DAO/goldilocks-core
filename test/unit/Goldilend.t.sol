@@ -59,9 +59,9 @@ contract GoldilendTest is Test, IERC721Receiver {
 
   uint256 twoMonthsOfYield = 43e18;
   uint256 twoMonthsOfBoostedYield = 4945e16;
-  uint256 singleBorrowInterest = 4646574074074073;
-  uint256 singleBorrowInterestBoosted = 4367779629629560;
-  uint256 singleBorrowInterestMaxBoost = 2323287037037000;
+  uint256 singleBorrowInterest = 4572685306811784;
+  uint256 singleBorrowInterestBoosted = 4298324188402998;
+  uint256 singleBorrowInterestMaxBoost = 2286342653405850;
 
   address honeyjar = address(0x69420);
 
@@ -125,6 +125,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     values[1] = 50;
     goldilend.setValue(100e18, nfts, values);
     goldilend.setShareRates(45, 5);
+    goldilend.setDurations(7 days, 21 days);
     deal(address(ibgt), address(goldilend), startingPoolSize);
     deal(address(ibgt), address(consensusvault), type(uint256).max / 2);
   }
@@ -197,7 +198,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256[] memory ids = new uint256[](2);
     ids[0] = 1;
     ids[1] = 1;
-    goldilend.boost(nfts, ids, goldilend.MONTH_DAYS() + 1);
+    goldilend.boost(nfts, ids, 30 days + 1);
     vm.expectRevert(BoostNotExpiredSelector);
     goldilend.withdrawBoost();
   }
@@ -311,7 +312,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     deal(address(goldilend), address(this), 1e18);
     goldilend.approve(address(goldilend), 1e18);
     goldilend.stake(1e18);
-    vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 2));
+    vm.warp(block.timestamp + (30 days * 2));
 
     uint256 userClaimable = goldilend.getClaimable(address(this));
 
@@ -322,7 +323,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     deal(address(goldilend), address(this), 1e18);
     goldilend.approve(address(goldilend), 1e18);
     goldilend.stake(1e18);
-    vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 2));
+    vm.warp(block.timestamp + (30 days * 2));
 
     address[] memory nfts = new address[](2);
     nfts[0] = address(beradrome);
@@ -331,7 +332,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     ids[0] = 1;
     ids[1] = 1;
 
-    goldilend.boost(nfts, ids, block.timestamp + (goldilend.MONTH_DAYS() * 3));
+    goldilend.boost(nfts, ids, block.timestamp + (30 days * 3));
 
     uint256 userClaimable = goldilend.getClaimable(address(this));
 
@@ -342,10 +343,10 @@ contract GoldilendTest is Test, IERC721Receiver {
     deal(address(goldilend), address(this), 2e18);
     goldilend.approve(address(goldilend), 2e18);
     goldilend.stake(1e18);
-    vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 6));
+    vm.warp(block.timestamp + (30 days * 6));
     uint256 userClaimable = goldilend.getClaimable(address(this));
 
-    vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 26));
+    vm.warp(block.timestamp + (30 days * 26));
     uint256 userClaimableAfter = goldilend.getClaimable(address(this));
 
 
@@ -356,10 +357,10 @@ contract GoldilendTest is Test, IERC721Receiver {
     deal(address(goldilend), address(this), 2e18);
     goldilend.approve(address(goldilend), 2e18);
     goldilend.stake(1e18);
-    vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 36));
+    vm.warp(block.timestamp + (30 days * 36));
 
     goldilend.stake(1e18);
-    vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 36));
+    vm.warp(block.timestamp + (30 days * 36));
     uint256 userClaimable = goldilend.getClaimable(address(this));
 
     assertEq(userClaimable, 0);    
@@ -384,7 +385,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     deal(address(goldilend), address(this), 2e18);
     goldilend.approve(address(goldilend), 2e18);
     goldilend.stake(1e18);
-    vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 2));
+    vm.warp(block.timestamp + (30 days * 2));
     goldilend.stake(1e18);
 
     uint256 prgBalance = goldilocked.balanceOf(address(this));
@@ -397,7 +398,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     deal(address(goldilend), address(this), 1e18);
     goldilend.approve(address(goldilend), 1e18);
     goldilend.stake(1e18);
-    vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 2));
+    vm.warp(block.timestamp + (30 days * 2));
     goldilend.unstake(1e18);
 
     uint256 usergBeraBalance = goldilend.balanceOf(address(this));
@@ -410,7 +411,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     assertEq(userPrgBalance, twoMonthsOfYield + mintAmount);
     assertEq(usergBeraBalance, 1e18);
     assertEq(staked, 0);
-    assertEq(claim, goldilend.MONTH_DAYS() * 2 + 1);
+    assertEq(claim, 30 days * 2 + 1);
   }
 
   function testBoostMapping() public {
@@ -458,14 +459,14 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256[] memory ids = new uint256[](2);
     ids[0] = 1;
     ids[1] = 1;
-    goldilend.boost(nfts, ids, goldilend.MONTH_DAYS() + 1);
+    goldilend.boost(nfts, ids, 30 days + 1);
     Goldilend.Boost memory userBoost = goldilend.lookupBoost(address(this));
 
     assertEq(IERC721(honeycomb).balanceOf(address(this)), 0);
     assertEq(IERC721(beradrome).balanceOf(address(this)), 0);
     assertEq(IERC721(honeycomb).balanceOf(address(goldilend)), 1);
     assertEq(IERC721(beradrome).balanceOf(address(goldilend)), 1);
-    assertEq(userBoost.expiry, goldilend.MONTH_DAYS() + 1);
+    assertEq(userBoost.expiry, 30 days + 1);
     assertEq(userBoost.boostMagnitude, 15);
   }
 
@@ -481,7 +482,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256[] memory ids = new uint256[](2);
     ids[0] = 1;
     ids[1] = 1;
-    goldilend.boost(nfts, ids, goldilend.MONTH_DAYS() + 1);
+    goldilend.boost(nfts, ids, 30 days + 1);
     vm.expectRevert(InvalidDurationSelector);
     goldilend.extendBoost(69);
   }
@@ -493,15 +494,15 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256[] memory ids = new uint256[](2);
     ids[0] = 1;
     ids[1] = 1;
-    goldilend.boost(nfts, ids, goldilend.MONTH_DAYS() + 1);
-    goldilend.extendBoost(goldilend.MONTH_DAYS() + 1);
+    goldilend.boost(nfts, ids, 30 days + 1);
+    goldilend.extendBoost(30 days + 1);
     Goldilend.Boost memory userBoost = goldilend.lookupBoost(address(this));
 
     assertEq(IERC721(honeycomb).balanceOf(address(this)), 0);
     assertEq(IERC721(beradrome).balanceOf(address(this)), 0);
     assertEq(IERC721(honeycomb).balanceOf(address(goldilend)), 1);
     assertEq(IERC721(beradrome).balanceOf(address(goldilend)), 1);
-    assertEq(userBoost.expiry, goldilend.MONTH_DAYS() + 1);
+    assertEq(userBoost.expiry, 30 days + 1);
     assertEq(userBoost.boostMagnitude, 15);
   }
 
@@ -512,8 +513,8 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256[] memory ids = new uint256[](2);
     ids[0] = 1;
     ids[1] = 1;
-    goldilend.boost(nfts, ids, goldilend.MONTH_DAYS() + 1);
-    vm.warp(goldilend.MONTH_DAYS() + 2);
+    goldilend.boost(nfts, ids, 30 days + 1);
+    vm.warp(30 days + 2);
     goldilend.withdrawBoost();
     Goldilend.Boost memory userBoost = goldilend.lookupBoost(address(this));
 
@@ -540,12 +541,12 @@ contract GoldilendTest is Test, IERC721Receiver {
     IERC721(beradrome).setApprovalForAll(address(goldilend), true);
     assertEq(IERC721(honeycomb).balanceOf(address(this)), 2);
     assertEq(IERC721(beradrome).balanceOf(address(this)), 2);
-    goldilend.boost(nfts, ids, goldilend.MONTH_DAYS() + 1);
+    goldilend.boost(nfts, ids, 30 days + 1);
     uint256[] memory ids2 = new uint256[](2);
     ids2[0] = 2;
     ids2[1] = 2;
-    goldilend.boost(nfts, ids2, goldilend.MONTH_DAYS() + 1);
-    vm.warp(goldilend.MONTH_DAYS() + 2);
+    goldilend.boost(nfts, ids2, 30 days + 1);
+    vm.warp(30 days + 2);
     goldilend.withdrawBoost();
     Goldilend.Boost memory userBoost = goldilend.lookupBoost(address(this));
     assertEq(IERC721(honeycomb).balanceOf(address(this)), 2);
@@ -568,15 +569,15 @@ contract GoldilendTest is Test, IERC721Receiver {
     ids[1] = 1;
     IERC721(honeycomb).setApprovalForAll(address(goldilend), true);
     IERC721(beradrome).setApprovalForAll(address(goldilend), true);
-    goldilend.boost(address(honeycomb), 1, goldilend.MONTH_DAYS() + 1);
-    goldilend.boost(nfts, ids, goldilend.MONTH_DAYS() + 1);
+    goldilend.boost(address(honeycomb), 1, 30 days + 1);
+    goldilend.boost(nfts, ids, 30 days + 1);
     Goldilend.Boost memory userBoost = goldilend.lookupBoost(address(this));
 
     assertEq(IERC721(honeycomb).balanceOf(address(this)), 0);
     assertEq(IERC721(beradrome).balanceOf(address(this)), 0);
     assertEq(IERC721(honeycomb).balanceOf(address(goldilend)), 2);
     assertEq(IERC721(beradrome).balanceOf(address(goldilend)), 1);
-    assertEq(userBoost.expiry, goldilend.MONTH_DAYS() + 1);
+    assertEq(userBoost.expiry, 30 days + 1);
     assertEq(userBoost.boostMagnitude, 21);
   }
 
@@ -585,15 +586,15 @@ contract GoldilendTest is Test, IERC721Receiver {
     INFT(address(beradrome)).mint(address(this));
     IERC721(honeycomb).setApprovalForAll(address(goldilend), true);
     IERC721(beradrome).setApprovalForAll(address(goldilend), true);
-    goldilend.boost(address(honeycomb), 1, goldilend.MONTH_DAYS() + 1);
-    goldilend.boost(address(beradrome), 1, goldilend.MONTH_DAYS() + 1);
+    goldilend.boost(address(honeycomb), 1, 30 days + 1);
+    goldilend.boost(address(beradrome), 1, 30 days + 1);
     Goldilend.Boost memory userBoost = goldilend.lookupBoost(address(this));
 
     assertEq(IERC721(honeycomb).balanceOf(address(this)), 0);
     assertEq(IERC721(beradrome).balanceOf(address(this)), 0);
     assertEq(IERC721(honeycomb).balanceOf(address(goldilend)), 1);
     assertEq(IERC721(beradrome).balanceOf(address(goldilend)), 1);
-    assertEq(userBoost.expiry, goldilend.MONTH_DAYS() + 1);
+    assertEq(userBoost.expiry, 30 days + 1);
     assertEq(userBoost.boostMagnitude, 15);
     assertEq(userBoost.partnerNFTs[0], address(honeycomb));
     assertEq(userBoost.partnerNFTs[1], address(beradrome));
@@ -716,7 +717,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     goldilend.borrow(99e18, 1209600, nfts, ids);
   }
 
-  function testMultipleBorrow() public dealUserBeras {
+  function testMultipleBorrowSuccess() public dealUserBeras {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
@@ -967,7 +968,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256 goldilendBeraBalance = ibgt.balanceOf(address(goldilend));
     uint256 multisigBeraBalance = ibgt.balanceOf(address(this));
 
-    uint256 claim = 209095833333330;
+    uint256 claim = 205770838806495;
     goldilend.multisigInterestClaim();
     
     assertEq(goldilend.multisigClaims(), 0);
@@ -983,7 +984,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256 goldilendBeraBalance = ibgt.balanceOf(address(goldilend));
     uint256 honeyjarBeraBalance = ibgt.balanceOf(honeyjar);
 
-    uint256 claim = 23232870370370;
+    uint256 claim = 22863426534055;
     vm.prank(honeyjar);
     goldilend.honeyjarInterestClaim();
 

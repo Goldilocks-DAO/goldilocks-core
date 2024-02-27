@@ -103,6 +103,7 @@ contract GoldiswapGasTest is Test {
     values[1] = 50;
     goldilend.setValue(100e18, nfts, values);
     goldilend.setShareRates(45, 5);
+    goldilend.setDurations(7 days, 21 days);
     deal(address(bera), address(goldilend), startingPoolSize);
     deal(address(bera), address(consensusvault), type(uint256).max / 2);
   }
