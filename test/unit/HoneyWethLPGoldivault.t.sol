@@ -57,8 +57,8 @@ contract HoneyWethLPGoldivaultTest is Test {
       address(ibgt),
       yieldTokens,
       address(69),
-      address(ibgt),
       address(69),
+      address(ibgt),
       address(69),
       address(this)
     );

@@ -47,7 +47,7 @@ abstract contract Goldivault {
   address public depositToken;
   address[] public yieldTokens;
   address public depositVault;
-  address public iBGTVault;
+  address public ibgtvault;
   address public ibgt;
   address public ired;
   address public multisig;
@@ -66,7 +66,7 @@ abstract contract Goldivault {
     address _depositToken,
     address[] memory _yieldTokens,
     address _depositVault,
-    address _iBGTVault,
+    address _ibgtvault,
     address _ibgt,
     address _ired,
     address _multisig
@@ -75,13 +75,14 @@ abstract contract Goldivault {
     yt = _yt;
     depositToken = _depositToken;
     depositVault = _depositVault;
-    iBGTVault = _iBGTVault;
+    ibgtvault = _ibgtvault;
     ibgt = _ibgt;
     ired = _ired;
     multisig = _multisig;
     concluded = false;
     startTime = block.timestamp;
     ERC20(_depositToken).approve(_depositVault, type(uint256).max);
+    ERC20(_ibgt).approve(_ibgtvault, type(uint256).max);
     for(uint8 i; i < _yieldTokens.length; ++i) {
       yieldTokens.push(_yieldTokens[i]);
     }
@@ -161,6 +162,7 @@ abstract contract Goldivault {
 
   /// @notice Renews concluded vault
   function renew() external {
+    // if(msg.sender != multisig) revert NotMultisig();
     if(concludeTime + duration < block.timestamp || !concluded) revert NotConcluded();
     startTime = block.timestamp;
     endTime = block.timestamp + duration;
