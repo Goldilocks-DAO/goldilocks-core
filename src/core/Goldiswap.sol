@@ -224,22 +224,20 @@ contract Goldiswap is ERC20 {
     uint256 _floor;
     uint256 _buyPrice;
     uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
-    uint256 incrementUnit = increment / 1e18;
-    if(increment == 0 || incrementUnit == 0) {
+    if(increment == 0) {
       increment = 1000e18;
-      incrementUnit = 1000;
     }
     while(_leftover >= increment) {
       _market = _marketPrice(_fsl, _psl, _supply);
       _floor = _floorPrice(_fsl, _supply);
-      _buyPrice += _market * incrementUnit;
+      _buyPrice += FixedPointMathLib.mulWad(_market, increment);
       _supply += increment;
       if (_psl * 100 >= _fsl * 50) {
-        _fsl += _market * incrementUnit;
+        _fsl += FixedPointMathLib.mulWad(_market, increment);
       }
       else {
-        _psl += (_market - _floor) * incrementUnit;
-        _fsl += _floor * incrementUnit;
+        _psl += FixedPointMathLib.mulWad((_market - _floor), increment);
+        _fsl += FixedPointMathLib.mulWad(_floor, increment);
       }
       _leftover -= increment;
     }
@@ -270,17 +268,15 @@ contract Goldiswap is ERC20 {
     uint256 _floor;
     uint256 _saleAmount;
     uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
-    uint256 incrementUnit = increment / 1e18;
-    if(increment == 0 || incrementUnit == 0) {
+    if(increment == 0) {
       increment = 1000e18;
-      incrementUnit = 1000;
     }
     while(_leftover >= increment) {
       _market = _marketPrice(_fsl, _psl, _supply);
       _floor = _floorPrice(_fsl, _supply);
-      _saleAmount += _market * incrementUnit;
-      _psl -= (_market - _floor) * incrementUnit;
-      _fsl -= _floor * incrementUnit;
+      _saleAmount += FixedPointMathLib.mulWad(_market, increment);
+      _psl -= FixedPointMathLib.mulWad((_market - _floor), increment);
+      _fsl -= FixedPointMathLib.mulWad(_floor, increment);
       _supply -= increment;
       _leftover -= increment;
     }

@@ -8,7 +8,7 @@ def redeem(amount, fsl, psl, supply, floor_price, market_price):
 def sell(amount, fsl, psl, supply, floor_price, market_price):
   sale_price = 0
   increment = supply / 100000
-  if increment < 1:
+  if increment == 0:
     increment = 1000
   while amount >= increment:
     amount -= increment
@@ -32,7 +32,7 @@ def sell(amount, fsl, psl, supply, floor_price, market_price):
 def buy(amount, fsl, psl, supply, floor_price, market_price):
   purchase_price = 0
   increment = supply / 100000
-  if increment < 1:
+  if increment == 0:
     increment = 1000
   while amount >= increment:
     amount -= increment
