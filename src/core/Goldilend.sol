@@ -370,7 +370,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       }
       interest = (interest / 1000) * discount;
     }
-    outstandingDebt = debt + borrowAmount;
+    outstandingDebt += borrowAmount;
     address[] memory collateralNFTs = new address[](1);
     collateralNFTs[0] = collateralNFT;
     uint256[] memory collateralNFTIds = new uint256[](1);
@@ -421,7 +421,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       }
       interest = (interest / 1000) * discount;
     }
-    outstandingDebt = debt + borrowAmount;
+    outstandingDebt += borrowAmount;
     Loan memory loan = Loan({
       collateralNFTs: collateralNFTs,
       collateralNFTIds: collateralNFTIds,
@@ -447,8 +447,8 @@ contract Goldilend is ERC20, IERC721Receiver {
     (Loan memory userLoan, uint256 index) = _lookupLoan(msg.sender, userLoanId);
     if(userLoan.borrowedAmount < repayAmount) revert ExcessiveRepay();
     if(block.timestamp > userLoan.endDate) revert LoanExpired();
-    uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoan.interest, userLoan.borrowedAmount - userLoan.interest);
-    uint256 interest = FixedPointMathLib.mulWad(repayAmount - userLoan.interest, interestLoanRatio);
+    uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoan.interest, userLoan.borrowedAmount);
+    uint256 interest = FixedPointMathLib.mulWadUp(repayAmount, interestLoanRatio);
     outstandingDebt -= repayAmount - interest;
     loans[msg.sender][index].borrowedAmount -= repayAmount;
     loans[msg.sender][index].interest -= interest;
