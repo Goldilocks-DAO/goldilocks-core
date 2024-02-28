@@ -59,9 +59,9 @@ contract GoldilendTest is Test, IERC721Receiver {
 
   uint256 twoMonthsOfYield = 43e18;
   uint256 twoMonthsOfBoostedYield = 43645e15;
-  uint256 singleBorrowInterest = 4572685306811784;
-  uint256 singleBorrowInterestBoosted = 4545249194970134;
-  uint256 singleBorrowInterestMaxBoost = 228634265340550;
+  uint256 singleBorrowInterest = 45726853068117;
+  uint256 singleBorrowInterestBoosted = 45452491949592;
+  uint256 singleBorrowInterestMaxBoost = 2286342653400;
 
   address honeyjar = address(0x69420);
 
@@ -969,7 +969,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256 goldilendBeraBalance = ibgt.balanceOf(address(goldilend));
     uint256 multisigBeraBalance = ibgt.balanceOf(address(this));
 
-    uint256 claim = 205770838806495;
+    uint256 claim = 2057708388060;
     goldilend.multisigInterestClaim();
     
     assertEq(goldilend.multisigClaims(), 0);
@@ -985,7 +985,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     uint256 goldilendBeraBalance = ibgt.balanceOf(address(goldilend));
     uint256 honeyjarBeraBalance = ibgt.balanceOf(honeyjar);
 
-    uint256 claim = 22863426534055;
+    uint256 claim = 228634265340;
     vm.prank(honeyjar);
     goldilend.honeyjarInterestClaim();
 
