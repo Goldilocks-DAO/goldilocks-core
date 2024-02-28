@@ -136,20 +136,17 @@ contract Goldiswap is ERC20 {
   /// @param amount Amount of $LOCKS to buy
   /// @param maxAmount Maximum amount of $HONEY to spend
   function buy(uint256 amount, uint256 maxAmount) external {
-    uint256 _supply = totalSupply();
-    uint256 _fsl = fsl;
-    uint256 _psl = psl;
     (
-      uint256 __psl, 
-      uint256 __fsl, 
-      uint256 __buyPrice
-    ) = _buyLoop(_psl, _fsl, _supply, amount);
-    uint256 tax = (__buyPrice / 1000) * 3;
-    if(__buyPrice + tax > maxAmount) revert ExcessiveSlippage();
-    fsl = __fsl;
-    psl = __psl;
+      uint256 _fsl, 
+      uint256 _psl, 
+      uint256 price
+    ) = _buyLoop(fsl, psl, totalSupply(), amount);
+    uint256 tax = (price / 1000) * 3;
+    if(price + tax > maxAmount) revert ExcessiveSlippage();
+    fsl = _fsl;
+    psl = _psl;
     _floorRaise();
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), __buyPrice);
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), price);
     SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
     _mint(msg.sender, amount);
     emit Buy(msg.sender, amount);
@@ -159,21 +156,18 @@ contract Goldiswap is ERC20 {
   /// @param amount Amount of $LOCKS to sell
   /// @param minAmount Minimum amount of $HONEY to receive
   function sell(uint256 amount, uint256 minAmount) external {
-    uint256 _supply = totalSupply();
-    uint256 _fsl = fsl;
-    uint256 _psl = psl;
     (
-      uint256 __psl,
-      uint256 __fsl,
-      uint256 __saleAmount
-    ) = _sellLoop(_psl, _fsl, _supply, amount);
-    uint256 tax = (__saleAmount / 1000) * 53;
-    if(__saleAmount - tax < minAmount) revert ExcessiveSlippage();
-    fsl = __fsl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, __fsl), (__fsl + __psl));
-    psl = __psl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, __psl), (__fsl + __psl));
+      uint256 _fsl,
+      uint256 _psl,
+      uint256 proceeds
+    ) = _sellLoop(fsl, psl, totalSupply(), amount);
+    uint256 tax = (proceeds / 1000) * 53;
+    if(proceeds - tax < minAmount) revert ExcessiveSlippage();
+    fsl = _fsl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _fsl), (_fsl + _psl));
+    psl = _psl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _psl), (_fsl + _psl));
     _floorReduce();
     _burn(msg.sender, amount);
-    SafeTransferLib.safeTransfer(honey, msg.sender, __saleAmount - tax);
+    SafeTransferLib.safeTransfer(honey, msg.sender, proceeds - tax);
     emit Sale(msg.sender, amount);
   }
 
@@ -214,81 +208,81 @@ contract Goldiswap is ERC20 {
   }
 
   /// @notice Loops through the amount of $LOCKS tokens to buy and calculates total price
-  /// @param _psl Temporary variable for PSL
   /// @param _fsl Temporary variable for FSL
+  /// @param _psl Temporary variable for PSL
   /// @param _supply Temporary variable for Supply
-  /// @param _leftover Temporary variable for amount of $LOCKS tokens
-  /// @return (PSL, FSL, supply and buy price)
-  function _buyLoop(uint256 _psl, uint256 _fsl, uint256 _supply, uint256 _leftover) internal pure returns (uint256, uint256, uint256) {
-    uint256 _market;
-    uint256 _floor;
+  /// @param leftover Temporary variable for amount of $LOCKS tokens
+  /// @return (FSL, PSL, supply and price)
+  function _buyLoop(uint256 _fsl, uint256 _psl, uint256 _supply, uint256 leftover) internal pure returns (uint256, uint256, uint256) {
+    uint256 market;
+    uint256 floor;
     uint256 _buyPrice;
     uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
     if(increment == 0) {
       increment = 1000e18;
     }
-    while(_leftover >= increment) {
-      _market = _marketPrice(_fsl, _psl, _supply);
-      _floor = _floorPrice(_fsl, _supply);
-      _buyPrice += FixedPointMathLib.mulWad(_market, increment);
+    while(leftover >= increment) {
+      market = _marketPrice(_fsl, _psl, _supply);
+      floor = _floorPrice(_fsl, _supply);
+      _buyPrice += FixedPointMathLib.mulWad(market, increment);
       _supply += increment;
       if (_psl * 100 >= _fsl * 50) {
-        _fsl += FixedPointMathLib.mulWad(_market, increment);
+        _fsl += FixedPointMathLib.mulWad(market, increment);
       }
       else {
-        _psl += FixedPointMathLib.mulWad((_market - _floor), increment);
-        _fsl += FixedPointMathLib.mulWad(_floor, increment);
+        _psl += FixedPointMathLib.mulWad((market - floor), increment);
+        _fsl += FixedPointMathLib.mulWad(floor, increment);
       }
-      _leftover -= increment;
+      leftover -= increment;
     }
-    if (_leftover > 0) {
-      _market = _marketPrice(_fsl, _psl, _supply);
-      _floor = _floorPrice(_fsl, _supply);
-      _buyPrice += FixedPointMathLib.mulWad(_market, _leftover);
-      _supply += _leftover;
+    if (leftover > 0) {
+      market = _marketPrice(_fsl, _psl, _supply);
+      floor = _floorPrice(_fsl, _supply);
+      _buyPrice += FixedPointMathLib.mulWad(market, leftover);
+      _supply += leftover;
       if (_psl * 100 >= _fsl * 50) {
-        _fsl += FixedPointMathLib.mulWad(_market, _leftover);
+        _fsl += FixedPointMathLib.mulWad(market, leftover);
       }
       else {
-        _psl += FixedPointMathLib.mulWad((_market - _floor), _leftover);
-        _fsl += FixedPointMathLib.mulWad(_floor, _leftover);
+        _psl += FixedPointMathLib.mulWad((market - floor), leftover);
+        _fsl += FixedPointMathLib.mulWad(floor, leftover);
       }
     }
-    return (_psl, _fsl, _buyPrice);
+    return (_fsl, _psl, _buyPrice);
   }
 
   /// @notice Loops through the amount of $LOCKS tokens to sell and calculates sale amount
-  /// @param _psl Temporary variable for PSL
   /// @param _fsl Temporary variable for FSL
+  /// @param _psl Temporary variable for PSL
   /// @param _supply Temporary variable for Supply
-  /// @param _leftover Temporary variable for amount of $LOCKS tokens to sell
-  /// @return (PSL, FSL, supply and sale amount)
-  function _sellLoop(uint256 _psl, uint256 _fsl, uint256 _supply, uint256 _leftover) internal pure returns (uint256, uint256, uint256) {
-    uint256 _market;
-    uint256 _floor;
-    uint256 _saleAmount;
+  /// @param leftover Temporary variable for amount of $LOCKS tokens to sell
+  /// @return (FSL, PSL, supply and proceeds)
+  function _sellLoop(uint256 _fsl, uint256 _psl, uint256 _supply, uint256 leftover) internal pure returns (uint256, uint256, uint256) {
+    uint256 market;
+    uint256 floor;
+    uint256 proceeds;
     uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
     if(increment == 0) {
       increment = 1000e18;
     }
-    while(_leftover >= increment) {
-      _market = _marketPrice(_fsl, _psl, _supply);
-      _floor = _floorPrice(_fsl, _supply);
-      _saleAmount += FixedPointMathLib.mulWad(_market, increment);
-      _psl -= FixedPointMathLib.mulWad((_market - _floor), increment);
-      _fsl -= FixedPointMathLib.mulWad(_floor, increment);
+    while(leftover >= increment) {
+      market = _marketPrice(_fsl, _psl, _supply);
+      floor = _floorPrice(_fsl, _supply);
+      proceeds += FixedPointMathLib.mulWad(market, increment);
+      _psl -= FixedPointMathLib.mulWad((market - floor), increment);
+      _fsl -= FixedPointMathLib.mulWad(floor, increment);
       _supply -= increment;
-      _leftover -= increment;
+      leftover -= increment;
     }
-    if (_leftover > 0) {
-      _market = _marketPrice(_fsl, _psl, _supply);
-      _floor = _floorPrice(_fsl, _supply);
-      _saleAmount += FixedPointMathLib.mulWad(_market, _leftover);
-      _psl -= FixedPointMathLib.mulWad((_market - _floor), _leftover);
-      _fsl -= FixedPointMathLib.mulWad(_floor, _leftover); 
-      _supply -= _leftover;
+    if (leftover > 0) {
+      market = _marketPrice(_fsl, _psl, _supply);
+      floor = _floorPrice(_fsl, _supply);
+      proceeds += FixedPointMathLib.mulWad(market, leftover);
+      _psl -= FixedPointMathLib.mulWad((market - floor), leftover);
+      _fsl -= FixedPointMathLib.mulWad(floor, leftover); 
+      _supply -= leftover;
     }
-    return (_psl, _fsl, _saleAmount);
+    return (_fsl, _psl, proceeds);
   }
 
   /// @notice from PRBMath (https://github.com/PaulRBerg/prb-math) by @PaulRBerg
