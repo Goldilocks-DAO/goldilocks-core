@@ -205,31 +205,16 @@ contract GoldilockedTest is Test {
     goldilocked.unstake(locksAmount);
 
     assertEq(goldilocked.userStakedLocks(address(this)), 0);
+    assertEq(govlocks.getCurrentVotes(address(this)), 0);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), locksAmount);
     assertEq(goldilocked.balanceOf(address(this)), oneDayPrg + prgMintAmount);
     assertEq(goldilocked.prgRewardDebt(address(this)), 0);
-    assertEq(govlocks.getCurrentVotes(address(this)), 0);
   }
 
-  // function testStakeUnstakeClaim() public dealAndStake100000Locks {
-  //   goldiswap.approve(address(goldilocked), locksAmount);
-  //   vm.warp(block.timestamp + 180 days);
-  //   goldilocked.unstake(locksAmount);
-  //   vm.warp(block.timestamp + 180 days);
-  //   goldilocked.stake(100e18);
-  //   vm.warp(block.timestamp + 180 days);
-
-  //   uint256 stakedLocks = goldilocked.userStakedLocks(address(this));
-  //   uint256 claimablePrg = goldilocked.userClaimablePrg(address(this));
-  //   uint256 prgRewardDebt = goldilocked.prgRewardDebt(address(this));
-  //   uint256 prgBalance = goldilocked.balanceOf(address(this));
-
-  //   assertEq(stakedLocks, 100000000000000000000);
-  //   assertEq(claimablePrg, 24657534246575342450);
-  //   assertEq(prgRewardDebt, 49315068493150684900);
-  //   assertEq(prgBalance, 24657534246575342450 + prgMintAmount);
-  // }
+  function testStirSuccess() public {
+    
+  }
 
 
   // function testStir() public dealAndStake100000Locks {
