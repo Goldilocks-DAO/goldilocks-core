@@ -43,8 +43,8 @@ contract GoldilockedTest is Test {
   uint256 prgMintAmount = 200000000e18;
   uint256 locksMintAmount = 100000000e18;
   uint256 oneDayPrg = 136986301369863000000;
-  uint256 HalfDayofYield = 68493150684931500000;
-  uint256 OneDayandHalfofYield = 205479452054794500000;
+  uint256 halfDayPrg = 68493150684931500000;
+  uint256 oneDayHalfPrg = 205479452054794500000;
   uint256 twoDaysPrg = 273972602739726000000;
   uint256 twoMonthsOfGoldilendStakingYield = 43e18;
 
@@ -212,141 +212,73 @@ contract GoldilockedTest is Test {
     assertEq(goldilocked.prgRewardDebt(address(this)), 0);
   }
 
-  function testStirSuccess() public {
-    
+  function testStirSuccess() public dealAndStake100000Locks {
+    uint256 oneDayPrgCost = 1438356164383561500;
+    uint256 oneDayLocksProceeds = 136986301369863000000;
+    deal(address(honey), address(this), oneDayPrgCost);
+    honey.approve(address(goldilocked), oneDayPrgCost);
+    vm.warp(1 days + 1);
+    goldilocked.unstake(locksAmount);
+    goldilocked.stir(oneDayPrg);
+
+    assertEq(goldiswap.balanceOf(address(this)), oneDayLocksProceeds + locksAmount);
+    assertEq(goldilocked.balanceOf(address(this)), 0 + prgMintAmount);
+    assertEq(honey.balanceOf(address(this)), 0);
+    assertEq(honey.balanceOf(address(goldiswap)), oneDayPrgCost);
   }
 
-
-  // function testStir() public dealAndStake100000Locks {
-  //   deal(address(honey), address(this), 280e18);
-  //   honey.approve(address(goldilocked), 280e18);
-  //   vm.warp(block.timestamp + (2 * 1 days));
-  //   goldilocked.unstake(locksAmount);
-  //   goldilocked.stir(twoDaysPrg);
-
-  //   uint256 userBalanceofPrg = goldilocked.balanceOf(address(this));
-  //   uint256 userBalanceofLocks = goldiswap.balanceOf(address(this));
-  //   uint256 userBalanceofHoney = honey.balanceOf(address(this));
-  //   uint256 goldiswapBalanceofHoney = honey.balanceOf(address(goldiswap));
-
-  //   assertEq(userBalanceofPrg, 0 + prgMintAmount);
-  //   assertEq(userBalanceofLocks, 100273972602739726000);
-  //   assertEq(userBalanceofHoney, 279997123287671232877);
-  //   assertEq(goldiswapBalanceofHoney, 2876712328767123);
-  // }
-
-
-  // function testCalculateHalfDayofYield() public dealAndStake100000Locks {
-  //   vm.warp(block.timestamp + (1 days / 2));
-  //   goldilocked.claim();
-
-  //   uint256 prgBalance = goldilocked.balanceOf(address(this));
+  function testHalfDayYield() public dealAndStake100000Locks {
+    vm.warp((1 days / 2) + 1);
+    goldilocked.claim();
     
-  //   assertEq(prgBalance, HalfDayofYield + prgMintAmount);
-  // }
+    assertEq(goldilocked.balanceOf(address(this)), halfDayPrg + prgMintAmount);
+  }
 
-  // function testCalculate1DayofYield() public dealAndStake100000Locks {
-  //   vm.warp(block.timestamp + 1 days);
-  //   goldilocked.claim();
+  function testDayYield() public dealAndStake100000Locks {
+    vm.warp(1 days + 1);
+    goldilocked.claim();
 
-  //   uint256 prgBalance = goldilocked.balanceOf(address(this));
+    assertEq(goldilocked.balanceOf(address(this)), oneDayPrg + prgMintAmount);
+  }
 
-  //   assertEq(prgBalance, oneDayPrg + prgMintAmount);
-  // }
-
-  // function testCalculate1andHalfDayofYield() public dealAndStake100000Locks {
-  //   vm.warp(block.timestamp + 1 days + (1 days / 2));
-  //   goldilocked.claim();
-
-  //   uint256 prgBalance = goldilocked.balanceOf(address(this));
+  function testDayHalfYield() public dealAndStake100000Locks {
+    vm.warp(1 days + (1 days / 2) + 1);
+    goldilocked.claim();
     
-  //   assertEq(prgBalance, OneDayandHalfofYield + prgMintAmount);
-  // }
+    assertEq(goldilocked.balanceOf(address(this)), oneDayHalfPrg + prgMintAmount);
+  }
 
-  // function testCalculate2daysofyield
+  function testTwoDaysYield() public dealAndStake100000Locks {
+    vm.warp(2 days + 1);
+    goldilocked.claim();
 
-    // function testNotGoldilend() public { 
-  //   vm.prank(address(0x01));
-  //   vm.expectRevert(NotGoldilendSelector);
-  //   goldilocked.goldilendMint(address(this), 69e18);
-  // }
+    assertEq(goldilocked.balanceOf(address(this)), twoDaysPrg + prgMintAmount);
+  }
 
-  // function testInvalidUnstake() public dealAndStake100000Locks {
-  //   vm.expectRevert(InvalidUnstakeSelector);
-  //   goldilocked.unstake(locksAmount + 1);
-  // }
+  function testBorrowHoneyFailLimit() public dealAndStake100000Locks dealGoldiswapMaxHoney {
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.InsufficientBorrowLimit.selector));
+    goldilocked.borrow(borrowAmount + 1);
+  }
 
-  // function testLocksBorrowedAgainst() public dealGoldiswapMaxHoney {
-  //   deal(address(goldiswap), address(this), 100000e18);
-  //   goldiswap.approve(address(goldilocked), 100000e18);
-  //   goldilocked.stake(100000e18);
-  //   goldilocked.borrow(1050e18);
-  //   vm.expectRevert(LocksBorrowedAgainstSelector);
-  //   goldilocked.unstake(1e18);
-  // }
+  function testBorrowHoneySuccess() public dealAndStake100000Locks dealGoldiswapMaxHoney {
+    uint256 fee = (borrowAmount / 100) * 3;
+    goldilocked.borrow(borrowAmount);
 
+    assertEq(goldilocked.userLockedLocks(address(this)), locksAmount);
+    assertEq(goldilocked.userBorrowedHoney(address(this)), borrowAmount);
+    assertEq(honey.balanceOf(address(this)), borrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - borrowAmount);
+  }
 
-  // function testClaim() public dealAndStake100000Locks {
-  //   vm.warp(block.timestamp + 1 days);
-  //   goldilocked.claim();
+  function testRepayHoneyFailExcessive() public dealAndStake100000Locks dealGoldiswapMaxHoney {
+    goldilocked.borrow(borrowAmount);
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.ExcessiveRepay.selector));
+    goldilocked.repay(borrowAmount + 1);
+  }
 
-  //   uint256 userBalanceofPrg = goldilocked.balanceOf(address(this));
-  //   uint256 userStakedLocks = goldilocked.userStakedLocks(address(this));
+  function testRepayHoneySuccess() public dealAndStake100000Locks dealGoldiswapMaxHoney {
 
-  //   assertEq(userBalanceofPrg, oneDayPrg + prgMintAmount);
-  //   assertEq(userStakedLocks, locksAmount);
-  // }
-
-  // function testGetClaimable() public dealAndStake100000Locks {
-  //   vm.warp(block.timestamp + 1 days);
-
-  //   uint256 claimable = goldilocked.userClaimablePrg(address(this));
-
-  //   assertEq(claimable, oneDayPrg);
-  // }
-
-  // function testGoldilendMint() public {
-  //   deal(address(goldilend), address(this), 1e18);
-  //   goldilend.approve(address(goldilend), 1e18);
-  //   goldilend.stake(1e18);
-  //   vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 2));
-  //   goldilend.claim();
-
-  //   uint256 userPrgBalance = goldilocked.balanceOf(address(this));
-
-  //   assertEq(userPrgBalance, twoMonthsOfGoldilendStakingYield + prgMintAmount);
-  // }
-
-  // function testInsufficientBorrowLimit() public dealAndStake100000Locks dealGoldiswapMaxHoney {
-  //   vm.expectRevert(InsufficientBorrowLimitSelector);
-  //   goldilocked.borrow(borrowAmount + 1);
-  // }
-
-  // function testExcessiveRepay() public dealAndStake100000Locks dealGoldiswapMaxHoney {
-  //   goldilocked.borrow(borrowAmount);
-  //   vm.expectRevert(ExcessiveRepaySelector);
-  //   goldilocked.repay(borrowAmount + 1);
-  // }
-
-  // function testBorrowLimitCalculation() public dealAndStake100000Locks {
-  //   uint256 limit = goldilocked.userBorrowLimit(address(this));
-
-  //   assertEq(limit, borrowAmount);
-  // }
-
-  // function testBorrowLocks() public dealAndStake100000Locks dealGoldiswapMaxHoney{
-  //   goldilocked.borrow(borrowAmount);
-
-  //   uint256 goldiswapHoneyBalance = honey.balanceOf(address(goldiswap));
-  //   uint256 userHoneyBalance = honey.balanceOf(address(this));
-  //   uint256 locked = goldilocked.userLockedLocks(address(this));
-  //   uint256 borrowed = goldilocked.userBorrowedHoney(address(this));
-
-  //   assertEq(goldiswapHoneyBalance, type(uint256).max - borrowAmount);
-  //   assertEq(userHoneyBalance, borrowAmount);
-  //   assertEq(locked, locksAmount);
-  //   assertEq(borrowed, borrowAmount);
-  // }
+  }
 
   // function testRepay() public dealAndStake100000Locks dealGoldiswapMaxHoney {
   //   goldilocked.borrow(borrowAmount);
@@ -372,6 +304,19 @@ contract GoldilockedTest is Test {
   //   uint256 locked = goldilocked.userLockedLocks(address(this));
 
   //   assertEq(locked, 0);
+  // }
+
+
+  // function testGoldilendMint() public {
+  //   deal(address(goldilend), address(this), 1e18);
+  //   goldilend.approve(address(goldilend), 1e18);
+  //   goldilend.stake(1e18);
+  //   vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 2));
+  //   goldilend.claim();
+
+  //   uint256 userPrgBalance = goldilocked.balanceOf(address(this));
+
+  //   assertEq(userPrgBalance, twoMonthsOfGoldilendStakingYield + prgMintAmount);
   // }
 
 }
