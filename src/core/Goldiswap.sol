@@ -161,7 +161,7 @@ contract Goldiswap is ERC20 {
       uint256 _psl,
       uint256 proceeds
     ) = _sellLoop(fsl, psl, totalSupply(), amount);
-    uint256 tax = (proceeds / 1000) * 53;
+    uint256 tax = (proceeds / 100) * 5;
     if(proceeds - tax < minAmount) revert ExcessiveSlippage();
     fsl = _fsl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _fsl), (_fsl + _psl));
     psl = _psl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _psl), (_fsl + _psl));

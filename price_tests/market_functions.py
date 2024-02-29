@@ -22,7 +22,7 @@ def sell(amount, fsl, psl, supply, floor_price, market_price):
   sale_price += market_price*amount
   fsl -= floor_price*amount
   psl -= (market_price - floor_price)*amount
-  tax = sale_price*0.053
+  tax = sale_price*0.05
   fsl += (tax * fsl / (fsl + psl))
   psl += (tax * psl / (fsl + psl))
   floor_price = fsl/max(supply, 1)

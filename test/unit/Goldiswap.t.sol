@@ -46,7 +46,7 @@ contract GoldiswapTest is Test {
   // uint256 proceedsof10Locks = 5300673535135953225736;
   // uint256 proceedsof10Locks = 5313319664425536973008;
   // uint256 proceedsof10Locks = 6073810997118547534560;
-  uint256 proceedsof10Locks = 248950964192680847;
+  uint256 proceedsof10Locks = 249739615610397845;
 
   bytes4 NotMultisigSelector = 0xf05e412b;
   bytes4 NotGoldilockedSelector = 0xfce9a065;
