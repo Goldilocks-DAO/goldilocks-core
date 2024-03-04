@@ -37,20 +37,10 @@ contract GoldiswapTest is Test {
 
   uint256 initialFSL = 1050000e18;
   uint256 initialPSL = 320000e18;
-
   uint256 txAmount = 10e18;
-  // uint256 costOf10Locks = 5641049601535046139648;
-  // uint256 costOf10Locks = 5627518081751651091792;
-  // uint256 costOf10Locks = 6413739173303640480000;
+  uint256 locksMintAmount = 100000000e18;
   uint256 costOf10Locks = 262883805905681940;
-  // uint256 proceedsof10Locks = 5300673535135953225736;
-  // uint256 proceedsof10Locks = 5313319664425536973008;
-  // uint256 proceedsof10Locks = 6073810997118547534560;
   uint256 proceedsof10Locks = 249739615610397845;
-
-  bytes4 NotMultisigSelector = 0xf05e412b;
-  bytes4 NotGoldilockedSelector = 0xfce9a065;
-  bytes4 ExcessiveSlippageSelector = 0x97c7f537;
 
   function setUp() public {
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(12));
@@ -147,6 +137,7 @@ contract GoldiswapTest is Test {
     bytes memory result = vm.ffi(inputs);
     uint256 pythonFloorPrice = abi.decode(result, (uint256));
     uint256 variance = pythonFloorPrice / 1000;
+
     assert(pythonFloorPrice + variance > floorPrice);
     assert(pythonFloorPrice - variance < floorPrice);
   }
@@ -162,6 +153,7 @@ contract GoldiswapTest is Test {
     bytes memory result = vm.ffi(inputs);
     uint256 pythonFloorPrice = abi.decode(result, (uint256));
     uint256 variance = pythonFloorPrice / 1000;
+
     assert(pythonFloorPrice + variance > floorPrice);
     assert(pythonFloorPrice - variance < floorPrice);
   }
@@ -174,6 +166,7 @@ contract GoldiswapTest is Test {
     bytes memory result = vm.ffi(inputs);
     uint256 pythonMarketPrice = abi.decode(result, (uint256));
     uint256 variance = pythonMarketPrice / 1000;
+
     assert(pythonMarketPrice + variance > marketPrice);
     assert(pythonMarketPrice - variance < marketPrice);
   }
@@ -189,39 +182,41 @@ contract GoldiswapTest is Test {
     bytes memory result = vm.ffi(inputs);
     uint256 pythonMarketPrice = abi.decode(result, (uint256));
     uint256 variance = pythonMarketPrice / 1000;
+
     assert(pythonMarketPrice + variance > marketPrice);
     assert(pythonMarketPrice - variance < marketPrice);
   }
 
-  function testBuy() public dealandApproveUserHoney {
+  function testBuyFailSlippage() public {
+    vm.expectRevert(abi.encodeWithSelector(Goldiswap.ExcessiveSlippage.selector));
+    goldiswap.buy(txAmount, 0);
+  }
+
+  function testBuySuccess() public dealandApproveUserHoney {
     goldiswap.buy(txAmount, type(uint256).max);
 
-    uint256 userLocksBalance = goldiswap.balanceOf(address(this));
-    uint256 userHoneyBalance = honey.balanceOf(address(this));
-
-    assertEq(userLocksBalance, txAmount);
-    assertEq(userHoneyBalance, (type(uint256).max / 2) - costOf10Locks);
+    assertEq(goldiswap.balanceOf(address(this)), txAmount);
+    assertEq(honey.balanceOf(address(this)), (type(uint256).max / 2) - costOf10Locks);
   }
 
-  function testSell() public dealLocks dealGammHoney {
+  function testSellFailSlippage() public {
+    vm.expectRevert(abi.encodeWithSelector(Goldiswap.ExcessiveSlippage.selector));
+    goldiswap.sell(txAmount, type(uint256).max);
+  }
+
+  function testSellSuccess() public dealLocks dealGammHoney {
     goldiswap.sell(txAmount, 0);
 
-    uint256 userLocksBalance = goldiswap.balanceOf(address(this));
-    uint256 userHoneyBalance = honey.balanceOf(address(this));
-
-    assertEq(userLocksBalance, 0);
-    assertEq(userHoneyBalance, proceedsof10Locks);
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(honey.balanceOf(address(this)), proceedsof10Locks);
   }
 
-  function testRedeemed() public dealLocks dealGammHoney {
+  function testRedeemSuccess() public dealLocks dealGammHoney {
     goldiswap.redeem(txAmount);
 
-    uint256 userLocksBalance = goldiswap.balanceOf(address(this));
-    uint256 userHoneyBalance = honey.balanceOf(address(this));
-    uint256 floorPriceof10Locks = goldiswap.floorPrice() * 10;
-
-    assertEq(userLocksBalance, 0);
-    assertEq(userHoneyBalance, floorPriceof10Locks);
+    assertEq(goldiswap.totalSupply(), locksMintAmount - txAmount);
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(honey.balanceOf(address(this)), goldiswap.floorPrice() * 10);
   }
 
   function testSuccessfulTransfer() public dealLocks {
@@ -279,7 +274,7 @@ contract GoldiswapTest is Test {
 
   function testSetMultisigFail() public {
     vm.prank(address(0x69));
-    vm.expectRevert(NotMultisigSelector);
+    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotMultisig.selector));
     goldiswap.setMultisig(address(0x69));
   }
 
@@ -287,39 +282,6 @@ contract GoldiswapTest is Test {
     goldiswap.setMultisig(address(0x69));
     
     assertEq(goldiswap.multisig(), address(0x69));
-  }
-
-  function testDrainGamm() public {
-    uint256 milly = 1000000e18;
-    deal(address(honey), address(this), milly);
-    honey.approve(address(goldiswap), milly);
-    deal(address(honey), address(goldiswap), milly);
-
-    uint256 beforeGammLocks = goldiswap.balanceOf(address(goldiswap));
-    uint256 beforeGammHoney = honey.balanceOf(address(goldiswap));
-    uint256 beforeUserLocks = goldiswap.balanceOf(address(this));
-    uint256 beforeUserHoney = honey.balanceOf(address(this));
-    console.log("before: goldiswap $LOCKS balance", beforeGammLocks);
-    console.log("before: goldiswap $HONEY balance", beforeGammHoney);
-    console.log("before: user $LOCKS balance", beforeUserLocks);
-    console.log("before: user $HONEY balance", beforeUserHoney);
-    console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-
-
-
-    goldiswap.buy(10e18, type(uint256).max);
-
-
-
-    uint256 afterGammLocks = goldiswap.balanceOf(address(goldiswap));
-    uint256 afterGammHoney = honey.balanceOf(address(goldiswap));
-    uint256 afterUserLocks = goldiswap.balanceOf(address(this));
-    uint256 afterUserHoney = honey.balanceOf(address(this));
-    console.log("after: goldiswap $LOCKS balance", afterGammLocks);
-    console.log("after: goldiswap $HONEY balance", afterGammHoney);
-    console.log("after: user $LOCKS balance", afterUserLocks);
-    console.log("after: user $HONEY balance", afterUserHoney);
-    console.log(beforeUserHoney - afterUserHoney);
   }
 
 }
