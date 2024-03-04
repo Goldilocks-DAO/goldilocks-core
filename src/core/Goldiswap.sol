@@ -173,7 +173,7 @@ contract Goldiswap is ERC20 {
 
   /// @notice Redeems $LOCKS tokens for floor value
   /// @param amount Amount of $LOCKS to redeem
-  function redeem(uint256 amount) public {
+  function redeem(uint256 amount) external {
     uint256 _rawTotal = FixedPointMathLib.mulWad(amount, _floorPrice(fsl, totalSupply()));
     fsl -= _rawTotal;
     _floorRaise();

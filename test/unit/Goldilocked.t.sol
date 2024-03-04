@@ -86,14 +86,16 @@ contract GoldilockedTest is Test {
     );
     govlocks = new govLOCKS(address(goldiswap), address(goldigovComputed), address(goldilockedComputed));
     timelock = new Timelock(address(goldigovComputed), 5 days);
-    address[] memory allocationsAddress = new address[](3);
+    address[] memory allocationsAddress = new address[](4);
     allocationsAddress[0] = address(0x69);
     allocationsAddress[1] = address(0x420);
     allocationsAddress[2] = address(0x42069);
-    uint256[] memory allocationsAmt = new uint256[](3);
+    allocationsAddress[3] = address(0x69420);
+    uint256[] memory allocationsAmt = new uint256[](4);
     allocationsAmt[0] = 12000000e18;
     allocationsAmt[1] = 12000000e18;
     allocationsAmt[2] = 10000000e18;
+    allocationsAmt[3] = 7000000e18;
     goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt);
     goldigov = new Goldigovernor(address(timelock), address(govlocks), address(this), 5761, 69, 4e18);
 
@@ -261,7 +263,6 @@ contract GoldilockedTest is Test {
   }
 
   function testBorrowHoneySuccess() public dealAndStake100000Locks dealGoldiswapMaxHoney {
-    uint256 fee = (borrowAmount / 100) * 3;
     goldilocked.borrow(borrowAmount);
 
     assertEq(goldilocked.userLockedLocks(address(this)), locksAmount);
@@ -277,34 +278,40 @@ contract GoldilockedTest is Test {
   }
 
   function testRepayHoneySuccess() public dealAndStake100000Locks dealGoldiswapMaxHoney {
+    goldilocked.borrow(borrowAmount);
+    honey.approve(address(goldilocked), borrowAmount);
+    goldilocked.repay(borrowAmount);
 
+    assertEq(goldilocked.lockedLocks(address(this)), 0);
+    assertEq(goldilocked.borrowedHoney(address(this)), 0);
+    assertEq(goldilocked.stakedLocks(address(this)), locksAmount);
+    assertEq(honey.balanceOf(address(this)), 0);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max);
   }
 
-  // function testRepay() public dealAndStake100000Locks dealGoldiswapMaxHoney {
-  //   goldilocked.borrow(borrowAmount);
-  //   honey.approve(address(goldilocked), borrowAmount);
-  //   goldilocked.repay(borrowAmount);
+  function testHalfRepayHoneySuccess() public dealAndStake100000Locks dealGoldiswapMaxHoney {
+    goldilocked.borrow(borrowAmount);
+    honey.approve(address(goldilocked), borrowAmount);
+    goldilocked.repay(borrowAmount / 2);
 
-  //   uint256 locked = goldilocked.userLockedLocks(address(this));
-  //   uint256 borrowed = goldilocked.userBorrowedHoney(address(this));
-  //   uint256 userHoneyBalance = honey.balanceOf(address(this));
-  //   uint256 userStakedLocksBalance = goldilocked.userStakedLocks(address(this));
+    assertEq(goldilocked.lockedLocks(address(this)), locksAmount / 2);
+    assertEq(goldilocked.borrowedHoney(address(this)), borrowAmount / 2);
+    assertEq(goldilocked.stakedLocks(address(this)), locksAmount);
+    assertEq(honey.balanceOf(address(this)), borrowAmount / 2);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - (borrowAmount / 2));
+  }
 
-  //   assertEq(locked, 0);
-  //   assertEq(borrowed, 0);
-  //   assertEq(userHoneyBalance, 0);
-  //   assertEq(userStakedLocksBalance, locksAmount);
-  // }
+  function testVesting() public {
+    vm.prank(address(0x69420));
+    // vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    // goldilocked.unstake(1);
 
-  // function testLockedAfterRepay() public dealAndStake100000Locks dealGoldiswapMaxHoney {
-  //   goldilocked.borrow(borrowAmount);
-  //   honey.approve(address(goldilocked), type(uint256).max);
-  //   goldilocked.repay(borrowAmount);
+    uint256 vest = goldilocked._vestingCheck(address(0x69420), 1);
 
-  //   uint256 locked = goldilocked.userLockedLocks(address(this));
+    assertEq(vest, 0);
+  }
 
-  //   assertEq(locked, 0);
-  // }
+  
 
 
   // function testGoldilendMint() public {
