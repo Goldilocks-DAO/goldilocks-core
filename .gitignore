@@ -9,3 +9,5 @@ whitelist/node_modules
 
 .env
 lib/
+
+price_tests/__pycache__

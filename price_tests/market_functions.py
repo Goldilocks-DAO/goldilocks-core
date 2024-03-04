@@ -72,3 +72,6 @@ def floor_raise(target, fsl, psl, supply, floor_price, market_price):
     floor_price = fsl/supply
     market_price = floor_price + ((psl/max(supply, 1))*((psl+fsl)/max(fsl, 1))**6)  
   return target, fsl, psl, supply, floor_price, market_price
+
+def get_initital_target_ratio():
+  return 0.32

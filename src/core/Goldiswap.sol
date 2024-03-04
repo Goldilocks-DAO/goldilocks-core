@@ -40,7 +40,7 @@ contract Goldiswap is ERC20 {
 
   uint256 public fsl;
   uint256 public psl;
-  uint256 public targetRatio = 36e16;
+  uint256 public targetRatio = 32e16;
 
   uint256 public lastFloorRaise;
   uint256 public lastFloorDecrease;
@@ -145,9 +145,9 @@ contract Goldiswap is ERC20 {
     if(price + tax > maxAmount) revert ExcessiveSlippage();
     fsl = _fsl;
     psl = _psl;
-    _floorRaise();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), price);
     SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
+    _floorRaise();
     _mint(msg.sender, amount);
     emit Buy(msg.sender, amount);
   }

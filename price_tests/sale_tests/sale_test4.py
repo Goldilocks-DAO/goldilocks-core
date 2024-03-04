@@ -1,6 +1,6 @@
 import sys
 sys.path.append('price_tests')
-from market_functions import sell
+from market_functions import sell, get_initital_target_ratio
 from eth_abi import encode
 
 fsl = 6300000
@@ -8,7 +8,7 @@ psl = 3100000
 supply = 3124
 floor_price = fsl/supply
 market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**6)
-target = 0.36
+target = get_initital_target_ratio()
 
 sold = 0
 while (sold < 2000):
