@@ -135,14 +135,14 @@ contract Goldilocked is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Returns the staked $LOCKS of an address
-  /// @param user Address to view staked $LOCKS
+  /// @notice Returns the staked $LOCKS of a user
+  /// @param user Address of user
   function userStakedLocks(address user) external view returns (uint256) {
     return stakedLocks[user];
   }
 
-  /// @notice Returns the claimable yield of an address
-  /// @param user Address to view claimable yield
+  /// @notice Returns the claimable yield of a user
+  /// @param user Address of user
   function userClaimablePrg(address user) external view returns (uint256) {
     uint256 currentRewards = _calculateCurrentRewards(stakedLocks[user]);
     return currentRewards - prgRewardDebt[user];
@@ -150,24 +150,27 @@ contract Goldilocked is ERC20 {
 
   /// @notice Returns the locked $LOCKS of a user
   /// @param user Address of user
-  /// @return locked $LOCKS of user
   function userLockedLocks(address user) external view returns (uint256) {
     return lockedLocks[user];
   }
 
   /// @notice Returns the borrowed $HONEY of a user
   /// @param user Address of user
-  /// @return borrowed $HONEY of user
   function userBorrowedHoney(address user) external view returns (uint256) {
     return borrowedHoney[user];
   }
 
   /// @notice Returns the borrow limit of a user
   /// @param user Address of user
-  /// @return limit Limit of user
   function userBorrowLimit(address user) external view returns (uint256) {
     uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
     return _borrowLimit(user, floorPrice);
+  }
+
+  /// @notice Returns the amount of unvested $LOCKS of a user
+  /// @param user Address of user
+  function userVestingCheck(address user) external view returns (uint256) {
+    return _vestingCheck(user, type(uint256).max);
   }
 
 
@@ -311,7 +314,7 @@ contract Goldilocked is ERC20 {
   /// @notice Calculates the amount of vested tokens for the user
   /// @param user Address of unstaker
   /// @param amount Amount of $LOCKS to unstake
-  function _vestingCheck(address user, uint256 amount) public view returns (uint256) {
+  function _vestingCheck(address user, uint256 amount) internal view returns (uint256) {
     uint256 teamAllocation = 10000000e18;
     uint256 initialAllocation = initialAllocations[user];
     if(initialAllocation > 0) {
@@ -344,7 +347,7 @@ contract Goldilocked is ERC20 {
     _mint(to, amount);
   }
 
-  function changeEmissions(uint256 newEmissions) external {
+  function changePorridgeEmissions(uint256 newEmissions) external {
     if(msg.sender != multisig) revert NotMultisig();
     ANNUAL_PORRIDGE_EMISSIONS = newEmissions;
   }

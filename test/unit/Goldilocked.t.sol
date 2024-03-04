@@ -301,29 +301,60 @@ contract GoldilockedTest is Test {
     assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - (borrowAmount / 2));
   }
 
-  function testVesting() public {
-    vm.prank(address(0x69420));
-    // vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
-    // goldilocked.unstake(1);
-
-    uint256 vest = goldilocked._vestingCheck(address(0x69420), 1);
-
-    assertEq(vest, 0);
+  function testTeamVest() public {    
+    assertEq(goldilocked.userVestingCheck(address(0x69)), 0);
   }
 
-  
+  function testNonTeamVest() public {
+    assertEq(goldilocked.userVestingCheck(address(0xaaa)), type(uint256).max);
+  }
 
+  function testSeedRoundNoVest() public {
+    assertEq(goldilocked.userVestingCheck(address(0x69420)), 0);
+  }
 
-  // function testGoldilendMint() public {
-  //   deal(address(goldilend), address(this), 1e18);
-  //   goldilend.approve(address(goldilend), 1e18);
-  //   goldilend.stake(1e18);
-  //   vm.warp(block.timestamp + (goldilend.MONTH_DAYS() * 2));
-  //   goldilend.claim();
+  function testSeedRoundFullVest() public {
+    vm.warp(90 days + 365 days + 1);
+    assertEq(goldilocked.userVestingCheck(address(0x69420)), 7000000e18);
+  }
 
-  //   uint256 userPrgBalance = goldilocked.balanceOf(address(this));
+  function testGoldilendMintFailGoldilend() public {
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotGoldilend.selector));
+    goldilocked.goldilendMint(address(this), 69);
+  }
 
-  //   assertEq(userPrgBalance, twoMonthsOfGoldilendStakingYield + prgMintAmount);
-  // }
+  function testGoldilendMintSuccess() public {
+    deal(address(goldilend), address(this), 1e18);
+    goldilend.approve(address(goldilend), 1e18);
+    goldilend.stake(1e18);
+    vm.warp(block.timestamp + 60 days);
+    goldilend.claim();
+
+    assertEq(goldilocked.balanceOf(address(this)), twoMonthsOfGoldilendStakingYield + prgMintAmount);
+  }
+
+  function testChangePorridgeEmissionsFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotMultisig.selector));
+    goldilocked.changePorridgeEmissions(69);
+  }
+
+  function testChangePorridgeEmissionsSuccess() public {
+    goldilocked.changePorridgeEmissions(69);
+
+    assertEq(goldilocked.ANNUAL_PORRIDGE_EMISSIONS(), 69);
+  }
+
+  function testMintPorridgeFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotMultisig.selector));
+    goldilocked.mintPorridge(69);
+  }
+
+  function testMintPorridgeSuccess() public {
+    goldilocked.mintPorridge(69);
+
+    assertEq(goldilocked.balanceOf(address(this)), 69 + prgMintAmount);
+  }
 
 }
