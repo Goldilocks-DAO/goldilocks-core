@@ -300,17 +300,19 @@ contract Goldiswap is ERC20 {
     }
   }
 
-  /// @notice If targetRatio of PSL and FSL is exceeded, increases the FSL and target ratio and decrease the PSL
+  /// @notice If target ratio of the PSL and FSL is exceeded, increases the FSL and target ratio and decreases the PSL
   /// @dev raiseAmount = (psl / fsl) * (psl / 32)
   /// @dev targetRatio increases by targetRatio / 50
   function _floorRaise() internal {
     uint256 currentRatio = FixedPointMathLib.divWad(psl, fsl);
-    if(currentRatio >= targetRatio && currentRatio < MAX_RATIO) {
+    if(currentRatio > targetRatio) {
       uint256 raiseAmount = FixedPointMathLib.mulWad(currentRatio, psl / 32);
       psl -= raiseAmount;
       fsl += raiseAmount;
-      targetRatio += targetRatio / 50;
       lastFloorRaise = block.timestamp;
+      if(currentRatio < MAX_RATIO) {
+        targetRatio += targetRatio / 50;
+      }
     }
   }
 
