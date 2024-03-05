@@ -30,7 +30,6 @@ for transaction, amount in transactions:
     target, fsl, psl, supply, floor_price, market_price = transaction(target, fsl, psl, supply, floor_price, market_price)
   else:
     fsl, psl, supply, floor_price, market_price = transaction(amount, fsl, psl, supply, floor_price, market_price)
-    print("Price:", market_price, "Floor price:", floor_price)
 
 market_price *= (10 ** 18)
 enc = encode(['uint256'], [int(market_price)])

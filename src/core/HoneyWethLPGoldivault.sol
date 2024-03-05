@@ -79,7 +79,7 @@ contract HoneyWethLPGoldivault is Goldivault {
     uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
     uint256 yieldTokensLength = yieldTokens.length;
     for(uint8 i; i < yieldTokensLength; ++i) {
-      SafeTransferLib.safeTransfer(yieldTokens[i], multisig, (ERC20(yieldTokens[i]).balanceOf(address(this)) / 100) * fee);
+      SafeTransferLib.safeTransfer(yieldTokens[i], multisig, (ERC20(yieldTokens[i]).balanceOf(address(this)) / 100) * yieldFee);
     }
     InfraredBGTVault(ibgtvault).stake(ibgtrewards);
   }

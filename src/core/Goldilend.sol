@@ -24,7 +24,7 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import { IConsensusVault } from "../mock/IConsensusVault.sol";
+import { iBGTVault } from "../mock/iBGTVault.sol";
 
 
 /// @title Goldilend
@@ -83,6 +83,7 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   uint256 public emissionsStart;
   uint256 public totalValuation;
+  uint256 public targetTVL;
   uint256 public protocolInterestRate;
   uint256 public outstandingDebt;
   uint256 public poolSize;
@@ -112,7 +113,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param _multisig Address of the GoldilocksDAO multisig
   /// @param _hj Address of Honeyjar
   /// @param _ibgt Address of $iBGT
-  /// @param _vault Address of Consensus Vault
+  /// @param _vault Address of iBGTVault
   /// @param _partnerNFTs Partnership NFTs
   /// @param _partnerNFTBoosts Partnership NFTs Boosts
   constructor(
@@ -528,6 +529,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       average = 180 days;
     }
     rate = porridgeMultiple - FixedPointMathLib.mulWad(porridgeMultiple, FixedPointMathLib.divWad(average, 180 days));
+    // rate = FixedPointMathLib.mulWad(rate, (1- FixedPointMathLib.divWad(poolSize, targetTVL)));
   }
 
   /// @notice Calculates the fair value of NFTs being borrowed against
@@ -574,8 +576,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param ibgtAmount Amount of $iBGT to stake
   function _refreshiBGT(uint256 ibgtAmount) internal {
     IERC20(ibgt).approve(vault, ibgtAmount);
-    uint256 rewards = IConsensusVault(vault).deposit(ibgtAmount);
-    poolSize += rewards;
+    iBGTVault(vault).stake(ibgtAmount);
+    poolSize += 5e18;
   }
 
   /// @notice Calculates the amount of $giBGT to mint
@@ -694,15 +696,19 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   /// @notice Allows the DAO to adjust the valuation of the NFTs to borrow against
   /// @param _totalValuation Total valuation of all NFTs able to be borrowed against
+  // /// @param _targetTVKL Target TVL of the protocol
   /// @param _nfts NFTs that are able to be borrowed against
   /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation
-  function setValue(
-    uint256 _totalValuation, 
+  // function inititalizeProtocol(
+    function setValue(
+    uint256 _totalValuation,
+    // uint256 _targetTVL,
     address[] calldata _nfts,
     uint256[] calldata _nftFairValues
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
     totalValuation = _totalValuation;
+    // targetTVL = _targetTVL;
     for(uint256 i; i < _nftFairValues.length; i++) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
     }

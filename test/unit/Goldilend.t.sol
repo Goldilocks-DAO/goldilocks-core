@@ -18,7 +18,7 @@ import { HoneyComb } from "../../src/mock/HoneyComb.sol";
 import { Beradrome } from "../../src/mock/Beradrome.sol";
 import { BondBear } from "../../src/mock/BondBear.sol";
 import { BandBear } from "../../src/mock/BandBear.sol";
-import { ConsensusVault } from "../../src/mock/ConsensusVault.sol";
+import { iBGTVault } from "../../src/mock/iBGTVault.sol";
 
 contract GoldilendTest is Test, IERC721Receiver {
 
@@ -36,7 +36,7 @@ contract GoldilendTest is Test, IERC721Receiver {
   Beradrome beradrome;
   BondBear bondbear;
   BandBear bandbear;
-  ConsensusVault consensusvault;
+  iBGTVault ibgtvault;
 
   uint256 initialFSL = 1050000e18;
   uint256 initialPSL = 320000e18;
@@ -75,7 +75,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     beradrome = new Beradrome();
     bondbear = new BondBear();
     bandbear = new BandBear();
-    consensusvault = new ConsensusVault(address(ibgt));
+    ibgtvault = new iBGTVault(address(ibgt), address(ibgt));
 
     goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this));
 
@@ -100,7 +100,7 @@ contract GoldilendTest is Test, IERC721Receiver {
       address(this),
       honeyjar,
       address(ibgt),
-      address(consensusvault),
+      address(ibgtvault),
       boostNfts,
       boosts
     );
@@ -128,7 +128,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     goldilend.setDurations(7 days, 21 days);
     goldilend.setBorrowingActive(true);
     deal(address(ibgt), address(goldilend), startingPoolSize);
-    deal(address(ibgt), address(consensusvault), type(uint256).max / 2);
+    deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
   }
 
   modifier dealUserBera() {
@@ -292,7 +292,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     ibgt.approve(address(goldilend), type(uint256).max);
     goldilend.lock(100e18);
     vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
-    vm.store(address(goldilend), bytes32(uint256(14)), bytes32(uint256(1000e18)));
+    vm.store(address(goldilend), bytes32(uint256(15)), bytes32(uint256(1000e18)));
 
     uint256 giBGTRatio = goldilend.getgiBGTRatio();
 

@@ -39,7 +39,8 @@ abstract contract Goldivault {
   uint256 public startTime;
   uint256 public endTime;
   uint256 public concludeTime;
-  uint256 public fee;
+  uint256 public earlyWithdrawalFee;
+  uint256 public yieldFee;
   uint256 public delay;
   uint256 public duration;
   address public ot;
@@ -141,7 +142,7 @@ abstract contract Goldivault {
     OwnershipToken(ot).burnOT(msg.sender, amount);
     YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken(amount);
-    uint256 _fee = fee;
+    uint256 _fee = earlyWithdrawalFee;
     if(remainingTime > 0) {
       SafeTransferLib.safeTransfer(depositToken, msg.sender, (amount / 1000) * (1000 - _fee));
       SafeTransferLib.safeTransfer(depositToken, multisig, (amount / 1000) * _fee);
@@ -183,15 +184,15 @@ abstract contract Goldivault {
   }
 
   /// @notice Allows DAO to set early withdrawal fee
-  function setEarlyWithdrawalFee(uint256 _fee) external {
+  function setEarlyWithdrawalFee(uint256 _earlyWithdrawalFee) external {
     if(msg.sender != multisig) revert NotMultisig();
-    fee = _fee;
+    earlyWithdrawalFee = _earlyWithdrawalFee;
   }
 
   /// @notice Allows DAO to set protocol parameters
-  function setParameters(uint256 _fee, uint256 _delay, uint256 _duration) external {
+  function setParameters(uint256 _yieldFee, uint256 _delay, uint256 _duration) external {
     if(msg.sender != multisig) revert NotMultisig();
-    fee = _fee;
+    yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
     endTime = block.timestamp + _duration;

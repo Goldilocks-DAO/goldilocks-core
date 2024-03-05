@@ -68,7 +68,7 @@ contract HoneyWethLPGoldivaultTest is Test {
   function testsetEarlyWithdrawalFeeSuccess() public {
     honeywethlpgoldivault.setEarlyWithdrawalFee(69);
 
-    assertEq(honeywethlpgoldivault.fee(), 69);
+    assertEq(honeywethlpgoldivault.earlyWithdrawalFee(), 69);
   }
 
   function testSetEarlyWithdrawalFeeFailCaller() public {
@@ -81,7 +81,7 @@ contract HoneyWethLPGoldivaultTest is Test {
   function testSetParametersSuccess() public {
     honeywethlpgoldivault.setParameters(69, 69, 69);
     
-    assertEq(honeywethlpgoldivault.fee(), 69);
+    assertEq(honeywethlpgoldivault.yieldFee(), 69);
     assertEq(honeywethlpgoldivault.delay(), 69);
     assertEq(honeywethlpgoldivault.duration(), 69);
   }
