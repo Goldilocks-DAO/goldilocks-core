@@ -269,6 +269,50 @@ contract GoldiswapPriceTest is Test {
     assert(pythonMarketPrice - variance < solidityMarketPrice);
   }
 
+  function testMixed4() public dealandApproveUserHoney dealUserLocks dealGammHoney {
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(600000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(180000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100000000e18)));
+    goldiswap.buy(6000000e18, type(uint256).max);
+    goldiswap.sell(8000000e18, 0);
+    goldiswap.buy(14000000e18, type(uint256).max);
+    goldiswap.sell(12900000e18, 0);
+    goldiswap.buy(23500000e18, type(uint256).max);
+    goldiswap.redeem(2500000e18);
+    goldiswap.sell(1500000e18, 0);
+    uint256 solidityMarketPrice = goldiswap.marketPrice();
+    string[] memory inputs = new string[](2);
+    inputs[0] = "python3";
+    inputs[1] = "price_tests/mixed_tests/mixed_test4.py";
+    bytes memory result = vm.ffi(inputs);
+    uint256 pythonMarketPrice = abi.decode(result, (uint256));
+    uint256 variance = pythonMarketPrice / 1000;
+    assert(pythonMarketPrice + variance > solidityMarketPrice);
+    assert(pythonMarketPrice - variance < solidityMarketPrice);
+  }
+
+  function testMixed5() public dealandApproveUserHoney dealUserLocks dealGammHoney {
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(600000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(180000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100000000e18)));
+    goldiswap.buy(1000000e18, type(uint256).max);
+    goldiswap.sell(2000000e18, 0);
+    goldiswap.buy(13000000e18, type(uint256).max);
+    goldiswap.sell(17100000e18, 0);
+    goldiswap.buy(19808759e18, type(uint256).max);
+    goldiswap.redeem(5000000e18);
+    goldiswap.sell(1700000e18, 0);
+    uint256 solidityMarketPrice = goldiswap.marketPrice();
+    string[] memory inputs = new string[](2);
+    inputs[0] = "python3";
+    inputs[1] = "price_tests/mixed_tests/mixed_test5.py";
+    bytes memory result = vm.ffi(inputs);
+    uint256 pythonMarketPrice = abi.decode(result, (uint256));
+    uint256 variance = pythonMarketPrice / 1000;
+    assert(pythonMarketPrice + variance > solidityMarketPrice);
+    assert(pythonMarketPrice - variance < solidityMarketPrice);
+  }
+
   function testRedeem1() public dealUserLocks dealGammHoney {
     uint256 redeemed;
     while(redeemed < 400) {
