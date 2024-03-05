@@ -34,7 +34,6 @@ contract Goldiswap is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   
-  uint256 public immutable DAYS_SECONDS = 86400;
   uint256 public immutable MAX_FLOOR_REDUCE = 5e18;
   uint256 public immutable MAX_RATIO = 45e16;
 
@@ -145,9 +144,9 @@ contract Goldiswap is ERC20 {
     if(price + tax > maxAmount) revert ExcessiveSlippage();
     fsl = _fsl;
     psl = _psl;
+    _floorRaise();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), price);
     SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
-    _floorRaise();
     _mint(msg.sender, amount);
     emit Buy(msg.sender, amount);
   }
@@ -218,9 +217,6 @@ contract Goldiswap is ERC20 {
     uint256 floor;
     uint256 _buyPrice;
     uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
-    if(increment == 0) {
-      increment = 1000e18;
-    }
     while(leftover >= increment) {
       market = _marketPrice(_fsl, _psl, _supply);
       floor = _floorPrice(_fsl, _supply);
@@ -262,9 +258,6 @@ contract Goldiswap is ERC20 {
     uint256 floor;
     uint256 proceeds;
     uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
-    if(increment == 0) {
-      increment = 1000e18;
-    }
     while(leftover >= increment) {
       market = _marketPrice(_fsl, _psl, _supply);
       floor = _floorPrice(_fsl, _supply);
@@ -322,8 +315,8 @@ contract Goldiswap is ERC20 {
   function _floorReduce() internal {
     uint256 elapsedRaise = block.timestamp - lastFloorRaise;
     uint256 elapsedDrop = block.timestamp - lastFloorDecrease;
-    if (elapsedRaise >= DAYS_SECONDS && elapsedDrop >= DAYS_SECONDS) {
-      uint256 decreaseFactor = FixedPointMathLib.divWad(elapsedRaise, DAYS_SECONDS);
+    if (elapsedRaise >= 1 days && elapsedDrop >= 1 days) {
+      uint256 decreaseFactor = FixedPointMathLib.divWad(elapsedRaise, 1 days);
       if(decreaseFactor > MAX_FLOOR_REDUCE) {
         targetRatio = FixedPointMathLib.mulWad(targetRatio / 100, 100e18 - MAX_FLOOR_REDUCE);
       }

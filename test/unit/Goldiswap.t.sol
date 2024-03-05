@@ -211,77 +211,117 @@ contract GoldiswapTest is Test {
     assertEq(honey.balanceOf(address(this)), proceedsof10Locks);
   }
 
-  // function testRedeemSuccess() public dealLocks dealGammHoney {
-  //   goldiswap.redeem(txAmount);
+  function testRedeemSuccess() public dealLocks dealGammHoney {
+    uint256 rawTotal = 105000000000000000;
+    goldiswap.redeem(txAmount);
 
-  //   assertEq(goldiswap.totalSupply(), locksMintAmount - txAmount);
-  //   assertEq(goldiswap.balanceOf(address(this)), 0);
-  //   assertEq(honey.balanceOf(address(this)), goldiswap.floorPrice() * 10);
-  // }
+    assertEq(goldiswap.fsl(), initialFSL - rawTotal);
+    assertEq(goldiswap.totalSupply(), locksMintAmount - txAmount);
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(honey.balanceOf(address(this)), goldiswap.floorPrice() * 10);
+  }
 
-  // function testSuccessfulTransfer() public dealLocks {
-  //   // bytes4(keccak256(bytes('transfer(address,uint256)')));
-  //   (bool success, bytes memory data) = address(goldiswap).call(abi.encodeWithSelector(0xa9059cbb, address(0x01), 5e18));
-  //   require(data.length == 0 || abi.decode(data, (bool)), 'transfer failed');
-  //   assertEq(true, success);
-  //   assertEq(goldiswap.balanceOf(address(0x01)), 5e18);
-  // }
+  function testFloorReduce() public {
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(12424533327755417665454800)));
+    vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(6069210257394481945730874)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(8402860035123450385400)));
+    vm.store(address(goldiswap), bytes32(uint256(4)), bytes32(uint256(1692551675)));
+    deal(address(honey), address(this), 1251210488977958997148919);
+    deal(address(goldiswap), address(this), 543082473864185130000);
+    deal(address(honey), address(goldiswap), 16442576931719627115185675);
+    vm.warp(1692836841);
+    goldiswap.sell(5000000000000000000, 9886383387107016000000);
 
-  // function testFloorReduce() public {
-  //   vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(12424533327755417665454800)));
-  //   vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(6069210257394481945730874)));
-  //   vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(8402860035123450385400)));
-  //   vm.store(address(goldiswap), bytes32(uint256(4)), bytes32(uint256(1692551675)));
+    assertEq(goldiswap.targetRatio(), 304000000000000000);
+  }
 
-  //   deal(address(honey), address(this), 1251210488977958997148919);
-  //   deal(address(goldiswap), address(this), 543082473864185130000);
-  //   deal(address(honey), address(goldiswap), 16442576931719627115185675);
+  function testFloorReduceMax() public {
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(12424533327755417665454800)));
+    vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(6069210257394481945730874)));
+    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(8402860035123450385400)));
+    vm.store(address(goldiswap), bytes32(uint256(4)), bytes32(uint256(1692551675)));
+    deal(address(honey), address(this), 1251210488977958997148919);
+    deal(address(goldiswap), address(this), 543082473864185130000);
+    deal(address(honey), address(goldiswap), 16442576931719627115185675);
+    vm.warp(1693936841);
+    goldiswap.sell(5000000000000000000, 9886383387107016000000);
 
-  //   vm.warp(1692836841);
-  //   goldiswap.sell(5000000000000000000, 9886383387107016000000);
+    assertEq(goldiswap.targetRatio(), 304000000000000000);
+  }
 
-  //   assertEq(goldiswap.targetRatio(), 342000000000000000);
-  // }
+  function testFloorReduceNoReduce() public dealLocks dealGammHoney {
+    goldiswap.sell(txAmount, 0);
 
-  // function testMaxFloorReduce() public {
-  //   vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(12424533327755417665454800)));
-  //   vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(6069210257394481945730874)));
-  //   vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(8402860035123450385400)));
-  //   vm.store(address(goldiswap), bytes32(uint256(4)), bytes32(uint256(1692551675)));
+    assertEq(goldiswap.targetRatio(), 32e16);
+  }
 
-  //   deal(address(honey), address(this), 1251210488977958997148919);
-  //   deal(address(goldiswap), address(this), 543082473864185130000);
-  //   deal(address(honey), address(goldiswap), 16442576931719627115185675);
+  function testBorrowTransferFailGoldilocked() public {
+    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotGoldilocked.selector));
+    goldiswap.borrowTransfer(address(0x69), 69, 69);
+  }
 
-  //   vm.warp(1693936841);
-  //   goldiswap.sell(5000000000000000000, 9886383387107016000000);
+  function testBorrowTransferSuccess() public {
+    uint256 locksAmount = 100000e18;
+    uint256 borrowAmount = 1050e18;
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldilocked.stake(locksAmount);
+    deal(address(honey), address(goldiswap), type(uint256).max);
+    goldilocked.borrow(borrowAmount);
 
-  //   assertEq(goldiswap.targetRatio(), 342000000000000000);
-  // }
+    assertEq(honey.balanceOf(address(this)), borrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - borrowAmount);
+  }
 
-  // function testInjectLiquidity() public {
-  //   uint256 fsltemp = goldiswap.fsl();
-  //   uint256 psltemp = goldiswap.psl();
-  //   uint256 injected = 69e18;
-  //   deal(address(honey), address(this), injected * 2);
-  //   honey.approve(address(goldiswap), injected * 2);
-  //   goldiswap.injectLiquidity(injected, injected);
+  function testPorridgeMintFailGoldilocked() public {
+    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotGoldilocked.selector));
+    goldiswap.porridgeMint(address(0x69), 69);
+  }
 
-  //   assertEq(goldiswap.fsl(), fsltemp + injected);
-  //   assertEq(goldiswap.psl(), psltemp + injected);
-  //   assertEq(honey.balanceOf(address(goldiswap)), injected * 2);
-  // }
+  function testPorridgeMintSuccess() public {
+    uint256 locksAmount = 100000e18;
+    uint256 oneDayPrg = 136986301369863000000;
+    uint256 oneDayPrgCost = 1438356164383561500;
+    uint256 oneDayLocksProceeds = 136986301369863000000;
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldilocked.stake(locksAmount);
+    deal(address(honey), address(this), oneDayPrgCost);
+    honey.approve(address(goldilocked), oneDayPrgCost);
+    vm.warp(1 days + 1);
+    goldilocked.unstake(locksAmount);
+    goldilocked.stir(oneDayPrg);
 
-  // function testSetMultisigFail() public {
-  //   vm.prank(address(0x69));
-  //   vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotMultisig.selector));
-  //   goldiswap.setMultisig(address(0x69));
-  // }
+    assertEq(goldiswap.balanceOf(address(this)), oneDayLocksProceeds + locksAmount);
+  }
 
-  // function testSetMultisig() public {
-  //   goldiswap.setMultisig(address(0x69));
-    
-  //   assertEq(goldiswap.multisig(), address(0x69));
-  // }
+  function testInjectLiquidityFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotMultisig.selector));
+    goldiswap.injectLiquidity(69, 69);
+  }
+
+  function testInjectLiquiditySuccess() public {
+    deal(address(honey), address(this), 69+69);
+    honey.approve(address(goldiswap), 69+69);
+    goldiswap.injectLiquidity(69, 69);
+
+    assertEq(goldiswap.fsl(), initialFSL + 69);
+    assertEq(goldiswap.psl(), initialPSL + 69);
+    assertEq(honey.balanceOf(address(goldiswap)), 69+69);
+    assertEq(honey.balanceOf(address(this)), 0);
+  }
+
+  function testSetMultisigFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotMultisig.selector));
+    goldiswap.setMultisig(address(0x69));
+  }
+
+  function testSetMultisigSuccess() public {
+    goldiswap.setMultisig(address(0x69));
+
+    assertEq(goldiswap.multisig(), address(0x69));
+  }
 
 }
