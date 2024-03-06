@@ -81,7 +81,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => uint8) public partnerNFTBoosts;
   mapping(address => uint256) public nftFairValues;
 
-  uint256 public emissionsStart;
+  uint256 public deployTime;
   uint256 public totalValuation;
   uint256 public targetTVL;
   uint256 public protocolInterestRate;
@@ -138,7 +138,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     hj = _hj;
     ibgt = _ibgt;
     vault = _vault;
-    emissionsStart = block.timestamp;
+    deployTime = block.timestamp;
     for(uint8 i; i < _partnerNFTs.length; i++) {
       partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
     }
@@ -453,7 +453,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     outstandingDebt -= repayAmount - interest;
     loans[msg.sender][index].borrowedAmount -= repayAmount;
     loans[msg.sender][index].interest -= interest;
-    poolSize += (interest / 100) * 95;
+    poolSize += (userLoan.interest / 1000) * (1000 - (multisigShare + honeyjarShare));
     if(userLoan.borrowedAmount - repayAmount == 0) {
       for(uint256 i; i < userLoan.collateralNFTs.length; i++){
         IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
@@ -473,14 +473,17 @@ contract Goldilend is ERC20, IERC721Receiver {
     if(block.timestamp < userLoan.endDate || userLoan.liquidated) revert Unliquidatable();
     loans[user][index].liquidated = true;
     loans[user][index].borrowedAmount = 0;
-    poolSize += (userLoan.interest / 1000) * (multisigShare + honeyjarShare);
     outstandingDebt -= userLoan.borrowedAmount - userLoan.interest;
+    if(msg.sender != multisig || block.timestamp < userLoan.endDate + 5 days) {
+      poolSize += (userLoan.interest / 1000) * (1000 - (multisigShare + honeyjarShare));
+      _updateInterestClaims(userLoan.interest);
+      SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), userLoan.borrowedAmount);
+    }
+    else {
+      poolSize -= userLoan.borrowedAmount - userLoan.interest;
+    }
     for(uint256 i; i < userLoan.collateralNFTs.length; i++) {
       IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
-    }
-    _updateInterestClaims(userLoan.interest);
-    if(msg.sender != multisig || block.timestamp < userLoan.endDate + 5 days) {
-      SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), userLoan.borrowedAmount);
     }
     emit Liquidation(msg.sender, user, userLoan.borrowedAmount);
   }
@@ -520,11 +523,11 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @dev rate = porridgeMultiple - (porridgeMultiple * (average of emissions start & lastClaim / 6 months))
   /// @param lastClaim Last timestamp user claimed
   function _calculateRate(uint256 lastClaim) internal view returns (uint256 rate) {
-    uint256 emissionsPeriod = block.timestamp - emissionsStart;
+    uint256 emissionsPeriod = block.timestamp - deployTime;
     if(emissionsPeriod > 180 days) {
       emissionsPeriod = 180 days;
     }
-    uint256 average = (emissionsPeriod + (lastClaim - emissionsStart)) / 2;
+    uint256 average = (emissionsPeriod + (lastClaim - deployTime)) / 2;
     if(average > 180 days) {
       average = 180 days;
     }
@@ -775,6 +778,11 @@ contract Goldilend is ERC20, IERC721Receiver {
   function setBorrowingActive(bool _borrowingActive) external {
     if(msg.sender != multisig) revert NotMultisig();
     borrowingActive = _borrowingActive;
+  }
+
+  function increasePrgEmissions(uint256 _deployTime) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    deployTime = _deployTime;
   }
 
 

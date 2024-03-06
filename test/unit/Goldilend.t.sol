@@ -880,7 +880,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
     assertEq(debt, 0);
-    assertEq(pool, startingPoolSize + ((userLoanBefore.interest / 100) * 95) + 5e18);
+    assertEq(pool, startingPoolSize + ((userLoanBefore.interest / 1000) * 950) + 5e18);
   }
 
   function testMultipleBorrowRepayTransfers() public dealUserBera dealUserBeras {
@@ -927,7 +927,7 @@ contract GoldilendTest is Test, IERC721Receiver {
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
     assertEq(debt, 0);
-    assertEq(pool, startingPoolSize + ((userLoanBefore.interest / 100) * 95) + 5e18);
+    assertEq(pool, startingPoolSize + ((userLoanBefore.interest / 1000) * 950) + 5e18);
   }
   
   function testSingleBorrowLiquidate() public dealUserBera dealUserBeras {

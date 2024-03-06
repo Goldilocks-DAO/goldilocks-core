@@ -257,6 +257,14 @@ contract GoldilockedTest is Test {
     assertEq(goldilocked.balanceOf(address(this)), twoDaysPrg + prgMintAmount);
   }
 
+  function testClaimFailDouble() public dealAndStake100000Locks {
+    vm.warp(2 days + 1);
+    goldilocked.claim();
+    goldilocked.claim();
+
+    assertEq(goldilocked.balanceOf(address(this)), (twoDaysPrg*2) + prgMintAmount);
+  }
+
   function testBorrowHoneyFailLimit() public dealAndStake100000Locks dealGoldiswapMaxHoney {
     vm.expectRevert(abi.encodeWithSelector(Goldilocked.InsufficientBorrowLimit.selector));
     goldilocked.borrow(borrowAmount + 1);
