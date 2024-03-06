@@ -570,7 +570,6 @@ contract Goldilend is ERC20, IERC721Receiver {
     revert LoanNotFound();
   }
 
-  //todo: not berachain consensus vault
   /// @notice Stakes $iBGT in Berachain Consensus Vault, 
   /// @dev Claims existing vault rewards and updates poolSize
   /// @param ibgtAmount Amount of $iBGT to stake

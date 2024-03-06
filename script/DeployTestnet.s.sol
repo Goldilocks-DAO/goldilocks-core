@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { Script } from "../lib/forge-std/src/Script.sol";
-import { HoneyWethLPGoldivault } from "./../src/core/HoneyWethLPGoldivault.sol";
+import { HoneyWethLPGoldivault } from "./../src/mock/HoneyWethLPGoldivault.sol";
 import { OwnershipToken } from "./../src/core/OwnershipToken.sol";
 import { YieldToken } from "./../src/core/YieldToken.sol";
 

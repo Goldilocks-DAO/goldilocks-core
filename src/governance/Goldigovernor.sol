@@ -157,8 +157,24 @@ contract Goldigovernor {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   
-  event VoteCast(address indexed voter, uint256 proposalId, uint8 support, uint256 votes, string reason);
-  event ProposalCreated(uint256 id, address proposer, address[] targets, uint[] values, string[] signatures, bytes[] calldatas, uint256 startBlock, uint256 endBlock, string description);
+  event VoteCast(
+    address indexed voter, 
+    uint256 proposalId, 
+    uint8 support, 
+    uint256 votes, 
+    string reason
+  );
+  event ProposalCreated(
+    uint256 proposalId,
+    address proposer, 
+    address[] targets, 
+    uint[] values, 
+    string[] signatures, 
+    bytes[] calldatas, 
+    uint256 startBlock, 
+    uint256 endBlock, 
+    string description
+  );
   event ProposalQueued(uint256 id, uint256 eta);
   event ProposalExecuted(uint256 id);
   event ProposalCanceled(uint256 id);
