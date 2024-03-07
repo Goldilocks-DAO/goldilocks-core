@@ -73,7 +73,9 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => Loan[]) public loans;
 
   mapping(address => uint256) public stakedgiBGT;
-  mapping(address => uint256) public prgRewardDebt;
+  mapping(address => uint256) public claimablePrg;
+  mapping(address => uint256) public lastClaim;
+  mapping(address => uint256) public prgPerTokenDebt;
   mapping(address => uint8) public partnerNFTBoosts;
   mapping(address => uint256) public nftFairValues;
 
@@ -212,9 +214,9 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   // /// @notice Returns the claimable $PRG of $giBGT staker
   // /// @param user $giBGT staker
-  // function getClaimable(address user) external view returns (uint256) {
-  //   return _calculateClaim(stakes[user]);
-  // }
+  function userClaimablePrg(address user) external view returns (uint256) {
+    return _calculateClaimablePrg(user);
+  }
 
   /// @notice Returns the current $giBGT ratio
   function getgiBGTRatio() external view returns (uint256) {
@@ -307,34 +309,27 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   /// @notice Stakes $giBGT
   /// @param amount Amount of $giBGT to stake
-  // function stake(uint256 amount) external {
-  //   stakedgiBGT[msg.sender] += amount;
-  //   prgRewardDebt[msg.sender] += FixedPointMathLib.mulWad(amount, _claimablePrgPergiBGT());
-  //   SafeTransferLib.safeTransferFrom(address(this), msg.sender, address(this), amount);
-  //   emit giBGTStake(msg.sender, amount);
-  // }
+  function stake(uint256 amount) external {
+    _updateClaimablePrg(msg.sender);
+    stakedgiBGT[msg.sender] += amount;
+    SafeTransferLib.safeTransferFrom(address(this), msg.sender, address(this), amount);
+    emit giBGTStake(msg.sender, amount);
+  }
 
   /// @notice Unstakes $giBGT
   /// @param amount Amount of $giBGT to unstake
-  // function unstake(uint256 amount) external {
-    // uint256 stakedBalance = stakes[msg.sender].stakedBalance;
-    // if(stakedBalance < amount) revert InvalidUnstake();
-    // Stake memory userStake = Stake({
-    //   lastClaim: block.timestamp,
-    //   stakedBalance: stakedBalance - amount
-    // });
-    // _claim();
-    // stakes[msg.sender] = userStake;
-    // SafeTransferLib.safeTransfer(address(this), msg.sender, amount);
-  //   if(amount > stakedgiBGT[msg.sender]) revert InvalidUnstake();
-  //   uint256 claimable = _calculateClaimablePrg(msg.sender);
-  // }
+  function unstake(uint256 amount) external {
+    if(amount > stakedgiBGT[msg.sender]) revert InvalidUnstake();
+    _updateClaimablePrg(msg.sender);
+    stakedgiBGT[msg.sender] -= amount;
+    SafeTransferLib.safeTransfer(address(this), msg.sender, amount);
+  }
 
   /// @notice Claims $giBGT staking rewards
-  // function claim() external {
-  //   _claim();
-  //   stakes[msg.sender].lastClaim = block.timestamp;
-  // }
+  function claim() external {
+    _updateClaimablePrg(msg.sender);
+    _claim(msg.sender, claimablePrg[msg.sender]);
+  }
 
   /// @notice Borrows $iBGT against value of NFT
   /// @param borrowAmount Amount of $iBGT to borrow
@@ -486,46 +481,62 @@ contract Goldilend is ERC20, IERC721Receiver {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Calculates and distributes $PRG rewards
-  // function _claim() internal {
-  //   Stake memory userStake = stakes[msg.sender];
-  //   uint256 claimed = _calculateClaim(userStake);
-  //   stakes[msg.sender].lastClaim = block.timestamp;
-  //   Goldilocked(goldilocked).goldilendMint(msg.sender, claimed);
-  // }
+  /// @notice Updates claimable $PRG for user that is staking, unstaking, or claiming
+  /// @param user Address to update claimable $PRG for
+  function _updateClaimablePrg(address user) internal {
+    claimablePrg[user] = _calculateClaimablePrg(user);
+    prgPerTokenDebt[user] = _claimablePrgPergiBGT(user);
+    lastClaim[user] = block.timestamp;
+  }
+
+  /// @notice Calculates and distributes $PRG
+  /// @param claimer User that is claiming $PRG
+  /// @param claimable Amount of $PRG to be claimed
+  function _claim(address claimer, uint256 claimable) internal {
+    if(claimable > 0) {
+      claimablePrg[claimer] = 0;
+      Goldilocked(goldilocked).goldilendMint(claimer, claimable);
+    }
+  }
 
   /// @notice Calculates claimable $PRG
-  /// @dev porridgeEarned = time staked * rate * amount staked
-  /// @param userStake Struct of the user's current stake information
-  // function _calculateClaim(Stake memory userStake) internal view returns (uint256 porridgeEarned) {    
-  //   uint256 timeStaked = (block.timestamp - userStake.lastClaim) > 180 days ? 180 days : block.timestamp - userStake.lastClaim;
-  //   uint256 rate = _calculateRate(userStake.lastClaim);
-  //   porridgeEarned = FixedPointMathLib.mulWad(timeStaked, rate) * userStake.stakedBalance;
-  //   Boost memory userBoost = boosts[msg.sender];
-  //   if (userBoost.expiry > block.timestamp) {
-  //     uint256 porridgeBoost = 50;
-  //     if(userBoost.boostMagnitude < porridgeBoost) {
-  //       porridgeBoost = userBoost.boostMagnitude;
-  //     }
-  //     porridgeEarned = (porridgeEarned / 1000) * (1000 + porridgeBoost);
-  //   }
-  // }
+  /// @param user Address to calculate claimable $PRG for
+  function _calculateClaimablePrg(address user) internal view returns (uint256) {
+    return (stakedgiBGT[user] * (_claimablePrgPergiBGT(user) - prgPerTokenDebt[user])) + claimablePrg[user];
+  }
+
+  /// @notice Calculates claimable $PRG
+  /// @dev porridgeEarned = time staked * rate
+  /// @param user User to calculate claimable $PRG per $giBGT
+  function _claimablePrgPergiBGT(address user) internal view returns (uint256 porridgeEarned) {    
+    uint256 timeStaked = (block.timestamp - deployTime) > 180 days ? 180 days : block.timestamp - deployTime;
+    uint256 rate = _calculateRate(block.timestamp);
+    porridgeEarned = FixedPointMathLib.mulWad(timeStaked, rate);
+    Boost memory userBoost = boosts[msg.sender];
+    if (userBoost.expiry > block.timestamp) {
+      uint256 porridgeBoost = 50;
+      if(userBoost.boostMagnitude < porridgeBoost) {
+        porridgeBoost = userBoost.boostMagnitude;
+      }
+      porridgeEarned = (porridgeEarned / 1000) * (1000 + porridgeBoost);
+    }
+  }
 
   // /// @notice Calculates the rate of $PRG emissions
-  // /// @dev rate = porridgeMultiple - (porridgeMultiple * (average of emissions start & lastClaim / 6 months))
-  // /// @param lastClaim Last timestamp user claimed
-  // function _calculateRate(uint256 lastClaim) internal view returns (uint256 rate) {
-  //   uint256 emissionsPeriod = block.timestamp - deployTime;
-  //   if(emissionsPeriod > 180 days) {
-  //     emissionsPeriod = 180 days;
-  //   }
-  //   uint256 average = (emissionsPeriod + (lastClaim - deployTime)) / 2;
-  //   if(average > 180 days) {
-  //     average = 180 days;
-  //   }
-  //   rate = porridgeMultiple - FixedPointMathLib.mulWad(porridgeMultiple, FixedPointMathLib.divWad(average, 180 days));
-  //   // rate = FixedPointMathLib.mulWad(rate, (1- FixedPointMathLib.divWad(poolSize, targetTVL)));
-  // }
+  // /// @dev rate = porridgeMultiple - (porridgeMultiple * (average of emissions start & userLastClaim / 6 months))
+  // /// @param userLastClaim Last timestamp user claimed
+  function _calculateRate(uint256 userLastClaim) internal view returns (uint256 rate) {
+    uint256 emissionsPeriod = block.timestamp - deployTime;
+    if(emissionsPeriod > 180 days) {
+      emissionsPeriod = 180 days;
+    }
+    uint256 average = (emissionsPeriod + (userLastClaim - deployTime)) / 2;
+    if(average > 180 days) {
+      average = 180 days;
+    }
+    rate = porridgeMultiple - FixedPointMathLib.mulWad(porridgeMultiple, FixedPointMathLib.divWad(average, 180 days));
+    // rate = FixedPointMathLib.mulWad(rate, (1- FixedPointMathLib.divWad(poolSize, targetTVL)));
+  }
 
   /// @notice Calculates the fair value of NFTs being borrowed against
   /// @param collateralNFTs NFT collections to find value of

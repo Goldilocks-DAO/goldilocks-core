@@ -42,8 +42,6 @@ contract Goldilocked is ERC20 {
   mapping(address => uint256) public borrowedHoney;
   mapping(address => uint256) public initialAllocations;
 
-  uint256 public rewardPerTokenStored;
-
   uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
   uint256 public deployTime;
   uint256 public vestingStart;
@@ -258,7 +256,7 @@ contract Goldilocked is ERC20 {
     prgPerTokenDebt[user] = _claimablePrgPerLocks();
   }
 
-  /// @notice Calculates and distributes yield
+  /// @notice Calculates and distributes $PRG
   /// @param claimer User that is claiming $PRG
   /// @param claimable Amount of $PRG to be claimed
   function _claim(address claimer, uint256 claimable) internal {
