@@ -80,7 +80,7 @@ contract govLocks is ERC20 {
 
   /// @notice Returns the symbol of the $LOCKS token
   function symbol() public pure override returns (string memory) {
-    return "govLocks";
+    return "govLOCKS";
   }
 
 
@@ -122,25 +122,28 @@ contract govLocks is ERC20 {
     return nCheckpoints > 0 ? checkpoints[user][nCheckpoints - 1].votes : 0;
   }
 
-  function getPriorVotes(address account, uint256 blockNumber) external view returns (uint256) {
+  /// @notice Returns votes balance for user from prior block
+  /// @param user Address to return votes balance
+  /// @param blockNumber Block to return votes balance for
+  function getPriorVotes(address user, uint256 blockNumber) external view returns (uint256) {
     if(blockNumber >= block.number) revert NoSuchBlock();
-    uint256 nCheckpoints = numCheckpoints[account];
+    uint256 nCheckpoints = numCheckpoints[user];
     if (nCheckpoints == 0) {
       return 0;
     }
     // First check most recent balance
-    if (checkpoints[account][nCheckpoints - 1].fromBlock <= blockNumber) {
-      return checkpoints[account][nCheckpoints - 1].votes;
+    if (checkpoints[user][nCheckpoints - 1].fromBlock <= blockNumber) {
+      return checkpoints[user][nCheckpoints - 1].votes;
     }
     // Next check implicit zero balance
-    if (checkpoints[account][0].fromBlock > blockNumber) {
+    if (checkpoints[user][0].fromBlock > blockNumber) {
       return 0;
     }
     uint256 lower = 0;
     uint256 upper = nCheckpoints - 1;
     while (upper > lower) {
       uint256 center = upper - (upper - lower) / 2; // ceil, avoiding overflow
-      Checkpoint memory cp = checkpoints[account][center];
+      Checkpoint memory cp = checkpoints[user][center];
       if (cp.fromBlock == blockNumber) {
         return cp.votes;
       } else if (cp.fromBlock < blockNumber) {
@@ -149,7 +152,7 @@ contract govLocks is ERC20 {
         upper = center - 1;
       }
     }
-    return checkpoints[account][lower].votes;
+    return checkpoints[user][lower].votes;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -157,6 +160,8 @@ contract govLocks is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Deposits $LOCKS to mint $govLOCKS
+  /// @param amount Amount of $LOCKS to deposit
   function deposit(uint256 amount) external {
     deposits[msg.sender] += amount;
     _moveDelegates(address(0), msg.sender, amount);
@@ -164,6 +169,8 @@ contract govLocks is ERC20 {
     _mint(msg.sender, amount);
   }
 
+  /// @notice Withdraws $LOCKS to burn $govLOCKS
+  /// @param amount Amount of $LOCKS to withdraw
   function withdraw(uint256 amount) external {
     deposits[msg.sender] -= amount;
     _moveDelegates(msg.sender, address(0), amount);

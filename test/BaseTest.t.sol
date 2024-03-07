@@ -126,6 +126,28 @@ contract BaseTest is Test, IERC721Receiver {
     return (targets, signatures, calldatas, values);
   }
 
+  function proposySamePropose() public returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {
+    address[] memory targets = new address[](2);
+    targets[0] = address(0x69);
+    targets[1] = address(0x69);
+    string[] memory signatures = new string[](2);
+    signatures[0] = "hello";
+    signatures[1] = "hello";
+    bytes[] memory calldatas = new bytes[](2);
+    calldatas[0] = hex"8eed55d1";
+    calldatas[1] = hex"8eed55d1";
+    uint256[] memory values = new uint256[](2);
+    values[0] = 69;
+    values[1] = 69;
+    deal(address(goldiswap), address(this), 5e18);
+    goldiswap.approve(address(govlocks), 5e18);
+    govlocks.deposit(5e18);
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+
+    return (targets, signatures, calldatas, values);
+  }
+
   function proposyDiffQueue() public returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {
     address[] memory targets = new address[](2);
     targets[0] = address(0x69);

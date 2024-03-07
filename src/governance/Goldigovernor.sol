@@ -198,7 +198,7 @@ contract Goldigovernor {
   /// @notice Returns the receipt for a voter on a given proposal
   /// @param voter Address of voter
   /// @param proposalId Id of proposal
-  function getReceipt(uint256 proposalId, address voter) external view returns (Receipt memory) {
+  function receipt(uint256 proposalId, address voter) external view returns (Receipt memory) {
     return proposals[proposalId].receipts[voter];
   }
 
@@ -362,8 +362,8 @@ contract Goldigovernor {
     if(_getProposalState(proposalId) != ProposalState.Active) revert InvalidProposalState();
     if(support > 2) revert InvalidVoteType();
     Proposal storage proposal = proposals[proposalId];
-    Receipt storage receipt = proposal.receipts[voter];
-    if(receipt.hasVoted != false) revert AlreadyVoted();
+    Receipt storage voterReceipt = proposal.receipts[voter];
+    if(voterReceipt.hasVoted != false) revert AlreadyVoted();
     uint256 votes = govLocks(govlocks).getPriorVotes(voter, proposal.startBlock);
     if (support == 0) {
       proposal.againstVotes = proposal.againstVotes + votes;
@@ -372,9 +372,9 @@ contract Goldigovernor {
     } else if (support == 2) {
       proposal.abstainVotes = proposal.abstainVotes + votes;
     }
-    receipt.hasVoted = true;
-    receipt.support = support;
-    receipt.votes = votes;
+    voterReceipt.hasVoted = true;
+    voterReceipt.support = support;
+    voterReceipt.votes = votes;
     return votes;
   }
 
