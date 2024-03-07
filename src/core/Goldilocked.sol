@@ -41,6 +41,10 @@ contract Goldilocked is ERC20 {
   mapping(address => uint256) public borrowedHoney;
   mapping(address => uint256) public initialAllocations;
 
+  uint256 public rewardPerTokenStored;
+  mapping(address => uint256) public rewards;
+  mapping(address => uint256) public userRewardPerTokenPaid;
+
   uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
   uint256 public deployTime;
   uint256 public vestingStart;
@@ -181,8 +185,8 @@ contract Goldilocked is ERC20 {
   /// @notice Stakes $LOCKS and begins earning $PRG
   /// @param amount Amount of $LOCKS to stake
   function stake(uint256 amount) external {
+    _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] += amount;
-    prgRewardDebt[msg.sender] += FixedPointMathLib.mulWad(amount, _claimablePrgPerLocks());
     govLOCKS(govlocks).updateStakedBalance(address(0), msg.sender, amount);
     SafeTransferLib.safeTransferFrom(goldiswap, msg.sender, address(this), amount);
     emit Staked(msg.sender, amount);
@@ -196,12 +200,10 @@ contract Goldilocked is ERC20 {
     uint256 _stakedLocks = stakedLocks[msg.sender];
     if(amount > _stakedLocks) revert InvalidUnstake();
     if(amount > _stakedLocks - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
-    uint256 claimable = _calculateClaimablePrg(msg.sender);
-    prgRewardDebt[msg.sender] += FixedPointMathLib.mulWad(amount, _claimablePrgPerLocks()) - prgRewardDebt[msg.sender];
+    _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] -= amount;
     govLOCKS(govlocks).updateStakedBalance(msg.sender, address(0), amount);
     SafeTransferLib.safeTransfer(goldiswap, msg.sender, amount);
-    _claim(msg.sender, claimable);
     emit Unstaked(msg.sender, amount);
   }
 
@@ -216,9 +218,15 @@ contract Goldilocked is ERC20 {
 
   /// @notice Claim $PRG rewards
   function claim() external {
-    uint256 claimable = _calculateClaimablePrg(msg.sender);
-    prgRewardDebt[msg.sender] += claimable;
-    _claim(msg.sender, claimable);
+    _updateClaimablePrg(msg.sender);
+    uint256 reward = rewards[msg.sender];
+    if(reward > 0) {
+      rewards[msg.sender] = 0;
+      _mint(msg.sender, reward);
+    }
+    // uint256 claimable = _calculateClaimablePrg(msg.sender);
+    // prgRewardDebt[msg.sender] += claimable;
+    // _claim(msg.sender, claimable);
   }
 
   /// @notice Lends out $HONEY using staked $LOCKS as collateral
@@ -250,10 +258,19 @@ contract Goldilocked is ERC20 {
   /*                      INTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+  function _updateClaimablePrg(address user) internal {
+    rewardPerTokenStored = _claimablePrgPerLocks();
+    rewards[user] = earned(user);
+    userRewardPerTokenPaid[user] = rewardPerTokenStored;
+  }
+
+  function earned(address user) public view returns (uint256) {
+    return FixedPointMathLib.mulWad(stakedLocks[user], _claimablePrgPerLocks() - userRewardPerTokenPaid[user]) + rewards[user];
+  }
 
   /// @notice Calculates and distributes yield
   /// @param claimer User that is claiming $PRG
-  /// @param claimable Amoutn of $PRG to be claimed
+  /// @param claimable Amount of $PRG to be claimed
   function _claim(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
       _mint(claimer, claimable);
