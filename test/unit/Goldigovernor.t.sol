@@ -21,23 +21,6 @@ contract GoldigovernorTest is BaseTest {
   bytes4 NotMultisigSelector = 0xf05e412b;
   bytes4 NotProposerSelector = 0x7d1b73b9;
 
-  function proposy() public pure returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {
-    address[] memory targets = new address[](2);
-    targets[0] = address(0x69);
-    targets[1] = address(0x69);
-    string[] memory signatures = new string[](2);
-    signatures[0] = "hello";
-    signatures[1] = "hello";
-    bytes[] memory calldatas = new bytes[](2);
-    calldatas[0] = hex"8eed55d1";
-    calldatas[1] = hex"8eed55d1";
-    uint256[] memory values = new uint256[](2);
-    values[0] = 69;
-    values[1] = 69;
-
-    return (targets, signatures, calldatas, values);
-  }
-
   function testArrayMismatch() public {
     address[] memory targets = new address[](3);
     targets[0] = address(0x69);
@@ -66,7 +49,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -82,7 +65,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -101,7 +84,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -181,7 +164,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -197,7 +180,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -254,7 +237,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -272,7 +255,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -293,7 +276,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 3e18);
     goldiswap.approve(address(govlocks), 3e18);
     govlocks.deposit(3e18);
@@ -375,7 +358,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -391,7 +374,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
@@ -412,7 +395,7 @@ contract GoldigovernorTest is BaseTest {
       string[] memory signatures,
       bytes[] memory calldatas,
       uint256[] memory values
-    ) = proposy();
+    ) = proposySame();
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);

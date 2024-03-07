@@ -485,7 +485,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param user Address to update claimable $PRG for
   function _updateClaimablePrg(address user) internal {
     claimablePrg[user] = _calculateClaimablePrg(user);
-    prgPerTokenDebt[user] = _claimablePrgPergiBGT(user);
+    prgPerTokenDebt[user] = _claimablePrgPergiBGT();
     lastClaim[user] = block.timestamp;
   }
 
@@ -502,13 +502,12 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Calculates claimable $PRG
   /// @param user Address to calculate claimable $PRG for
   function _calculateClaimablePrg(address user) internal view returns (uint256) {
-    return (stakedgiBGT[user] * (_claimablePrgPergiBGT(user) - prgPerTokenDebt[user])) + claimablePrg[user];
+    return (stakedgiBGT[user] * (_claimablePrgPergiBGT() - prgPerTokenDebt[user])) + claimablePrg[user];
   }
 
   /// @notice Calculates claimable $PRG
   /// @dev porridgeEarned = time staked * rate
-  /// @param user User to calculate claimable $PRG per $giBGT
-  function _claimablePrgPergiBGT(address user) internal view returns (uint256 porridgeEarned) {    
+  function _claimablePrgPergiBGT() internal view returns (uint256 porridgeEarned) {    
     uint256 timeStaked = (block.timestamp - deployTime) > 180 days ? 180 days : block.timestamp - deployTime;
     uint256 rate = _calculateRate(block.timestamp);
     porridgeEarned = FixedPointMathLib.mulWad(timeStaked, rate);

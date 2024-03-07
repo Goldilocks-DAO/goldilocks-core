@@ -34,19 +34,19 @@ contract Goldigovernor {
 
 
   struct Proposal {
-    address[] targets;    
-    string[] signatures;    
-    bytes[] calldatas;    
-    uint256[] values;    
+    address[] targets;
+    string[] signatures;
+    bytes[] calldatas;
+    uint256[] values;
     address proposer;
     uint256 id;
     uint256 eta;
-    uint256 startBlock;    
-    uint256 endBlock;    
-    uint256 forVotes;    
-    uint256 againstVotes;    
+    uint256 startBlock;
+    uint256 endBlock;  
+    uint256 forVotes;
+    uint256 againstVotes;
     uint256 abstainVotes;
-    bool cancelled;    
+    bool cancelled;
     bool executed;
     mapping (address => Receipt) receipts;
   }
