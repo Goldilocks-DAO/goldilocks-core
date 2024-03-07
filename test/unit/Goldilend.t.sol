@@ -7,7 +7,6 @@ import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721
 import { INFT } from "../../src/mock/INFT.sol";
 import { Goldilend } from "../../src/core/Goldilend.sol";
 
-
 contract GoldilendTest is BaseTest {
 
   bytes4 NotMultisigSelector = 0xf05e412b;

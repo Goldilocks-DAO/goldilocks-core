@@ -9,7 +9,7 @@ import { Goldilocked } from "../src/core/Goldilocked.sol";
 import { Goldilend } from "../src/core/Goldilend.sol";
 import { Goldigovernor } from "../src/governance/Goldigovernor.sol";
 import { Timelock } from "../src/governance/Timelock.sol";
-import { govLOCKS } from "../src/governance/govLOCKS.sol";
+import { govLocks } from "../src/governance/govLocks.sol";
 import { Honey } from "../src/mock/Honey.sol";
 import { iBGT } from "../src/mock/iBGT.sol";
 import { HoneyComb } from "../src/mock/HoneyComb.sol";
@@ -24,7 +24,7 @@ contract BaseTest is Test, IERC721Receiver {
 
   Goldiswap goldiswap;
   Goldilend goldilend;
-  govLOCKS govlocks;
+  govLocks govlocks;
   Timelock timelock;
   Goldilocked goldilocked;
   Goldigovernor goldigov;
@@ -80,7 +80,7 @@ contract BaseTest is Test, IERC721Receiver {
       boostNfts,
       boosts
     );
-    govlocks = new govLOCKS(address(goldiswap), address(goldigovComputed), address(goldilockedComputed));
+    govlocks = new govLocks(address(goldiswap), address(goldigovComputed), address(goldilockedComputed));
     timelock = new Timelock(address(goldigovComputed), 5 days);
     address[] memory allocationsAddress = new address[](4);
     allocationsAddress[0] = address(0x69);

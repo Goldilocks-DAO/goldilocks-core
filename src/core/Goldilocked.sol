@@ -21,7 +21,7 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { Goldiswap } from "./Goldiswap.sol";
-import { govLOCKS } from "../governance/govLOCKS.sol";
+import { govLocks } from "../governance/govLocks.sol";
 
 
 /// @title Goldilocked
@@ -61,7 +61,7 @@ contract Goldilocked is ERC20 {
   /// @notice Constructor of this contract
   /// @param _goldiswap Address of Goldiswap  
   /// @param _goldilend Address of Goldilend contract
-  /// @param _govlocks Address of govLOCKS contract
+  /// @param _govlocks Address of govLocks contract
   /// @param _honey Address of the HONEY contract
   /// @param allocationsAddress Addresses receiving $LOCKS
   /// @param allocationsAmt Amounts of $LOCKS to stake and lock
@@ -87,7 +87,7 @@ contract Goldilocked is ERC20 {
       lockedLocks[allocationsAddress[i]] = allocationsAmt[i];
       borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
       initialAllocations[allocationsAddress[i]] = allocationsAmt[i];
-      govLOCKS(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
+      govLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
 
     }
     _mint(multisig, 200000000e18);
@@ -184,7 +184,7 @@ contract Goldilocked is ERC20 {
   function stake(uint256 amount) external {
     _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] += amount;
-    govLOCKS(govlocks).updateStakedBalance(address(0), msg.sender, amount);
+    govLocks(govlocks).updateStakedBalance(address(0), msg.sender, amount);
     SafeTransferLib.safeTransferFrom(goldiswap, msg.sender, address(this), amount);
     emit Staked(msg.sender, amount);
   }
@@ -199,7 +199,7 @@ contract Goldilocked is ERC20 {
     if(amount > _stakedLocks - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
     _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] -= amount;
-    govLOCKS(govlocks).updateStakedBalance(msg.sender, address(0), amount);
+    govLocks(govlocks).updateStakedBalance(msg.sender, address(0), amount);
     SafeTransferLib.safeTransfer(goldiswap, msg.sender, amount);
     emit Unstaked(msg.sender, amount);
   }

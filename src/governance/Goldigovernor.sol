@@ -18,7 +18,7 @@ pragma solidity ^0.8.19;
 
 
 import { Timelock } from "./Timelock.sol";
-import { govLOCKS } from "./govLOCKS.sol";
+import { govLocks } from "./govLocks.sol";
 
 
 /// @title Goldigovernor
@@ -157,27 +157,27 @@ contract Goldigovernor {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   
-  event VoteCast(
-    address indexed voter, 
-    uint256 proposalId, 
-    uint8 support, 
-    uint256 votes, 
-    string reason
-  );
   event ProposalCreated(
-    uint256 proposalId,
-    address proposer, 
+    uint256 id,
+    address proposer,
     address[] targets, 
     uint[] values, 
     string[] signatures, 
-    bytes[] calldatas, 
-    uint256 startBlock, 
-    uint256 endBlock, 
+    bytes[] calldatas,
+    uint256 startBlock,
+    uint256 endBlock,
     string description
   );
+  event VoteCast(
+    address indexed voter,
+    uint256 proposalId,
+    uint8 support,
+    uint256 votes, 
+    string reason
+  );
+  event ProposalCanceled(uint256 id);
   event ProposalQueued(uint256 id, uint256 eta);
   event ProposalExecuted(uint256 id);
-  event ProposalCanceled(uint256 id);
   event VotingDelaySet(uint256 oldVotingDelay, uint256 newVotingDelay);
   event VotingPeriodSet(uint256 oldVotingPeriod, uint256 newVotingPeriod);
   event ProposalThresholdSet(uint256 oldProposalThreshold, uint256 newProposalThreshold);
@@ -191,7 +191,7 @@ contract Goldigovernor {
 
   /// @notice Return the state of a proposal
   /// @param proposalId Id of the proposal
-  function getProposalState(uint256 proposalId) external view returns (ProposalState) {
+  function state(uint256 proposalId) external view returns (ProposalState) {
     return _getProposalState(proposalId);
   }
 
@@ -210,18 +210,18 @@ contract Goldigovernor {
 
   /// @notice Proposes a new proposal, proposer must have delegates above the proposal threshold
   /// @param targets Target addresses for proposal calls
+  /// @param values Eth values for proposal calls
   /// @param signatures Function signatures for proposal calls
   /// @param calldatas Calldatas for proposal calls
-  /// @param values Eth values for proposal calls
   /// @param description String description of the proposal
   function propose(
     address[] memory targets,
+    uint256[] memory values,
     string[] memory signatures, 
     bytes[] memory calldatas,
-    uint256[] memory values,
     string memory description
-  ) external {
-    if(govLOCKS(govlocks).getPriorVotes(msg.sender, block.number - 1) <= proposalThreshold) revert BelowThreshold();
+  ) external returns (uint256) {
+    if(govLocks(govlocks).getPriorVotes(msg.sender, block.number - 1) <= proposalThreshold) revert BelowThreshold();
     if(targets.length != values.length || targets.length != signatures.length || targets.length != calldatas.length) revert ArrayMismatch();
     if(targets.length == 0) revert InvalidProposalAction();
     if(targets.length > proposalMaxOperations) revert InvalidProposalAction();
@@ -251,6 +251,7 @@ contract Goldigovernor {
     newProposal.executed = false;
     latestProposalIds[msg.sender] = proposalCount;
     emit ProposalCreated(proposalCount, msg.sender, targets, values, signatures, calldatas, startBlock, endBlock, description);    
+    return proposalCount;
   }
   
   /// @notice Queues a proposal if successful
@@ -286,7 +287,7 @@ contract Goldigovernor {
     if(_getProposalState(proposalId) == ProposalState.Executed) revert InvalidProposalState();
     Proposal storage proposal = proposals[proposalId];
     if(msg.sender != proposal.proposer) revert NotProposer();
-    if(govLOCKS(govlocks).getPriorVotes(proposal.proposer, block.number - 1) > proposalThreshold) revert AboveThreshold();
+    if(govLocks(govlocks).getPriorVotes(proposal.proposer, block.number - 1) > proposalThreshold) revert AboveThreshold();
     proposal.cancelled = true;
     uint256 targetsLength = proposal.targets.length;
     for (uint256 i = 0; i < targetsLength; i++) {
@@ -363,7 +364,7 @@ contract Goldigovernor {
     Proposal storage proposal = proposals[proposalId];
     Receipt storage receipt = proposal.receipts[voter];
     if(receipt.hasVoted != false) revert AlreadyVoted();
-    uint256 votes = govLOCKS(govlocks).getPriorVotes(voter, proposal.startBlock);
+    uint256 votes = govLocks(govlocks).getPriorVotes(voter, proposal.startBlock);
     if (support == 0) {
       proposal.againstVotes = proposal.againstVotes + votes;
     } else if (support == 1) {
