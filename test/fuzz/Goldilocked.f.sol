@@ -116,7 +116,7 @@ contract GoldilockedFuzzTest is Test {
     deal(address(bera), address(consensusvault), type(uint256).max / 2);
   }
 
-  function testFuzz_Stake(uint256 txAmount) public {
+  function test_Stake(uint256 txAmount) public {
     vm.assume(txAmount < 100000000000e18);
     deal(address(goldiswap), address(this), txAmount);
     goldiswap.approve(address(goldilocked), txAmount);
