@@ -168,7 +168,7 @@ contract GoldilockedTest is Test {
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), 0);
-    // assertEq(goldilocked.prgRewardDebt(address(this)), oneDayPrg);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
     assertEq(govlocks.getCurrentVotes(address(this)), locksAmount);
   }
 
@@ -181,7 +181,7 @@ contract GoldilockedTest is Test {
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount + locksAmount);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksAmount + locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), 0);
-    // assertEq(goldilocked.prgRewardDebt(address(this)), oneDayPrg);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
     assertEq(govlocks.getCurrentVotes(address(this)), locksAmount + locksAmount);
   }
 
@@ -210,8 +210,8 @@ contract GoldilockedTest is Test {
     assertEq(govlocks.getCurrentVotes(address(this)), 0);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), locksAmount);
-    // assertEq(goldilocked.balanceOf(address(this)), oneDayPrg + prgMintAmount);
-    // assertEq(goldilocked.prgRewardDebt(address(this)), oneDayPrg);
+    assertEq(goldilocked.balanceOf(address(this)), prgMintAmount);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
   }
 
   function testStirSuccess() public dealStakeLocks {
@@ -224,7 +224,7 @@ contract GoldilockedTest is Test {
     goldilocked.stir(oneDayPrg);
 
     assertEq(goldiswap.balanceOf(address(this)), oneDayLocksProceeds + locksAmount);
-    // assertEq(goldilocked.balanceOf(address(this)), 0 + prgMintAmount);
+    assertEq(goldilocked.balanceOf(address(this)), prgMintAmount - oneDayPrg);
     assertEq(honey.balanceOf(address(this)), 0);
     assertEq(honey.balanceOf(address(goldiswap)), oneDayPrgCost);
   }
