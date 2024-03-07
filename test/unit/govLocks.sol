@@ -14,7 +14,7 @@ contract govLocksTest is BaseTest {
   }
 
   function testLocksSymbol() public {
-    assertEq(govlocks.symbol(), "govLockss");
+    assertEq(govlocks.symbol(), "govLocks");
   }
 
   function testDeposit() public {

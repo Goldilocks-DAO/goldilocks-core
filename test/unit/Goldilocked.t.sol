@@ -15,7 +15,7 @@ contract GoldilockedTest is BaseTest {
   uint256 halfDayPrg = 68493150684931500000;
   uint256 oneDayHalfPrg = 205479452054794500000;
   uint256 twoDaysPrg = 273972602739726000000;
-  uint256 twoMonthsOfGoldilendStakingYield = 43e18;
+  uint256 twoMonthsOfGoldilendStakingYield = 34e18;
 
 
   modifier dealStakeLocks() {
@@ -74,7 +74,7 @@ contract GoldilockedTest is BaseTest {
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), 0);
     assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
-    assertEq(govlocks.getCurrentVotes(address(this)), locksAmount);
+    assertEq(govlocks.getVotes(address(this)), locksAmount);
   }
 
   function testDoubleStakeSuccess() public dealStakeLocks {
@@ -87,7 +87,7 @@ contract GoldilockedTest is BaseTest {
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksAmount + locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), 0);
     assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
-    assertEq(govlocks.getCurrentVotes(address(this)), locksAmount + locksAmount);
+    assertEq(govlocks.getVotes(address(this)), locksAmount + locksAmount);
   }
 
   function testUnstakeFailVest() public {
@@ -112,7 +112,7 @@ contract GoldilockedTest is BaseTest {
     goldilocked.unstake(locksAmount);
 
     assertEq(goldilocked.userStakedLocks(address(this)), 0);
-    assertEq(govlocks.getCurrentVotes(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), locksAmount);
     assertEq(goldilocked.balanceOf(address(this)), prgMintAmount);
@@ -301,15 +301,15 @@ contract GoldilockedTest is BaseTest {
     goldilocked.goldilendMint(address(this), 69);
   }
 
-  // function testGoldilendMintSuccess() public {
-  //   deal(address(goldilend), address(this), 1e18);
-  //   goldilend.approve(address(goldilend), 1e18);
-  //   goldilend.stake(1e18);
-  //   vm.warp(block.timestamp + 60 days);
-  //   goldilend.claim();
+  function testGoldilendMintSuccess() public {
+    deal(address(goldilend), address(this), 1e18);
+    goldilend.approve(address(goldilend), 1e18);
+    goldilend.stake(1e18);
+    vm.warp(block.timestamp + 60 days);
+    goldilend.claim();
 
-  //   assertEq(goldilocked.balanceOf(address(this)), twoMonthsOfGoldilendStakingYield + prgMintAmount);
-  // }
+    assertEq(goldilocked.balanceOf(address(this)), twoMonthsOfGoldilendStakingYield + prgMintAmount);
+  }
 
   function testChangePorridgeEmissionsFailMultisig() public {
     vm.prank(address(0x69));
