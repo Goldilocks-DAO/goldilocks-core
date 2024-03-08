@@ -134,7 +134,7 @@ abstract contract Goldivault {
     }
   }
 
-  /// @notice Withdraws assets from the vault 
+  /// @notice Withdraws tokens from the vault 
   /// @param amount Amount of tokens to redeem
   function redeemOwnership(uint256 amount) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
@@ -175,8 +175,8 @@ abstract contract Goldivault {
     _compoundVaultRewards();
   }
 
-  /// @notice Allows DAO to add yield assets to vault
-  function addYieldAssets(address[] calldata _yieldTokens) external {
+  /// @notice Allows DAO to add yield tokens to vault
+  function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
     for(uint8 i; i < _yieldTokens.length; ++i) {
       yieldTokens.push(_yieldTokens[i]);

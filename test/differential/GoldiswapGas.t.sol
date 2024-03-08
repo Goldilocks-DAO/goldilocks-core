@@ -6,24 +6,13 @@ import { BaseTest } from "../BaseTest.t.sol";
 
 contract UnitGoldiswapGasTest is BaseTest {
 
-  uint256 txAmount = 10e18;
+  uint256 smallTxAmount = 10e18;
   uint256 mediumTxAmount = 100e18;
   uint256 largeTxAmount = 1000e18;
 
   uint256 gas10Buy = 10e18;
   uint256 gas100Buy = 10e18;
   uint256 gas1000Buy = 10e18;
-
-  modifier dealandApproveUserHoney() {
-    deal(address(honey), address(this), type(uint256).max / 2);
-    honey.approve(address(goldiswap), type(uint256).max);
-    _;
-  }
-
-  modifier dealUserLocks() {
-    deal(address(goldiswap), address(this), type(uint256).max / 2);
-    _;
-  }
 
   modifier dealGammHoney() {
     deal(address(honey), address(goldiswap), type(uint256).max / 2);
@@ -33,7 +22,7 @@ contract UnitGoldiswapGasTest is BaseTest {
   // gasused = 119360, actual = 114264
   function test10Buy() public dealandApproveUserHoney {
     uint256 gasStart = gasleft();
-    goldiswap.buy(txAmount, type(uint256).max);
+    goldiswap.buy(smallTxAmount, type(uint256).max);
     uint256 gasEnd = gasleft();
     uint256 gasUsed = gasStart   - gasEnd;
     assert(gasUsed <= 119360);
@@ -71,7 +60,7 @@ contract UnitGoldiswapGasTest is BaseTest {
   // gasused = 128109, actual = 122898
   function testnew10000Buy() public dealandApproveUserHoney {
     uint256 gasStart = gasleft();
-    goldiswap.buy(txAmount*1000, type(uint256).max);
+    goldiswap.buy(smallTxAmount*1000, type(uint256).max);
     uint256 gasEnd = gasleft();
     uint256 gasUsed = gasStart   - gasEnd;
     console.log(gasUsed);

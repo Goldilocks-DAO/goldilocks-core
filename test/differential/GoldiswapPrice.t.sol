@@ -5,17 +5,6 @@ import { BaseTest } from "../BaseTest.t.sol";
 
 contract GoldiswapPriceTest is BaseTest {
 
-  modifier dealandApproveUserHoney() {
-    deal(address(honey), address(this), type(uint256).max / 2);
-    honey.approve(address(goldiswap), type(uint256).max);
-    _;
-  }
-
-  modifier dealUserLocks() {
-    deal(address(goldiswap), address(this), type(uint256).max / 2);
-    _;
-  }
-
   modifier dealGammHoney() {
     deal(address(honey), address(goldiswap), type(uint256).max / 2);
     _;

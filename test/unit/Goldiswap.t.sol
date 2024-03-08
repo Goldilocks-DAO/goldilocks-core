@@ -7,27 +7,6 @@ import { Goldiswap } from "../../src/core/Goldiswap.sol";
 
 contract UnitGoldiswapTest is BaseTest {
 
-  uint256 txAmount = 10e18;
-  uint256 locksMintAmount = 100000000e18;
-  uint256 costOf10Locks = 262883805905681940;
-  uint256 proceedsof10Locks = 249739615610397845;
-
-  modifier dealandApproveUserHoney() {
-    deal(address(honey), address(this), type(uint256).max / 2);
-    honey.approve(address(goldiswap), type(uint256).max / 2);
-    _;
-  }
-
-  modifier dealLocks() {
-    deal(address(goldiswap), address(this), txAmount);
-    _;
-  }
-
-  modifier dealGammHoney() {
-    deal(address(honey), address(goldiswap), type(uint256).max);
-    _;
-  }
-
   function testLocksName() public {
     assertEq(goldiswap.name(), "Locks Token");
   }
@@ -111,14 +90,14 @@ contract UnitGoldiswapTest is BaseTest {
     goldiswap.sell(txAmount, type(uint256).max);
   }
 
-  function testSellSuccess() public dealLocks dealGammHoney {
+  function testSellSuccess() public dealLocks dealGoldiswapHoney {
     goldiswap.sell(txAmount, 0);
 
     assertEq(goldiswap.balanceOf(address(this)), 0);
     assertEq(honey.balanceOf(address(this)), proceedsof10Locks);
   }
 
-  function testRedeemSuccess() public dealLocks dealGammHoney {
+  function testRedeemSuccess() public dealLocks dealGoldiswapHoney {
     uint256 rawTotal = 105000000000000000;
     goldiswap.redeem(txAmount);
 
@@ -156,7 +135,7 @@ contract UnitGoldiswapTest is BaseTest {
     assertEq(goldiswap.targetRatio(), 304000000000000000);
   }
 
-  function testFloorReduceNoReduce() public dealLocks dealGammHoney {
+  function testFloorReduceNoReduce() public dealLocks dealGoldiswapHoney {
     goldiswap.sell(txAmount, 0);
 
     assertEq(goldiswap.targetRatio(), 32e16);

@@ -6,28 +6,6 @@ import { Goldilocked } from "../../src/core/Goldilocked.sol";
 
 contract UnitGoldilockedTest is BaseTest {
 
-  uint256 locksAmount = 100000e18;
-  uint256 borrowAmount = 1050e18;
-  uint256 locksMintAmount = 100000000e18;
-  uint256 oneDayPrg = 136986301369863000000;
-  uint256 halfDayPrg = 68493150684931500000;
-  uint256 oneDayHalfPrg = 205479452054794500000;
-  uint256 twoDaysPrg = 273972602739726000000;
-  uint256 twoMonthsOfGoldilendStakingYield = 34e18;
-
-
-  modifier dealStakeLocks() {
-    deal(address(goldiswap), address(this), locksAmount);
-    goldiswap.approve(address(goldilocked), locksAmount);
-    goldilocked.stake(locksAmount);
-    _;
-  }
-
-  modifier dealGoldiswapMaxHoney() {
-    deal(address(honey), address(goldiswap), type(uint256).max);
-    _;
-  }
-
   function testPRGName() public {
     assertEq(goldilocked.name(), "Porridge");
   }

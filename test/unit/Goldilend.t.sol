@@ -25,34 +25,6 @@ contract UnitGoldilendTest is BaseTest {
   bytes4 LoanExpiredSelector = 0x5dc919ca;
   bytes4 UnliquidatableSelector = 0x13d94799;
 
-  uint256 twoMonthsOfYield = 34e18;
-  uint256 twoMonthsOfBoostedYield = 43645e15;
-  uint256 singleBorrowInterest = 45726853068117;
-  uint256 singleBorrowInterestBoosted = 45452491949592;
-  uint256 singleBorrowInterestMaxBoost = 2286342653400;
-
-  modifier dealUserBera() {
-    deal(address(ibgt), address(this), type(uint256).max / 2);
-    ibgt.approve(address(goldilend), type(uint256).max / 2);
-    _;
-  }
-
-  modifier dealUserBeras() {
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bandbear)).mint(address(this));
-    IERC721(bondbear).setApprovalForAll(address(goldilend), true);
-    IERC721(bandbear).setApprovalForAll(address(goldilend), true);
-    _;
-  }
-
-  modifier dealUserPartnerNFTs() {
-    INFT(address(honeycomb)).mint(address(this));
-    INFT(address(beradrome)).mint(address(this));
-    IERC721(honeycomb).setApprovalForAll(address(goldilend), true);
-    IERC721(beradrome).setApprovalForAll(address(goldilend), true);
-    _;
-  }
-
   function testNotMultisig() public {
     vm.prank(address(0x01));
     vm.expectRevert(NotMultisigSelector);

@@ -8,8 +8,6 @@ import { govLocks } from "../../src/governance/govLocks.sol";
 
 contract UnitgovLocksTest is BaseTest {
 
-  uint256 amt = 5e18;
-
   function testgovLocksName() public {
     assertEq(govlocks.name(), "Governance Locks");
   }
@@ -19,19 +17,19 @@ contract UnitgovLocksTest is BaseTest {
   }
 
   function testGetVotes() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(2);
 
-    assertEq(govlocks.getVotes(address(this)), amt);
+    assertEq(govlocks.getVotes(address(this)), govLocksAmt);
   }
   
   function testGetPriorVotesFailBlock() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(2);
     vm.expectRevert(abi.encodeWithSelector(govLocks.NoSuchBlock.selector));
@@ -39,13 +37,13 @@ contract UnitgovLocksTest is BaseTest {
   }
 
   function testGetPriorVotesSuccess() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(2);
 
-    assertEq(govlocks.getPriorVotes(address(this), 1), amt);
+    assertEq(govlocks.getPriorVotes(address(this), 1), govLocksAmt);
   }
 
   function testGetPriorVotesNone() public {
@@ -56,9 +54,9 @@ contract UnitgovLocksTest is BaseTest {
 
   function testGetPriorVotesImplicitZero() public {
     vm.roll(69);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(420);
 
@@ -67,119 +65,119 @@ contract UnitgovLocksTest is BaseTest {
 
   function testGetPriorVotesNotMostRecentBalanceHigher() public {
     vm.roll(69);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(420);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(500);
 
-    assertEq(govlocks.getPriorVotes(address(this), 80), amt);
+    assertEq(govlocks.getPriorVotes(address(this), 80), govLocksAmt);
   }
 
   function testGetPriorVotesNotMostRecentBalanceEqual() public {
     vm.roll(69);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(420);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(500);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(1000);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
 
-    assertEq(govlocks.getPriorVotes(address(this), 420), amt+amt);
+    assertEq(govlocks.getPriorVotes(address(this), 420), govLocksAmt+govLocksAmt);
   }
 
   function testGetPriorVotesNotMostRecentBalanceLower() public {
     vm.roll(69);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(420);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(500);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(1000);
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
 
-    assertEq(govlocks.getPriorVotes(address(this), 421), amt+amt);
+    assertEq(govlocks.getPriorVotes(address(this), 421), govLocksAmt+govLocksAmt);
   }
 
   function testDepositSuccess() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
 
     assertEq(goldiswap.balanceOf(address(this)), 0);
-    assertEq(govlocks.balanceOf(address(this)), amt);
+    assertEq(govlocks.balanceOf(address(this)), govLocksAmt);
   }
 
   function testWithdrawSuccess() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
-    govlocks.withdraw(amt);
+    govlocks.withdraw(govLocksAmt);
 
-    assertEq(goldiswap.balanceOf(address(this)), amt);
+    assertEq(goldiswap.balanceOf(address(this)), govLocksAmt);
     assertEq(govlocks.balanceOf(address(this)), 0);
   }
 
   function testDelegateOtherSuccess() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(0x6969));
     vm.roll(2);
 
-    assertEq(govlocks.getPriorVotes(address(0x6969), block.number - 1), amt);
+    assertEq(govlocks.getPriorVotes(address(0x6969), block.number - 1), govLocksAmt);
     assertEq(govlocks.balanceOf(address(0x6969)), 0);
     assertEq(govlocks.getPriorVotes(address(this), block.number - 1), 0);
-    assertEq(govlocks.balanceOf(address(this)), amt);
+    assertEq(govlocks.balanceOf(address(this)), govLocksAmt);
   }
 
   function testDelegateSelfSuccess() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(2);
 
-    assertEq(govlocks.getPriorVotes(address(this), block.number - 1), amt);
-    assertEq(govlocks.balanceOf(address(this)), amt);
+    assertEq(govlocks.getPriorVotes(address(this), block.number - 1), govLocksAmt);
+    assertEq(govlocks.balanceOf(address(this)), govLocksAmt);
   }
 
   function testDelegateDelegate() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(2);
     govlocks.delegate(address(0x6969));
@@ -188,17 +186,17 @@ contract UnitgovLocksTest is BaseTest {
     vm.roll(4);
 
     assertEq(govlocks.getPriorVotes(address(0x6969), block.number - 1), 0);
-    assertEq(govlocks.getPriorVotes(address(0x420420), block.number - 1), amt);
+    assertEq(govlocks.getPriorVotes(address(0x420420), block.number - 1), govLocksAmt);
     assertEq(govlocks.getPriorVotes(address(this), block.number - 1), 0);
   }
 
   function testDelegateDelegateVote() public {
     address user = address(0x69);
     address user2 = address(0x420);
-    deal(address(goldiswap), user, amt);
+    deal(address(goldiswap), user, govLocksAmt);
     vm.startPrank(user);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(2);
     govlocks.delegate(user2);
@@ -224,7 +222,7 @@ contract UnitgovLocksTest is BaseTest {
 
     vm.roll(20);
     vm.prank(user);
-    SafeTransferLib.safeTransfer(address(govlocks), address(0x80085), amt);
+    SafeTransferLib.safeTransfer(address(govlocks), address(0x80085), govLocksAmt);
     vm.roll(73);
 
     vm.prank(user);
@@ -236,9 +234,9 @@ contract UnitgovLocksTest is BaseTest {
   }
 
   function testMoveDelegatesSrcRepNonZero() public {
-    deal(address(goldiswap), address(this), amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     vm.roll(3);
     govlocks.delegate(address(this));
     vm.roll(5);
@@ -257,24 +255,24 @@ contract UnitgovLocksTest is BaseTest {
     assertEq(numUser, 2);
     assertEq(num69, 1);
     assertEq(votesUser, 0);
-    assertEq(votes69, amt);
+    assertEq(votes69, govLocksAmt);
   }
 
   function testUpdateStakedBalanceFailGoldilocked() public {
     vm.expectRevert(abi.encodeWithSelector(govLocks.NotGoldilocked.selector));
-    govlocks.updateStakedBalance(address(0x69), address(0x69), amt);
+    govlocks.updateStakedBalance(address(0x69), address(0x69), govLocksAmt);
   }
 
   function testUpdatedStakedBalanceSuccess() public {
-    deal(address(goldiswap), address(this), amt + amt);
-    goldiswap.approve(address(govlocks), amt);
-    govlocks.deposit(amt);
+    deal(address(goldiswap), address(this), govLocksAmt + govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
-    goldiswap.approve(address(goldilocked), amt);
-    goldilocked.stake(amt);
+    goldiswap.approve(address(goldilocked), govLocksAmt);
+    goldilocked.stake(govLocksAmt);
     vm.roll(2);
 
-    assertEq(govlocks.getPriorVotes(address(this), 1), goldilocked.userStakedLocks(address(this)) + amt);
+    assertEq(govlocks.getPriorVotes(address(this), 1), goldilocked.userStakedLocks(address(this)) + govLocksAmt);
   }
 
 }
