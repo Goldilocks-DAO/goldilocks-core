@@ -1,0 +1,547 @@
+INFO:Detectors:
+Goldivault.redeemOwnership(uint256) (src/core/Goldivault.sol#139-153) performs a multiplication on the result of a division:
+	- SafeTransferLib.safeTransfer(depositToken,msg.sender,(amount / 1000) * (1000 - _fee)) (src/core/Goldivault.sol#147)
+Goldivault.redeemOwnership(uint256) (src/core/Goldivault.sol#139-153) performs a multiplication on the result of a division:
+	- SafeTransferLib.safeTransfer(depositToken,multisig,(amount / 1000) * _fee) (src/core/Goldivault.sol#148)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#divide-before-multiply
+INFO:Detectors:
+Goldivault.constructor(address,address,address,address[],address,address,address,address,address) (src/core/Goldivault.sol#64-90) ignores return value by ERC20(_depositToken).approve(_depositVault,type()(uint256).max) (src/core/Goldivault.sol#85)
+Goldivault.constructor(address,address,address,address[],address,address,address,address,address) (src/core/Goldivault.sol#64-90) ignores return value by ERC20(_ibgt).approve(_ibgtvault,type()(uint256).max) (src/core/Goldivault.sol#86)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return
+INFO:Detectors:
+Goldivault.setEarlyWithdrawalFee(uint256) (src/core/Goldivault.sol#187-190) should emit an event for: 
+	- earlyWithdrawalFee = _earlyWithdrawalFee (src/core/Goldivault.sol#189) 
+Goldivault.setParameters(uint256,uint256,uint256) (src/core/Goldivault.sol#193-199) should emit an event for: 
+	- delay = _delay (src/core/Goldivault.sol#196) 
+	- duration = _duration (src/core/Goldivault.sol#197) 
+	- endTime = block.timestamp + _duration (src/core/Goldivault.sol#198)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-events-arithmetic
+INFO:Detectors:
+Goldivault.redeemYield(uint256) (src/core/Goldivault.sol#125-135) has external calls inside a loop: finalYield = ERC20(yieldTokens[i]).balanceOf(address(this)) (src/core/Goldivault.sol#131)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#calls-inside-a-loop
+INFO:Detectors:
+Goldivault.deposit(uint256) (src/core/Goldivault.sol#113-121) uses timestamp for comparisons
+	Dangerous comparisons:
+	- remainingTime < 86400 (src/core/Goldivault.sol#115)
+Goldivault.redeemYield(uint256) (src/core/Goldivault.sol#125-135) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < concludeTime + delay || ! concluded (src/core/Goldivault.sol#126)
+Goldivault.redeemOwnership(uint256) (src/core/Goldivault.sol#139-153) uses timestamp for comparisons
+	Dangerous comparisons:
+	- remainingTime > 0 (src/core/Goldivault.sol#146)
+	- block.timestamp > endTime (src/core/Goldivault.sol#140)
+Goldivault.conclude() (src/core/Goldivault.sol#156-162) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < endTime (src/core/Goldivault.sol#157)
+Goldivault.renew() (src/core/Goldivault.sol#165-171) uses timestamp for comparisons
+	Dangerous comparisons:
+	- concludeTime + duration < block.timestamp || ! concluded (src/core/Goldivault.sol#167)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Parameter Goldivault.addYieldAssets(address[])._yieldTokens (src/core/Goldivault.sol#179) is not in mixedCase
+Parameter Goldivault.setEarlyWithdrawalFee(uint256)._earlyWithdrawalFee (src/core/Goldivault.sol#187) is not in mixedCase
+Parameter Goldivault.setParameters(uint256,uint256,uint256)._yieldFee (src/core/Goldivault.sol#193) is not in mixedCase
+Parameter Goldivault.setParameters(uint256,uint256,uint256)._delay (src/core/Goldivault.sol#193) is not in mixedCase
+Parameter Goldivault.setParameters(uint256,uint256,uint256)._duration (src/core/Goldivault.sol#193) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+INFO:Detectors:
+Goldivault.depositToken (src/core/Goldivault.sol#48) should be immutable 
+Goldivault.depositVault (src/core/Goldivault.sol#50) should be immutable 
+Goldivault.ibgt (src/core/Goldivault.sol#52) should be immutable 
+Goldivault.ibgtvault (src/core/Goldivault.sol#51) should be immutable 
+Goldivault.ired (src/core/Goldivault.sol#53) should be immutable 
+Goldivault.multisig (src/core/Goldivault.sol#54) should be immutable 
+Goldivault.ot (src/core/Goldivault.sol#46) should be immutable 
+Goldivault.yt (src/core/Goldivault.sol#47) should be immutable 
+OwnershipToken.vault (src/core/OwnershipToken.sol#31) should be immutable 
+YieldToken.vault (src/core/YieldToken.sol#31) should be immutable 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#state-variables-that-could-be-declared-immutable
+INFO:Detectors:
+OwnershipToken.vault (src/core/OwnershipToken.sol#31) should be immutable 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#state-variables-that-could-be-declared-immutable
+INFO:Detectors:
+YieldToken.vault (src/core/YieldToken.sol#31) should be immutable 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#state-variables-that-could-be-declared-immutable
+Goldiswap.buy(uint256,uint256) (src/core/Goldiswap.sol#137-152) performs a multiplication on the result of a division:
+	- tax = (price / 1000) * 3 (src/core/Goldiswap.sol#143)
+Goldiswap.sell(uint256,uint256) (src/core/Goldiswap.sol#157-171) performs a multiplication on the result of a division:
+	- tax = (proceeds / 100) * 5 (src/core/Goldiswap.sol#163)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#divide-before-multiply
+INFO:Detectors:
+Goldiswap.injectLiquidity(uint256,uint256) (src/core/Goldiswap.sol#359-364) should emit an event for: 
+	- fsl += fslLiq (src/core/Goldiswap.sol#361) 
+	- psl += pslLiq (src/core/Goldiswap.sol#362) 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-events-arithmetic
+INFO:Detectors:
+Goldiswap.constructor(uint256,uint256,address,address,address)._goldilocked (src/core/Goldiswap.sol#66) lacks a zero-check on :
+		- goldilocked = _goldilocked (src/core/Goldiswap.sol#72)
+Goldiswap.constructor(uint256,uint256,address,address,address)._honey (src/core/Goldiswap.sol#67) lacks a zero-check on :
+		- honey = _honey (src/core/Goldiswap.sol#73)
+Goldiswap.constructor(uint256,uint256,address,address,address)._multisig (src/core/Goldiswap.sol#68) lacks a zero-check on :
+		- multisig = _multisig (src/core/Goldiswap.sol#74)
+Goldiswap.setMultisig(address)._multisig (src/core/Goldiswap.sol#369) lacks a zero-check on :
+		- multisig = _multisig (src/core/Goldiswap.sol#371)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-zero-address-validation
+INFO:Detectors:
+Goldiswap._floorRaise() (src/core/Goldiswap.sol#299-310) uses timestamp for comparisons
+	Dangerous comparisons:
+	- currentRatio > targetRatio (src/core/Goldiswap.sol#301)
+Goldiswap._floorReduce() (src/core/Goldiswap.sol#315-328) uses timestamp for comparisons
+	Dangerous comparisons:
+	- elapsedRaise >= 86400 && elapsedDrop >= 86400 (src/core/Goldiswap.sol#318)
+	- decreaseFactor > MAX_FLOOR_REDUCE (src/core/Goldiswap.sol#320)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Parameter Goldiswap.setMultisig(address)._multisig (src/core/Goldiswap.sol#369) is not in mixedCase
+Variable Goldiswap.MAX_FLOOR_REDUCE (src/core/Goldiswap.sol#37) is not in mixedCase
+Variable Goldiswap.MAX_RATIO (src/core/Goldiswap.sol#38) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+Goldiswap.constructor(uint256,uint256,address,address,address) (src/core/Goldiswap.sol#63-78) uses literals with too many digits:
+	- _mint(goldilocked,100000000e18) (src/core/Goldiswap.sol#77)
+Goldiswap._buyLoop(uint256,uint256,uint256,uint256) (src/core/Goldiswap.sol#215-248) uses literals with too many digits:
+	- increment = FixedPointMathLib.divWad(_supply,100000e18) (src/core/Goldiswap.sol#219)
+Goldiswap._sellLoop(uint256,uint256,uint256,uint256) (src/core/Goldiswap.sol#256-279) uses literals with too many digits:
+	- increment = FixedPointMathLib.divWad(_supply,100000e18) (src/core/Goldiswap.sol#260)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#too-many-digits
+INFO:Detectors:
+Goldiswap.goldilocked (src/core/Goldiswap.sol#47) should be immutable 
+Goldiswap.honey (src/core/Goldiswap.sol#48) should be immutable 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#state-variables-that-could-be-declared-immutable
+Goldilend.borrow(uint256,uint256,address,uint256) (src/core/Goldilend.sol#342-383) performs a multiplication on the result of a division:
+	- interest = (interest / 1000) * discount (src/core/Goldilend.sol#362)
+Goldilend.borrow(uint256,uint256,address[],uint256[]) (src/core/Goldilend.sol#390-432) performs a multiplication on the result of a division:
+	- interest = (interest / 1000) * discount (src/core/Goldilend.sol#413)
+Goldilend.repay(uint256,uint256) (src/core/Goldilend.sol#437-456) performs a multiplication on the result of a division:
+	- poolSize += (userLoan.interest / 1000) * (1000 - (multisigShare + honeyjarShare)) (src/core/Goldilend.sol#446)
+Goldilend.liquidate(address,uint256) (src/core/Goldilend.sol#461-479) performs a multiplication on the result of a division:
+	- poolSize += (userLoan.interest / 1000) * (1000 - (multisigShare + honeyjarShare)) (src/core/Goldilend.sol#468)
+Goldilend._claimablePrgPergiBGT(address) (src/core/Goldilend.sol#513-526) performs a multiplication on the result of a division:
+	- porridgeEarned = (porridgeEarned / 1000) * (1000 + porridgeBoost) (src/core/Goldilend.sol#524)
+Goldilend._calculateFairValue(address[]) (src/core/Goldilend.sol#547-551) performs a multiplication on the result of a division:
+	- fairValue += (totalValuation / 100) * nftFairValues[collateralNFTs[i]] (src/core/Goldilend.sol#549)
+Goldilend._updateInterestClaims(uint256) (src/core/Goldilend.sol#686-689) performs a multiplication on the result of a division:
+	- multisigClaims += (interest / 1000) * multisigShare (src/core/Goldilend.sol#687)
+Goldilend._updateInterestClaims(uint256) (src/core/Goldilend.sol#686-689) performs a multiplication on the result of a division:
+	- honeyjarClaims += (interest / 1000) * honeyjarShare (src/core/Goldilend.sol#688)
+Goldilocked._calcFee(uint256) (src/core/Goldilocked.sol#314-316) performs a multiplication on the result of a division:
+	- (amount / 100) * 3 (src/core/Goldilocked.sol#315)
+Goldiswap.buy(uint256,uint256) (src/core/Goldiswap.sol#137-152) performs a multiplication on the result of a division:
+	- tax = (price / 1000) * 3 (src/core/Goldiswap.sol#143)
+Goldiswap.sell(uint256,uint256) (src/core/Goldiswap.sol#157-171) performs a multiplication on the result of a division:
+	- tax = (proceeds / 100) * 5 (src/core/Goldiswap.sol#163)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#divide-before-multiply
+INFO:Detectors:
+govLocks._writeCheckpoint(address,uint256,uint256,uint256) (src/governance/govLocks.sol#218-231) uses a dangerous strict equality:
+	- nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == block.number (src/governance/govLocks.sol#224)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dangerous-strict-equalities
+INFO:Detectors:
+Reentrancy in Goldilend.repay(uint256,uint256) (src/core/Goldilend.sol#437-456):
+	External calls:
+	- IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this),msg.sender,userLoan.collateralNFTIds[i]) (src/core/Goldilend.sol#449)
+	- _refreshiBGT(repayAmount) (src/core/Goldilend.sol#452)
+		- IERC20(ibgt).approve(vault,ibgtAmount) (src/core/Goldilend.sol#586)
+		- iBGTVault(vault).stake(ibgtAmount) (src/core/Goldilend.sol#587)
+	State variables written after the call(s):
+	- _refreshiBGT(repayAmount) (src/core/Goldilend.sol#452)
+		- poolSize += 5e18 (src/core/Goldilend.sol#588)
+	Goldilend.poolSize (src/core/Goldilend.sol#87) can be used in cross function reentrancies:
+	- Goldilend._calculateInterest(uint256,uint256,uint256) (src/core/Goldilend.sol#557-567)
+	- Goldilend._giBGTMintAmount(uint256) (src/core/Goldilend.sol#594-597)
+	- Goldilend._giBGTRatio() (src/core/Goldilend.sol#601-603)
+	- Goldilend._refreshiBGT(uint256) (src/core/Goldilend.sol#585-589)
+	- Goldilend.borrow(uint256,uint256,address[],uint256[]) (src/core/Goldilend.sol#390-432)
+	- Goldilend.borrow(uint256,uint256,address,uint256) (src/core/Goldilend.sol#342-383)
+	- Goldilend.constructor(uint256,uint256,uint256,uint256,address,address,address,address,address,address[],uint8[]) (src/core/Goldilend.sol#117-143)
+	- Goldilend.emergencyWithdraw() (src/core/Goldilend.sol#742-745)
+	- Goldilend.liquidate(address,uint256) (src/core/Goldilend.sol#461-479)
+	- Goldilend.lock(uint256) (src/core/Goldilend.sol#302-308)
+	- Goldilend.poolSize (src/core/Goldilend.sol#87)
+	- Goldilend.repay(uint256,uint256) (src/core/Goldilend.sol#437-456)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-1
+INFO:Detectors:
+Goldilend.withdrawBoost().ids (src/core/Goldilend.sol#287) is a local variable never initialized
+Goldilend.withdrawBoost().nfts (src/core/Goldilend.sol#286) is a local variable never initialized
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#uninitialized-local-variables
+INFO:Detectors:
+Goldilend._refreshiBGT(uint256) (src/core/Goldilend.sol#585-589) ignores return value by IERC20(ibgt).approve(vault,ibgtAmount) (src/core/Goldilend.sol#586)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return
+INFO:Detectors:
+Goldilend.setValue(uint256,address[],uint256[]) (src/core/Goldilend.sol#711-723) should emit an event for: 
+	- totalValuation = _totalValuation (src/core/Goldilend.sol#718) 
+Goldilend.setProtocolInterestRate(uint256) (src/core/Goldilend.sol#727-730) should emit an event for: 
+	- protocolInterestRate = _protocolInterestRate (src/core/Goldilend.sol#729) 
+Goldilend.setShareRates(uint256,uint256) (src/core/Goldilend.sol#735-739) should emit an event for: 
+	- multisigShare = _multisigShare (src/core/Goldilend.sol#737) 
+	- honeyjarShare = _honeyjarShare (src/core/Goldilend.sol#738) 
+Goldilend.setSlope(uint256) (src/core/Goldilend.sol#768-771) should emit an event for: 
+	- slope = _slope (src/core/Goldilend.sol#770) 
+Goldilend.setDurations(uint256,uint256) (src/core/Goldilend.sol#776-780) should emit an event for: 
+	- minDuration = _minDuration (src/core/Goldilend.sol#778) 
+	- maxDuration = _maxDuration (src/core/Goldilend.sol#779) 
+Goldilend.increasePrgEmissions(uint256) (src/core/Goldilend.sol#789-792) should emit an event for: 
+	- deployTime = _deployTime (src/core/Goldilend.sol#791) 
+Goldilocked.changePorridgeEmissions(uint256) (src/core/Goldilocked.sol#354-357) should emit an event for: 
+	- ANNUAL_PORRIDGE_EMISSIONS = newEmissions (src/core/Goldilocked.sol#356) 
+Goldiswap.injectLiquidity(uint256,uint256) (src/core/Goldiswap.sol#359-364) should emit an event for: 
+	- fsl += fslLiq (src/core/Goldiswap.sol#361) 
+	- psl += pslLiq (src/core/Goldiswap.sol#362) 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-events-arithmetic
+INFO:Detectors:
+Goldilend.constructor(uint256,uint256,uint256,uint256,address,address,address,address,address,address[],uint8[])._goldilocked (src/core/Goldilend.sol#122) lacks a zero-check on :
+		- goldilocked = _goldilocked (src/core/Goldilend.sol#134)
+Goldilend.constructor(uint256,uint256,uint256,uint256,address,address,address,address,address,address[],uint8[])._multisig (src/core/Goldilend.sol#123) lacks a zero-check on :
+		- multisig = _multisig (src/core/Goldilend.sol#135)
+Goldilend.constructor(uint256,uint256,uint256,uint256,address,address,address,address,address,address[],uint8[])._hj (src/core/Goldilend.sol#124) lacks a zero-check on :
+		- hj = _hj (src/core/Goldilend.sol#136)
+Goldilend.constructor(uint256,uint256,uint256,uint256,address,address,address,address,address,address[],uint8[])._ibgt (src/core/Goldilend.sol#125) lacks a zero-check on :
+		- ibgt = _ibgt (src/core/Goldilend.sol#137)
+Goldilend.constructor(uint256,uint256,uint256,uint256,address,address,address,address,address,address[],uint8[])._vault (src/core/Goldilend.sol#126) lacks a zero-check on :
+		- vault = _vault (src/core/Goldilend.sol#138)
+Goldilend.setMultisig(address)._multisig (src/core/Goldilend.sol#700) lacks a zero-check on :
+		- multisig = _multisig (src/core/Goldilend.sol#702)
+Goldilocked.constructor(address,address,address,address,address[],uint256[])._goldiswap (src/core/Goldilocked.sol#69) lacks a zero-check on :
+		- goldiswap = _goldiswap (src/core/Goldilocked.sol#76)
+Goldilocked.constructor(address,address,address,address,address[],uint256[])._goldilend (src/core/Goldilocked.sol#70) lacks a zero-check on :
+		- goldilend = _goldilend (src/core/Goldilocked.sol#77)
+Goldilocked.constructor(address,address,address,address,address[],uint256[])._govlocks (src/core/Goldilocked.sol#71) lacks a zero-check on :
+		- govlocks = _govlocks (src/core/Goldilocked.sol#78)
+Goldilocked.constructor(address,address,address,address,address[],uint256[])._honey (src/core/Goldilocked.sol#72) lacks a zero-check on :
+		- honey = _honey (src/core/Goldilocked.sol#79)
+Goldiswap.constructor(uint256,uint256,address,address,address)._goldilocked (src/core/Goldiswap.sol#66) lacks a zero-check on :
+		- goldilocked = _goldilocked (src/core/Goldiswap.sol#72)
+Goldiswap.constructor(uint256,uint256,address,address,address)._honey (src/core/Goldiswap.sol#67) lacks a zero-check on :
+		- honey = _honey (src/core/Goldiswap.sol#73)
+Goldiswap.constructor(uint256,uint256,address,address,address)._multisig (src/core/Goldiswap.sol#68) lacks a zero-check on :
+		- multisig = _multisig (src/core/Goldiswap.sol#74)
+Goldiswap.setMultisig(address)._multisig (src/core/Goldiswap.sol#369) lacks a zero-check on :
+		- multisig = _multisig (src/core/Goldiswap.sol#371)
+govLocks.constructor(address,address,address)._locks (src/governance/govLocks.sol#67) lacks a zero-check on :
+		- locks = _locks (src/governance/govLocks.sol#71)
+govLocks.constructor(address,address,address)._goldigov (src/governance/govLocks.sol#68) lacks a zero-check on :
+		- goldigov = _goldigov (src/governance/govLocks.sol#72)
+govLocks.constructor(address,address,address)._goldilocked (src/governance/govLocks.sol#69) lacks a zero-check on :
+		- goldilocked = _goldilocked (src/governance/govLocks.sol#73)
+iBGTVault.constructor(address,address)._depositToken (src/mock/iBGTVault.sol#19) lacks a zero-check on :
+		- depositToken = _depositToken (src/mock/iBGTVault.sol#22)
+iBGTVault.constructor(address,address)._ibgt (src/mock/iBGTVault.sol#20) lacks a zero-check on :
+		- ibgt = _ibgt (src/mock/iBGTVault.sol#23)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-zero-address-validation
+INFO:Detectors:
+Goldilend.boost(address[],uint256[],uint256) (src/core/Goldilend.sol#257-271) has external calls inside a loop: IERC721(partnerNFTs[i_scope_0]).safeTransferFrom(msg.sender,address(this),partnerNFTIds[i_scope_0]) (src/core/Goldilend.sol#269)
+Goldilend.withdrawBoost() (src/core/Goldilend.sol#282-298) has external calls inside a loop: IERC721(userBoost.partnerNFTs[i]).safeTransferFrom(address(this),msg.sender,userBoost.partnerNFTIds[i]) (src/core/Goldilend.sol#296)
+Goldilend.borrow(uint256,uint256,address[],uint256[]) (src/core/Goldilend.sol#390-432) has external calls inside a loop: IERC721(collateralNFTs[i_scope_0]).safeTransferFrom(msg.sender,address(this),collateralNFTIds[i_scope_0]) (src/core/Goldilend.sol#428)
+Goldilend.repay(uint256,uint256) (src/core/Goldilend.sol#437-456) has external calls inside a loop: IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this),msg.sender,userLoan.collateralNFTIds[i]) (src/core/Goldilend.sol#449)
+Goldilend.liquidate(address,uint256) (src/core/Goldilend.sol#461-479) has external calls inside a loop: IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this),msg.sender,userLoan.collateralNFTIds[i]) (src/core/Goldilend.sol#476)
+Goldilocked.constructor(address,address,address,address,address[],uint256[]) (src/core/Goldilocked.sol#68-94) has external calls inside a loop: govLocks(govlocks).updateStakedBalance(address(0),allocationsAddress[i],allocationsAmt[i]) (src/core/Goldilocked.sol#90)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#calls-inside-a-loop
+INFO:Detectors:
+Reentrancy in Goldilend._refreshiBGT(uint256) (src/core/Goldilend.sol#585-589):
+	External calls:
+	- IERC20(ibgt).approve(vault,ibgtAmount) (src/core/Goldilend.sol#586)
+	- iBGTVault(vault).stake(ibgtAmount) (src/core/Goldilend.sol#587)
+	State variables written after the call(s):
+	- poolSize += 5e18 (src/core/Goldilend.sol#588)
+Reentrancy in Goldilend.repay(uint256,uint256) (src/core/Goldilend.sol#437-456):
+	External calls:
+	- IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this),msg.sender,userLoan.collateralNFTIds[i]) (src/core/Goldilend.sol#449)
+	- _refreshiBGT(repayAmount) (src/core/Goldilend.sol#452)
+		- IERC20(ibgt).approve(vault,ibgtAmount) (src/core/Goldilend.sol#586)
+		- iBGTVault(vault).stake(ibgtAmount) (src/core/Goldilend.sol#587)
+	State variables written after the call(s):
+	- _updateInterestClaims(interest) (src/core/Goldilend.sol#453)
+		- honeyjarClaims += (interest / 1000) * honeyjarShare (src/core/Goldilend.sol#688)
+	- _updateInterestClaims(interest) (src/core/Goldilend.sol#453)
+		- multisigClaims += (interest / 1000) * multisigShare (src/core/Goldilend.sol#687)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-2
+INFO:Detectors:
+Reentrancy in Goldilend.borrow(uint256,uint256,address,uint256) (src/core/Goldilend.sol#342-383):
+	External calls:
+	- IERC721(collateralNFT).safeTransferFrom(msg.sender,address(this),collateralNFTId) (src/core/Goldilend.sol#380)
+	Event emitted after the call(s):
+	- Borrow(msg.sender,borrowAmount) (src/core/Goldilend.sol#382)
+Reentrancy in Goldilend.borrow(uint256,uint256,address[],uint256[]) (src/core/Goldilend.sol#390-432):
+	External calls:
+	- IERC721(collateralNFTs[i_scope_0]).safeTransferFrom(msg.sender,address(this),collateralNFTIds[i_scope_0]) (src/core/Goldilend.sol#428)
+	Event emitted after the call(s):
+	- Borrow(msg.sender,borrowAmount) (src/core/Goldilend.sol#431)
+Reentrancy in Goldilocked.borrow(uint256) (src/core/Goldilocked.sol#225-233):
+	External calls:
+	- Goldiswap(goldiswap).borrowTransfer(msg.sender,amount,fee) (src/core/Goldilocked.sol#231)
+	Event emitted after the call(s):
+	- Borrowed(msg.sender,amount) (src/core/Goldilocked.sol#232)
+Reentrancy in Goldilend.liquidate(address,uint256) (src/core/Goldilend.sol#461-479):
+	External calls:
+	- IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this),msg.sender,userLoan.collateralNFTIds[i]) (src/core/Goldilend.sol#476)
+	Event emitted after the call(s):
+	- Liquidation(msg.sender,user,userLoan.borrowedAmount) (src/core/Goldilend.sol#478)
+Reentrancy in Goldilend.lock(uint256) (src/core/Goldilend.sol#302-308):
+	External calls:
+	- _refreshiBGT(amount) (src/core/Goldilend.sol#305)
+		- IERC20(ibgt).approve(vault,ibgtAmount) (src/core/Goldilend.sol#586)
+		- iBGTVault(vault).stake(ibgtAmount) (src/core/Goldilend.sol#587)
+	Event emitted after the call(s):
+	- iBGTLock(msg.sender,amount) (src/core/Goldilend.sol#307)
+Reentrancy in Goldilend.repay(uint256,uint256) (src/core/Goldilend.sol#437-456):
+	External calls:
+	- IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this),msg.sender,userLoan.collateralNFTIds[i]) (src/core/Goldilend.sol#449)
+	- _refreshiBGT(repayAmount) (src/core/Goldilend.sol#452)
+		- IERC20(ibgt).approve(vault,ibgtAmount) (src/core/Goldilend.sol#586)
+		- iBGTVault(vault).stake(ibgtAmount) (src/core/Goldilend.sol#587)
+	Event emitted after the call(s):
+	- Repay(msg.sender,repayAmount) (src/core/Goldilend.sol#455)
+Reentrancy in Goldilocked.stake(uint256) (src/core/Goldilocked.sol#184-190):
+	External calls:
+	- govLocks(govlocks).updateStakedBalance(address(0),msg.sender,amount) (src/core/Goldilocked.sol#187)
+	Event emitted after the call(s):
+	- Staked(msg.sender,amount) (src/core/Goldilocked.sol#189)
+Reentrancy in Goldilocked.stir(uint256) (src/core/Goldilocked.sol#209-214):
+	External calls:
+	- Goldiswap(goldiswap).porridgeMint(msg.sender,amount) (src/core/Goldilocked.sol#212)
+	Event emitted after the call(s):
+	- Stirred(msg.sender,amount) (src/core/Goldilocked.sol#213)
+Reentrancy in Goldilocked.unstake(uint256) (src/core/Goldilocked.sol#194-205):
+	External calls:
+	- govLocks(govlocks).updateStakedBalance(msg.sender,address(0),amount) (src/core/Goldilocked.sol#202)
+	Event emitted after the call(s):
+	- Unstaked(msg.sender,amount) (src/core/Goldilocked.sol#204)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-3
+INFO:Detectors:
+Goldilend.boost(address,uint256,uint256) (src/core/Goldilend.sol#241-250) uses timestamp for comparisons
+	Dangerous comparisons:
+	- expiry < block.timestamp + 2592000 (src/core/Goldilend.sol#246)
+Goldilend.boost(address[],uint256[],uint256) (src/core/Goldilend.sol#257-271) uses timestamp for comparisons
+	Dangerous comparisons:
+	- expiry < block.timestamp + 2592000 (src/core/Goldilend.sol#265)
+Goldilend.extendBoost(uint256) (src/core/Goldilend.sol#275-279) uses timestamp for comparisons
+	Dangerous comparisons:
+	- newExpiry < block.timestamp + 2592000 (src/core/Goldilend.sol#277)
+Goldilend.withdrawBoost() (src/core/Goldilend.sol#282-298) uses timestamp for comparisons
+	Dangerous comparisons:
+	- userBoost.expiry > block.timestamp (src/core/Goldilend.sol#285)
+Goldilend.borrow(uint256,uint256,address,uint256) (src/core/Goldilend.sol#342-383) uses timestamp for comparisons
+	Dangerous comparisons:
+	- userBoost.expiry > block.timestamp + duration (src/core/Goldilend.sol#357)
+Goldilend.borrow(uint256,uint256,address[],uint256[]) (src/core/Goldilend.sol#390-432) uses timestamp for comparisons
+	Dangerous comparisons:
+	- userBoost.expiry > block.timestamp + duration (src/core/Goldilend.sol#408)
+Goldilend.repay(uint256,uint256) (src/core/Goldilend.sol#437-456) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp > userLoan.endDate (src/core/Goldilend.sol#440)
+Goldilend.liquidate(address,uint256) (src/core/Goldilend.sol#461-479) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < userLoan.endDate || userLoan.liquidated (src/core/Goldilend.sol#463)
+	- msg.sender != multisig || block.timestamp < userLoan.endDate + 432000 (src/core/Goldilend.sol#467)
+Goldilend._claimablePrgPergiBGT(address) (src/core/Goldilend.sol#513-526) uses timestamp for comparisons
+	Dangerous comparisons:
+	- userBoost.expiry > block.timestamp (src/core/Goldilend.sol#519)
+	- initialStakeTime[user] > 0 (src/core/Goldilend.sol#514)
+	- (userInitialStakeTime - deployTime) > 15552000 (src/core/Goldilend.sol#515)
+Goldilend._calculateRate(uint256) (src/core/Goldilend.sol#531-542) uses timestamp for comparisons
+	Dangerous comparisons:
+	- emissionsPeriod > 15552000 (src/core/Goldilend.sol#533)
+	- average > 15552000 (src/core/Goldilend.sol#537)
+Goldilocked.unstake(uint256) (src/core/Goldilocked.sol#194-205) uses timestamp for comparisons
+	Dangerous comparisons:
+	- amount > vest (src/core/Goldilocked.sol#196)
+Goldilocked._claim(address,uint256) (src/core/Goldilocked.sol#262-268) uses timestamp for comparisons
+	Dangerous comparisons:
+	- claimable > 0 (src/core/Goldilocked.sol#263)
+Goldilocked._vestingCheck(address,uint256) (src/core/Goldilocked.sol#321-337) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < vestingStart (src/core/Goldilocked.sol#329)
+Goldiswap._floorRaise() (src/core/Goldiswap.sol#299-310) uses timestamp for comparisons
+	Dangerous comparisons:
+	- currentRatio > targetRatio (src/core/Goldiswap.sol#301)
+Goldiswap._floorReduce() (src/core/Goldiswap.sol#315-328) uses timestamp for comparisons
+	Dangerous comparisons:
+	- elapsedRaise >= 86400 && elapsedDrop >= 86400 (src/core/Goldiswap.sol#318)
+	- decreaseFactor > MAX_FLOOR_REDUCE (src/core/Goldiswap.sol#320)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Event Goldilend.iBGTLock(address,uint256) (src/core/Goldilend.sol#184) is not in CapWords
+Event Goldilend.giBGTStake(address,uint256) (src/core/Goldilend.sol#185) is not in CapWords
+Parameter Goldilend.setMultisig(address)._multisig (src/core/Goldilend.sol#700) is not in mixedCase
+Parameter Goldilend.setValue(uint256,address[],uint256[])._totalValuation (src/core/Goldilend.sol#712) is not in mixedCase
+Parameter Goldilend.setValue(uint256,address[],uint256[])._nfts (src/core/Goldilend.sol#714) is not in mixedCase
+Parameter Goldilend.setValue(uint256,address[],uint256[])._nftFairValues (src/core/Goldilend.sol#715) is not in mixedCase
+Parameter Goldilend.setProtocolInterestRate(uint256)._protocolInterestRate (src/core/Goldilend.sol#727) is not in mixedCase
+Parameter Goldilend.setShareRates(uint256,uint256)._multisigShare (src/core/Goldilend.sol#735) is not in mixedCase
+Parameter Goldilend.setShareRates(uint256,uint256)._honeyjarShare (src/core/Goldilend.sol#735) is not in mixedCase
+Parameter Goldilend.setSlope(uint256)._slope (src/core/Goldilend.sol#768) is not in mixedCase
+Parameter Goldilend.setDurations(uint256,uint256)._minDuration (src/core/Goldilend.sol#776) is not in mixedCase
+Parameter Goldilend.setDurations(uint256,uint256)._maxDuration (src/core/Goldilend.sol#776) is not in mixedCase
+Parameter Goldilend.setBorrowingActive(bool)._borrowingActive (src/core/Goldilend.sol#784) is not in mixedCase
+Parameter Goldilend.increasePrgEmissions(uint256)._deployTime (src/core/Goldilend.sol#789) is not in mixedCase
+Variable Goldilocked.ANNUAL_PORRIDGE_EMISSIONS (src/core/Goldilocked.sol#45) is not in mixedCase
+Parameter Goldiswap.setMultisig(address)._multisig (src/core/Goldiswap.sol#369) is not in mixedCase
+Variable Goldiswap.MAX_FLOOR_REDUCE (src/core/Goldiswap.sol#37) is not in mixedCase
+Variable Goldiswap.MAX_RATIO (src/core/Goldiswap.sol#38) is not in mixedCase
+Contract govLocks (src/governance/govLocks.sol#28-256) is not in CapWords
+Contract iBGT (src/mock/iBGT.sol#5-19) is not in CapWords
+Parameter iBGT.mint(address,uint256)._to (src/mock/iBGT.sol#12) is not in mixedCase
+Parameter iBGT.mint(address,uint256)._amount (src/mock/iBGT.sol#12) is not in mixedCase
+Parameter iBGT.burn(address,uint256)._to (src/mock/iBGT.sol#15) is not in mixedCase
+Parameter iBGT.burn(address,uint256)._amount (src/mock/iBGT.sol#15) is not in mixedCase
+Contract iBGTVault (src/mock/iBGTVault.sol#8-52) is not in CapWords
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+Goldilocked.constructor(address,address,address,address,address[],uint256[]) (src/core/Goldilocked.sol#68-94) uses literals with too many digits:
+	- _mint(multisig,200000000e18) (src/core/Goldilocked.sol#93)
+Goldilocked._vestingCheck(address,uint256) (src/core/Goldilocked.sol#321-337) uses literals with too many digits:
+	- teamAllocation = 10000000e18 (src/core/Goldilocked.sol#322)
+Goldiswap.constructor(uint256,uint256,address,address,address) (src/core/Goldiswap.sol#63-78) uses literals with too many digits:
+	- _mint(goldilocked,100000000e18) (src/core/Goldiswap.sol#77)
+Goldiswap._buyLoop(uint256,uint256,uint256,uint256) (src/core/Goldiswap.sol#215-248) uses literals with too many digits:
+	- increment = FixedPointMathLib.divWad(_supply,100000e18) (src/core/Goldiswap.sol#219)
+Goldiswap._sellLoop(uint256,uint256,uint256,uint256) (src/core/Goldiswap.sol#256-279) uses literals with too many digits:
+	- increment = FixedPointMathLib.divWad(_supply,100000e18) (src/core/Goldiswap.sol#260)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#too-many-digits
+INFO:Detectors:
+Goldilend.targetTVL (src/core/Goldilend.sol#84) should be constant 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#state-variables-that-could-be-declared-constant
+INFO:Detectors:
+Goldilend.goldilocked (src/core/Goldilend.sol#66) should be immutable 
+Goldilend.hj (src/core/Goldilend.sol#68) should be immutable 
+Goldilend.ibgt (src/core/Goldilend.sol#69) should be immutable 
+Goldilend.porridgeMultiple (src/core/Goldilend.sol#88) should be immutable 
+Goldilend.vault (src/core/Goldilend.sol#70) should be immutable 
+Goldilocked.deployTime (src/core/Goldilocked.sol#46) should be immutable 
+Goldilocked.goldilend (src/core/Goldilocked.sol#50) should be immutable 
+Goldilocked.goldiswap (src/core/Goldilocked.sol#49) should be immutable 
+Goldilocked.govlocks (src/core/Goldilocked.sol#51) should be immutable 
+Goldilocked.honey (src/core/Goldilocked.sol#52) should be immutable 
+Goldilocked.multisig (src/core/Goldilocked.sol#53) should be immutable 
+Goldilocked.vestingEnd (src/core/Goldilocked.sol#48) should be immutable 
+Goldilocked.vestingStart (src/core/Goldilocked.sol#47) should be immutable 
+Goldiswap.goldilocked (src/core/Goldiswap.sol#47) should be immutable 
+Goldiswap.honey (src/core/Goldiswap.sol#48) should be immutable 
+govLocks.goldigov (src/governance/govLocks.sol#48) should be immutable 
+govLocks.goldilocked (src/governance/govLocks.sol#49) should be immutable 
+govLocks.locks (src/governance/govLocks.sol#47) should be immutable 
+iBGTVault.depositToken (src/mock/iBGTVault.sol#13) should be immutable 
+iBGTVault.ibgt (src/mock/iBGTVault.sol#14) should be immutable 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#state-variables-that-could-be-declared-immutable
+Goldilocked._calcFee(uint256) (src/core/Goldilocked.sol#314-316) performs a multiplication on the result of a division:
+	- (amount / 100) * 3 (src/core/Goldilocked.sol#315)
+Goldiswap.buy(uint256,uint256) (src/core/Goldiswap.sol#137-152) performs a multiplication on the result of a division:
+	- tax = (price / 1000) * 3 (src/core/Goldiswap.sol#143)
+Goldiswap.sell(uint256,uint256) (src/core/Goldiswap.sol#157-171) performs a multiplication on the result of a division:
+	- tax = (proceeds / 100) * 5 (src/core/Goldiswap.sol#163)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#divide-before-multiply
+INFO:Detectors:
+govLocks._writeCheckpoint(address,uint256,uint256,uint256) (src/governance/govLocks.sol#218-231) uses a dangerous strict equality:
+	- nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == block.number (src/governance/govLocks.sol#224)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dangerous-strict-equalities
+INFO:Detectors:
+Goldilocked.changePorridgeEmissions(uint256) (src/core/Goldilocked.sol#354-357) should emit an event for: 
+	- ANNUAL_PORRIDGE_EMISSIONS = newEmissions (src/core/Goldilocked.sol#356) 
+Goldiswap.injectLiquidity(uint256,uint256) (src/core/Goldiswap.sol#359-364) should emit an event for: 
+	- fsl += fslLiq (src/core/Goldiswap.sol#361) 
+	- psl += pslLiq (src/core/Goldiswap.sol#362) 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-events-arithmetic
+INFO:Detectors:
+Goldilocked.constructor(address,address,address,address,address[],uint256[])._goldiswap (src/core/Goldilocked.sol#69) lacks a zero-check on :
+		- goldiswap = _goldiswap (src/core/Goldilocked.sol#76)
+Goldilocked.constructor(address,address,address,address,address[],uint256[])._goldilend (src/core/Goldilocked.sol#70) lacks a zero-check on :
+		- goldilend = _goldilend (src/core/Goldilocked.sol#77)
+Goldilocked.constructor(address,address,address,address,address[],uint256[])._govlocks (src/core/Goldilocked.sol#71) lacks a zero-check on :
+		- govlocks = _govlocks (src/core/Goldilocked.sol#78)
+Goldilocked.constructor(address,address,address,address,address[],uint256[])._honey (src/core/Goldilocked.sol#72) lacks a zero-check on :
+		- honey = _honey (src/core/Goldilocked.sol#79)
+Goldiswap.constructor(uint256,uint256,address,address,address)._goldilocked (src/core/Goldiswap.sol#66) lacks a zero-check on :
+		- goldilocked = _goldilocked (src/core/Goldiswap.sol#72)
+Goldiswap.constructor(uint256,uint256,address,address,address)._honey (src/core/Goldiswap.sol#67) lacks a zero-check on :
+		- honey = _honey (src/core/Goldiswap.sol#73)
+Goldiswap.constructor(uint256,uint256,address,address,address)._multisig (src/core/Goldiswap.sol#68) lacks a zero-check on :
+		- multisig = _multisig (src/core/Goldiswap.sol#74)
+Goldiswap.setMultisig(address)._multisig (src/core/Goldiswap.sol#369) lacks a zero-check on :
+		- multisig = _multisig (src/core/Goldiswap.sol#371)
+govLocks.constructor(address,address,address)._locks (src/governance/govLocks.sol#67) lacks a zero-check on :
+		- locks = _locks (src/governance/govLocks.sol#71)
+govLocks.constructor(address,address,address)._goldigov (src/governance/govLocks.sol#68) lacks a zero-check on :
+		- goldigov = _goldigov (src/governance/govLocks.sol#72)
+govLocks.constructor(address,address,address)._goldilocked (src/governance/govLocks.sol#69) lacks a zero-check on :
+		- goldilocked = _goldilocked (src/governance/govLocks.sol#73)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-zero-address-validation
+INFO:Detectors:
+Goldilocked.constructor(address,address,address,address,address[],uint256[]) (src/core/Goldilocked.sol#68-94) has external calls inside a loop: govLocks(govlocks).updateStakedBalance(address(0),allocationsAddress[i],allocationsAmt[i]) (src/core/Goldilocked.sol#90)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#calls-inside-a-loop
+INFO:Detectors:
+Reentrancy in Goldilocked.borrow(uint256) (src/core/Goldilocked.sol#225-233):
+	External calls:
+	- Goldiswap(goldiswap).borrowTransfer(msg.sender,amount,fee) (src/core/Goldilocked.sol#231)
+	Event emitted after the call(s):
+	- Borrowed(msg.sender,amount) (src/core/Goldilocked.sol#232)
+Reentrancy in Goldilocked.stake(uint256) (src/core/Goldilocked.sol#184-190):
+	External calls:
+	- govLocks(govlocks).updateStakedBalance(address(0),msg.sender,amount) (src/core/Goldilocked.sol#187)
+	Event emitted after the call(s):
+	- Staked(msg.sender,amount) (src/core/Goldilocked.sol#189)
+Reentrancy in Goldilocked.stir(uint256) (src/core/Goldilocked.sol#209-214):
+	External calls:
+	- Goldiswap(goldiswap).porridgeMint(msg.sender,amount) (src/core/Goldilocked.sol#212)
+	Event emitted after the call(s):
+	- Stirred(msg.sender,amount) (src/core/Goldilocked.sol#213)
+Reentrancy in Goldilocked.unstake(uint256) (src/core/Goldilocked.sol#194-205):
+	External calls:
+	- govLocks(govlocks).updateStakedBalance(msg.sender,address(0),amount) (src/core/Goldilocked.sol#202)
+	Event emitted after the call(s):
+	- Unstaked(msg.sender,amount) (src/core/Goldilocked.sol#204)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-3
+INFO:Detectors:
+Goldilocked.unstake(uint256) (src/core/Goldilocked.sol#194-205) uses timestamp for comparisons
+	Dangerous comparisons:
+	- amount > vest (src/core/Goldilocked.sol#196)
+Goldilocked._claim(address,uint256) (src/core/Goldilocked.sol#262-268) uses timestamp for comparisons
+	Dangerous comparisons:
+	- claimable > 0 (src/core/Goldilocked.sol#263)
+Goldilocked._vestingCheck(address,uint256) (src/core/Goldilocked.sol#321-337) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < vestingStart (src/core/Goldilocked.sol#329)
+Goldiswap._floorRaise() (src/core/Goldiswap.sol#299-310) uses timestamp for comparisons
+	Dangerous comparisons:
+	- currentRatio > targetRatio (src/core/Goldiswap.sol#301)
+Goldiswap._floorReduce() (src/core/Goldiswap.sol#315-328) uses timestamp for comparisons
+	Dangerous comparisons:
+	- elapsedRaise >= 86400 && elapsedDrop >= 86400 (src/core/Goldiswap.sol#318)
+	- decreaseFactor > MAX_FLOOR_REDUCE (src/core/Goldiswap.sol#320)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Pragma version^0.8.19 (src/core/Goldilocked.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.
+Pragma version^0.8.19 (src/core/Goldiswap.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.
+Pragma version^0.8.19 (src/governance/govLocks.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.
+solc-0.8.20 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+INFO:Detectors:
+Variable Goldilocked.ANNUAL_PORRIDGE_EMISSIONS (src/core/Goldilocked.sol#45) is not in mixedCase
+Parameter Goldiswap.setMultisig(address)._multisig (src/core/Goldiswap.sol#369) is not in mixedCase
+Variable Goldiswap.MAX_FLOOR_REDUCE (src/core/Goldiswap.sol#37) is not in mixedCase
+Variable Goldiswap.MAX_RATIO (src/core/Goldiswap.sol#38) is not in mixedCase
+Contract govLocks (src/governance/govLocks.sol#28-256) is not in CapWords
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+Goldilocked.constructor(address,address,address,address,address[],uint256[]) (src/core/Goldilocked.sol#68-94) uses literals with too many digits:
+	- _mint(multisig,200000000e18) (src/core/Goldilocked.sol#93)
+Goldilocked._vestingCheck(address,uint256) (src/core/Goldilocked.sol#321-337) uses literals with too many digits:
+	- teamAllocation = 10000000e18 (src/core/Goldilocked.sol#322)
+Goldiswap.constructor(uint256,uint256,address,address,address) (src/core/Goldiswap.sol#63-78) uses literals with too many digits:
+	- _mint(goldilocked,100000000e18) (src/core/Goldiswap.sol#77)
+Goldiswap._buyLoop(uint256,uint256,uint256,uint256) (src/core/Goldiswap.sol#215-248) uses literals with too many digits:
+	- increment = FixedPointMathLib.divWad(_supply,100000e18) (src/core/Goldiswap.sol#219)
+Goldiswap._sellLoop(uint256,uint256,uint256,uint256) (src/core/Goldiswap.sol#256-279) uses literals with too many digits:
+	- increment = FixedPointMathLib.divWad(_supply,100000e18) (src/core/Goldiswap.sol#260)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#too-many-digits
+INFO:Detectors:
+Goldilocked.deployTime (src/core/Goldilocked.sol#46) should be immutable 
+Goldilocked.goldilend (src/core/Goldilocked.sol#50) should be immutable 
+Goldilocked.goldiswap (src/core/Goldilocked.sol#49) should be immutable 
+Goldilocked.govlocks (src/core/Goldilocked.sol#51) should be immutable 
+Goldilocked.honey (src/core/Goldilocked.sol#52) should be immutable 
+Goldilocked.multisig (src/core/Goldilocked.sol#53) should be immutable 
+Goldilocked.vestingEnd (src/core/Goldilocked.sol#48) should be immutable 
+Goldilocked.vestingStart (src/core/Goldilocked.sol#47) should be immutable 
+Goldiswap.goldilocked (src/core/Goldiswap.sol#47) should be immutable 
+Goldiswap.honey (src/core/Goldiswap.sol#48) should be immutable 
+govLocks.goldigov (src/governance/govLocks.sol#48) should be immutable 
+govLocks.goldilocked (src/governance/govLocks.sol#49) should be immutable 
+govLocks.locks (src/governance/govLocks.sol#47) should be immutable 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#state-variables-that-could-be-declared-immutable
+INFO:Slither:src/core analyzed (33 contracts with 93 detectors), 1070 result(s) found
