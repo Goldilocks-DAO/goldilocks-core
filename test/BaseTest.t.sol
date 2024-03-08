@@ -47,38 +47,6 @@ contract UnitGoldivault is Goldivault {
     _ired,
     _multisig
   ) {}
-  function _vaultDeposit(uint256 amount) internal override {
-    HoneyWethLPVault(depositVault).stake(amount);
-  }
-  function _unstakeDepositToken(uint256 amount) internal override {
-    HoneyWethLPVault(depositVault).withdraw(amount);
-  }
-  function _concludeVaultRewards() internal override {
-    HoneyWethLPVault(depositVault).exit();
-    InfraredBGTVault(ibgtvault).exit();
-  }
-  function _compoundVaultRewards() internal override {
-    HoneyWethLPVault(depositVault).getReward();
-    InfraredBGTVault(ibgtvault).getReward();
-    uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
-    uint256 yieldTokensLength = yieldTokens.length;
-    for(uint8 i; i < yieldTokensLength; ++i) {
-      SafeTransferLib.safeTransfer(yieldTokens[i], multisig, (ERC20(yieldTokens[i]).balanceOf(address(this)) / 100) * yieldFee);
-    }
-    InfraredBGTVault(ibgtvault).stake(ibgtrewards);
-  }
-}
-contract HoneyWethLPVault {
-  function stake(uint256 amount) external {}
-  function getReward() external {}
-  function withdraw(uint256 amount) external {}
-  function exit() external {}
-}
-contract InfraredBGTVault {
-  function stake(uint256 amount) external {}
-  function getReward() external {}
-  function withdraw(uint256 amount) external {}
-  function exit() external {}
 }
 contract oUnit is OwnershipToken {
   constructor(
@@ -128,7 +96,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
   BondBear bondbear;
   BandBear bandbear;
   iBGTVault ibgtvault;
-  iBGTVault unitvault;
   UnitGoldivault goldivault;
   oUnit ot;
   yUnit yt;
@@ -162,8 +129,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   address honeyjar = address(0x69420);
 
   function setUp() public {
-    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(14));
-    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(15));
+    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(13));
+    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(14));
     UnitGoldivault goldivaultComputed = UnitGoldivault(address(this).computeAddress(18));
 
     unit = new Unit();
@@ -174,7 +141,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bondbear = new BondBear();
     bandbear = new BandBear();
     ibgtvault = new iBGTVault(address(ibgt), address(ibgt));
-    unitvault = new iBGTVault(address(unit), address(ibgt));
 
     goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this));
 
@@ -241,8 +207,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(yt),
       address(unit),
       yieldTokens,
-      address(unitvault),
-      address(unitvault),
+      address(ibgtvault),
+      address(ibgtvault),
       address(ibgt),
       address(0x69),
       address(this)
