@@ -505,7 +505,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     return (stakedgiBGT[user] * (_claimablePrgPergiBGT() - prgPerTokenDebt[user])) + claimablePrg[user];
   }
 
-  /// @notice Calculates claimable $PRG
+  /// @notice Calculates claimable $PRG per $giBGT
   /// @dev porridgeEarned = time staked * rate
   function _claimablePrgPergiBGT() internal view returns (uint256 porridgeEarned) {    
     uint256 timeStaked = (block.timestamp - deployTime) > 180 days ? 180 days : block.timestamp - deployTime;
