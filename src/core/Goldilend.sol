@@ -74,7 +74,7 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   mapping(address => uint256) public stakedgiBGT;
   mapping(address => uint256) public claimablePrg;
-  mapping(address => uint256) public lastClaim;
+  mapping(address => uint256) public initialStakeTime;
   mapping(address => uint256) public prgPerTokenDebt;
   mapping(address => uint8) public partnerNFTBoosts;
   mapping(address => uint256) public nftFairValues;
@@ -311,6 +311,9 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param amount Amount of $giBGT to stake
   function stake(uint256 amount) external {
     _updateClaimablePrg(msg.sender);
+    if(initialStakeTime[msg.sender] == 0) {
+      initialStakeTime[msg.sender] = block.timestamp;
+    }
     stakedgiBGT[msg.sender] += amount;
     SafeTransferLib.safeTransferFrom(address(this), msg.sender, address(this), amount);
     emit giBGTStake(msg.sender, amount);
@@ -485,8 +488,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param user Address to update claimable $PRG for
   function _updateClaimablePrg(address user) internal {
     claimablePrg[user] = _calculateClaimablePrg(user);
-    prgPerTokenDebt[user] = _claimablePrgPergiBGT();
-    lastClaim[user] = block.timestamp;
+    prgPerTokenDebt[user] = _claimablePrgPergiBGT(user);
   }
 
   /// @notice Calculates and distributes $PRG
@@ -502,14 +504,16 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Calculates claimable $PRG
   /// @param user Address to calculate claimable $PRG for
   function _calculateClaimablePrg(address user) internal view returns (uint256) {
-    return (stakedgiBGT[user] * (_claimablePrgPergiBGT() - prgPerTokenDebt[user])) + claimablePrg[user];
+    return FixedPointMathLib.mulWad(stakedgiBGT[user], _claimablePrgPergiBGT(user) - prgPerTokenDebt[user]) + claimablePrg[user];
   }
 
   /// @notice Calculates claimable $PRG per $giBGT
   /// @dev porridgeEarned = time staked * rate
-  function _claimablePrgPergiBGT() internal view returns (uint256 porridgeEarned) {    
-    uint256 timeStaked = (block.timestamp - deployTime) > 180 days ? 180 days : block.timestamp - deployTime;
-    uint256 rate = _calculateRate(block.timestamp);
+  /// @param user Address to calculate claimable for
+  function _claimablePrgPergiBGT(address user) internal view returns (uint256 porridgeEarned) {    
+    uint256 userInitialStakeTime = initialStakeTime[user] > 0 ? initialStakeTime[user] : deployTime;
+    uint256 timeStaked = (userInitialStakeTime - deployTime) > 180 days ? 180 days : userInitialStakeTime - deployTime;
+    uint256 rate = _calculateRate(userInitialStakeTime);
     porridgeEarned = FixedPointMathLib.mulWad(timeStaked, rate);
     Boost memory userBoost = boosts[msg.sender];
     if (userBoost.expiry > block.timestamp) {
@@ -522,14 +526,14 @@ contract Goldilend is ERC20, IERC721Receiver {
   }
 
   // /// @notice Calculates the rate of $PRG emissions
-  // /// @dev rate = porridgeMultiple - (porridgeMultiple * (average of emissions start & userLastClaim / 6 months))
-  // /// @param userLastClaim Last timestamp user claimed
-  function _calculateRate(uint256 userLastClaim) internal view returns (uint256 rate) {
+  // /// @dev rate = porridgeMultiple - (porridgeMultiple * (average of emissions start & userInitialStakeTime / 6 months))
+  // /// @param userInitialStakeTime Initital time user staked
+  function _calculateRate(uint256 userInitialStakeTime) internal view returns (uint256 rate) {
     uint256 emissionsPeriod = block.timestamp - deployTime;
     if(emissionsPeriod > 180 days) {
       emissionsPeriod = 180 days;
     }
-    uint256 average = (emissionsPeriod + (userLastClaim - deployTime)) / 2;
+    uint256 average = (emissionsPeriod + (userInitialStakeTime - deployTime)) / 2;
     if(average > 180 days) {
       average = 180 days;
     }

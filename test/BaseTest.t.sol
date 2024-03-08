@@ -38,6 +38,7 @@ contract BaseTest is Test, IERC721Receiver {
 
   uint256 initialFSL = 1050000e18;
   uint256 initialPSL = 320000e18;
+  uint256 prgMintAmount = 200000000e18;
   
   address honeyjar = address(0x69420);
 

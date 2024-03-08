@@ -239,6 +239,25 @@ contract govLocksTest is BaseTest {
     deal(address(goldiswap), address(this), amt);
     goldiswap.approve(address(govlocks), amt);
     govlocks.deposit(amt);
+    vm.roll(3);
+    govlocks.delegate(address(this));
+    vm.roll(5);
+    govlocks.delegate(address(0x6699));
+    vm.roll(10);
+    govlocks.delegate(address(0x6969));
+    vm.roll(69);
+
+    (uint256 fromBlockUser, uint256 votesUser) = govlocks.checkpoints(address(0x6699), 1);
+    (uint256 fromBlock69, uint256 votes69) = govlocks.checkpoints(address(0x6969), 0);
+    uint256 numUser = govlocks.numCheckpoints(address(this));
+    uint256 num69 = govlocks.numCheckpoints(address(0x6969));
+    
+    assertEq(fromBlockUser, 10);
+    assertEq(fromBlock69, 10);
+    assertEq(numUser, 2);
+    assertEq(num69, 1);
+    assertEq(votesUser, 0);
+    assertEq(votes69, amt);
   }
 
   function testUpdateStakedBalanceFailGoldilocked() public {
