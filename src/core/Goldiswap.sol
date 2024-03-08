@@ -164,7 +164,7 @@ contract Goldiswap is ERC20 {
     if(proceeds - tax < minAmount) revert ExcessiveSlippage();
     fsl = _fsl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _fsl), (_fsl + _psl));
     psl = _psl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _psl), (_fsl + _psl));
-    _floorReduce();
+    _floorDecrease();
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransfer(honey, msg.sender, proceeds - tax);
     emit Sale(msg.sender, amount);
@@ -312,7 +312,7 @@ contract Goldiswap is ERC20 {
   /// @notice If a day has elapsed since the last floor increase and decrease, decrease the target ratio
   /// @dev decreaseFactor is days since last floor increase
   /// @dev max floor reduce is 5%
-  function _floorReduce() internal {
+  function _floorDecrease() internal {
     uint256 elapsedRaise = block.timestamp - lastFloorRaise;
     uint256 elapsedDrop = block.timestamp - lastFloorDecrease;
     if (elapsedRaise >= 1 days && elapsedDrop >= 1 days) {

@@ -109,6 +109,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 locksMintAmount = 100000000e18;
   uint256 costOf10Locks = 262883805905681940;
   uint256 proceedsof10Locks = 249739615610397845;
+  uint256 decreasedTargetRatio = 313600037037037037;
+  uint256 maxDecreasedTargetRatio = 304000000000000000;
 
   uint256 locksAmount = 100000e18;
   uint256 borrowAmount = 1050e18;

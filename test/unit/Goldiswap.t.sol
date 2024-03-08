@@ -107,38 +107,47 @@ contract UnitGoldiswapTest is BaseTest {
     assertEq(honey.balanceOf(address(this)), goldiswap.floorPrice() * 10);
   }
 
-  function testFloorReduce() public {
-    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(12424533327755417665454800)));
-    vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(6069210257394481945730874)));
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(8402860035123450385400)));
-    vm.store(address(goldiswap), bytes32(uint256(4)), bytes32(uint256(1692551675)));
-    deal(address(honey), address(this), 1251210488977958997148919);
-    deal(address(goldiswap), address(this), 543082473864185130000);
-    deal(address(honey), address(goldiswap), 16442576931719627115185675);
-    vm.warp(1692836841);
-    goldiswap.sell(5000000000000000000, 9886383387107016000000);
-
-    assertEq(goldiswap.targetRatio(), 304000000000000000);
-  }
-
-  function testFloorReduceMax() public {
-    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(12424533327755417665454800)));
-    vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(6069210257394481945730874)));
-    vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(8402860035123450385400)));
-    vm.store(address(goldiswap), bytes32(uint256(4)), bytes32(uint256(1692551675)));
-    deal(address(honey), address(this), 1251210488977958997148919);
-    deal(address(goldiswap), address(this), 543082473864185130000);
-    deal(address(honey), address(goldiswap), 16442576931719627115185675);
-    vm.warp(1693936841);
-    goldiswap.sell(5000000000000000000, 9886383387107016000000);
-
-    assertEq(goldiswap.targetRatio(), 304000000000000000);
-  }
-
-  function testFloorReduceNoReduce() public dealLocks dealGoldiswapHoney {
+  function testFloorDecreaseNoDecrease() public dealLocks dealGoldiswapHoney {
     goldiswap.sell(txAmount, 0);
 
     assertEq(goldiswap.targetRatio(), 32e16);
+  }
+
+  function testFloorDecreaseNotElapsed() public dealLocks dealGoldiswapHoney {
+    goldiswap.sell(txAmount, 0);
+    
+    assertEq(goldiswap.targetRatio(), 32e16);
+    assertEq(goldiswap.lastFloorDecrease(), 1);
+  }
+
+  function testFloorDecreaseElapsed() public dealGoldiswapHoney {
+    deal(address(goldiswap), address(this), txAmount*1000);
+    vm.warp(2 days);
+    goldiswap.sell(txAmount*1000, 0);
+    vm.warp(block.timestamp + 69);
+
+    assertEq(goldiswap.targetRatio(), decreasedTargetRatio);
+    assertEq(goldiswap.lastFloorDecrease(), block.timestamp - 69);
+  }
+
+  function testFloorDecreaseMaxElapsed() public dealGoldiswapHoney {
+    deal(address(goldiswap), address(this), txAmount*1000*2);
+    goldiswap.sell(txAmount*1000, 0);
+    vm.warp(2 days);
+    goldiswap.sell(txAmount*1000, 0);
+
+    assertEq(goldiswap.targetRatio(), decreasedTargetRatio);
+    assertEq(goldiswap.lastFloorDecrease(), block.timestamp);
+  }
+
+  function testFloorDecreaseMaxDecrease() public dealGoldiswapHoney {
+    deal(address(goldiswap), address(this), txAmount*1000*2);
+    goldiswap.sell(txAmount*1000, 0);
+    vm.warp(6 days);
+    goldiswap.sell(txAmount*1000, 0);
+
+    assertEq(goldiswap.targetRatio(), maxDecreasedTargetRatio);
+    assertEq(goldiswap.lastFloorDecrease(), block.timestamp);
   }
 
   function testBorrowTransferFailGoldilocked() public {
