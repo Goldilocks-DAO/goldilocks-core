@@ -5,7 +5,7 @@ import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { Goldivault } from "../../src/core/Goldivault.sol";
 
-contract GoldivaultTest is BaseTest {
+contract UnitGoldivaultTest is BaseTest {
 
 
 }

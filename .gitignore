@@ -12,4 +12,4 @@ lib/
 
 price_tests/__pycache__
 infrared.md
-slither_core.txt
+slither/

@@ -16,7 +16,7 @@ contract oiBGT is OwnershipToken {
   ) {}
 }
 
-contract OwnershipTokenTest is Test {
+contract UnitOwnershipTokenTest is Test {
 
   oiBGT ot;
 

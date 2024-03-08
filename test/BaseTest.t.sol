@@ -18,7 +18,7 @@ import { BondBear } from "../src/mock/BondBear.sol";
 import { BandBear } from "../src/mock/BandBear.sol";
 import { iBGTVault } from "../src/mock/iBGTVault.sol";
 
-contract BaseTest is Test, IERC721Receiver {
+abstract contract BaseTest is Test, IERC721Receiver {
 
   using LibRLP for address;
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { BaseTest } from "../BaseTest.t.sol";
 import { Timelock } from "../../src/governance/Timelock.sol";
 
-contract TimelockTest is BaseTest {
+contract UnitTimelockTest is BaseTest {
 
   function testQueueTransactionFailAdmin() public {
     vm.expectRevert(abi.encodeWithSelector(Timelock.NotAdmin.selector));

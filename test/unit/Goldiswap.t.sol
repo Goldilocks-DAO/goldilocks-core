@@ -5,7 +5,7 @@ import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { Goldiswap } from "../../src/core/Goldiswap.sol";
 
-contract GoldiswapTest is BaseTest {
+contract UnitGoldiswapTest is BaseTest {
 
   uint256 txAmount = 10e18;
   uint256 locksMintAmount = 100000000e18;

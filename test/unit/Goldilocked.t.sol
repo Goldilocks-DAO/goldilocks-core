@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { BaseTest } from "../BaseTest.t.sol";
 import { Goldilocked } from "../../src/core/Goldilocked.sol";
 
-contract GoldilockedTest is BaseTest {
+contract UnitGoldilockedTest is BaseTest {
 
   uint256 locksAmount = 100000e18;
   uint256 borrowAmount = 1050e18;

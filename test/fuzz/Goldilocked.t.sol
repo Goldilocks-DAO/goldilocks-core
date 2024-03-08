@@ -5,7 +5,7 @@ import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { Goldilocked } from "../../src/core/Goldilocked.sol";
 
-contract GoldilockedFuzzTest is BaseTest {
+contract FuzzGoldilockedTest is BaseTest {
 
   uint256 locksAmountPrg = 100e18;
   uint256 locksAmount = 100000e18;
@@ -16,7 +16,7 @@ contract GoldilockedFuzzTest is BaseTest {
   uint256 TwoDaysofYield = 273972602739726000;
   uint256 twoMonthsOfGoldilendStakingYield = 43e18;
 
-  function test_Stake(uint256 txAmount) public {
+  function testFuzzStake(uint256 txAmount) public {
     vm.assume(txAmount < 100000000000e18);
     deal(address(goldiswap), address(this), txAmount);
     goldiswap.approve(address(goldilocked), txAmount);

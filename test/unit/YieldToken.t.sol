@@ -16,7 +16,7 @@ contract yiBGT is YieldToken {
   ) {}
 }
 
-contract YieldTokenTest is Test {
+contract UnitYieldTokenTest is Test {
 
   yiBGT yt;
 

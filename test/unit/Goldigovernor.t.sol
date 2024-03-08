@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { BaseTest } from "../BaseTest.t.sol";
 import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
 
-contract GoldigovernorTest is BaseTest {
+contract UnitGoldigovernorTest is BaseTest {
 
   function testStateSuccess() public {
     proposySamePropose();

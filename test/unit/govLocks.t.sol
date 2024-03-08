@@ -6,7 +6,7 @@ import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol"
 import { BaseTest } from "../BaseTest.t.sol";
 import { govLocks } from "../../src/governance/govLocks.sol";
 
-contract govLocksTest is BaseTest {
+contract UnitgovLocksTest is BaseTest {
 
   uint256 amt = 5e18;
 
