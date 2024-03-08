@@ -81,6 +81,7 @@ contract GoldilockedTest is BaseTest {
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
+    govlocks.delegate(address(this));
 
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount + locksAmount);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksAmount + locksMintAmount);

@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
 
@@ -36,6 +35,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 3e18);
     goldiswap.approve(address(govlocks), 3e18);
     govlocks.deposit(3e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.BelowThreshold.selector));
     goldigov.propose(targets, values, signatures, calldatas, "");
@@ -54,6 +54,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.ArrayMismatch.selector));
     goldigov.propose(targets, values, signatures, calldatas, "");
@@ -67,6 +68,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalAction.selector));
     goldigov.propose(targets, values, signatures, calldatas, "");
@@ -124,6 +126,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalAction.selector));
     goldigov.propose(targets, values, signatures, calldatas, ""); 
@@ -139,6 +142,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(139);
@@ -196,6 +200,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(6900);
     goldigov.propose(targets, values, signatures, calldatas, "");
   }
@@ -232,6 +237,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -267,6 +273,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -288,6 +295,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -308,6 +316,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -334,6 +343,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -357,6 +367,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -374,6 +385,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -444,9 +456,12 @@ contract GoldigovernorTest is BaseTest {
     goldiswap.approve(address(govlocks), 5e18);
     vm.prank(admin);
     govlocks.deposit(5e18);
+    vm.prank(admin);
+    govlocks.delegate(admin);
     deal(address(goldiswap), address(this), 401e18);
     goldiswap.approve(address(govlocks), 401e18);
     govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -474,6 +489,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
@@ -495,6 +511,7 @@ contract GoldigovernorTest is BaseTest {
     deal(address(goldiswap), address(this), 399e18);
     goldiswap.approve(address(govlocks), 399e18);
     govlocks.deposit(399e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);

@@ -164,7 +164,7 @@ contract govLocks is ERC20 {
   /// @param amount Amount of $LOCKS to deposit
   function deposit(uint256 amount) external {
     deposits[msg.sender] += amount;
-    _moveDelegates(address(0), msg.sender, amount);
+    _moveDelegates(address(0), delegates[msg.sender], amount);
     SafeTransferLib.safeTransferFrom(locks, msg.sender, address(this), amount);
     _mint(msg.sender, amount);
   }
@@ -173,7 +173,7 @@ contract govLocks is ERC20 {
   /// @param amount Amount of $LOCKS to withdraw
   function withdraw(uint256 amount) external {
     deposits[msg.sender] -= amount;
-    _moveDelegates(msg.sender, address(0), amount);
+    _moveDelegates(delegates[msg.sender], address(0), amount);
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransfer(locks, msg.sender, amount);
   }
@@ -248,7 +248,7 @@ contract govLocks is ERC20 {
 
   function _afterTokenTransfer(address from, address to, uint256 amt) internal override {
     if(from != address(0) && to != address(0)) {
-      _moveDelegates(from, to, amt);
+      _moveDelegates(delegates[from], delegates[to], amt);
     }
   }
 

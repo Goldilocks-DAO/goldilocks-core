@@ -142,6 +142,7 @@ contract BaseTest is Test, IERC721Receiver {
     deal(address(goldiswap), address(this), 5e18);
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
 
@@ -164,6 +165,7 @@ contract BaseTest is Test, IERC721Receiver {
     deal(address(goldiswap), address(this), 401e18);
     goldiswap.approve(address(govlocks), 401e18);
     govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
