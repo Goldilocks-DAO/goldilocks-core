@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 
-contract UnitGoldiswapGasTest is BaseTest {
+contract GoldiswapGasTest is BaseTest {
 
   uint256 smallTxAmount = 10e18;
   uint256 mediumTxAmount = 100e18;

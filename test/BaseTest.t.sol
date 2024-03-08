@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import "../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../lib/solady/src/utils/LibRLP.sol";
-import { SafeTransferLib } from "../lib/solady/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "../lib/solady/src/tokens/ERC20.sol";
 import { IERC721Receiver } from "../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC721 } from "../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
@@ -120,6 +119,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 twoDaysPrg = 273972602739726000000;
   uint256 twoMonthsOfGoldilendStakingYield = 34e18;
 
+  uint256 goldilendDuration = 1209600;
   uint256 twoMonthsOfYield = 34e18;
   uint256 twoMonthsOfBoostedYield = 43645e15;
   uint256 singleBorrowInterest = 45726853068117;
@@ -131,10 +131,13 @@ abstract contract BaseTest is Test, IERC721Receiver {
   address honeyjar = address(0x69420);
 
   function setUp() public {
+    
+    // precompute addresses
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(13));
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(14));
     UnitGoldivault goldivaultComputed = UnitGoldivault(address(this).computeAddress(18));
 
+    // deploy mock contracts
     unit = new Unit();
     honey = new Honey();
     ibgt = new iBGT();
@@ -144,14 +147,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bandbear = new BandBear();
     ibgtvault = new iBGTVault(address(ibgt), address(ibgt));
 
+    // deploy goldiswap
     goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this));
 
-    // amount of porridge earned per gbera per second
-    // depends on what we want the initial apr
-    // apr will be a function of the bera and porridge prices
-    uint256 startingPoolSize = 1000e18;
-    uint256 protocolInterestRate = 1e17;
-    uint256 porridgeMultiple = 1e13;
+    // deploy goldilend
     address[] memory boostNfts = new address[](2);
     boostNfts[0] = address(honeycomb);
     boostNfts[1] = address(beradrome);
@@ -159,9 +158,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
     boosts[0] = 6;
     boosts[1] = 9;
     goldilend = new Goldilend(
-      startingPoolSize,
-      protocolInterestRate,
-      porridgeMultiple,
+      1000e18,
+      1e17,
+      1e13,
       10,
       address(goldilockedComputed),
       address(this),
@@ -171,8 +170,26 @@ abstract contract BaseTest is Test, IERC721Receiver {
       boostNfts,
       boosts
     );
+
+    // initial configuration of goldilend
+    address[] memory nfts = new address[](2);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    uint256[] memory values = new uint256[](2);
+    values[0] = 50;
+    values[1] = 50;
+    goldilend.setValue(100e18, nfts, values);
+    goldilend.setShareRates(45, 5);
+    goldilend.setDurations(7 days, 21 days);
+    goldilend.setBorrowingActive(true);
+    deal(address(ibgt), address(goldilend), 1000e18);
+    deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
+
+    // deploy govlocks and timelock
     govlocks = new govLocks(address(goldiswap), address(goldigovComputed), address(goldilockedComputed));
     timelock = new Timelock(address(goldigovComputed), 5 days);
+
+    // deploy golidlocked
     address[] memory allocationsAddress = new address[](4);
     allocationsAddress[0] = address(0x69);
     allocationsAddress[1] = address(0x420);
@@ -184,21 +201,11 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAmt[2] = 10000000e18;
     allocationsAmt[3] = 7000000e18;
     goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt);
+
+    // deploy goldigovernor
     goldigov = new Goldigovernor(address(timelock), address(govlocks), address(this), 5761, 69, 4e18);
 
-    address[] memory nfts = new address[](2);
-    nfts[0] = address(bondbear);
-    nfts[1] = address(bandbear);
-    uint256[] memory values = new uint256[](2);
-    values[0] = 50;
-    values[1] = 50;
-    goldilend.setValue(100e18, nfts, values);
-    goldilend.setShareRates(45, 5);
-    goldilend.setDurations(7 days, 21 days);
-    goldilend.setBorrowingActive(true);
-    deal(address(ibgt), address(goldilend), startingPoolSize);
-    deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
-
+    // deploy goldivault
     address[] memory yieldTokens = new address[](1);
     yieldTokens[0] = address(ibgt);
     unit = new Unit();
@@ -252,7 +259,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     _;
   }
 
-  modifier dealUserBera() {
+  modifier dealUseriBGT() {
     deal(address(ibgt), address(this), type(uint256).max / 2);
     ibgt.approve(address(goldilend), type(uint256).max / 2);
     _;
@@ -363,6 +370,53 @@ abstract contract BaseTest is Test, IERC721Receiver {
     unit.approve(address(goldivault), txAmount);
     goldivault.deposit(txAmount);
   }
+
+  function boosty() public returns (address[] memory, uint256[] memory) {
+    address[] memory nfts = new address[](2);
+    nfts[0] = address(honeycomb);
+    nfts[1] = address(beradrome);
+    uint256[] memory ids = new uint256[](2);
+    ids[0] = 1;
+    ids[1] = 1;
+    return (nfts, ids);
+  }
+
+  function maxBoosty() public returns (address[] memory, uint256[] memory) {
+    INFT(address(honeycomb)).mint(address(this));
+    INFT(address(beradrome)).mint(address(this));
+    INFT(address(beradrome)).mint(address(this));
+    INFT(address(beradrome)).mint(address(this));
+    INFT(address(beradrome)).mint(address(this));
+    INFT(address(beradrome)).mint(address(this));
+    address[] memory nfts = new address[](6);
+    nfts[0] = address(honeycomb);
+    nfts[1] = address(beradrome);
+    nfts[2] = address(beradrome);
+    nfts[3] = address(beradrome);
+    nfts[4] = address(beradrome);
+    nfts[5] = address(beradrome);
+    uint256[] memory ids = new uint256[](6);
+    ids[0] = 1;
+    ids[1] = 1;
+    ids[2] = 2;
+    ids[3] = 3;
+    ids[4] = 4;
+    ids[5] = 5;
+    IERC721(honeycomb).setApprovalForAll(address(goldilend), true);
+    IERC721(beradrome).setApprovalForAll(address(goldilend), true);
+    return (nfts, ids);
+  }
+
+  function beras() public returns (address[] memory, uint256[] memory) {
+    address[] memory nfts = new address[](2);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    uint256[] memory ids = new uint256[](2);
+    ids[0] = 1;
+    ids[1] = 1;
+    return (nfts, ids);
+  }
+
 
   function onERC721Received(
     address,
