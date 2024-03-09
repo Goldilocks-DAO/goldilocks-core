@@ -538,7 +538,6 @@ contract Goldilend is ERC20, IERC721Receiver {
       average = 180 days;
     }
     rate = porridgeMultiple - FixedPointMathLib.mulWad(porridgeMultiple, FixedPointMathLib.divWad(average, 180 days));
-    // rate = FixedPointMathLib.mulWad(rate, (1- FixedPointMathLib.divWad(poolSize, targetTVL)));
   }
 
   /// @notice Calculates the fair value of NFTs being borrowed against
@@ -704,19 +703,15 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   /// @notice Allows the DAO to adjust the valuation of the NFTs to borrow against
   /// @param _totalValuation Total valuation of all NFTs able to be borrowed against
-  // /// @param _targetTVKL Target TVL of the protocol
   /// @param _nfts NFTs that are able to be borrowed against
   /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation
-  // function inititalizeProtocol(
     function setValue(
     uint256 _totalValuation,
-    // uint256 _targetTVL,
     address[] calldata _nfts,
     uint256[] calldata _nftFairValues
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
     totalValuation = _totalValuation;
-    // targetTVL = _targetTVL;
     for(uint256 i; i < _nftFairValues.length; i++) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
     }
@@ -762,7 +757,6 @@ contract Goldilend is ERC20, IERC721Receiver {
     SafeTransferLib.safeTransfer(ibgt, hj, interestClaim);
   }
 
-
   /// @notice Allows the DAO to change the degree of the protocol interest rate
   /// @param _slope New slope
   function setSlope(uint256 _slope) external {
@@ -786,6 +780,8 @@ contract Goldilend is ERC20, IERC721Receiver {
     borrowingActive = _borrowingActive;
   }
 
+  /// @notice Allows the DAO to increase $PRG emissions
+  /// @param _deployTime Sets the deploy time in the past to increase emissions
   function increasePrgEmissions(uint256 _deployTime) external {
     if(msg.sender != multisig) revert NotMultisig();
     deployTime = _deployTime;
