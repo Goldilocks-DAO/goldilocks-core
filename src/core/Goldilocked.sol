@@ -43,13 +43,13 @@ contract Goldilocked is ERC20 {
   mapping(address => uint256) public initialAllocations;
 
   uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
-  uint256 public deployTime;
-  uint256 public vestingStart;
-  uint256 public vestingEnd;
-  address public goldiswap;
-  address public goldilend;
-  address public govlocks;
-  address public honey;
+  uint256 public immutable deployTime;
+  uint256 public immutable vestingStart;
+  uint256 public immutable vestingEnd;
+  address public immutable goldiswap;
+  address public immutable goldilend;
+  address public immutable govlocks;
+  address public immutable honey;
   address public multisig;
 
 
@@ -90,7 +90,7 @@ contract Goldilocked is ERC20 {
       govLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
 
     }
-    _mint(multisig, 200000000e18);
+    _mint(multisig, 200_000_000e18);
   }
 
   /// @notice Returns the name of the $PRG token
@@ -312,7 +312,7 @@ contract Goldilocked is ERC20 {
   /// @param amount Amount of $HONEY the user is requesting to borrow
   /// @return fee Fee that user pays for borrowing
   function _calcFee(uint256 amount) internal pure returns (uint256 fee) {
-    return (amount / 100) * 3;
+    return amount * 3 / 100;
   }
 
   /// @notice Calculates the amount of vested tokens for the user

@@ -63,11 +63,11 @@ contract Goldilend is ERC20, IERC721Receiver {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     
 
-  address public goldilocked;
+  address public immutable goldilocked;
+  address public immutable hj;
+  address public immutable ibgt;
+  address public immutable vault;
   address public multisig;
-  address public hj;
-  address public ibgt;
-  address public vault;
 
   mapping(address => Boost) public boosts;
   mapping(address => Loan[]) public loans;
@@ -81,7 +81,6 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   uint256 public deployTime;
   uint256 public totalValuation;
-  uint256 public targetTVL;
   uint256 public protocolInterestRate;
   uint256 public outstandingDebt;
   uint256 public poolSize;
@@ -359,7 +358,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       if(userBoost.boostMagnitude < discount) {
         discount = 1000 - userBoost.boostMagnitude;
       }
-      interest = (interest / 1000) * discount;
+      interest = interest * discount / 1000;
     }
     outstandingDebt += borrowAmount;
     address[] memory collateralNFTs = new address[](1);
@@ -410,7 +409,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       if(userBoost.boostMagnitude < discount) {
         discount = 1000 - userBoost.boostMagnitude;
       }
-      interest = (interest / 1000) * discount;
+      interest = interest * discount / 1000;
     }
     outstandingDebt += borrowAmount;
     Loan memory loan = Loan({
@@ -443,14 +442,14 @@ contract Goldilend is ERC20, IERC721Receiver {
     outstandingDebt -= repayAmount - interest;
     loans[msg.sender][index].borrowedAmount -= repayAmount;
     loans[msg.sender][index].interest -= interest;
-    poolSize += (userLoan.interest / 1000) * (1000 - (multisigShare + honeyjarShare));
+    poolSize += userLoan.interest * (1000 - (multisigShare + honeyjarShare)) / 1000;
+    _refreshiBGT(repayAmount);
+    _updateInterestClaims(interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       for(uint256 i; i < userLoan.collateralNFTs.length; i++){
         IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
       }
     }
-    _refreshiBGT(repayAmount);
-    _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), repayAmount);
     emit Repay(msg.sender, repayAmount);
   }
@@ -465,7 +464,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     loans[user][index].borrowedAmount = 0;
     outstandingDebt -= userLoan.borrowedAmount - userLoan.interest;
     if(msg.sender != multisig || block.timestamp < userLoan.endDate + 5 days) {
-      poolSize += (userLoan.interest / 1000) * (1000 - (multisigShare + honeyjarShare));
+      poolSize += userLoan.interest * (1000 - (multisigShare + honeyjarShare)) / 1000;
       _updateInterestClaims(userLoan.interest);
       SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), userLoan.borrowedAmount);
     }
@@ -521,7 +520,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       if(userBoost.boostMagnitude < porridgeBoost) {
         porridgeBoost = userBoost.boostMagnitude;
       }
-      porridgeEarned = (porridgeEarned / 1000) * (1000 + porridgeBoost);
+      porridgeEarned = porridgeEarned  * (1000 + porridgeBoost) / 1000;
     }
   }
 
@@ -545,7 +544,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @return fairValue Fair value of NFTs
   function _calculateFairValue(address[] calldata collateralNFTs) internal view returns (uint256 fairValue) {
     for(uint256 i; i < collateralNFTs.length; i++) {
-      fairValue += (totalValuation / 100) * nftFairValues[collateralNFTs[i]];
+      fairValue += totalValuation * nftFairValues[collateralNFTs[i]] / 100;
     }
   }
 
@@ -683,8 +682,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @dev Multisig can claim 4.5% and honeyjar can claim 0.5% of interest paid
   /// @param interest Interest paid during repayment
   function _updateInterestClaims(uint256 interest) internal {
-    multisigClaims += (interest / 1000) * multisigShare;
-    honeyjarClaims += (interest / 1000) * honeyjarShare;
+    multisigClaims += interest * multisigShare / 1000;
+    honeyjarClaims += interest * honeyjarShare / 1000;
   }
 
 

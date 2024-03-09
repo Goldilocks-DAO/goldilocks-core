@@ -42,22 +42,24 @@ contract HoneyWethLPGoldivault is Goldivault {
     address _ot,
     address _yt,
     address _depositToken,
-    address[] memory _yieldTokens,
     address _depositVault,
-    address _ibgtvault,
     address _ibgt,
+    address _ibgtVault,
     address _ired,
-    address _multisig
+    address _iredVault,
+    address _multisig,
+    address[] memory _yieldTokens
   ) Goldivault(
     _ot,
     _yt,
     _depositToken,
-    _yieldTokens,
     _depositVault,
-    _ibgtvault,
     _ibgt,
+    _ibgtVault,
     _ired,
-    _multisig
+    _iredVault,
+    _multisig,
+    _yieldTokens
   ) {}
 
   function _vaultDeposit(uint256 amount) internal override {
@@ -70,18 +72,18 @@ contract HoneyWethLPGoldivault is Goldivault {
 
   function _concludeVaultRewards() internal override {
     HoneyWethLPVault(depositVault).exit();
-    InfraredBGTVault(ibgtvault).exit();
+    InfraredBGTVault(ibgtVault).exit();
   }
 
   function _compoundVaultRewards() internal override {
     HoneyWethLPVault(depositVault).getReward();
-    InfraredBGTVault(ibgtvault).getReward();
+    InfraredBGTVault(ibgtVault).getReward();
     uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
     uint256 yieldTokensLength = yieldTokens.length;
     for(uint8 i; i < yieldTokensLength; ++i) {
       SafeTransferLib.safeTransfer(yieldTokens[i], multisig, (ERC20(yieldTokens[i]).balanceOf(address(this)) / 100) * yieldFee);
     }
-    InfraredBGTVault(ibgtvault).stake(ibgtrewards);
+    InfraredBGTVault(ibgtVault).stake(ibgtrewards);
   }
 
 }

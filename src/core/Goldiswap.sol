@@ -44,8 +44,8 @@ contract Goldiswap is ERC20 {
   uint256 public lastFloorRaise;
   uint256 public lastFloorDecrease;
 
-  address public goldilocked;
-  address public honey;
+  address public immutable goldilocked;
+  address public immutable honey;
   address public multisig;
 
 
@@ -74,7 +74,7 @@ contract Goldiswap is ERC20 {
     multisig = _multisig;
     lastFloorRaise = block.timestamp;
     lastFloorDecrease = block.timestamp;
-    _mint(goldilocked, 100000000e18);
+    _mint(goldilocked, 100_000_000e18);
   }
 
   /// @notice Returns the name of the $LOCKS token
@@ -140,7 +140,7 @@ contract Goldiswap is ERC20 {
       uint256 _psl, 
       uint256 price
     ) = _buyLoop(fsl, psl, totalSupply(), amount);
-    uint256 tax = (price / 1000) * 3;
+    uint256 tax = price * 3 / 1000;
     if(price + tax > maxAmount) revert ExcessiveSlippage();
     fsl = _fsl;
     psl = _psl;
@@ -160,7 +160,7 @@ contract Goldiswap is ERC20 {
       uint256 _psl,
       uint256 proceeds
     ) = _sellLoop(fsl, psl, totalSupply(), amount);
-    uint256 tax = (proceeds / 100) * 5;
+    uint256 tax = proceeds * 5 / 100;    
     if(proceeds - tax < minAmount) revert ExcessiveSlippage();
     fsl = _fsl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _fsl), (_fsl + _psl));
     psl = _psl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _psl), (_fsl + _psl));
@@ -216,7 +216,7 @@ contract Goldiswap is ERC20 {
     uint256 market;
     uint256 floor;
     uint256 _buyPrice;
-    uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
+    uint256 increment = FixedPointMathLib.divWad(_supply, 100_000e18);
     while(leftover >= increment) {
       market = _marketPrice(_fsl, _psl, _supply);
       floor = _floorPrice(_fsl, _supply);
@@ -257,7 +257,7 @@ contract Goldiswap is ERC20 {
     uint256 market;
     uint256 floor;
     uint256 proceeds;
-    uint256 increment = FixedPointMathLib.divWad(_supply, 100000e18);
+    uint256 increment = FixedPointMathLib.divWad(_supply, 100_000e18);
     while(leftover >= increment) {
       market = _marketPrice(_fsl, _psl, _supply);
       floor = _floorPrice(_fsl, _supply);

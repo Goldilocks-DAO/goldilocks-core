@@ -29,22 +29,24 @@ contract UnitGoldivault is Goldivault {
     address _ot,
     address _yt,
     address _depositToken,
-    address[] memory _yieldTokens,
     address _depositVault,
-    address _ibgtvault,
     address _ibgt,
+    address _ibgtvault,
     address _ired,
-    address _multisig
+    address _iredVault,
+    address _multisig,
+    address[] memory _yieldTokens
   ) Goldivault(
     _ot,
     _yt,
     _depositToken,
-    _yieldTokens,
     _depositVault,
-    _ibgtvault,
     _ibgt,
+    _ibgtvault,
     _ired,
-    _multisig
+    _iredVault,
+    _multisig,
+    _yieldTokens
   ) {}
 }
 contract oUnit is OwnershipToken {
@@ -107,7 +109,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 txAmount = 10e18;
   uint256 locksMintAmount = 100000000e18;
   uint256 costOf10Locks = 262883805905681940;
-  uint256 proceedsof10Locks = 249739615610397845;
+  uint256 taxof10Locks = 788651417717045;
+  uint256 proceedsof10Locks = 249739615610397843;
   uint256 decreasedTargetRatio = 313600037037037037;
   uint256 maxDecreasedTargetRatio = 304000000000000000;
 
@@ -123,8 +126,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 twoMonthsOfYield = 34e18;
   uint256 twoMonthsOfBoostedYield = 43645e15;
   uint256 singleBorrowInterest = 45726853068117;
-  uint256 singleBorrowInterestBoosted = 45452491949592;
-  uint256 singleBorrowInterestMaxBoost = 2286342653400;
+  uint256 singleBorrowInterestBoosted = 45452491949708;
+  uint256 singleBorrowInterestMaxBoost = 2286342653405;
 
   uint256 govLocksAmt = 5e18;
   
@@ -215,14 +218,15 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(ot),
       address(yt),
       address(unit),
-      yieldTokens,
-      address(ibgtvault),
       address(ibgtvault),
       address(ibgt),
+      address(ibgtvault),
       address(0x69),
-      address(this)
+      address(0x69),
+      address(this),
+      yieldTokens
     );
-    goldivault.setEarlyWithdrawalFee(69);
+    goldivault.setEarlyWithdrawalFee(30);
     goldivault.setParameters(20, 1 days, 365 days);
   }
 

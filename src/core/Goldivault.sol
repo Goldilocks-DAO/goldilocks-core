@@ -43,15 +43,16 @@ abstract contract Goldivault {
   uint256 public yieldFee;
   uint256 public delay;
   uint256 public duration;
-  address public ot;
-  address public yt;
-  address public depositToken;
-  address[] public yieldTokens;
-  address public depositVault;
-  address public ibgtvault;
-  address public ibgt;
-  address public ired;
+  address public immutable ot;
+  address public immutable yt;
+  address public immutable depositToken;
+  address public immutable depositVault;
+  address public immutable ibgt;
+  address public immutable ibgtVault;
+  address public immutable ired;
+  address public immutable iredVault;
   address public multisig;
+  address[] public yieldTokens;
   bool public concluded;
 
 
@@ -65,25 +66,27 @@ abstract contract Goldivault {
     address _ot,
     address _yt,
     address _depositToken,
-    address[] memory _yieldTokens,
     address _depositVault,
-    address _ibgtvault,
     address _ibgt,
+    address _ibgtVault,
     address _ired,
-    address _multisig
+    address _iredVault,
+    address _multisig,
+    address[] memory _yieldTokens
   ) {
     ot = _ot;
     yt = _yt;
     depositToken = _depositToken;
     depositVault = _depositVault;
-    ibgtvault = _ibgtvault;
     ibgt = _ibgt;
+    ibgtVault = _ibgtVault;
     ired = _ired;
+    iredVault = _iredVault;
     multisig = _multisig;
     concluded = false;
     startTime = block.timestamp;
     ERC20(_depositToken).approve(_depositVault, type(uint256).max);
-    ERC20(_ibgt).approve(_ibgtvault, type(uint256).max);
+    ERC20(_ibgt).approve(_ibgtVault, type(uint256).max);
     for(uint8 i; i < _yieldTokens.length; ++i) {
       yieldTokens.push(_yieldTokens[i]);
     }
@@ -144,8 +147,8 @@ abstract contract Goldivault {
     _unstakeDepositToken(amount);
     uint256 _fee = earlyWithdrawalFee;
     if(remainingTime > 0) {
-      SafeTransferLib.safeTransfer(depositToken, msg.sender, (amount / 1000) * (1000 - _fee));
-      SafeTransferLib.safeTransfer(depositToken, multisig, (amount / 1000) * _fee);
+      SafeTransferLib.safeTransfer(depositToken, msg.sender, amount * (1000 - _fee) / 1000);
+      SafeTransferLib.safeTransfer(depositToken, multisig, amount * _fee / 1000);
     }
     else {
       SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);

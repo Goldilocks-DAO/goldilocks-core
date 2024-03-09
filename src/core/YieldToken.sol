@@ -28,7 +28,7 @@ abstract contract YieldToken is ERC20 {
 
   string private tokenName;
   string private tokenSymbol;
-  address public vault;
+  address public immutable vault;
 
   error NotVault();
 

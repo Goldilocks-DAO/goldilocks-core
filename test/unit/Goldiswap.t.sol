@@ -85,6 +85,17 @@ contract UnitGoldiswapTest is BaseTest {
     assertEq(honey.balanceOf(address(this)), (type(uint256).max / 2) - costOf10Locks);
   }
 
+  function testBuyNonMultisig() public {
+    deal(address(honey), address(0xbbb), type(uint256).max / 2);
+    vm.startPrank(address(0xbbb));
+    honey.approve(address(goldiswap), type(uint256).max / 2);
+    goldiswap.buy(txAmount, type(uint256).max);
+    vm.stopPrank();
+
+    assertEq(goldiswap.balanceOf(address(0xbbb)), txAmount);
+    assertEq(honey.balanceOf(address(0xbbb)), (type(uint256).max / 2) - costOf10Locks - taxof10Locks);
+  }
+
   function testSellFailSlippage() public {
     vm.expectRevert(abi.encodeWithSelector(Goldiswap.ExcessiveSlippage.selector));
     goldiswap.sell(txAmount, type(uint256).max);

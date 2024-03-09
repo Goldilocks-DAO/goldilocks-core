@@ -35,6 +35,7 @@ contract UnitGoldivaultTest is BaseTest {
     goldivault.redeemYield(txAmount);
 
     assertEq(ibgt.balanceOf(address(this)), 69);
+    assertEq(yt.balanceOf(address(this)), 0);
   }
 
   function testRedeemYieldSuccess() public {
@@ -51,6 +52,24 @@ contract UnitGoldivaultTest is BaseTest {
     depositUnit();
     vm.warp(180 days);
     goldivault.redeemOwnership(txAmount);
+
+    assertEq(ot.balanceOf(address(this)), 0);
+    assertEq(unit.balanceOf(address(this)), txAmount);
+  }
+
+  function testRedeemOwnershipRemainingTimeNonMultisig() public {
+    deal(address(unit), address(0xbbb), txAmount);
+    vm.startPrank(address(0xbbb));
+    unit.approve(address(goldivault), txAmount);
+    goldivault.deposit(txAmount);
+    vm.stopPrank();
+    vm.warp(180 days);
+    vm.prank(address(0xbbb));
+    goldivault.redeemOwnership(txAmount);
+
+    assertEq(ot.balanceOf(address(this)), 0);
+    assertEq(unit.balanceOf(address(0xbbb)), 97e17);
+    assertEq(unit.balanceOf(address(this)), 3e17);
   }
 
   //todo: fix

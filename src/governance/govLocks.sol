@@ -44,9 +44,9 @@ contract govLocks is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  address public locks;
-  address public goldigov;
-  address public goldilocked;
+  address public immutable locks;
+  address public immutable goldigov;
+  address public immutable goldilocked;
 
   mapping(address => uint256) public deposits;
   mapping(address => address) public delegates;

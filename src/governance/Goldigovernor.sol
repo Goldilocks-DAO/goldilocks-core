@@ -76,7 +76,7 @@ contract Goldigovernor {
 
   string public constant name = "Goldigovernor";
   uint256 public constant MIN_PROPOSAL_THRESHOLD = 1e18;
-  uint256 public constant MAX_PROPOSAL_THRESHOLD = 10000000e18;
+  uint256 public constant MAX_PROPOSAL_THRESHOLD = 10_000_000e18;
   uint32 public constant MIN_VOTING_PERIOD = 5760; // About 24 hours
   uint32 public constant MAX_VOTING_PERIOD = 80640; // About 2 weeks
   uint32 public constant MIN_VOTING_DELAY = 1;
@@ -87,8 +87,8 @@ contract Goldigovernor {
   bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
   bytes32 public constant BALLOT_TYPEHASH = keccak256("Ballot(uint256 proposalId,uint8 support)");
 
-  address public timelock;
-  address public govlocks;
+  address public immutable timelock;
+  address public immutable govlocks;
   address public multisig;
 
   mapping(uint256 => Proposal) public proposals;

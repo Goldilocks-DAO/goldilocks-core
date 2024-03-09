@@ -85,7 +85,7 @@ contract UnitGoldilendTest is BaseTest {
     ibgt.approve(address(goldilend), type(uint256).max);
     goldilend.lock(100e18);
     vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
-    vm.store(address(goldilend), bytes32(uint256(18)), bytes32(uint256(1000e18)));
+    vm.store(address(goldilend), bytes32(uint256(13)), bytes32(uint256(1000e18)));
 
     assertEq(goldilend.getgiBGTRatio(), 10e16);
   }
@@ -523,7 +523,7 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
     assertEq(goldilend.outstandingDebt(), 0);
-    assertEq(goldilend.poolSize(), 1000e18 + ((userLoanBefore.interest / 1000) * 950) + 5e18);
+    assertEq(goldilend.poolSize(), 1000e18 + (userLoanBefore.interest * 950 / 1000) + 5e18);
   }
 
   function testMultipleBorrowRepayTransfers() public dealUseriBGT dealUserBeras {
@@ -558,7 +558,7 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
     assertEq(goldilend.outstandingDebt(), 0);
-    assertEq(goldilend.poolSize(), 1000e18 + ((userLoanBefore.interest / 1000) * 950) + 5e18);
+    assertEq(goldilend.poolSize(), 1000e18 + (userLoanBefore.interest * 950 / 1000) + 5e18);
   }
 
   function testLiquidateFailUnliquidatable() public dealUseriBGT dealUserBeras {
@@ -694,8 +694,8 @@ contract UnitGoldilendTest is BaseTest {
     goldilend.multisigInterestClaim();
     
     assertEq(goldilend.multisigClaims(), 0);
-    assertEq(ibgt.balanceOf(address(this)), multisigibgtBalanceBefore + 2057708388060);
-    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 2057708388060);
+    assertEq(ibgt.balanceOf(address(this)), multisigibgtBalanceBefore + 2057708388065);
+    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 2057708388065);
   }
 
   function testHoneyjarInterestClaimFailMultisig() public {
