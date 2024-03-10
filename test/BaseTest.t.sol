@@ -104,10 +104,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
 
   uint256 initialFSL = 1_050_000e18;
   uint256 initialPSL = 320_000e18;
-  uint256 prgMintAmount = 200000000e18;
+  uint256 prgMintAmount = 200_000_000e18;
 
   uint256 txAmount = 10e18;
-  uint256 locksMintAmount = 100000000e18;
+  uint256 locksMintAmount = 100_000_000e18;
   uint256 costOf10Locks = 262883805905681940;
   uint256 taxof10Locks = 788651417717045;
   uint256 proceedsof10Locks = 249739615610397843;
@@ -118,8 +118,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 decreasedTargetRatio = 313600037037037037;
   uint256 maxDecreasedTargetRatio = 304000000000000000;
 
-  uint256 locksAmount = 100000e18;
-  uint256 borrowAmount = 1050e18;
+  uint256 locksAmount = 100_000e18;
+  uint256 borrowAmount = 1_050e18;
   uint256 oneDayPrg = 136986301369863000000;
   uint256 halfDayPrg = 68493150684931500000;
   uint256 oneDayHalfPrg = 205479452054794500000;
@@ -204,10 +204,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAddress[2] = address(0x42069);
     allocationsAddress[3] = address(0x69420);
     uint256[] memory allocationsAmt = new uint256[](4);
-    allocationsAmt[0] = 12000000e18;
-    allocationsAmt[1] = 12000000e18;
-    allocationsAmt[2] = 10000000e18;
-    allocationsAmt[3] = 7000000e18;
+    allocationsAmt[0] = 12_000_000e18;
+    allocationsAmt[1] = 12_000_000e18;
+    allocationsAmt[2] = 10_000_000e18;
+    allocationsAmt[3] = 7_000_000e18;
     goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt, 200_000_000e18);
 
     // deploy goldigovernor

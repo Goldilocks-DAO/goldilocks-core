@@ -39,7 +39,8 @@ contract Goldilocked is ERC20 {
   mapping(address => uint256) public claimablePrg;
   mapping(address => uint256) public prgPerTokenDebt;
   mapping(address => uint256) public borrowedHoney;
-  mapping(address => uint256) public initialAllocations;
+  mapping(address => uint256) public seedAllocations;
+  mapping(address => uint256) public teamAllocations;
 
   uint256 public immutable deployTime;
   uint256 public immutable vestingStart;
@@ -89,9 +90,8 @@ contract Goldilocked is ERC20 {
     for(uint8 i; i < allocationsAddress.length; i++) {
       stakedLocks[allocationsAddress[i]] = allocationsAmt[i];
       borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
-      initialAllocations[allocationsAddress[i]] = allocationsAmt[i];
+      i < 3 ? teamAllocations[allocationsAddress[i]] = allocationsAmt[i] : seedAllocations[allocationsAddress[i]] = allocationsAmt[i];
       govLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
-
     }
     _mint(multisig, initialSupply);
   }
@@ -321,17 +321,12 @@ contract Goldilocked is ERC20 {
   /// @param user Address of unstaker
   /// @param amount Amount of $LOCKS to unstake
   function _vestingCheck(address user, uint256 amount) internal view returns (uint256) {
-    uint256 teamAllocation = 10000000e18;
-    uint256 initialAllocation = initialAllocations[user];
+    if(teamAllocations[user] > 0) return 0;
+    uint256 initialAllocation = seedAllocations[user];
     if(initialAllocation > 0) {
-      if(initialAllocation >= teamAllocation) {
-        return 0;
-      }
-      else {
-        if(block.timestamp < vestingStart) return 0;
-        uint256 vestPortion = FixedPointMathLib.divWad(block.timestamp - vestingStart, vestingEnd - vestingStart);
-        return FixedPointMathLib.mulWad(vestPortion, initialAllocation);
-      }
+      if(block.timestamp < vestingStart) return 0;
+      uint256 vestPortion = FixedPointMathLib.divWad(block.timestamp - vestingStart, vestingEnd - vestingStart);
+      return FixedPointMathLib.mulWad(vestPortion, initialAllocation) - (initialAllocation - stakedLocks[msg.sender]);
     }
     else {
       return amount;

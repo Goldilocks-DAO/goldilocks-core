@@ -413,4 +413,101 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, oneDayPrg + halfDayPrg);
   }
 
+  function testTeamUnstakeFail() public {
+    vm.prank(address(0x42069));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    goldilocked.unstake(1);
+  }
+
+  function testSeedUnstakeFail() public {
+    vm.prank(address(0x69420));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    goldilocked.unstake(1);
+  }
+
+  function testSeedUnstakeWaitFail() public {
+    vm.warp(7776000 + 15768000 + 1);
+    deal(address(honey), address(0x69420), 36750e18);
+    vm.prank(address(0x69420));
+    honey.approve(address(goldilocked), 36750e18);
+    vm.prank(address(0x69420));
+    goldilocked.repay(36750e18);
+    vm.prank(address(0x69420));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    goldilocked.unstake(3_500_001e18);
+  }
+
+  function testSeedUnstakeSuccess() public {
+    vm.warp(7776000 + 15768000 + 1);
+    deal(address(honey), address(0x69420), 36750e18);
+    vm.startPrank(address(0x69420));
+    honey.approve(address(goldilocked), 36750e18);
+    goldilocked.repay(36750e18);
+    goldilocked.unstake(3_500_000e18);
+    vm.stopPrank();
+  }
+
+  function testSeedUnstakeFailBeforeVest() public {
+    vm.warp(7776000 + 15768000 + 1);
+    deal(address(honey), address(0x69420), 73500e18);
+    vm.startPrank(address(0x69420));
+    honey.approve(address(goldilocked), 73500e18);
+    goldilocked.repay(73500e18);
+    goldilocked.unstake(3_500_000e18);
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    goldilocked.unstake(3_500_000e18);
+    vm.stopPrank();
+  }
+
+  function testSeedUnstakeFullVestSuccess() public {
+    vm.warp(90 days + 365 days + 1);
+    deal(address(honey), address(0x69420), 73500e18);
+    vm.startPrank(address(0x69420));
+    honey.approve(address(goldilocked), 73500e18);
+    goldilocked.repay(73500e18);
+    goldilocked.unstake(7_000_000e18);
+    vm.stopPrank();
+    
+    assertEq(goldilocked.userStakedLocks(address(0x69420)), 0);
+    assertEq(goldilocked.seedAllocations(address(0x69420)), 7_000_000e18);
+    assertEq(goldilocked.borrowedHoney(address(0x69420)), 0);
+    assertEq(goldiswap.balanceOf(address(0x69420)), 7_000_000e18);
+  }
+
+  function testSeedUnstakeRestakeSuccess() public {
+    vm.warp(7776000 + 15768000 + 1);
+    deal(address(honey), address(0x69420), 73500e18);
+    deal(address(goldiswap), address(0x69420), 1e18);
+    vm.startPrank(address(0x69420));
+    honey.approve(address(goldilocked), 73500e18);
+    goldiswap.approve(address(goldilocked), 1e18);
+    goldilocked.repay(73500e18);
+    goldilocked.unstake(3_500_000e18);
+    goldilocked.stake(1e18);
+    goldilocked.unstake(1e18);
+    vm.stopPrank();
+  }
+
+  //todo: fix
+  // function testSeedUnstakeRestakeFail() public {
+  //   vm.warp(7776000 + 15768000 + 1);
+  //   deal(address(honey), address(0x69420), 73500e18);
+  //   deal(address(goldiswap), address(0x69420), 1e18);
+  //   vm.startPrank(address(0x69420));
+  //   honey.approve(address(goldilocked), 73500e18);
+  //   goldiswap.approve(address(goldilocked), 1e18);
+  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
+  //   goldilocked.repay(73500e18);
+  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
+  //   goldilocked.unstake(3_500_000e18);
+  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
+  //   goldilocked.stake(1e18);
+  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
+  //   goldilocked.unstake(1e18);
+  //   vm.stopPrank();
+  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
+  //   vm.warp(block.timestamp + 15768000);
+  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
+  // }
+
 }
