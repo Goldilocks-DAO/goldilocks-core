@@ -87,6 +87,7 @@ abstract contract Goldivault {
     startTime = block.timestamp;
     ERC20(_depositToken).approve(_depositVault, type(uint256).max);
     ERC20(_ibgt).approve(_ibgtVault, type(uint256).max);
+    ERC20(_ired).approve(_iredVault, type(uint256).max);
     for(uint8 i; i < _yieldTokens.length; ++i) {
       yieldTokens.push(_yieldTokens[i]);
     }

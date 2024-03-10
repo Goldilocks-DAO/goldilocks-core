@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { BaseTest } from "../BaseTest.t.sol";
 
-contract GoldiswapPriceTest is BaseTest {
+contract DifferentialGoldiswapPriceTest is BaseTest {
 
   modifier dealGammHoney() {
     deal(address(honey), address(goldiswap), type(uint256).max / 2);

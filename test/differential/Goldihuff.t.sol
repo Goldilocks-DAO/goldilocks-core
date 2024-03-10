@@ -11,7 +11,7 @@ interface Goldihuff {
   function floorPriceWad(uint256,uint256) external returns (uint256);
 }
 
-contract GoldihuffTest is Test {
+contract DifferentialGoldihuffTest is Test {
 
   Goldihuff goldihuff;
   Math math;

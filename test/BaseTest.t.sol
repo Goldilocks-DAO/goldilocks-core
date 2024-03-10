@@ -111,6 +111,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 costOf10Locks = 262883805905681940;
   uint256 taxof10Locks = 788651417717045;
   uint256 proceedsof10Locks = 249739615610397843;
+  uint256 startingFloorPrice = 10500000000000000;
+  uint256 randomFloorPrice = 5362996113397347965249;
+  uint256 startingMarketPrice = 26288380590568194;
+  uint256 randomMarketPrice = 17195479260432920174524;
   uint256 decreasedTargetRatio = 313600037037037037;
   uint256 maxDecreasedTargetRatio = 304000000000000000;
 
@@ -221,7 +225,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(ibgtvault),
       address(ibgt),
       address(ibgtvault),
-      address(0x69),
+      address(ibgt),
       address(0x69),
       address(this),
       yieldTokens
@@ -375,7 +379,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     goldivault.deposit(txAmount);
   }
 
-  function boosty() public returns (address[] memory, uint256[] memory) {
+  function boosty() public view returns (address[] memory, uint256[] memory) {
     address[] memory nfts = new address[](2);
     nfts[0] = address(honeycomb);
     nfts[1] = address(beradrome);
@@ -411,7 +415,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     return (nfts, ids);
   }
 
-  function beras() public returns (address[] memory, uint256[] memory) {
+  function beras() public view returns (address[] memory, uint256[] memory) {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);

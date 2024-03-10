@@ -16,61 +16,27 @@ contract UnitGoldiswapTest is BaseTest {
   }
 
   function testFloorPrice() public {
-    uint256 floorPrice = goldiswap.floorPrice();
-    string[] memory inputs = new string[](2);
-    inputs[0] = "python3";
-    inputs[1] = "price_tests/floor_test/test.py";
-    bytes memory result = vm.ffi(inputs);
-    uint256 pythonFloorPrice = abi.decode(result, (uint256));
-    uint256 variance = pythonFloorPrice / 1000;
-
-    assert(pythonFloorPrice + variance > floorPrice);
-    assert(pythonFloorPrice - variance < floorPrice);
+    assertEq(goldiswap.floorPrice(), startingFloorPrice);
   }
 
   function testRandomFloorPrice() public {
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(23457745e18)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(8340957e18)));
     vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(4374e18)));
-    uint256 floorPrice = goldiswap.floorPrice();
-    string[] memory inputs = new string[](2);
-    inputs[0] = "python3";
-    inputs[1] = "price_tests/floor_test/random_test.py";
-    bytes memory result = vm.ffi(inputs);
-    uint256 pythonFloorPrice = abi.decode(result, (uint256));
-    uint256 variance = pythonFloorPrice / 1000;
-
-    assert(pythonFloorPrice + variance > floorPrice);
-    assert(pythonFloorPrice - variance < floorPrice);
+    
+    assertEq(goldiswap.floorPrice(), randomFloorPrice);
   }
 
   function testMarketPrice() public {
-    uint256 marketPrice = goldiswap.marketPrice();
-    string[] memory inputs = new string[](2);
-    inputs[0] = "python3";
-    inputs[1] = "price_tests/market_test/test.py";
-    bytes memory result = vm.ffi(inputs);
-    uint256 pythonMarketPrice = abi.decode(result, (uint256));
-    uint256 variance = pythonMarketPrice / 1000;
-
-    assert(pythonMarketPrice + variance > marketPrice);
-    assert(pythonMarketPrice - variance < marketPrice);
+    assertEq(goldiswap.marketPrice(), startingMarketPrice);
   }
 
   function testRandomMarketPrice() public {
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(23457745e18)));
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(8340957e18)));
     vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(4374e18)));
-    uint256 marketPrice = goldiswap.marketPrice();
-    string[] memory inputs = new string[](2);
-    inputs[0] = "python3";
-    inputs[1] = "price_tests/market_test/random_test.py";
-    bytes memory result = vm.ffi(inputs);
-    uint256 pythonMarketPrice = abi.decode(result, (uint256));
-    uint256 variance = pythonMarketPrice / 1000;
 
-    assert(pythonMarketPrice + variance > marketPrice);
-    assert(pythonMarketPrice - variance < marketPrice);
+    assertEq(goldiswap.marketPrice(), randomMarketPrice);
   }
 
   function testBuyFailSlippage() public {
