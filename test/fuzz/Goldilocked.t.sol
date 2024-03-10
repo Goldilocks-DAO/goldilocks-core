@@ -101,7 +101,7 @@ contract FuzzGoldilockedTest is BaseTest {
     honey.approve(address(goldilocked), fuzzedBorrowAmount);
     goldilocked.repay(fuzzedBorrowAmount);
 
-    assertEq(goldilocked.lockedLocks(address(this)), 0);
+    assertEq(goldilocked.userLockedLocks(address(this)), 0);
     assertEq(goldilocked.borrowedHoney(address(this)), 0);
     assertEq(goldilocked.stakedLocks(address(this)), repayHoneyAmount);
     assertEq(honey.balanceOf(address(this)), 0);

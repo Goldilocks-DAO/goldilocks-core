@@ -38,11 +38,9 @@ contract Goldilocked is ERC20 {
   mapping(address => uint256) public stakedLocks;
   mapping(address => uint256) public claimablePrg;
   mapping(address => uint256) public prgPerTokenDebt;
-  mapping(address => uint256) public lockedLocks;
   mapping(address => uint256) public borrowedHoney;
   mapping(address => uint256) public initialAllocations;
 
-  uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
   uint256 public immutable deployTime;
   uint256 public immutable vestingStart;
   uint256 public immutable vestingEnd;
@@ -50,6 +48,9 @@ contract Goldilocked is ERC20 {
   address public immutable goldilend;
   address public immutable govlocks;
   address public immutable honey;
+  uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
+  uint256 public lastUpdateTime;
+  uint256 public claimablePrgPerLocksStored;
   address public multisig;
 
 
@@ -86,7 +87,6 @@ contract Goldilocked is ERC20 {
     uint256 floor = Goldiswap(goldiswap).floorPrice();
     for(uint8 i; i < allocationsAddress.length; i++) {
       stakedLocks[allocationsAddress[i]] = allocationsAmt[i];
-      lockedLocks[allocationsAddress[i]] = allocationsAmt[i];
       borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
       initialAllocations[allocationsAddress[i]] = allocationsAmt[i];
       govLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
@@ -153,7 +153,7 @@ contract Goldilocked is ERC20 {
   /// @notice Returns the locked $LOCKS of a user
   /// @param user Address of user
   function userLockedLocks(address user) external view returns (uint256) {
-    return lockedLocks[user];
+    return _lockedLocks(user);
   }
 
   /// @notice Returns the borrowed $HONEY of a user
@@ -198,7 +198,7 @@ contract Goldilocked is ERC20 {
     if(amount > vest) revert NotVested();
     uint256 _stakedLocks = stakedLocks[msg.sender];
     if(amount > _stakedLocks) revert InvalidUnstake();
-    if(amount > _stakedLocks - lockedLocks[msg.sender]) revert LocksBorrowedAgainst();
+    if(amount > _stakedLocks - _lockedLocks(msg.sender)) revert LocksBorrowedAgainst();
     _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] -= amount;
     govLocks(govlocks).updateStakedBalance(msg.sender, address(0), amount);
@@ -227,7 +227,6 @@ contract Goldilocked is ERC20 {
   function borrow(uint256 amount) external {
     uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
     if(!_borrowLimitCheck(amount, floorPrice)) revert InsufficientBorrowLimit();
-    lockedLocks[msg.sender] += FixedPointMathLib.divWad(amount, floorPrice);
     borrowedHoney[msg.sender] += amount;
     uint256 fee = _calcFee(amount);
     Goldiswap(goldiswap).borrowTransfer(msg.sender, amount, fee);
@@ -238,8 +237,6 @@ contract Goldilocked is ERC20 {
   /// @param amount Amount of $HONEY to repay
   function repay(uint256 amount) external {
     if(borrowedHoney[msg.sender] < amount) revert ExcessiveRepay();
-    uint256 repaidLocks = _calcRepayingLocks(amount);
-    lockedLocks[msg.sender] -= repaidLocks;
     borrowedHoney[msg.sender] -= amount;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, goldiswap, amount);
     emit Repaid(msg.sender, amount);
@@ -254,8 +251,12 @@ contract Goldilocked is ERC20 {
   /// @notice Updates claimable $PRG for user that is staking, unstaking, or claiming
   /// @param user Address to update claimable $PRG for
   function _updateClaimablePrg(address user) internal {
-    claimablePrg[user] = _calculateClaimablePrg(user);
-    prgPerTokenDebt[user] = _claimablePrgPerLocks();
+    claimablePrgPerLocksStored = _claimablePrgPerLocks();
+    lastUpdateTime = block.timestamp;
+    if(user != address(0)) {
+      claimablePrg[user] = _calculateClaimablePrg(user);
+      prgPerTokenDebt[user] = claimablePrgPerLocksStored;
+    }
   }
 
   /// @notice Calculates and distributes $PRG
@@ -277,43 +278,41 @@ contract Goldilocked is ERC20 {
 
   /// @notice Calculates claimable $PRG per $LOCKS token
   function _claimablePrgPerLocks() internal view returns (uint256) {
-    uint256 timeSinceDeploy = block.timestamp - deployTime;
-    return FixedPointMathLib.mulWad(ANNUAL_PORRIDGE_EMISSIONS, FixedPointMathLib.divWad(timeSinceDeploy, 365 days));
-  }
-
-  /// @notice Calculates the amount of $LOCKS to return to users
-  /// @dev repaidLocks = (repaid $HONEY / borrowed $HONEY) * locked $LOCKS
-  /// @param amount Amount of $HONEY user is repaying with
-  /// @return repaidLocks Amount of $LOCKS that is returned to user
-  function _calcRepayingLocks(uint256 amount) internal view returns (uint256 repaidLocks) {
-    repaidLocks = FixedPointMathLib.mulWad(FixedPointMathLib.divWad(amount, borrowedHoney[msg.sender]), lockedLocks[msg.sender]);
+    if(block.timestamp - lastUpdateTime == 0) {
+      return claimablePrgPerLocksStored;
+    }
+    return claimablePrgPerLocksStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
   }
 
   /// @notice Checks if the user has enough borrowing power
   /// @param amount Amount of $HONEY the user is requesting to borrow
   /// @param floorPrice Current floor price of $LOCKS
-  /// @return check Returns true if the user has enough borrowing power
-  function _borrowLimitCheck(uint256 amount, uint256 floorPrice) internal view returns (bool check) {
+  function _borrowLimitCheck(uint256 amount, uint256 floorPrice) internal view returns (bool) {
     uint256 limit = _borrowLimit(msg.sender, floorPrice);
-    check = limit >= amount;
+    return limit >= amount;
   }
 
   /// @notice Checks if the user has enough borrowing power
   /// @dev limit = $LOCKS floor price * available staked $LOCKS
   /// @param user Address of user
   /// @param floorPrice Current floor price of $LOCKS
-  /// @return limit Returns the borrowing power of the user
-  function _borrowLimit(address user, uint256 floorPrice) internal view returns (uint256 limit) {
+  function _borrowLimit(address user, uint256 floorPrice) internal view returns (uint256) {
     uint256 staked = stakedLocks[msg.sender];
-    uint256 locked = lockedLocks[user];
-    limit = FixedPointMathLib.mulWad(floorPrice, staked - locked);
+    uint256 locked = _lockedLocks(user);
+    return FixedPointMathLib.mulWad(floorPrice, staked - locked);
+  }
+
+  /// @notice Calculates the amount of locked $LOCKS for user
+  /// @dev locked locks = borrowed honey / floor price
+  /// @param user Address to calculate locked $LOCKS for
+  function _lockedLocks(address user) internal view returns (uint256) {
+    return FixedPointMathLib.divWad(borrowedHoney[user], Goldiswap(goldiswap).floorPrice());
   }
 
   /// @notice Calculates the fee for borrowing
   /// @dev 3% fee
   /// @param amount Amount of $HONEY the user is requesting to borrow
-  /// @return fee Fee that user pays for borrowing
-  function _calcFee(uint256 amount) internal pure returns (uint256 fee) {
+  function _calcFee(uint256 amount) internal pure returns (uint256) {
     return amount * 3 / 100;
   }
 

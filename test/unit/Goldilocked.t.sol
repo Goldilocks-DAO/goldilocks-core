@@ -42,15 +42,15 @@ contract UnitGoldilockedTest is BaseTest {
   }
 
   function testStakeLocksSuccess() public {
-    vm.warp(1 days + 1);
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
+    govlocks.delegate(address(this));
 
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), 0);
-    assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), initialPrgDebt);
     assertEq(govlocks.getVotes(address(this)), locksAmount);
   }
 
@@ -64,7 +64,7 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount + locksAmount);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksAmount + locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), 0);
-    assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), dayOfPrgDebt);
     assertEq(govlocks.getVotes(address(this)), locksAmount + locksAmount);
   }
 
@@ -94,7 +94,7 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), locksAmount);
     assertEq(goldilocked.balanceOf(address(this)), prgMintAmount);
-    assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), dayOfPrgDebt);
   }
 
   function testStirSuccess() public dealStakeLocks {
@@ -138,6 +138,16 @@ contract UnitGoldilockedTest is BaseTest {
     goldilocked.claim();
 
     assertEq(goldilocked.balanceOf(address(this)), twoDaysPrg + prgMintAmount);
+  }
+
+  function testYieldOneYear() public {
+    deal(address(goldiswap), address(this), 1e18);
+    goldiswap.approve(address(goldilocked), 1e18);
+    goldilocked.stake(1e18);
+    vm.warp(365 days + 1);
+    goldilocked.claim();
+
+    assertEq(goldilocked.balanceOf(address(this)), 5e17 + prgMintAmount);
   }
 
   function testDoubleClaimFail() public dealStakeLocks {
@@ -193,7 +203,7 @@ contract UnitGoldilockedTest is BaseTest {
     vm.warp(1 days + block.timestamp);
     goldilocked.claim();
 
-    assertEq(goldilocked.balanceOf(address(this)), (oneDayPrg * 8) + 1e5 + prgMintAmount);
+    assertEq(goldilocked.balanceOf(address(this)), (oneDayPrg * 8)  + prgMintAmount);
   }
 
   function testMultipleUnstaking() public {
@@ -238,7 +248,7 @@ contract UnitGoldilockedTest is BaseTest {
     honey.approve(address(goldilocked), borrowAmount);
     goldilocked.repay(borrowAmount);
 
-    assertEq(goldilocked.lockedLocks(address(this)), 0);
+    assertEq(goldilocked.userLockedLocks(address(this)), 0);
     assertEq(goldilocked.borrowedHoney(address(this)), 0);
     assertEq(goldilocked.stakedLocks(address(this)), locksAmount);
     assertEq(honey.balanceOf(address(this)), 0);
@@ -250,7 +260,7 @@ contract UnitGoldilockedTest is BaseTest {
     honey.approve(address(goldilocked), borrowAmount);
     goldilocked.repay(borrowAmount / 2);
 
-    assertEq(goldilocked.lockedLocks(address(this)), locksAmount / 2);
+    assertEq(goldilocked.userLockedLocks(address(this)), locksAmount / 2);
     assertEq(goldilocked.borrowedHoney(address(this)), borrowAmount / 2);
     assertEq(goldilocked.stakedLocks(address(this)), locksAmount);
     assertEq(honey.balanceOf(address(this)), borrowAmount / 2);
@@ -318,26 +328,58 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(goldilocked.balanceOf(address(this)), 69 + prgMintAmount);
   }
 
-  function testBorrowFurtherBorrow() public {
-
+  function testUnstakeAfterFloorIncreaseFail() public {
     deal(address(honey), address(goldiswap), type(uint256).max);
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
-    console.log("floor: ", goldiswap.floorPrice());
-    console.log("limit: ", goldilocked.userBorrowLimit(address(this)));
     goldilocked.borrow(borrowAmount);
-
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
-    console.log("floor: ", goldiswap.floorPrice());
-    console.log("limit: ", goldilocked.userBorrowLimit(address(this)));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.LocksBorrowedAgainst.selector));
+    goldilocked.unstake((locksAmount/2) + 1);
+  }
+
+  function testUnstakeAfterFloorIncreaseSuccess() public {
+    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldilocked.stake(locksAmount);
+    goldilocked.borrow(borrowAmount);
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
+    goldilocked.unstake(locksAmount/2);
+
+    assertEq(goldiswap.balanceOf(address(this)), locksAmount/2);
+    assertEq(goldilocked.userStakedLocks(address(this)), locksAmount/2);
+    assertEq(goldilocked.userLockedLocks(address(this)), locksAmount/2);
+    assertEq(honey.balanceOf(address(this)), borrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - borrowAmount);
+  }
+
+  function testBorrowFurtherBorrowFail() public {
+    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldilocked.stake(locksAmount);
+    goldilocked.borrow(borrowAmount);
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.InsufficientBorrowLimit.selector));
+    goldilocked.borrow(borrowAmount+1);
+  }
+
+  function testBorrowFurtherBorrowSuccess() public {
+    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldilocked.stake(locksAmount);
+    goldilocked.borrow(borrowAmount);
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
     goldilocked.borrow(borrowAmount);
 
+    assertEq(goldilocked.userStakedLocks(address(this)), locksAmount);
     assertEq(goldilocked.userLockedLocks(address(this)), locksAmount);
     assertEq(goldilocked.userBorrowedHoney(address(this)), borrowAmount*2);
     assertEq(honey.balanceOf(address(this)), borrowAmount*2);
     assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - (borrowAmount*2));
   }
-
 
 }
