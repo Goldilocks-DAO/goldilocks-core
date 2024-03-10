@@ -102,8 +102,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   yUnit yt;
   Unit unit;
 
-  uint256 initialFSL = 1050000e18;
-  uint256 initialPSL = 320000e18;
+  uint256 initialFSL = 1_050_000e18;
+  uint256 initialPSL = 320_000e18;
   uint256 prgMintAmount = 200000000e18;
 
   uint256 txAmount = 10e18;

@@ -112,28 +112,28 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(honey.balanceOf(address(goldiswap)), oneDayPrgCost);
   }
 
-  function testHalfDayYield() public dealStakeLocks {
+  function testYieldHalfDay() public dealStakeLocks {
     vm.warp((1 days / 2) + 1);
     goldilocked.claim();
     
     assertEq(goldilocked.balanceOf(address(this)), halfDayPrg + prgMintAmount);
   }
 
-  function testDayYield() public dealStakeLocks {
+  function testYieldDay() public dealStakeLocks {
     vm.warp(1 days + 1);
     goldilocked.claim();
 
     assertEq(goldilocked.balanceOf(address(this)), oneDayPrg + prgMintAmount);
   }
 
-  function testDayHalfYield() public dealStakeLocks {
+  function testYieldDayHalf() public dealStakeLocks {
     vm.warp(1 days + (1 days / 2) + 1);
     goldilocked.claim();
     
     assertEq(goldilocked.balanceOf(address(this)), oneDayHalfPrg + prgMintAmount);
   }
 
-  function testTwoDaysYield() public dealStakeLocks {
+  function testYieldTwoDays() public dealStakeLocks {
     vm.warp(2 days + 1);
     goldilocked.claim();
 
@@ -317,5 +317,27 @@ contract UnitGoldilockedTest is BaseTest {
 
     assertEq(goldilocked.balanceOf(address(this)), 69 + prgMintAmount);
   }
+
+  function testBorrowFurtherBorrow() public {
+
+    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldilocked.stake(locksAmount);
+    console.log("floor: ", goldiswap.floorPrice());
+    console.log("limit: ", goldilocked.userBorrowLimit(address(this)));
+    goldilocked.borrow(borrowAmount);
+
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
+    console.log("floor: ", goldiswap.floorPrice());
+    console.log("limit: ", goldilocked.userBorrowLimit(address(this)));
+    goldilocked.borrow(borrowAmount);
+
+    assertEq(goldilocked.userLockedLocks(address(this)), locksAmount);
+    assertEq(goldilocked.userBorrowedHoney(address(this)), borrowAmount*2);
+    assertEq(honey.balanceOf(address(this)), borrowAmount*2);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - (borrowAmount*2));
+  }
+
 
 }
