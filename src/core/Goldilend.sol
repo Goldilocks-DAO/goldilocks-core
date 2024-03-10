@@ -53,8 +53,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   struct Boost {
     address[] partnerNFTs;
     uint256[] partnerNFTIds;
-    uint256 expiry;
     uint256 boostMagnitude;
+    uint256 expiry;
   }
 
 
@@ -72,7 +72,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => Boost) public boosts;
   mapping(address => Loan[]) public loans;
 
-  mapping(address => uint256) public stakedgiBGT;
+  mapping(address => uint256) public stakedGiBGT;
   mapping(address => uint256) public claimablePrg;
   mapping(address => uint256) public initialStakeTime;
   mapping(address => uint256) public prgPerTokenDebt;
@@ -141,14 +141,14 @@ contract Goldilend is ERC20, IERC721Receiver {
     }
   }
 
-  /// @notice Returns the name of the $giBGT token
+  /// @notice Returns the name of the $GiBGT token
   function name() public pure override returns (string memory) {
-    return "giBGT Token";
+    return "GiBGT Token";
   }
 
-  /// @notice Returns the symbol of the $giBGT token
+  /// @notice Returns the symbol of the $GiBGT token
   function symbol() public pure override returns (string memory) {
-    return "giBGT";
+    return "GiBGT";
   }
 
 
@@ -181,7 +181,7 @@ contract Goldilend is ERC20, IERC721Receiver {
 
 
   event iBGTLock(address indexed user, uint256 amount);
-  event giBGTStake(address indexed user, uint256 amount);
+  event GiBGTStake(address indexed user, uint256 amount);
   event Borrow(address indexed user, uint256 amount);
   event Repay(address indexed user, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount);
@@ -211,15 +211,15 @@ contract Goldilend is ERC20, IERC721Receiver {
     userBoost = boosts[user];
   }
 
-  // /// @notice Returns the claimable $PRG of $giBGT staker
-  // /// @param user $giBGT staker
+  // /// @notice Returns the claimable $PRG of $GiBGT staker
+  // /// @param user $GiBGT staker
   function userClaimablePrg(address user) external view returns (uint256) {
     return _calculateClaimablePrg(user);
   }
 
-  /// @notice Returns the current $giBGT ratio
-  function getgiBGTRatio() external view returns (uint256) {
-    return _giBGTRatio();
+  /// @notice Returns the current $GiBGT ratio
+  function getGiBGTRatio() external view returns (uint256) {
+    return _GiBGTRatio();
   }
 
   /// @notice Returns the fair value of NFTs
@@ -236,15 +236,12 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Locks partner NFT to receive boost on staking yield and discounted borrowing rates
   /// @param partnerNFT NFT address to transfer to this contract
   /// @param partnerNFTId Token ID of NFT to be transferred
-  /// @param expiry Expiration date of the boost
   function boost(
     address partnerNFT,
-    uint256 partnerNFTId, 
-    uint256 expiry
-  ) external {
-    if(expiry < block.timestamp + 30 days) revert InvalidDuration();
+    uint256 partnerNFTId
+  ) external {    
     if(partnerNFTBoosts[partnerNFT] == 0) revert InvalidBoostNFT();
-    boosts[msg.sender] = _buildBoost(partnerNFT, partnerNFTId, expiry);
+    boosts[msg.sender] = _buildBoost(partnerNFT, partnerNFTId);
     IERC721(partnerNFT).safeTransferFrom(msg.sender, address(this), partnerNFTId);
   }
 
@@ -252,29 +249,18 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Locks partner NFTs to receive boost on staking yield and discounted borrowing rates
   /// @param partnerNFTs Array of NFT addresses to transfer to this contract
   /// @param partnerNFTIds Array of token IDs for NFTs to be transferred
-  /// @param expiry Expiration date of the boost
   function boost(
     address[] calldata partnerNFTs, 
-    uint256[] calldata partnerNFTIds, 
-    uint256 expiry
+    uint256[] calldata partnerNFTIds
   ) external {
     for(uint256 i; i < partnerNFTs.length; i++) {
       if(partnerNFTBoosts[partnerNFTs[i]] == 0) revert InvalidBoostNFT();
     }
-    if(expiry < block.timestamp + 30 days) revert InvalidDuration();
     if(partnerNFTs.length != partnerNFTIds.length) revert ArrayMismatch();    
-    boosts[msg.sender] = _buildBoost(partnerNFTs, partnerNFTIds, expiry);
+    boosts[msg.sender] = _buildBoost(partnerNFTs, partnerNFTIds);
     for(uint8 i; i < partnerNFTs.length; i++) {
       IERC721(partnerNFTs[i]).safeTransferFrom(msg.sender, address(this), partnerNFTIds[i]);
     }
-  }
-
-  /// @notice Extends the duration of an existing boost
-  /// @param newExpiry New expiration of the boost
-  function extendBoost(uint256 newExpiry) external {
-    if(boosts[msg.sender].expiry == 0) revert InvalidBoost();
-    if(newExpiry < block.timestamp + 30 days) revert InvalidDuration();
-    boosts[msg.sender].expiry = newExpiry;
   }
 
   /// @notice Claims NFTs from expired boosts
@@ -296,38 +282,38 @@ contract Goldilend is ERC20, IERC721Receiver {
     }
   }
   
-  /// @notice Locks $iBGT and mints $giBGT
+  /// @notice Locks $iBGT and mints $GiBGT
   /// @param amount Amount of $iBGT to lock
   function lock(uint256 amount) external {
     poolSize += amount;
     SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
     _refreshiBGT(amount);
-    _mint(msg.sender, _giBGTMintAmount(amount));
+    _mint(msg.sender, _GiBGTMintAmount(amount));
     emit iBGTLock(msg.sender, amount);
   }
 
-  /// @notice Stakes $giBGT
-  /// @param amount Amount of $giBGT to stake
+  /// @notice Stakes $GiBGT
+  /// @param amount Amount of $GiBGT to stake
   function stake(uint256 amount) external {
     _updateClaimablePrg(msg.sender);
     if(initialStakeTime[msg.sender] == 0) {
       initialStakeTime[msg.sender] = block.timestamp;
     }
-    stakedgiBGT[msg.sender] += amount;
+    stakedGiBGT[msg.sender] += amount;
     SafeTransferLib.safeTransferFrom(address(this), msg.sender, address(this), amount);
-    emit giBGTStake(msg.sender, amount);
+    emit GiBGTStake(msg.sender, amount);
   }
 
-  /// @notice Unstakes $giBGT
-  /// @param amount Amount of $giBGT to unstake
+  /// @notice Unstakes $GiBGT
+  /// @param amount Amount of $GiBGT to unstake
   function unstake(uint256 amount) external {
-    if(amount > stakedgiBGT[msg.sender]) revert InvalidUnstake();
+    if(amount > stakedGiBGT[msg.sender]) revert InvalidUnstake();
     _updateClaimablePrg(msg.sender);
-    stakedgiBGT[msg.sender] -= amount;
+    stakedGiBGT[msg.sender] -= amount;
     SafeTransferLib.safeTransfer(address(this), msg.sender, amount);
   }
 
-  /// @notice Claims $giBGT staking rewards
+  /// @notice Claims $GiBGT staking rewards
   function claim() external {
     _updateClaimablePrg(msg.sender);
     _claim(msg.sender, claimablePrg[msg.sender]);
@@ -487,7 +473,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param user Address to update claimable $PRG for
   function _updateClaimablePrg(address user) internal {
     claimablePrg[user] = _calculateClaimablePrg(user);
-    prgPerTokenDebt[user] = _claimablePrgPergiBGT(user);
+    prgPerTokenDebt[user] = _claimablePrgPerGiBGT(user);
   }
 
   /// @notice Calculates and distributes $PRG
@@ -503,13 +489,13 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Calculates claimable $PRG
   /// @param user Address to calculate claimable $PRG for
   function _calculateClaimablePrg(address user) internal view returns (uint256) {
-    return FixedPointMathLib.mulWad(stakedgiBGT[user], _claimablePrgPergiBGT(user) - prgPerTokenDebt[user]) + claimablePrg[user];
+    return FixedPointMathLib.mulWad(stakedGiBGT[user], _claimablePrgPerGiBGT(user) - prgPerTokenDebt[user]) + claimablePrg[user];
   }
 
-  /// @notice Calculates claimable $PRG per $giBGT
+  /// @notice Calculates claimable $PRG per $GiBGT
   /// @dev porridgeEarned = time staked * rate
   /// @param user Address to calculate claimable for
-  function _claimablePrgPergiBGT(address user) internal view returns (uint256 porridgeEarned) {    
+  function _claimablePrgPerGiBGT(address user) internal view returns (uint256 porridgeEarned) {    
     uint256 userInitialStakeTime = initialStakeTime[user] > 0 ? initialStakeTime[user] : deployTime;
     uint256 timeStaked = (userInitialStakeTime - deployTime) > 180 days ? 180 days : userInitialStakeTime - deployTime;
     uint256 rate = _calculateRate(userInitialStakeTime);
@@ -583,20 +569,19 @@ contract Goldilend is ERC20, IERC721Receiver {
   function _refreshiBGT(uint256 ibgtAmount) internal {
     IERC20(ibgt).approve(vault, ibgtAmount);
     iBGTVault(vault).stake(ibgtAmount);
-    poolSize += 5e18;
   }
 
-  /// @notice Calculates the amount of $giBGT to mint
+  /// @notice Calculates the amount of $GiBGT to mint
   /// @param lockAmount Amount of $iBGT to lock
-  /// @return mintAmount Total supply of $giBGT divided by the lending pool size multiplied by lockAmount
-  function _giBGTMintAmount(uint256 lockAmount) internal view returns (uint256 mintAmount) {
-    uint256 ratio = _giBGTRatio();
+  /// @return mintAmount Total supply of $GiBGT divided by the lending pool size multiplied by lockAmount
+  function _GiBGTMintAmount(uint256 lockAmount) internal view returns (uint256 mintAmount) {
+    uint256 ratio = _GiBGTRatio();
     mintAmount = poolSize > 0 ? FixedPointMathLib.mulWad(lockAmount, ratio) : lockAmount;
   }
 
-  /// @notice Calculates the current $giBGT ratio
-  /// @return gibgtRatio Total supply of $giBGT divided by the lending pool size
-  function _giBGTRatio() internal view returns (uint256 gibgtRatio) {
+  /// @notice Calculates the current $GiBGT ratio
+  /// @return gibgtRatio Total supply of $GiBGT divided by the lending pool size
+  function _GiBGTRatio() internal view returns (uint256 gibgtRatio) {
     gibgtRatio = FixedPointMathLib.divWad(totalSupply(), poolSize);
   }
 
@@ -605,8 +590,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param partnerNFTId Token ID of NFT to be transferred
   function _buildBoost(
     address partnerNFT, 
-    uint256 partnerNFTId,
-    uint256 expiry
+    uint256 partnerNFTId
   ) internal returns (Boost memory newUserBoost) {
     uint256 magnitude;
     Boost storage userBoost = boosts[msg.sender];
@@ -619,7 +603,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       newUserBoost = Boost({
         partnerNFTs: nft,
         partnerNFTIds: id,
-        expiry: expiry,
+        expiry: block.timestamp + 30 days,
         boostMagnitude: magnitude
       });
     }
@@ -633,7 +617,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       newUserBoost = Boost({
         partnerNFTs: nfts,
         partnerNFTIds: ids,
-        expiry: expiry,
+        expiry: block.timestamp + 30 days,
         boostMagnitude: magnitude
       });
     }
@@ -644,8 +628,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param partnerNFTIds Array of token IDs for NFTs to be transferred
   function _buildBoost(
     address[] calldata partnerNFTs, 
-    uint256[] calldata partnerNFTIds,
-    uint256 expiry
+    uint256[] calldata partnerNFTIds
   ) internal returns (Boost memory newUserBoost) {
     uint256 magnitude;
     Boost storage userBoost = boosts[msg.sender];
@@ -656,7 +639,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       newUserBoost = Boost({
         partnerNFTs: partnerNFTs,
         partnerNFTIds: partnerNFTIds,
-        expiry: expiry,
+        expiry: block.timestamp + 30 days,
         boostMagnitude: magnitude
       });
     }
@@ -672,7 +655,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       newUserBoost = Boost({
         partnerNFTs: nfts,
         partnerNFTIds: ids,
-        expiry: expiry,
+        expiry: block.timestamp + 30 days,
         boostMagnitude: magnitude
       });
     }
