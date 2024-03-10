@@ -155,7 +155,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     ibgtvault = new iBGTVault(address(ibgt), address(ibgt));
 
     // deploy goldiswap
-    goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this));
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this), 100_000_000e18);
 
     // deploy goldilend
     address[] memory boostNfts = new address[](2);
@@ -207,7 +207,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAmt[1] = 12000000e18;
     allocationsAmt[2] = 10000000e18;
     allocationsAmt[3] = 7000000e18;
-    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt);
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt, 200_000_000e18);
 
     // deploy goldigovernor
     goldigov = new Goldigovernor(address(timelock), address(govlocks), address(this), 5761, 69, 4e18);

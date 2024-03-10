@@ -60,12 +60,14 @@ contract Goldiswap is ERC20 {
   /// @param _goldilocked Address of Goldilocked
   /// @param _honey Address of $HONEY
   /// @param _multisig Address of the GoldilocksDAO multisig
+  /// @param initialSupply Initial supply of the $LOCKS token
   constructor(
     uint256 _fsl,
     uint256 _psl,
     address _goldilocked,
     address _honey,
-    address _multisig
+    address _multisig,
+    uint256 initialSupply
   ) {
     fsl = _fsl;
     psl = _psl;
@@ -74,7 +76,7 @@ contract Goldiswap is ERC20 {
     multisig = _multisig;
     lastFloorRaise = block.timestamp;
     lastFloorDecrease = block.timestamp;
-    _mint(goldilocked, 100_000_000e18);
+    _mint(goldilocked, initialSupply);
   }
 
   /// @notice Returns the name of the $LOCKS token

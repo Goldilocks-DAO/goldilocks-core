@@ -65,13 +65,15 @@ contract Goldilocked is ERC20 {
   /// @param _honey Address of the HONEY contract
   /// @param allocationsAddress Addresses receiving $LOCKS
   /// @param allocationsAmt Amounts of $LOCKS to stake and lock
+  /// @param initialSupply Initial supply of the $PRG token
   constructor(
     address _goldiswap,
     address _goldilend,
     address _govlocks,
     address _honey,
     address[] memory allocationsAddress,
-    uint256[] memory allocationsAmt
+    uint256[] memory allocationsAmt,
+    uint256 initialSupply
   ) {
     goldiswap = _goldiswap;
     goldilend = _goldilend;
@@ -90,7 +92,7 @@ contract Goldilocked is ERC20 {
       govLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
 
     }
-    _mint(multisig, 200_000_000e18);
+    _mint(multisig, initialSupply);
   }
 
   /// @notice Returns the name of the $PRG token

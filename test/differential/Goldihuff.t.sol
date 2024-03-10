@@ -20,7 +20,7 @@ contract DifferentialGoldihuffTest is Test {
   function setUp() public {
     goldihuff = Goldihuff(HuffDeployer.deploy("mock/Goldihuff"));
     math = new Math();
-    goldiswap = new Goldiswap(69, 69, address(0x69), address(0x69), address(0x69));
+    goldiswap = new Goldiswap(69, 69, address(0x69), address(0x69), address(0x69), 100_000_000e18);
   }
 
   function testDivideHuff() public {
