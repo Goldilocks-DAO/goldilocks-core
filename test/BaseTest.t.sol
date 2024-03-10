@@ -136,7 +136,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
 
   uint256 govLocksAmt = 5e18;
   
-  address honeyjar = address(0x69420);
+  address honeyjar = address(0xdddd);
 
   function setUp() public {
     
@@ -156,7 +156,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     ibgtvault = new iBGTVault(address(ibgt), address(ibgt));
 
     // deploy goldiswap
-    goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this), 100_000_000e18);
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this), locksMintAmount);
 
     // deploy goldilend
     address[] memory boostNfts = new address[](2);
@@ -194,7 +194,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
 
     // deploy govlocks and timelock
-    govlocks = new govLocks(address(goldiswap), address(goldigovComputed), address(goldilockedComputed));
+    govlocks = new govLocks(address(goldiswap), address(goldigovComputed), address(goldilockedComputed), honeyjar, locksMintAmount / 20);
     timelock = new Timelock(address(goldigovComputed), 5 days);
 
     // deploy golidlocked
@@ -208,7 +208,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAmt[1] = 12_000_000e18;
     allocationsAmt[2] = 10_000_000e18;
     allocationsAmt[3] = 7_000_000e18;
-    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt, 200_000_000e18);
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt, prgMintAmount);
 
     // deploy goldigovernor
     goldigov = new Goldigovernor(address(timelock), address(govlocks), address(this), 5761, 69, 4e18);

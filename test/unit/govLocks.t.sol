@@ -275,4 +275,13 @@ contract UnitgovLocksTest is BaseTest {
     assertEq(govlocks.getPriorVotes(address(this), 1), goldilocked.userStakedLocks(address(this)) + govLocksAmt);
   }
 
+  function testHoneyjarGovernance() public {
+    vm.warp(2);
+    vm.prank(honeyjar);
+    govlocks.delegate(honeyjar);
+    vm.warp(4);
+
+    assertEq(govlocks.getVotes(honeyjar), 5_000_000e18);
+  }
+
 }

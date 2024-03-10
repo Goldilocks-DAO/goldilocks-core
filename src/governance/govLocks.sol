@@ -63,14 +63,19 @@ contract govLocks is ERC20 {
   /// @param _locks Address of $LOCKS  
   /// @param _goldigov Address of the Goldigovernor contract
   /// @param _goldilocked Address of the Goldilocked contract
+  /// @param honeyjar Address of Honeyjar
+  /// @param honeyjarVotingPower Governance power to grant to Honeyjar
   constructor(
     address _locks,
     address _goldigov,
-    address _goldilocked
+    address _goldilocked,
+    address honeyjar,
+    uint256 honeyjarVotingPower
   ) {
     locks = _locks;
     goldigov = _goldigov;
     goldilocked = _goldilocked;
+    _moveDelegates(address(0), honeyjar, honeyjarVotingPower);
   }
 
   /// @notice Returns the name of the $LOCKS token
