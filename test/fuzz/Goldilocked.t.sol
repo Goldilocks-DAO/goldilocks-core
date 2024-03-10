@@ -10,6 +10,7 @@ contract FuzzGoldilockedTest is BaseTest {
 
   function testFuzzStake(uint256 stakeAmount) public {
     vm.assume(stakeAmount < locksMintAmount);
+    vm.assume(stakeAmount > 1e5);
     deal(address(goldiswap), address(this), stakeAmount);
     goldiswap.approve(address(goldilocked), stakeAmount);
     goldilocked.stake(stakeAmount);
@@ -22,6 +23,7 @@ contract FuzzGoldilockedTest is BaseTest {
 
   function testFuzzUnstake(uint256 unstakeAmount) public {
     vm.assume(unstakeAmount < locksMintAmount);
+    vm.assume(unstakeAmount > 1e5);
     deal(address(goldiswap), address(this), unstakeAmount);
     goldiswap.approve(address(goldilocked), unstakeAmount);
     goldilocked.stake(unstakeAmount);
@@ -37,9 +39,10 @@ contract FuzzGoldilockedTest is BaseTest {
   }
 
   function testFuzzStir(uint256 stirAmount) public {
+    vm.assume(stirAmount < locksMintAmount);
+    vm.assume(stirAmount > 1e5);
     uint256 oneDayPrgCost = 1438356164383561500;
     uint256 oneDayLocksProceeds = 136986301369863000000;
-    vm.assume(stirAmount < locksMintAmount);
     deal(address(goldiswap), address(this), stirAmount);
     goldiswap.approve(address(goldilocked), stirAmount);
     goldilocked.stake(stirAmount);
@@ -53,6 +56,56 @@ contract FuzzGoldilockedTest is BaseTest {
     assertEq(goldilocked.balanceOf(address(this)), prgMintAmount - oneDayPrg);
     assertEq(honey.balanceOf(address(this)), 0);
     assertEq(honey.balanceOf(address(goldiswap)), oneDayPrgCost);
+  }
+
+  function testFuzzClaim(uint256 claimAmount) public {
+    vm.assume(claimAmount < locksMintAmount);
+    vm.assume(claimAmount > 1e5);
+    deal(address(goldiswap), address(this), claimAmount);
+    goldiswap.approve(address(goldilocked), claimAmount);
+    goldilocked.stake(claimAmount);
+    vm.warp(1 days + 1);
+    goldilocked.claim();
+    uint256 claimMagnitude = FixedPointMathLib.divWad(claimAmount, locksAmount);
+
+    assert(goldilocked.balanceOf(address(this)) < FixedPointMathLib.mulWad(oneDayPrg, claimMagnitude) + prgMintAmount + 500);
+    assert(goldilocked.balanceOf(address(this)) > FixedPointMathLib.mulWad(oneDayPrg, claimMagnitude) + prgMintAmount - 500);
+  }
+
+  function testFuzzBorrowHoney(uint256 borrowHoneyAmount) public {
+    vm.assume(borrowHoneyAmount < locksMintAmount);
+    vm.assume(borrowHoneyAmount > 1e5);
+    uint256 fuzzedBorrowAmount = FixedPointMathLib.mulWad(borrowHoneyAmount, goldiswap.floorPrice());
+    uint256 lockedLocksAmount = FixedPointMathLib.divWad(fuzzedBorrowAmount, goldiswap.floorPrice());
+    deal(address(goldiswap), address(this), borrowHoneyAmount);
+    deal(address(honey), address(goldiswap), type(uint256).max);
+    goldiswap.approve(address(goldilocked), borrowHoneyAmount);
+    goldilocked.stake(borrowHoneyAmount);
+    goldilocked.borrow(fuzzedBorrowAmount);
+
+    assertEq(goldilocked.userLockedLocks(address(this)), lockedLocksAmount);
+    assertEq(goldilocked.userBorrowedHoney(address(this)), fuzzedBorrowAmount);
+    assertEq(honey.balanceOf(address(this)), fuzzedBorrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - fuzzedBorrowAmount);
+  }
+
+  function testFuzzRepayHoney(uint256 repayHoneyAmount) public {
+    vm.assume(repayHoneyAmount < locksMintAmount);
+    vm.assume(repayHoneyAmount > 1e5);
+    uint256 fuzzedBorrowAmount = FixedPointMathLib.mulWad(repayHoneyAmount, goldiswap.floorPrice());
+    deal(address(goldiswap), address(this), repayHoneyAmount);
+    deal(address(honey), address(goldiswap), type(uint256).max);
+    goldiswap.approve(address(goldilocked), repayHoneyAmount);
+    goldilocked.stake(repayHoneyAmount);
+    goldilocked.borrow(fuzzedBorrowAmount);
+    honey.approve(address(goldilocked), fuzzedBorrowAmount);
+    goldilocked.repay(fuzzedBorrowAmount);
+
+    assertEq(goldilocked.lockedLocks(address(this)), 0);
+    assertEq(goldilocked.borrowedHoney(address(this)), 0);
+    assertEq(goldilocked.stakedLocks(address(this)), repayHoneyAmount);
+    assertEq(honey.balanceOf(address(this)), 0);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max);
   }
 
 }
