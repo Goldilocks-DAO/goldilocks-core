@@ -35,7 +35,7 @@ contract FuzzGoldilockedTest is BaseTest {
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), unstakeAmount);
     assertEq(goldilocked.balanceOf(address(this)), prgMintAmount);
-    assertEq(goldilocked.prgPerTokenDebt(address(this)), oneDayPrg / 1e5);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), dayOfPrgDebt);
   }
 
   function testFuzzStir(uint256 stirAmount) public {

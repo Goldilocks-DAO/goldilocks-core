@@ -269,7 +269,7 @@ contract Goldilocked is ERC20 {
       emit Claimed(msg.sender, claimable);
     }
   }
-
+    
   /// @notice Calculates claimable $PRG
   /// @param user Address to calculate claimable $PRG for
   function _calculateClaimablePrg(address user) internal view returns (uint256) {
@@ -360,6 +360,11 @@ contract Goldilocked is ERC20 {
   function mintPorridge(uint256 newPorridge) external {
     if(msg.sender != multisig) revert NotMultisig();
     _mint(msg.sender, newPorridge);
+  }
+
+  function changeEmissions(uint256 newEmissions) external {
+    _updateClaimablePrg(address(0));
+    ANNUAL_PORRIDGE_EMISSIONS = newEmissions;
   }
 
 }

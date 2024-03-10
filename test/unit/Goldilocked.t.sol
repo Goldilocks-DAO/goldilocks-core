@@ -382,4 +382,40 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - (borrowAmount*2));
   }
 
+  function testChangePrgEmissionsDoubleAfterHalfYear() public {
+    deal(address(goldiswap), address(this), 1e18);
+    goldiswap.approve(address(goldilocked), 1e18);
+    goldilocked.stake(1e18);
+    vm.warp(15768000 + 1);
+    goldilocked.changeEmissions(1e18);
+    vm.warp(block.timestamp + 15768000);
+    goldilocked.claim();
+
+    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, 75e16);
+  }
+
+  function testChangePrgEmissionsDoubleAfterDay() public {
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldilocked.stake(locksAmount);
+    vm.warp(1 days + 1);
+    goldilocked.changeEmissions(1e18);
+    vm.warp(block.timestamp + 1 days);
+    goldilocked.claim();
+
+    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, oneDayPrg + twoDaysPrg);
+  }
+
+  function testChangePrgEmissionsHalfAfterDay() public {
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldilocked.stake(locksAmount);
+    vm.warp(1 days + 1);
+    goldilocked.changeEmissions(25e16);
+    vm.warp(block.timestamp + 1 days);
+    goldilocked.claim();
+
+    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, oneDayPrg + halfDayPrg);
+  }
+
 }
