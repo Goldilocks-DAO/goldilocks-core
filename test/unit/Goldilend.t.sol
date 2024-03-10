@@ -9,11 +9,11 @@ import { Goldilend } from "../../src/core/Goldilend.sol";
 
 contract UnitGoldilendTest is BaseTest {
 
-  function testgiBGTName() public {
+  function testGiBGTName() public {
     assertEq(goldilend.name(), "GiBGT Token");
   }
 
-  function testgiBGTSymbol() public {
+  function testGiBGTSymbol() public {
     assertEq(goldilend.symbol(), "GiBGT");
   }
 
@@ -56,36 +56,21 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(userBoost.boostMagnitude, 15);
   }
 
-  function testCalculatePostEmissionsClaim() public {
-    deal(address(goldilend), address(this), 2e18);
-    goldilend.approve(address(goldilend), 2e18);
-    goldilend.stake(1e18);
-    vm.warp(block.timestamp + (30 days * 6));
-    uint256 userClaimable = goldilend.userClaimablePrg(address(this));
-    vm.warp(block.timestamp + (30 days * 26));
-    uint256 userClaimableAfter = goldilend.userClaimablePrg(address(this));
+  function testUserClaimablePrg() public {
+    deal(address(goldilend), address(this), locksAmount);
+    goldilend.approve(address(goldilend), locksAmount);
+    goldilend.stake(locksAmount);
+    vm.warp(1 days + 1);
 
-    assertEq(userClaimable, userClaimableAfter);
+    assertEq(goldilend.userClaimablePrg(address(this)), oneDayPrg);
   }
 
-  function testCalculatePostEmissionsClaimMaxAverage() public {
-    deal(address(goldilend), address(this), 2e18);
-    goldilend.approve(address(goldilend), 2e18);
-    goldilend.stake(1e18);
-    vm.warp(block.timestamp + (30 days * 36));
-    goldilend.stake(1e18);
-    vm.warp(block.timestamp + (30 days * 36));
-    uint256 userClaimable = goldilend.userClaimablePrg(address(this));
-
-    assertEq(userClaimable, 0);
-  }
-
-  function testGetgiBGTRatio() public {
+  function testGetGiBGTRatio() public {
     deal(address(ibgt), address(this), 11157e16);
     ibgt.approve(address(goldilend), type(uint256).max);
     goldilend.lock(100e18);
     vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
-    vm.store(address(goldilend), bytes32(uint256(13)), bytes32(uint256(1000e18)));
+    vm.store(address(goldilend), bytes32(uint256(12)), bytes32(uint256(1000e18)));
 
     assertEq(goldilend.getGiBGTRatio(), 10e16);
   }
@@ -228,7 +213,6 @@ contract UnitGoldilendTest is BaseTest {
     goldilend.approve(address(goldilend), 2e18);
     goldilend.stake(2e18);
 
-    assertEq(goldilend.initialStakeTime(address(this)), block.timestamp);
     assertEq(goldilend.balanceOf(address(this)), 0);
     assertEq(goldilend.balanceOf(address(goldilend)), 2e18);
   }
@@ -251,46 +235,56 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(goldilend.stakedGiBGT(address(this)), 0);
   }
 
-  // //todo: fix
-  // function testDoubleStake() public {
-  //   deal(address(goldilend), address(this), 2e18);
-  //   goldilend.approve(address(goldilend), 2e18);
-  //   goldilend.stake(1e18);
-  //   vm.warp(block.timestamp + (30 days * 2));
-  //   goldilend.stake(1e18);
-  //   goldilend.claim();
+  function testClaimSuccess() public {
+    deal(address(goldilend), address(this), locksAmount);
+    goldilend.approve(address(goldilend), locksAmount);
+    goldilend.stake(locksAmount);
+    vm.warp(1 days + 1);
+    goldilend.claim();
 
-  //   // assertEq(goldilocked.balanceOf(address(this)), twoMonthsOfYield + 200000000e18);
-  // }
+    assertEq(goldilocked.balanceOf(address(this)), oneDayPrg + prgMintAmount);
+    assertEq(goldilend.claimablePrg(address(this)), 0);
+  }
 
-  // //todo: fix
-  // function testCalculateClaim() public {
-  //   deal(address(goldilend), address(this), 1e18);
-  //   goldilend.approve(address(goldilend), 1e18);
-  //   goldilend.stake(1e18);
-  //   vm.warp(block.timestamp + (30 days * 2));
-  //   goldilend.claim();
+  function testClaimBoostedClaim() public dealUserPartnerNFTs {
+    goldilend.boost(address(honeycomb), 1);
+    deal(address(goldilend), address(this), locksAmount);
+    goldilend.approve(address(goldilend), locksAmount);
+    goldilend.stake(locksAmount);
+    vm.warp(1 days + 1);
+    goldilend.claim();
 
-  //   // assertEq(goldilend.userClaimablePrg(address(this)), twoMonthsOfBoostedYield);
-  //   // assertEq(goldilocked.balanceOf(address(this)), twoMonthsOfYield);
-  // }
+    assertEq(goldilocked.balanceOf(address(this)), oneDayPrgBoosted + prgMintAmount);
+  }
 
-  // //todo: fix
-  // function testCalculateBoostedClaim() public dealUserPartnerNFTs {
-  //   deal(address(goldilend), address(this), 1e18);
-  //   goldilend.approve(address(goldilend), 1e18);
-  //   goldilend.stake(1e18);
-  //   vm.warp(block.timestamp + (30 days * 2));
-  //   address[] memory nfts = new address[](2);
-  //   nfts[0] = address(beradrome);
-  //   nfts[1] = address(honeycomb);
-  //   uint256[] memory ids = new uint256[](2);
-  //   ids[0] = 1;
-  //   ids[1] = 1;
-  //   goldilend.boost(nfts, ids);
+  function testClaimBoostedClaimTwoDays() public dealUserPartnerNFTs {
+    goldilend.boost(address(honeycomb), 1);
+    deal(address(goldilend), address(this), locksAmount);
+    goldilend.approve(address(goldilend), locksAmount);
+    goldilend.stake(locksAmount);
+    vm.warp(2 days + 1);
+    goldilend.claim();
 
-  //   // assertEq(goldilend.userClaimablePrg(address(this)), twoMonthsOfBoostedYield);
-  // }
+    assertEq(goldilocked.balanceOf(address(this)), oneDayPrgBoosted*2 + prgMintAmount);
+  }
+
+  function testClaimZeroClaim() public {
+    goldilend.claim();
+
+    assertEq(goldilocked.balanceOf(address(this)), prgMintAmount);
+  }
+
+  function testClaimMaxBoostedClaim() public {
+    (address[] memory nfts, uint256[] memory ids) = maxBoosty();
+    goldilend.boost(nfts, ids);
+    deal(address(goldilend), address(this), locksAmount);
+    goldilend.approve(address(goldilend), locksAmount);
+    goldilend.stake(locksAmount);
+    vm.warp(1 days + 1);
+    goldilend.claim();
+
+    assertEq(goldilocked.balanceOf(address(this)), oneDayPrgMaxBoosted + prgMintAmount);
+  }
 
   function testSingleBorrowFailActive() public {
     goldilend.setBorrowingActive(false);
@@ -698,12 +692,6 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(goldilend.slope(), 69);
   }
 
-  function testIncreasePrgEmissionsFailMultisig() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.increasePrgEmissions(69);
-  }
-
   function testSetDurationsFailMultisig() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
@@ -717,7 +705,6 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(goldilend.maxDuration(), 69);
   }
 
-
   function testSetBorrowingActiveFailMultisig() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
@@ -730,9 +717,15 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(goldilend.borrowingActive(), false);
   }
 
-  function testIncreasePrgEmissionsSuccess() public {
-    goldilend.increasePrgEmissions(69);
+  function testChangePrgEmissionsFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
+    goldilend.changePrgEmissions(69);
+  }
 
-    assertEq(goldilend.deployTime(), 69);
+  function testChangePrgEmissionsSuccess() public {
+    goldilend.changePrgEmissions(69);
+
+    assertEq(goldilend.ANNUAL_PORRIDGE_EMISSIONS(), 69);
   }
 }

@@ -48,7 +48,7 @@ contract Goldilocked is ERC20 {
   address public immutable goldilend;
   address public immutable govlocks;
   address public immutable honey;
-  uint256 public ANNUAL_PORRIDGE_EMISSIONS = 5e17;
+  uint256 public ANNUAL_PORRIDGE_EMISSIONS;
   uint256 public lastUpdateTime;
   uint256 public claimablePrgPerLocksStored;
   address public multisig;
@@ -76,6 +76,7 @@ contract Goldilocked is ERC20 {
     uint256[] memory allocationsAmt,
     uint256 initialSupply
   ) {
+    ANNUAL_PORRIDGE_EMISSIONS = 5e17;
     goldiswap = _goldiswap;
     goldilend = _goldilend;
     govlocks = _govlocks;
@@ -264,9 +265,9 @@ contract Goldilocked is ERC20 {
   /// @param claimable Amount of $PRG to be claimed
   function _claim(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
-      claimablePrg[msg.sender] = 0;
+      claimablePrg[claimer] = 0;
       _mint(claimer, claimable);
-      emit Claimed(msg.sender, claimable);
+      emit Claimed(claimer, claimable);
     }
   }
     
@@ -343,7 +344,7 @@ contract Goldilocked is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Mints $PRG to user who is staking $gBERA
+  /// @notice Mints $PRG to user who is staking $GiBGT
   /// @dev Only Goldilend contract can call this function
   /// @param to Recipient of minted $PRG tokens
   /// @param amount Amount of minted $PRG tokens
@@ -352,19 +353,19 @@ contract Goldilocked is ERC20 {
     _mint(to, amount);
   }
 
-  function changePorridgeEmissions(uint256 newEmissions) external {
+  /// @notice Allows the DAO to change $PRG emissions
+  /// @param newPrgEmissions Sets the annual $PRG emission rate for $LOCKS staking
+  function changePrgEmissions(uint256 newPrgEmissions) external {
     if(msg.sender != multisig) revert NotMultisig();
-    ANNUAL_PORRIDGE_EMISSIONS = newEmissions;
+    _updateClaimablePrg(address(0));
+    ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
   }
 
+  /// @notice Allows the DAO to mint $PRG
+  /// @param newPorridge Amount of $PRG to mint
   function mintPorridge(uint256 newPorridge) external {
     if(msg.sender != multisig) revert NotMultisig();
     _mint(msg.sender, newPorridge);
-  }
-
-  function changeEmissions(uint256 newEmissions) external {
-    _updateClaimablePrg(address(0));
-    ANNUAL_PORRIDGE_EMISSIONS = newEmissions;
   }
 
 }

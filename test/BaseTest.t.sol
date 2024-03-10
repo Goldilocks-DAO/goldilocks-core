@@ -126,11 +126,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 twoDaysPrg = 273972602739726000000;
   uint256 initialPrgDebt = 15854895991;
   uint256 dayOfPrgDebt = 1369878868594621;
-  uint256 twoMonthsOfGoldilendStakingYield = 34e18;
+  uint256 oneDayPrgBoosted = 137808219178082178000;
+  uint256 oneDayPrgMaxBoosted = 143835616438356150000;
 
   uint256 goldilendDuration = 1209600;
-  uint256 twoMonthsOfYield = 34e18;
-  uint256 twoMonthsOfBoostedYield = 43645e15;
   uint256 singleBorrowInterest = 45726853068117;
   uint256 singleBorrowInterestBoosted = 45452491949708;
   uint256 singleBorrowInterestMaxBoost = 2286342653405;

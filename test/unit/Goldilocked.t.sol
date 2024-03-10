@@ -289,29 +289,24 @@ contract UnitGoldilockedTest is BaseTest {
     goldilocked.goldilendMint(address(this), 69);
   }
 
-  //todo: fix
   function testGoldilendMintSuccess() public {
-    deal(address(goldilend), address(this), 1e18);
-    goldilend.approve(address(goldilend), 1e18);
-    goldilend.stake(1e18);
-    vm.warp(block.timestamp + 60 days);
+    deal(address(goldilend), address(this), locksAmount);
+    goldilend.approve(address(goldilend), locksAmount);
+    goldilend.stake(locksAmount);
+    vm.warp(1 days + 1);
     goldilend.claim();
 
-    vm.prank(address(goldilend));
-    goldilocked.goldilendMint(address(this), twoMonthsOfGoldilendStakingYield);
-
-    assertEq(goldilocked.balanceOf(address(this)), twoMonthsOfGoldilendStakingYield + prgMintAmount);
-    // assertEq(goldilocked.balanceOf(address(this)), prgMintAmount);
+    assertEq(goldilocked.balanceOf(address(this)), oneDayPrg + prgMintAmount);
   }
 
   function testChangePorridgeEmissionsFailMultisig() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotMultisig.selector));
-    goldilocked.changePorridgeEmissions(69);
+    goldilocked.changePrgEmissions(69);
   }
 
   function testChangePorridgeEmissionsSuccess() public {
-    goldilocked.changePorridgeEmissions(69);
+    goldilocked.changePrgEmissions(69);
 
     assertEq(goldilocked.ANNUAL_PORRIDGE_EMISSIONS(), 69);
   }
@@ -387,7 +382,7 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), 1e18);
     goldilocked.stake(1e18);
     vm.warp(15768000 + 1);
-    goldilocked.changeEmissions(1e18);
+    goldilocked.changePrgEmissions(1e18);
     vm.warp(block.timestamp + 15768000);
     goldilocked.claim();
 
@@ -399,7 +394,7 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     vm.warp(1 days + 1);
-    goldilocked.changeEmissions(1e18);
+    goldilocked.changePrgEmissions(1e18);
     vm.warp(block.timestamp + 1 days);
     goldilocked.claim();
 
@@ -411,7 +406,7 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     vm.warp(1 days + 1);
-    goldilocked.changeEmissions(25e16);
+    goldilocked.changePrgEmissions(25e16);
     vm.warp(block.timestamp + 1 days);
     goldilocked.claim();
 

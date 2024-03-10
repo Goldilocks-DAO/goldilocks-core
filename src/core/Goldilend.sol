@@ -74,7 +74,6 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   mapping(address => uint256) public stakedGiBGT;
   mapping(address => uint256) public claimablePrg;
-  mapping(address => uint256) public initialStakeTime;
   mapping(address => uint256) public prgPerTokenDebt;
   mapping(address => uint8) public partnerNFTBoosts;
   mapping(address => uint256) public nftFairValues;
@@ -92,6 +91,9 @@ contract Goldilend is ERC20, IERC721Receiver {
   uint256 public honeyjarClaims;
   uint256 public multisigShare;
   uint256 public honeyjarShare;
+  uint256 public ANNUAL_PORRIDGE_EMISSIONS;
+  uint256 public lastUpdateTime;
+  uint256 public claimablePrgPerLocksStored;
 
   bool public borrowingActive;
 
@@ -126,6 +128,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     address[] memory _partnerNFTs, 
     uint8[] memory _partnerNFTBoosts
   ) {
+    ANNUAL_PORRIDGE_EMISSIONS = 5e17;
     poolSize = _startingPoolSize;
     protocolInterestRate = _protocolInterestRate;
     porridgeMultiple = _porridgeMultiple;
@@ -256,7 +259,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     for(uint256 i; i < partnerNFTs.length; i++) {
       if(partnerNFTBoosts[partnerNFTs[i]] == 0) revert InvalidBoostNFT();
     }
-    if(partnerNFTs.length != partnerNFTIds.length) revert ArrayMismatch();    
+    if(partnerNFTs.length != partnerNFTIds.length) revert ArrayMismatch();
     boosts[msg.sender] = _buildBoost(partnerNFTs, partnerNFTIds);
     for(uint8 i; i < partnerNFTs.length; i++) {
       IERC721(partnerNFTs[i]).safeTransferFrom(msg.sender, address(this), partnerNFTIds[i]);
@@ -296,9 +299,6 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param amount Amount of $GiBGT to stake
   function stake(uint256 amount) external {
     _updateClaimablePrg(msg.sender);
-    if(initialStakeTime[msg.sender] == 0) {
-      initialStakeTime[msg.sender] = block.timestamp;
-    }
     stakedGiBGT[msg.sender] += amount;
     SafeTransferLib.safeTransferFrom(address(this), msg.sender, address(this), amount);
     emit GiBGTStake(msg.sender, amount);
@@ -472,8 +472,12 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Updates claimable $PRG for user that is staking, unstaking, or claiming
   /// @param user Address to update claimable $PRG for
   function _updateClaimablePrg(address user) internal {
-    claimablePrg[user] = _calculateClaimablePrg(user);
-    prgPerTokenDebt[user] = _claimablePrgPerGiBGT(user);
+    claimablePrgPerLocksStored = _claimablePrgPerGiBGT();
+    lastUpdateTime = block.timestamp;
+    if(user != address(0)) {
+      claimablePrg[user] = _calculateClaimablePrg(user);
+      prgPerTokenDebt[user] = claimablePrgPerLocksStored;
+    }
   }
 
   /// @notice Calculates and distributes $PRG
@@ -489,40 +493,21 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Calculates claimable $PRG
   /// @param user Address to calculate claimable $PRG for
   function _calculateClaimablePrg(address user) internal view returns (uint256) {
-    return FixedPointMathLib.mulWad(stakedGiBGT[user], _claimablePrgPerGiBGT(user) - prgPerTokenDebt[user]) + claimablePrg[user];
+    uint256 claimable = FixedPointMathLib.mulWad(stakedGiBGT[user], _claimablePrgPerGiBGT() - prgPerTokenDebt[user]) + claimablePrg[user];
+    Boost memory userBoost = boosts[user];
+    if(userBoost.expiry > block.timestamp) {
+      uint256 prgBoost = userBoost.boostMagnitude < 50 ? userBoost.boostMagnitude : 50;
+      return claimable * (1000 + prgBoost) / 1000;
+    }
+    return claimable;
   }
 
   /// @notice Calculates claimable $PRG per $GiBGT
-  /// @dev porridgeEarned = time staked * rate
-  /// @param user Address to calculate claimable for
-  function _claimablePrgPerGiBGT(address user) internal view returns (uint256 porridgeEarned) {    
-    uint256 userInitialStakeTime = initialStakeTime[user] > 0 ? initialStakeTime[user] : deployTime;
-    uint256 timeStaked = (userInitialStakeTime - deployTime) > 180 days ? 180 days : userInitialStakeTime - deployTime;
-    uint256 rate = _calculateRate(userInitialStakeTime);
-    porridgeEarned = FixedPointMathLib.mulWad(timeStaked, rate);
-    Boost memory userBoost = boosts[msg.sender];
-    if (userBoost.expiry > block.timestamp) {
-      uint256 porridgeBoost = 50;
-      if(userBoost.boostMagnitude < porridgeBoost) {
-        porridgeBoost = userBoost.boostMagnitude;
-      }
-      porridgeEarned = porridgeEarned  * (1000 + porridgeBoost) / 1000;
+  function _claimablePrgPerGiBGT() internal view returns (uint256) {
+    if(block.timestamp - lastUpdateTime == 0) {
+      return claimablePrgPerLocksStored;
     }
-  }
-
-  // /// @notice Calculates the rate of $PRG emissions
-  // /// @dev rate = porridgeMultiple - (porridgeMultiple * (average of emissions start & userInitialStakeTime / 6 months))
-  // /// @param userInitialStakeTime Initital time user staked
-  function _calculateRate(uint256 userInitialStakeTime) internal view returns (uint256 rate) {
-    uint256 emissionsPeriod = block.timestamp - deployTime;
-    if(emissionsPeriod > 180 days) {
-      emissionsPeriod = 180 days;
-    }
-    uint256 average = (emissionsPeriod + (userInitialStakeTime - deployTime)) / 2;
-    if(average > 180 days) {
-      average = 180 days;
-    }
-    rate = porridgeMultiple - FixedPointMathLib.mulWad(porridgeMultiple, FixedPointMathLib.divWad(average, 180 days));
+    return claimablePrgPerLocksStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
   }
 
   /// @notice Calculates the fair value of NFTs being borrowed against
@@ -762,11 +747,12 @@ contract Goldilend is ERC20, IERC721Receiver {
     borrowingActive = _borrowingActive;
   }
 
-  /// @notice Allows the DAO to increase $PRG emissions
-  /// @param _deployTime Sets the deploy time in the past to increase emissions
-  function increasePrgEmissions(uint256 _deployTime) external {
+  /// @notice Allows the DAO to change $PRG emissions
+  /// @param newPrgEmissions Sets the annual $PRG emission rate for $GiBGT staking
+  function changePrgEmissions(uint256 newPrgEmissions) external {
     if(msg.sender != multisig) revert NotMultisig();
-    deployTime = _deployTime;
+    _updateClaimablePrg(address(0));
+    ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
   }
 
 
