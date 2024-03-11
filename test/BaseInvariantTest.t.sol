@@ -80,7 +80,7 @@ contract Unit is ERC20 {
   }
 }
 
-abstract contract BaseTest is Test, IERC721Receiver {
+abstract contract BaseInvariantTest is Test, IERC721Receiver {
 
   using LibRLP for address;
 
@@ -137,6 +137,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 govLocksAmt = 5e18;
   
   address honeyjar = address(0xdddd);
+  address[] public actors;
+  address internal currentActor;
 
   function setUp() public virtual {
     
@@ -233,6 +235,32 @@ abstract contract BaseTest is Test, IERC721Receiver {
     );
     goldivault.setEarlyWithdrawalFee(30);
     goldivault.setParameters(20, 1 days, 365 days);
+
+    // exclude mock contracts from invariant testing
+    excludeContract(address(unit));
+    excludeContract(address(honey));
+    excludeContract(address(ibgt));
+    excludeContract(address(honeycomb));
+    excludeContract(address(beradrome));
+    excludeContract(address(bondbear));
+    excludeContract(address(bandbear));
+    excludeContract(address(ibgtvault));
+
+    // create actors
+    actors = new address[](3);
+    actors[0] = address(0xabcdabcd);
+    actors[1] = address(0xdcbadcba);
+    actors[2] = address(0xaabbccdd);
+
+    // exclude admin from being msg.sender
+    excludeSender(address(this));
+  }
+
+  modifier useActor(uint256 actorIndexSeed) {
+    currentActor = actors[bound(actorIndexSeed, 0, actors.length - 1)];
+    vm.startPrank(currentActor);
+    _;
+    vm.stopPrank();
   }
 
   modifier dealandApproveUserHoney() {
