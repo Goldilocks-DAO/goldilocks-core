@@ -426,6 +426,11 @@ abstract contract BaseTest is Test, IERC721Receiver {
     return (nfts, ids);
   }
 
+  function withinVariance(uint256 num1, uint256 num2) public pure returns (bool) {
+    uint256 variance = num1 / 1000;
+    return (num1 + variance > num2 && num1 - variance < num2) || (num1 == num2);
+  }
+
   function onERC721Received(
     address,
     address,

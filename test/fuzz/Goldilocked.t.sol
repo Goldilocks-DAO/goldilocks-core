@@ -67,8 +67,8 @@ contract FuzzGoldilockedTest is BaseTest {
     goldilocked.claim();
     uint256 claimMagnitude = FixedPointMathLib.divWad(claimAmount, locksAmount);
 
-    assert(goldilocked.balanceOf(address(this)) < FixedPointMathLib.mulWad(oneDayPrg, claimMagnitude) + prgMintAmount + 500);
-    assert(goldilocked.balanceOf(address(this)) > FixedPointMathLib.mulWad(oneDayPrg, claimMagnitude) + prgMintAmount - 500);
+    assertLe(goldilocked.balanceOf(address(this)), FixedPointMathLib.mulWad(oneDayPrg, claimMagnitude) + prgMintAmount + 500);
+    assertGe(goldilocked.balanceOf(address(this)),  FixedPointMathLib.mulWad(oneDayPrg, claimMagnitude) + prgMintAmount - 500);
   }
 
   function testFuzzBorrowHoney(uint256 borrowHoneyAmount) public {
