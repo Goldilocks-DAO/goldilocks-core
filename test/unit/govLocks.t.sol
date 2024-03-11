@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../lib/forge-std/src/Test.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { govLocks } from "../../src/governance/govLocks.sol";
@@ -229,8 +228,6 @@ contract UnitgovLocksTest is BaseTest {
     goldigov.castVote(1, 1);
     vm.prank(user2);
     goldigov.castVote(1, 1);
-    console.log(govlocks.balanceOf(user));
-    console.log(govlocks.balanceOf(user2));
   }
 
   function testMoveDelegatesSrcRepNonZero() public {
