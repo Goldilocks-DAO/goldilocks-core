@@ -138,7 +138,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   
   address honeyjar = address(0xdddd);
 
-  function setUp() public {
+  function setUp() public virtual {
     
     // precompute addresses
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(13));
