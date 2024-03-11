@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 
 // |============================================================================================|
@@ -289,8 +289,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param amount Amount of $iBGT to lock
   function lock(uint256 amount) external {
     poolSize += amount;
-    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
     _refreshiBGT(amount);
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
     _mint(msg.sender, _GiBGTMintAmount(amount));
     emit iBGTLock(msg.sender, amount);
   }
@@ -429,7 +429,6 @@ contract Goldilend is ERC20, IERC721Receiver {
     loans[msg.sender][index].borrowedAmount -= repayAmount;
     loans[msg.sender][index].interest -= interest;
     poolSize += userLoan.interest * (1000 - (multisigShare + honeyjarShare)) / 1000;
-    _refreshiBGT(repayAmount);
     _updateInterestClaims(interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       for(uint256 i; i < userLoan.collateralNFTs.length; i++){
@@ -437,6 +436,7 @@ contract Goldilend is ERC20, IERC721Receiver {
       }
     }
     SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), repayAmount);
+    _refreshiBGT(repayAmount);
     emit Repay(msg.sender, repayAmount);
   }
 
@@ -548,7 +548,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     revert LoanNotFound();
   }
 
-  /// @notice Stakes $iBGT in Berachain Consensus Vault, 
+  /// @notice Stakes $iBGT in Infrared vault
   /// @dev Claims existing vault rewards and updates poolSize
   /// @param ibgtAmount Amount of $iBGT to stake
   function _refreshiBGT(uint256 ibgtAmount) internal {
@@ -559,15 +559,14 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Calculates the amount of $GiBGT to mint
   /// @param lockAmount Amount of $iBGT to lock
   /// @return mintAmount Total supply of $GiBGT divided by the lending pool size multiplied by lockAmount
-  function _GiBGTMintAmount(uint256 lockAmount) internal view returns (uint256 mintAmount) {
-    uint256 ratio = _GiBGTRatio();
-    mintAmount = poolSize > 0 ? FixedPointMathLib.mulWad(lockAmount, ratio) : lockAmount;
+  function _GiBGTMintAmount(uint256 lockAmount) internal view returns (uint256) {
+    return poolSize > 0 ? FixedPointMathLib.mulWad(lockAmount, _GiBGTRatio()) : lockAmount;
   }
 
   /// @notice Calculates the current $GiBGT ratio
   /// @return gibgtRatio Total supply of $GiBGT divided by the lending pool size
-  function _GiBGTRatio() internal view returns (uint256 gibgtRatio) {
-    gibgtRatio = FixedPointMathLib.divWad(totalSupply(), poolSize);
+  function _GiBGTRatio() internal view returns (uint256) {
+    return FixedPointMathLib.divWad(totalSupply(), poolSize);
   }
 
   /// @notice Creates the struct containing the details of the boost

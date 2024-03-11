@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { INFT } from "../../src/mock/INFT.sol";
