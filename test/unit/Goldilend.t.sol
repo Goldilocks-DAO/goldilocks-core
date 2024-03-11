@@ -31,7 +31,7 @@ contract UnitGoldilendTest is BaseTest {
 
   function testLookupLoanFailNotFound() public {
     vm.expectRevert(abi.encodeWithSelector(Goldilend.LoanNotFound.selector));
-    Goldilend.Loan memory userLoan = goldilend.lookupLoan(address(this), 2);
+    goldilend.lookupLoan(address(this), 2);
   }
 
   function testLookupLoan() public dealUserBeras {

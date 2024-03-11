@@ -115,6 +115,7 @@ contract Goldilocked is ERC20 {
   error NotGoldilend();
   error NotMultisig();
   error NotVested();
+  error Vesting();
   error InvalidUnstake();
   error LocksBorrowedAgainst();
   error InsufficientBorrowLimit();
@@ -185,6 +186,7 @@ contract Goldilocked is ERC20 {
   /// @notice Stakes $LOCKS and begins earning $PRG
   /// @param amount Amount of $LOCKS to stake
   function stake(uint256 amount) external {
+    if(seedAllocations[msg.sender] > 0) revert Vesting();
     _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] += amount;
     govLocks(govlocks).updateStakedBalance(address(0), msg.sender, amount);
@@ -326,7 +328,7 @@ contract Goldilocked is ERC20 {
     if(initialAllocation > 0) {
       if(block.timestamp < vestingStart) return 0;
       uint256 vestPortion = FixedPointMathLib.divWad(block.timestamp - vestingStart, vestingEnd - vestingStart);
-      return FixedPointMathLib.mulWad(vestPortion, initialAllocation) - (initialAllocation - stakedLocks[msg.sender]);
+      return FixedPointMathLib.mulWad(vestPortion, initialAllocation) - (initialAllocation - stakedLocks[user]);
     }
     else {
       return amount;

@@ -41,6 +41,12 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(goldilocked.userBorrowLimit(address(this)), borrowAmount);
   }
 
+  function testStakeLocksFailVesting() public {
+    vm.prank(address(0x69420));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.Vesting.selector));
+    goldilocked.stake(1);
+  }
+
   function testStakeLocksSuccess() public {
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(goldilocked), locksAmount);
@@ -279,11 +285,10 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(goldilocked.userVestingCheck(address(0x69420)), 0);
   }
 
-  //todo: fix
-  // function testSeedRoundFullVest() public {
-  //   vm.warp(90 days + 365 days + 1);
-  //   assertEq(goldilocked.userVestingCheck(address(0x69420)), 7000000e18);
-  // }
+  function testSeedRoundFullVest() public {
+    vm.warp(90 days + 365 days + 1);
+    assertEq(goldilocked.userVestingCheck(address(0x69420)), 7000_000e18);
+  }
 
   function testGoldilendMintFailGoldilend() public {
     vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotGoldilend.selector));
@@ -330,7 +335,7 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     goldilocked.borrow(borrowAmount);
-    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_100_000e18)));
     vm.expectRevert(abi.encodeWithSelector(Goldilocked.LocksBorrowedAgainst.selector));
     goldilocked.unstake((locksAmount/2) + 1);
   }
@@ -341,7 +346,7 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     goldilocked.borrow(borrowAmount);
-    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_100_000e18)));
     goldilocked.unstake(locksAmount/2);
 
     assertEq(goldiswap.balanceOf(address(this)), locksAmount/2);
@@ -475,7 +480,7 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(goldiswap.balanceOf(address(0x69420)), 7_000_000e18);
   }
 
-  function testSeedUnstakeRestakeSuccess() public {
+  function testSeedUnstakeRestakeFail() public {
     vm.warp(7776000 + 15768000 + 1);
     deal(address(honey), address(0x69420), 73500e18);
     deal(address(goldiswap), address(0x69420), 1e18);
@@ -484,31 +489,10 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), 1e18);
     goldilocked.repay(73500e18);
     goldilocked.unstake(3_500_000e18);
-    goldilocked.stake(1e18);
-    goldilocked.unstake(1e18);
     vm.stopPrank();
-  }
+    vm.warp(block.timestamp + 15768000);
 
-  //todo: fix
-  // function testSeedUnstakeRestakeFail() public {
-  //   vm.warp(7776000 + 15768000 + 1);
-  //   deal(address(honey), address(0x69420), 73500e18);
-  //   deal(address(goldiswap), address(0x69420), 1e18);
-  //   vm.startPrank(address(0x69420));
-  //   honey.approve(address(goldilocked), 73500e18);
-  //   goldiswap.approve(address(goldilocked), 1e18);
-  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
-  //   goldilocked.repay(73500e18);
-  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
-  //   goldilocked.unstake(3_500_000e18);
-  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
-  //   goldilocked.stake(1e18);
-  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
-  //   goldilocked.unstake(1e18);
-  //   vm.stopPrank();
-  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
-  //   vm.warp(block.timestamp + 15768000);
-  //   console.log("unvested: ", goldilocked.userVestingCheck(address(0x69420)));
-  // }
+    assertEq(goldilocked.userVestingCheck(address(0x69420)), 3_500_000e18);
+  }
 
 }
