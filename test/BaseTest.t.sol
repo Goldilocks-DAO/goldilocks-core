@@ -120,6 +120,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   function setUp() public virtual {
     
     // precompute addresses
+    Timelock timelockComputed = Timelock(address(this).computeAddress(13));
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(14));
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(15));
     InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(18));
@@ -136,7 +137,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bexvault = new BexLPVault(address(bexlp), address(ibgt));
 
     // deploy goldiswap
-    goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this), locksMintAmount);
+    goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this), address(timelockComputed), locksMintAmount);
 
     // deploy goldilend
     address[] memory boostNfts = new address[](2);

@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 
@@ -166,33 +167,47 @@ contract UnitGoldiswapTest is BaseTest {
     assertEq(goldiswap.balanceOf(address(this)), oneDayLocksProceeds + locksAmount);
   }
 
-  function testInjectLiquidityFailMultisig() public {
+  function testInjectLiquidityFailGoldigov() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotMultisig.selector));
+    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotTimelock.selector));
     goldiswap.injectLiquidity(69, 69);
   }
 
   function testInjectLiquiditySuccess() public {
-    deal(address(honey), address(this), 69+69);
-    honey.approve(address(goldiswap), 69+69);
-    goldiswap.injectLiquidity(69, 69);
+    bytes memory _calldata = abi.encodeWithSignature("approve(address,uint256)", address(goldiswap), 69+69);
+    bytes memory _calldatta = abi.encodeWithSignature("injectLiquidity(uint256,uint256)", 69, 69);
+    deal(address(honey), address(timelock), 69+69);
+    address[] memory targets = new address[](2);
+    targets[0] = address(honey);
+    targets[1] = address(goldiswap);
+    string[] memory signatures = new string[](2);
+    signatures[0] = "";
+    signatures[1] = "";
+    bytes[] memory calldatas = new bytes[](2);
+    calldatas[0] = _calldata;
+    calldatas[1] = _calldatta;
+    uint256[] memory values = new uint256[](2);
+    values[0] = 0;
+    values[1] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
+    assertEq(executed, true);
     assertEq(goldiswap.fsl(), initialFSL + 69);
     assertEq(goldiswap.psl(), initialPSL + 69);
     assertEq(honey.balanceOf(address(goldiswap)), 69+69);
-    assertEq(honey.balanceOf(address(this)), 0);
-  }
-
-  function testSetMultisigFailMultisig() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotMultisig.selector));
-    goldiswap.setMultisig(address(0x69));
-  }
-
-  function testSetMultisigSuccess() public {
-    goldiswap.setMultisig(address(0x69));
-
-    assertEq(goldiswap.multisig(), address(0x69));
+    assertEq(honey.balanceOf(address(timelock)), 0);
   }
 
 }

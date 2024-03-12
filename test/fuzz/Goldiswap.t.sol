@@ -19,6 +19,7 @@ contract FuzzGoldiswapTest is BaseTest {
     assertEq(withinVariance(honey.balanceOf(address(this)), (type(uint256).max / 2) - cost), true);
   }
 
+  //todo: make differential
   function testFuzzSell(uint256 sellAmount) public {
     vm.assume(sellAmount < 1_000_000e18 + 1);
     deal(address(goldiswap), address(this), sellAmount);
@@ -60,9 +61,10 @@ contract FuzzGoldiswapTest is BaseTest {
   function testFuzzInjectLiquidity(uint256 fsl, uint256 psl) public {
     vm.assume(fsl < type(uint256).max / 4);
     vm.assume(psl < type(uint256).max / 4);
-    deal(address(honey), address(this), fsl + psl);
+    deal(address(honey), address(timelock), fsl + psl);
+    vm.prank(goldiswap.timelock());
     honey.approve(address(goldiswap), fsl + psl);
-    vm.prank(goldiswap.multisig());
+    vm.prank(goldiswap.timelock());
     goldiswap.injectLiquidity(fsl, psl);
 
     assertEq(goldiswap.fsl(), initialFSL + fsl);

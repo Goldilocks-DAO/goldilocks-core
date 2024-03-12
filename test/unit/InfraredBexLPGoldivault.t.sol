@@ -131,7 +131,18 @@ contract UnitInfraredBexLPGoldivaultTest is BaseTest {
     goldivault.redeemOwnership(txAmount);
 
     assertEq(ot.balanceOf(address(this)), 0);
-    assertEq(yt.balanceOf(address(this)), txAmount); //todo: dont think this is correct
+    assertEq(yt.balanceOf(address(this)), txAmount);
+    assertEq(bexlp.balanceOf(address(this)), txAmount);
+    assertEq(bexlp.balanceOf(address(bexvault)), 0);
+  }
+
+  function testRedeemOwnershipSuccessHalf() public {
+    depositBexLP();
+    vm.warp(1 + (365 days / 2));
+    goldivault.redeemOwnership(txAmount);
+
+    assertEq(ot.balanceOf(address(this)), 0);
+    assertEq(yt.balanceOf(address(this)), txAmount / 2);
     assertEq(bexlp.balanceOf(address(this)), txAmount);
     assertEq(bexlp.balanceOf(address(bexvault)), 0);
   }

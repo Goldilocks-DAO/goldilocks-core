@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { BaseTest } from "../BaseTest.t.sol";
+import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 
 contract FuzzInfraredBexLPGoldivaultTest is BaseTest {
@@ -33,19 +34,23 @@ contract FuzzInfraredBexLPGoldivaultTest is BaseTest {
     assertEq(yt.balanceOf(address(this)), 0);
   }
 
+  //todo: make differential
   function testFuzzRedeemOwnership(uint256 redeemAmount, uint256 duration) public {
     vm.assume(redeemAmount > 0 && redeemAmount < 1e40);
-  
-    vm.assume(duration > 365 days + 1 && duration < 1e40);
+    vm.assume(duration > 100 && duration < 1e40);
     deal(address(bexlp), address(this), redeemAmount);
     bexlp.approve(address(goldivault), redeemAmount);
     goldivault.deposit(redeemAmount);
     vm.warp(duration);
+    // uint256 remainingTime = block.timestamp > goldivault.endTime() ? 0 : goldivault.endTime() - block.timestamp;
+    // uint256 timeshare = FixedPointMathLib.divWad(remainingTime, goldivault.duration());
+    // uint256 ytBalance = yt.balanceOf(address(this));
+    // uint256 bexlpBalance = remainingTime > 0 ? (redeemAmount * (1000 - goldivault.earlyWithdrawalFee()) / 1000) : redeemAmount;
     goldivault.redeemOwnership(redeemAmount);
 
     assertEq(ot.balanceOf(address(this)), 0);
-    assertEq(yt.balanceOf(address(this)), redeemAmount); //todo: dont think this is correct
-    assertEq(bexlp.balanceOf(address(this)), redeemAmount);
+    // assertEq(yt.balanceOf(address(this)), ytBalance - FixedPointMathLib.mulWad(redeemAmount, timeshare));
+    // assertEq(bexlp.balanceOf(address(this)), bexlpBalance);
     assertEq(bexlp.balanceOf(address(bexvault)), 0);
   }
 

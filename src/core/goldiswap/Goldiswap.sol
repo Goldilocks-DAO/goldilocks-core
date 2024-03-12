@@ -46,7 +46,8 @@ contract Goldiswap is ERC20 {
 
   address public immutable goldilocked;
   address public immutable honey;
-  address public multisig;
+  address public immutable multisig;
+  address public immutable timelock;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -67,6 +68,7 @@ contract Goldiswap is ERC20 {
     address _goldilocked,
     address _honey,
     address _multisig,
+    address _timelock,
     uint256 initialSupply
   ) {
     fsl = _fsl;
@@ -74,6 +76,7 @@ contract Goldiswap is ERC20 {
     goldilocked = _goldilocked;
     honey = _honey;
     multisig = _multisig;
+    timelock = _timelock;
     lastFloorRaise = block.timestamp;
     lastFloorDecrease = block.timestamp;
     _mint(goldilocked, initialSupply);
@@ -97,6 +100,7 @@ contract Goldiswap is ERC20 {
 
   error NotGoldilocked();
   error NotMultisig();
+  error NotTimelock();
   error ExcessiveSlippage();
 
 
@@ -359,18 +363,10 @@ contract Goldiswap is ERC20 {
   /// @param fslLiq Liquidity added to FSL
   /// @param pslLiq Liquidity added to PSL
   function injectLiquidity(uint256 fslLiq, uint256 pslLiq) external {
-    if(msg.sender != multisig) revert NotMultisig();
+    if(msg.sender != timelock) revert NotTimelock();
     fsl += fslLiq;
     psl += pslLiq;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), fslLiq + pslLiq);
-  }
-
-  /// @notice Changes the address of the multisig address
-  /// @dev Used after deployment by deployment address
-  /// @param _multisig Address of the multisig
-  function setMultisig(address _multisig) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    multisig = _multisig;
   }
 
 }
