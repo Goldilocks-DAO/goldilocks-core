@@ -167,8 +167,8 @@ abstract contract Goldivault {
 
   /// @notice Renews concluded vault
   function renew() external {
-    // if(msg.sender != multisig) revert NotMultisig();
-    if(concludeTime + duration < block.timestamp || !concluded) revert NotConcluded();
+    if(msg.sender != multisig) revert NotMultisig();
+    if(concludeTime < block.timestamp || !concluded) revert NotConcluded();
     startTime = block.timestamp;
     endTime = block.timestamp + duration;
     concluded = false;

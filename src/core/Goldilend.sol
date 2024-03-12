@@ -66,7 +66,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   address public immutable goldilocked;
   address public immutable hj;
   address public immutable ibgt;
-  address public immutable vault;
+  address public immutable ibgtVault;
   address public multisig;
 
   mapping(address => Boost) public boosts;
@@ -77,7 +77,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => uint256) public stakedGiBGT;
   mapping(address => uint256) public claimablePrg;
   mapping(address => uint256) public prgPerTokenDebt;
-  mapping(address => uint256) public rewardPerGiBGTStored;
+  mapping(address => uint256) public claimableRewardsPerGiBGTStored;
   mapping(address => mapping(address => uint256)) public claimableRewards;
   mapping(address => mapping(address => uint256)) public rewardPerTokenDebt;
 
@@ -95,9 +95,10 @@ contract Goldilend is ERC20, IERC721Receiver {
   uint256 public multisigShare;
   uint256 public honeyjarShare;
   uint256 public ANNUAL_PORRIDGE_EMISSIONS;
-  uint256 public lastUpdateTime;
-  uint256 public claimablePrgPerLocksStored;
-  address[] public yieldTokens;
+  uint256 public lastPrgUpdateTime;
+  uint256 public lastRewardUpdateTime;
+  uint256 public claimablePrgPerGiBGTStored;  
+  address[] public rewardTokens;
 
   bool public borrowingActive;
 
@@ -116,7 +117,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param _multisig Address of the GoldilocksDAO multisig
   /// @param _hj Address of Honeyjar
   /// @param _ibgt Address of $iBGT
-  /// @param _vault Address of iBGTVault
+  /// @param _ibgtVault Address of iBGTVault
   /// @param _partnerNFTs Partnership NFTs
   /// @param _partnerNFTBoosts Partnership NFTs Boosts
   constructor(
@@ -128,7 +129,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     address _multisig,
     address _hj,
     address _ibgt, 
-    address _vault,
+    address _ibgtVault,
     address[] memory _partnerNFTs, 
     uint8[] memory _partnerNFTBoosts
   ) {
@@ -141,7 +142,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     multisig = _multisig;
     hj = _hj;
     ibgt = _ibgt;
-    vault = _vault;
+    ibgtVault = _ibgtVault;
     deployTime = block.timestamp;
     for(uint8 i; i < _partnerNFTs.length; i++) {
       partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
@@ -304,6 +305,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param amount Amount of $GiBGT to stake
   function stake(uint256 amount) external {
     _updateClaimablePrg(msg.sender);
+    _updateClaimableRewards(msg.sender);
     stakedGiBGT[msg.sender] += amount;
     SafeTransferLib.safeTransferFrom(address(this), msg.sender, address(this), amount);
     emit GiBGTStake(msg.sender, amount);
@@ -314,14 +316,22 @@ contract Goldilend is ERC20, IERC721Receiver {
   function unstake(uint256 amount) external {
     if(amount > stakedGiBGT[msg.sender]) revert InvalidUnstake();
     _updateClaimablePrg(msg.sender);
+    _updateClaimableRewards(msg.sender);
     stakedGiBGT[msg.sender] -= amount;
     SafeTransferLib.safeTransfer(address(this), msg.sender, amount);
   }
 
-  /// @notice Claims $GiBGT staking rewards
+  /// @notice Claims $GiBGT and $iBGT staking rewards
   function claim() external {
     _updateClaimablePrg(msg.sender);
-    _claim(msg.sender, claimablePrg[msg.sender]);
+    _updateClaimableRewards(msg.sender);
+    _claimPrg(msg.sender, claimablePrg[msg.sender]);
+    _claimRewards(msg.sender);
+  }
+
+  /// @notice Updates claimable rewards from $iBGT staking
+  function updateClaimableRewards() external {
+    _updateClaimableRewards(address(0));
   }
 
   /// @notice Borrows $iBGT against value of NFT
@@ -477,21 +487,41 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Updates claimable $PRG for user that is staking, unstaking, or claiming
   /// @param user Address to update claimable $PRG for
   function _updateClaimablePrg(address user) internal {
-    claimablePrgPerLocksStored = _claimablePrgPerGiBGT();
-    lastUpdateTime = block.timestamp;
+    claimablePrgPerGiBGTStored = _claimablePrgPerGiBGT();
+    lastPrgUpdateTime = block.timestamp;
     if(user != address(0)) {
       claimablePrg[user] = _calculateClaimablePrg(user);
-      prgPerTokenDebt[user] = claimablePrgPerLocksStored;
+      prgPerTokenDebt[user] = claimablePrgPerGiBGTStored;
     }
+  }
+
+  /// @notice Updates claimable rewards for user that is locking or claiming
+  /// @param user Address to update claimable rewards for
+  function _updateClaimableRewards(address user) internal {
+    
   }
 
   /// @notice Calculates and distributes $PRG
   /// @param claimer User that is claiming $PRG
   /// @param claimable Amount of $PRG to be claimed
-  function _claim(address claimer, uint256 claimable) internal {
+  function _claimPrg(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
       claimablePrg[claimer] = 0;
       Goldilocked(goldilocked).goldilendMint(claimer, claimable);
+    }
+  }
+
+  /// @notice Calculates and distributes rewards
+  /// @param claimer User that is claiming rewards
+  function _claimRewards(address claimer) internal {
+    uint256 rewardTokensLength = rewardTokens.length;
+    for(uint8 i; i < rewardTokensLength; ++i) {
+      address rewardToken = rewardTokens[i];
+      uint256 reward = claimableRewards[claimer][rewardToken];
+      if(reward > 0) {
+        claimableRewards[claimer][rewardToken] = 0;
+        SafeTransferLib.safeTransfer(rewardToken, claimer, reward);
+      }
     }
   }
 
@@ -507,16 +537,27 @@ contract Goldilend is ERC20, IERC721Receiver {
     return claimable;
   }
 
-  /// @notice Calculates claimable $PRG per $GiBGT
-  function _claimablePrgPerGiBGT() internal view returns (uint256) {
-    if(block.timestamp - lastUpdateTime == 0) {
-      return claimablePrgPerLocksStored;
-    }
-    return claimablePrgPerLocksStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
+  /// @notice Calculates claimable rewards
+  /// @param user Address to calculate claimable rewards for
+  function _calculateClaimableRewards(address user, address rewardToken) internal view returns (uint256) {
+    return FixedPointMathLib.mulWad(stakedGiBGT[user], _claimableRewardPerGiBGT(rewardToken) - rewardPerTokenDebt[user][rewardToken]) + claimableRewards[user][rewardToken];
   }
 
-  function _claimableRewardPerGiBGT() internal view returns (uint256) {
+  /// @notice Calculates claimable $PRG per $GiBGT
+  function _claimablePrgPerGiBGT() internal view returns (uint256) {
+    if(block.timestamp - lastPrgUpdateTime == 0) {
+      return claimablePrgPerGiBGTStored;
+    }
+    return claimablePrgPerGiBGTStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastPrgUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
+  }
 
+  /// @notice Calculates claimable $PRG per $GiBGT
+  /// @param rewardToken Token to calculate claimable reward
+  function _claimableRewardPerGiBGT(address rewardToken) internal view returns (uint256) {
+    if(block.timestamp - lastRewardUpdateTime == 0) {
+      return claimableRewardsPerGiBGTStored[rewardToken];
+    }
+    return claimableRewardsPerGiBGTStored[rewardToken];
   }
 
   /// @notice Calculates the fair value of NFTs being borrowed against
@@ -561,8 +602,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @dev Claims existing vault rewards and updates poolSize
   /// @param ibgtAmount Amount of $iBGT to stake
   function _refreshiBGT(uint256 ibgtAmount) internal {
-    IERC20(ibgt).approve(vault, ibgtAmount);
-    iBGTVault(vault).stake(ibgtAmount);
+    IERC20(ibgt).approve(ibgtVault, ibgtAmount);
+    iBGTVault(ibgtVault).stake(ibgtAmount);
   }
 
   /// @notice Calculates the amount of $GiBGT to mint
@@ -764,11 +805,11 @@ contract Goldilend is ERC20, IERC721Receiver {
   }
 
   /// @notice Allows DAO to add yield tokens to Goldilend
-  /// @param _yieldTokens Tokens to add to yieldTokens array
-  function addYieldTokens(address[] calldata _yieldTokens) external {
+  /// @param _rewardTokens Tokens to add to yieldTokens array
+  function addRewardTokens(address[] calldata _rewardTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
-    for(uint8 i; i < _yieldTokens.length; ++i) {
-      yieldTokens.push(_yieldTokens[i]);
+    for(uint8 i; i < _rewardTokens.length; ++i) {
+      rewardTokens.push(_rewardTokens[i]);
     }
   }
 
