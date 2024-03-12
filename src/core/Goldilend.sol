@@ -78,8 +78,11 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => uint256) public claimablePrg;
   mapping(address => uint256) public prgPerTokenDebt;
   mapping(address => uint256) public claimableRewardsPerGiBGTStored;
+  mapping(address => uint256) public lastRewardUpdateTime;
+  mapping(address => uint256) public outstandingRewards;
   mapping(address => mapping(address => uint256)) public claimableRewards;
   mapping(address => mapping(address => uint256)) public rewardPerTokenDebt;
+
 
   uint256 public deployTime;
   uint256 public totalValuation;
@@ -95,9 +98,9 @@ contract Goldilend is ERC20, IERC721Receiver {
   uint256 public multisigShare;
   uint256 public honeyjarShare;
   uint256 public ANNUAL_PORRIDGE_EMISSIONS;
-  uint256 public lastPrgUpdateTime;
-  uint256 public lastRewardUpdateTime;
   uint256 public claimablePrgPerGiBGTStored;  
+  uint256 public lastPrgUpdateTime;
+  uint256 public totalStakedGiBGT;
   address[] public rewardTokens;
 
   bool public borrowingActive;
@@ -307,6 +310,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     _updateClaimablePrg(msg.sender);
     _updateClaimableRewards(msg.sender);
     stakedGiBGT[msg.sender] += amount;
+    totalStakedGiBGT += amount;
     SafeTransferLib.safeTransferFrom(address(this), msg.sender, address(this), amount);
     emit GiBGTStake(msg.sender, amount);
   }
@@ -318,6 +322,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     _updateClaimablePrg(msg.sender);
     _updateClaimableRewards(msg.sender);
     stakedGiBGT[msg.sender] -= amount;
+    totalStakedGiBGT -= amount;
     SafeTransferLib.safeTransfer(address(this), msg.sender, amount);
   }
 
@@ -498,7 +503,19 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Updates claimable rewards for user that is locking or claiming
   /// @param user Address to update claimable rewards for
   function _updateClaimableRewards(address user) internal {
-    
+    iBGTVault(ibgtVault).getReward();
+    uint256 rewardTokensLength = rewardTokens.length;
+    for(uint8 i; i < rewardTokensLength; ++i) {
+      address rewardToken = rewardTokens[i];
+      outstandingRewards[rewardToken] = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewards[rewardToken];
+      claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken);
+      lastRewardUpdateTime[rewardToken] = block.timestamp;
+      if(user != address(0)) {
+        claimableRewards[user][rewardToken] = _calculateClaimableRewards(user, rewardToken);
+        rewardPerTokenDebt[user][rewardToken] = claimableRewardsPerGiBGTStored[rewardToken];
+      }
+      outstandingRewards[rewardToken] = 0;
+    }
   }
 
   /// @notice Calculates and distributes $PRG
@@ -554,10 +571,10 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Calculates claimable $PRG per $GiBGT
   /// @param rewardToken Token to calculate claimable reward
   function _claimableRewardPerGiBGT(address rewardToken) internal view returns (uint256) {
-    if(block.timestamp - lastRewardUpdateTime == 0) {
+    if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0) {
       return claimableRewardsPerGiBGTStored[rewardToken];
     }
-    return claimableRewardsPerGiBGTStored[rewardToken];
+    return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards[rewardToken], totalStakedGiBGT);
   }
 
   /// @notice Calculates the fair value of NFTs being borrowed against
