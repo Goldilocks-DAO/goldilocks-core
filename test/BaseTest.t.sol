@@ -11,6 +11,7 @@ import { Goldiswap } from "../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../src/core/goldiswap/Goldilocked.sol";
 import { Goldilend } from "../src/core/goldilend/Goldilend.sol";
 import { Goldivault } from "../src/core/goldivault/Goldivault.sol";
+import { InfraredBexLPGoldivault } from "../src/core/goldivault/InfraredBexLPGoldivault.sol";
 import { OwnershipToken } from "../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../src/core/goldivault/YieldToken.sol";
 import { Goldigovernor } from "../src/core/goldigovernance/Goldigovernor.sol";
@@ -23,33 +24,9 @@ import { Beradrome } from "../src/mock/Beradrome.sol";
 import { BondBear } from "../src/mock/BondBear.sol";
 import { BandBear } from "../src/mock/BandBear.sol";
 import { iBGTVault } from "../src/mock/iBGTVault.sol";
+import { BexLPVault } from "../src/mock/BexLPVault.sol";
 
-contract UnitGoldivault is Goldivault {
-  constructor(
-    address _ot,
-    address _yt,
-    address _depositToken,
-    address _depositVault,
-    address _ibgt,
-    address _ibgtvault,
-    address _ired,
-    address _iredVault,
-    address _multisig,
-    address[] memory _yieldTokens
-  ) Goldivault(
-    _ot,
-    _yt,
-    _depositToken,
-    _depositVault,
-    _ibgt,
-    _ibgtvault,
-    _ired,
-    _iredVault,
-    _multisig,
-    _yieldTokens
-  ) {}
-}
-contract oUnit is OwnershipToken {
+contract oBexLPToken is OwnershipToken {
   constructor(
     string memory _tokenName,
     string memory _tokenSymbol,
@@ -60,7 +37,7 @@ contract oUnit is OwnershipToken {
     _vault
   ) {}
 }
-contract yUnit is YieldToken {
+contract yBexLPToken is YieldToken {
   constructor(
     string memory _tokenName,
     string memory _tokenSymbol,
@@ -71,12 +48,12 @@ contract yUnit is YieldToken {
     _vault
   ) {}
 }
-contract Unit is ERC20 {
+contract BexLPToken is ERC20 {
   function name() public pure override returns (string memory) {
-    return "Unit";
+    return "BexLPToken";
   }
   function symbol() public pure override returns (string memory) {
-    return "Unit";
+    return "BEXLP";
   }
 }
 
@@ -97,10 +74,11 @@ abstract contract BaseTest is Test, IERC721Receiver {
   BondBear bondbear;
   BandBear bandbear;
   iBGTVault ibgtvault;
-  UnitGoldivault goldivault;
-  oUnit ot;
-  yUnit yt;
-  Unit unit;
+  InfraredBexLPGoldivault goldivault;
+  oBexLPToken ot;
+  yBexLPToken yt;
+  BexLPToken bexlp;
+  BexLPVault bexvault;
 
   uint256 initialFSL = 1_050_000e18;
   uint256 initialPSL = 320_000e18;
@@ -133,20 +111,21 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 singleBorrowInterest = 45726853068117;
   uint256 singleBorrowInterestBoosted = 45452491949708;
   uint256 singleBorrowInterestMaxBoost = 2286342653405;
+  address honeyjar = address(0xdddd);
 
   uint256 govLocksAmt = 5e18;
-  
-  address honeyjar = address(0xdddd);
+
+  uint256 yearMockBexLPYield = 11574074074074000;  
 
   function setUp() public virtual {
     
     // precompute addresses
-    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(13));
-    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(14));
-    UnitGoldivault goldivaultComputed = UnitGoldivault(address(this).computeAddress(18));
+    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(14));
+    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(15));
+    InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(18));
 
     // deploy mock contracts
-    unit = new Unit();
+    bexlp = new BexLPToken();
     honey = new Honey();
     ibgt = new iBGT();
     honeycomb = new HoneyComb();
@@ -154,6 +133,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bondbear = new BondBear();
     bandbear = new BandBear();
     ibgtvault = new iBGTVault(address(ibgt), address(ibgt));
+    bexvault = new BexLPVault(address(bexlp), address(ibgt));
 
     // deploy goldiswap
     goldiswap = new Goldiswap(initialFSL, initialPSL, address(goldilockedComputed), address(honey), address(this), locksMintAmount);
@@ -216,18 +196,17 @@ abstract contract BaseTest is Test, IERC721Receiver {
     // deploy goldivault
     address[] memory yieldTokens = new address[](1);
     yieldTokens[0] = address(ibgt);
-    unit = new Unit();
-    ot = new oUnit("oUnit", "oUnit", address(goldivaultComputed));
-    yt = new yUnit("yUnit", "yUnit", address(goldivaultComputed));
-    goldivault = new UnitGoldivault(
+    ot = new oBexLPToken("oBexLPToken", "oBEXLP", address(goldivaultComputed));
+    yt = new yBexLPToken("yBexLPToken", "yBEXLP", address(goldivaultComputed));
+    goldivault = new InfraredBexLPGoldivault(
       address(ot),
       address(yt),
-      address(unit),
-      address(ibgtvault),
+      address(bexlp),
+      address(bexvault),
       address(ibgt),
       address(ibgtvault),
       address(ibgt),
-      address(0x69),
+      address(ibgtvault),
       address(this),
       yieldTokens
     );
@@ -374,9 +353,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
     return (targets, signatures, calldatas, values);
   }
 
-  function depositUnit() public {
-    deal(address(unit), address(this), txAmount);
-    unit.approve(address(goldivault), txAmount);
+  function depositBexLP() public {
+    deal(address(bexlp), address(this), txAmount);
+    bexlp.approve(address(goldivault), txAmount);
     goldivault.deposit(txAmount);
   }
 

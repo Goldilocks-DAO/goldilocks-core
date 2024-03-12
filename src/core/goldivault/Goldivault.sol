@@ -100,6 +100,7 @@ abstract contract Goldivault {
 
 
   error InsufficientTime();
+  error InvalidRedemption();
   error NotExpired();
   error NotConcluded();
   error NotMultisig();
@@ -127,6 +128,7 @@ abstract contract Goldivault {
   /// @notice Redeems yield tokens for share of yield accrued to vault
   /// @param amount Amount of tokens to redeem
   function redeemYield(uint256 amount) external {
+    if(amount == 0) revert InvalidRedemption();
     if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
     YieldToken(yt).burnYT(msg.sender, amount);
@@ -141,6 +143,7 @@ abstract contract Goldivault {
   /// @notice Withdraws tokens from the vault 
   /// @param amount Amount of tokens to redeem
   function redeemOwnership(uint256 amount) external {
+    if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).burnOT(msg.sender, amount);

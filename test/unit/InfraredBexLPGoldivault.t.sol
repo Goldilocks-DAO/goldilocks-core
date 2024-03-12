@@ -1,10 +1,53 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
+import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
+import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 
-contract UnitInfraredBexLPGoldivault is BaseTest {
+contract UnitInfraredBexLPGoldivaultTest is BaseTest {
+
+  function testOTName() public {
+    assertEq(ot.name(), "oBexLPToken");
+  }
+
+  function testOTSymbol() public {
+    assertEq(ot.symbol(), "oBEXLP");
+  }
+
+  function testYTName() public {
+    assertEq(yt.name(), "yBexLPToken");
+  }
+
+  function testYTSymbol() public {
+    assertEq(yt.symbol(), "yBEXLP");
+  }
+
+  function testMintOTFailVault() public {
+    vm.prank(address(0xdddd));
+    vm.expectRevert(abi.encodeWithSelector(OwnershipToken.NotVault.selector));
+    ot.mintOT(address(this), 69);
+  }
+
+  function testBurnOTFailVault() public {
+    vm.prank(address(0xdddd));
+    vm.expectRevert(abi.encodeWithSelector(OwnershipToken.NotVault.selector));
+    ot.burnOT(address(this), 69);
+  }
+
+  function testMintYTFailVault() public {
+    vm.prank(address(0xdddd));
+    vm.expectRevert(abi.encodeWithSelector(YieldToken.NotVault.selector));
+    yt.mintYT(address(this), 69);
+  }
+
+  function testBurnYTFailVault() public {
+    vm.prank(address(0xdddd));
+    vm.expectRevert(abi.encodeWithSelector(YieldToken.NotVault.selector));
+    yt.burnYT(address(this), 69);
+  }
 
   function testDepositFailTime() public {
     vm.warp(1 + 364 days + 69);
@@ -13,11 +56,18 @@ contract UnitInfraredBexLPGoldivault is BaseTest {
   }
 
   function testDepositSuccess() public {
-    depositUnit();
+    depositBexLP();
 
     assertEq(ot.balanceOf(address(this)), txAmount);
     assertEq(yt.balanceOf(address(this)), txAmount);
-    assertEq(unit.balanceOf(address(this)), 0);
+    assertEq(bexlp.balanceOf(address(this)), 0);
+    assertEq(bexlp.balanceOf(address(goldivault)), 0);
+    assertEq(bexlp.balanceOf(address(bexvault)), txAmount);
+  }
+
+  function testRedeemYieldFailInvalid() public {
+    vm.expectRevert(abi.encodeWithSelector(Goldivault.InvalidRedemption.selector));
+    goldivault.redeemYield(0);
   }
 
   function testRedeemYieldFailConcluded() public {
@@ -26,19 +76,18 @@ contract UnitInfraredBexLPGoldivault is BaseTest {
   }
 
   function testRedeemYieldDistribute() public {
-    depositUnit();
-    deal(address(ibgt), address(goldivault), 69);
+    depositBexLP();    
     vm.warp(366 days);
     goldivault.conclude();
     vm.warp(block.timestamp + 1 days + 1);
     goldivault.redeemYield(txAmount);
 
-    assertEq(ibgt.balanceOf(address(this)), 69);
+    assertEq(ibgt.balanceOf(address(this)), yearMockBexLPYield);
     assertEq(yt.balanceOf(address(this)), 0);
   }
 
   function testRedeemYieldSuccess() public {
-    depositUnit();
+    depositBexLP();
     vm.warp(366 days);
     goldivault.conclude();
     vm.warp(block.timestamp + 1 days + 1);
@@ -47,19 +96,24 @@ contract UnitInfraredBexLPGoldivault is BaseTest {
     assertEq(yt.balanceOf(address(this)), 0);
   }
 
+  function testRedeemOwnershipFailInvalid() public {
+    vm.expectRevert(abi.encodeWithSelector(Goldivault.InvalidRedemption.selector));
+    goldivault.redeemOwnership(0);
+  }
+
   function testRedeemOwnershipRemainingTime() public {
-    depositUnit();
+    depositBexLP();
     vm.warp(180 days);
     goldivault.redeemOwnership(txAmount);
 
     assertEq(ot.balanceOf(address(this)), 0);
-    assertEq(unit.balanceOf(address(this)), txAmount);
+    assertEq(bexlp.balanceOf(address(this)), txAmount);
   }
 
   function testRedeemOwnershipRemainingTimeNonMultisig() public {
-    deal(address(unit), address(0xbbb), txAmount);
+    deal(address(bexlp), address(0xbbb), txAmount);
     vm.startPrank(address(0xbbb));
-    unit.approve(address(goldivault), txAmount);
+    bexlp.approve(address(goldivault), txAmount);
     goldivault.deposit(txAmount);
     vm.stopPrank();
     vm.warp(180 days);
@@ -67,19 +121,19 @@ contract UnitInfraredBexLPGoldivault is BaseTest {
     goldivault.redeemOwnership(txAmount);
 
     assertEq(ot.balanceOf(address(this)), 0);
-    assertEq(unit.balanceOf(address(0xbbb)), 97e17);
-    assertEq(unit.balanceOf(address(this)), 3e17);
+    assertEq(bexlp.balanceOf(address(0xbbb)), 97e17);
+    assertEq(bexlp.balanceOf(address(this)), 3e17);
   }
 
-  //todo: fix
   function testRedeemOwnershipSuccess() public {
-    depositUnit();
+    depositBexLP();
     vm.warp(366 days);
     goldivault.redeemOwnership(txAmount);
 
     assertEq(ot.balanceOf(address(this)), 0);
-    // assertEq(yt.balanceOf(address(this)), 0);
-    assertEq(unit.balanceOf(address(this)), txAmount);
+    assertEq(yt.balanceOf(address(this)), txAmount); //todo: dont think this is correct
+    assertEq(bexlp.balanceOf(address(this)), txAmount);
+    assertEq(bexlp.balanceOf(address(bexvault)), 0);
   }
 
   function testConcludeFailExpired() public {
@@ -100,6 +154,12 @@ contract UnitInfraredBexLPGoldivault is BaseTest {
 
     assertEq(goldivault.concluded(), true);
     assertEq(goldivault.concludeTime(), block.timestamp);
+  }
+
+  function testRenewFailMultisig() public {
+    vm.prank(address(0xbbbb));
+    vm.expectRevert(abi.encodeWithSelector(Goldivault.NotMultisig.selector));
+    goldivault.renew();
   }
 
   function testRenewFailConcluded() public {
