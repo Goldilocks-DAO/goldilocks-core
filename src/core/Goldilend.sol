@@ -72,11 +72,14 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => Boost) public boosts;
   mapping(address => Loan[]) public loans;
 
+  mapping(address => uint8) public partnerNFTBoosts;
+  mapping(address => uint256) public nftFairValues;
   mapping(address => uint256) public stakedGiBGT;
   mapping(address => uint256) public claimablePrg;
   mapping(address => uint256) public prgPerTokenDebt;
-  mapping(address => uint8) public partnerNFTBoosts;
-  mapping(address => uint256) public nftFairValues;
+  mapping(address => uint256) public rewardPerGiBGTStored;
+  mapping(address => mapping(address => uint256)) public claimableRewards;
+  mapping(address => mapping(address => uint256)) public rewardPerTokenDebt;
 
   uint256 public deployTime;
   uint256 public totalValuation;
@@ -94,6 +97,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   uint256 public ANNUAL_PORRIDGE_EMISSIONS;
   uint256 public lastUpdateTime;
   uint256 public claimablePrgPerLocksStored;
+  address[] public yieldTokens;
 
   bool public borrowingActive;
 
@@ -288,10 +292,11 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Locks $iBGT and mints $GiBGT
   /// @param amount Amount of $iBGT to lock
   function lock(uint256 amount) external {
+    uint256 mintAmount = _GiBGTMintAmount(amount);
     poolSize += amount;
     _refreshiBGT(amount);
     SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
-    _mint(msg.sender, _GiBGTMintAmount(amount));
+    _mint(msg.sender, mintAmount);
     emit iBGTLock(msg.sender, amount);
   }
 
@@ -508,6 +513,10 @@ contract Goldilend is ERC20, IERC721Receiver {
       return claimablePrgPerLocksStored;
     }
     return claimablePrgPerLocksStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
+  }
+
+  function _claimableRewardPerGiBGT() internal view returns (uint256) {
+
   }
 
   /// @notice Calculates the fair value of NFTs being borrowed against
@@ -752,6 +761,15 @@ contract Goldilend is ERC20, IERC721Receiver {
     if(msg.sender != multisig) revert NotMultisig();
     _updateClaimablePrg(address(0));
     ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
+  }
+
+  /// @notice Allows DAO to add yield tokens to Goldilend
+  /// @param _yieldTokens Tokens to add to yieldTokens array
+  function addYieldTokens(address[] calldata _yieldTokens) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    for(uint8 i; i < _yieldTokens.length; ++i) {
+      yieldTokens.push(_yieldTokens[i]);
+    }
   }
 
 

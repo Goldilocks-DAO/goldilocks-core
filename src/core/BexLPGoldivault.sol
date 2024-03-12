@@ -36,7 +36,7 @@ contract InfraredBGTVault {
   function exit() external {}
 }
 
-contract HoneyWethLPGoldivault is Goldivault {
+contract BexLPGoldivault is Goldivault {
 
   constructor(
     address _ot,

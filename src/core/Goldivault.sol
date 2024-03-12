@@ -180,6 +180,7 @@ abstract contract Goldivault {
   }
 
   /// @notice Allows DAO to add yield tokens to vault
+  /// @param _yieldTokens Tokens to add to yieldTokens array
   function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
     for(uint8 i; i < _yieldTokens.length; ++i) {
@@ -188,12 +189,16 @@ abstract contract Goldivault {
   }
 
   /// @notice Allows DAO to set early withdrawal fee
+  /// @param _earlyWithdrawalFee New early withdrawal fee
   function setEarlyWithdrawalFee(uint256 _earlyWithdrawalFee) external {
     if(msg.sender != multisig) revert NotMultisig();
     earlyWithdrawalFee = _earlyWithdrawalFee;
   }
 
   /// @notice Allows DAO to set protocol parameters
+  /// @param _yieldFee New vault fee
+  /// @param _delay New vault delay
+  /// @param _duration New vault duration
   function setParameters(uint256 _yieldFee, uint256 _delay, uint256 _duration) external {
     if(msg.sender != multisig) revert NotMultisig();
     yieldFee = _yieldFee;
