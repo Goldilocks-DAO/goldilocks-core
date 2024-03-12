@@ -13,18 +13,18 @@ pragma solidity ^0.8.20;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ====================================== OwnershipToken ========================================
+// ======================================== YieldToken ==========================================
 // ==============================================================================================
 
 
-import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
+import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 
 
-/// @title OwnershipToken
-/// @notice Tokenized ownership token for use in Goldivaults
+/// @title YieldToken
+/// @notice Tokenized yield token for use in Goldivaults
 /// @author ampnoob
 /// @author geeb
-abstract contract OwnershipToken is ERC20 {
+abstract contract YieldToken is ERC20 {
 
   string private tokenName;
   string private tokenSymbol;
@@ -48,22 +48,22 @@ abstract contract OwnershipToken is ERC20 {
     vault = _vault;
   }
 
-  /// @notice Returns the name of the Ownership token
+  /// @notice Returns the name of the YieldToken token
   function name() public view override returns (string memory) {
     return tokenName;
   }
 
-  /// @notice Returns the symbol of the Ownership token
+  /// @notice Returns the symbol of the YieldToken token
   function symbol() public view override returns (string memory) {
     return tokenSymbol;
   }
 
-  function mintOT(address to, uint256 amount) external {
+  function mintYT(address to, uint256 amount) external {
     if(msg.sender != vault) revert NotVault();
     _mint(to, amount);
   }
 
-  function burnOT(address to, uint256 amount) external {
+  function burnYT(address to, uint256 amount) external {
     if(msg.sender != vault) revert NotVault();
     _burn(to, amount);
   }

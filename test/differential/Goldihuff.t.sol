@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "../../lib/foundry-huff/src/HuffDeployer.sol";
 import "../../lib/forge-std/src/Test.sol";
-import { Goldiswap } from "../../src/core/Goldiswap.sol";
+import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Math } from "../../src/mock/Math.sol";
 
 interface Goldihuff {

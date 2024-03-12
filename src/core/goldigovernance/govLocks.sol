@@ -17,8 +17,8 @@ pragma solidity ^0.8.20;
 // ==============================================================================================
 
 
-import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
-import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
+import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
+import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 
 
 /// @title Governance Locks

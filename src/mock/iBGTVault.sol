@@ -29,16 +29,17 @@ contract iBGTVault {
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
   }
 
+  function withdraw(uint256 amount) external {
+    if(deposits[msg.sender] < amount) revert Stealing();
+    deposits[msg.sender] -= amount;
+    SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
+  }
+  
   function getReward() external {
     uint256 daysStaked = FixedPointMathLib.divWad(startTime[msg.sender], 1 days);
     uint256 tokens = FixedPointMathLib.mulWad(deposits[msg.sender], 100e18);
     uint256 yield = FixedPointMathLib.mulWad(daysStaked, tokens);
     iBGT(ibgt).mint(msg.sender, yield);
-  }
-
-  function withdraw(uint256 amount) external {
-    if(deposits[msg.sender] < amount) revert Stealing();
-    SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
   }
 
   function exit() external {

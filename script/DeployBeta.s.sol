@@ -2,36 +2,36 @@
 pragma solidity ^0.8.20;
 
 import { Script } from "../lib/forge-std/src/Script.sol";
-import { Goldiswap } from  "../src/core/Goldiswap.sol";
-import { Goldilend } from "../src/core/Goldilend.sol";
-import { Honey } from "../src/mock/Honey.sol";
-import { ConsensusVault } from "../src/mock/ConsensusVault.sol";
-import { Bera } from "../src/mock/Bera.sol";
-import { HoneyComb } from "../src/mock/HoneyComb.sol";
-import { Beradrome } from "../src/mock/Beradrome.sol";
-import { BondBear } from "../src/mock/BondBear.sol";
-import { BandBear } from "../src/mock/BandBear.sol";
-import { BeraFaucet } from "../src/mock/BeraFaucet.sol";
+// import { Goldiswap } from  "../src/core/Goldiswap.sol";
+// import { Goldilend } from "../src/core/Goldilend.sol";
+// import { Honey } from "../src/mock/Honey.sol";
+// import { ConsensusVault } from "../src/mock/ConsensusVault.sol";
+// import { Bera } from "../src/mock/Bera.sol";
+// import { HoneyComb } from "../src/mock/HoneyComb.sol";
+// import { Beradrome } from "../src/mock/Beradrome.sol";
+// import { BondBear } from "../src/mock/BondBear.sol";
+// import { BandBear } from "../src/mock/BandBear.sol";
+// import { BeraFaucet } from "../src/mock/BeraFaucet.sol";
 
 contract DeployBetaScript is Script {
 
-  Goldilend goldilend;
+  // Goldilend goldilend;
   // Porridge porridge;
-  Goldiswap goldiswap;
+  // Goldiswap goldiswap;
   // Borrow borrow;
-  Honey honey;
-  Bera bera;
-  ConsensusVault consensusvault;
-  HoneyComb honeycomb;
-  Beradrome beradrome;
-  BondBear bondbear;
-  BandBear bandbear;
-  BeraFaucet berafaucet;
-  address admin = 0x50A7dd4778724FbED41aCe9B3d3056a7B36E874C;
-  uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+  // Honey honey;
+  // Bera bera;
+  // ConsensusVault consensusvault;
+  // HoneyComb honeycomb;
+  // Beradrome beradrome;
+  // BondBear bondbear;
+  // BandBear bandbear;
+  // BeraFaucet berafaucet;
+  // address admin = 0x50A7dd4778724FbED41aCe9B3d3056a7B36E874C;
+  // uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
   function run() external {
-    vm.startBroadcast(deployerPrivateKey);
+    // vm.startBroadcast(deployerPrivateKey);
 
     // honey = new Honey();
     // bera = new Bera();
@@ -111,7 +111,7 @@ contract DeployBetaScript is Script {
 
     // porridge.setGoldilendAddress(address(goldilend));
     
-    vm.stopBroadcast();
+    // vm.stopBroadcast();
   }
 
 }

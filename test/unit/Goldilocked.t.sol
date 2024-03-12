@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { BaseTest } from "../BaseTest.t.sol";
-import { Goldilocked } from "../../src/core/Goldilocked.sol";
+import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 
 contract UnitGoldilockedTest is BaseTest {
 

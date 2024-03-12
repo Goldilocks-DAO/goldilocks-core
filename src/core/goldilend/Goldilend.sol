@@ -17,14 +17,14 @@ pragma solidity ^0.8.20;
 // ==============================================================================================
 
 
-import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
-import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
-import { Goldilocked } from "./Goldilocked.sol";
-import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
-import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import { IERC721Receiver } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import { iBGTVault } from "../mock/iBGTVault.sol";
+import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
+import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
+import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import { Goldilocked } from "../goldiswap/Goldilocked.sol";
+import { iBGTVault } from "../../mock/iBGTVault.sol";
 
 
 /// @title Goldilend

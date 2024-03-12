@@ -17,9 +17,9 @@ pragma solidity ^0.8.20;
 // ==============================================================================================
 
 
-import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
-import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
-import { Goldivault } from "../core/Goldivault.sol";
+import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
+import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
+import { Goldivault } from "../../core/goldivault/Goldivault.sol";
 
 
 contract HoneyWethLPVault {
@@ -36,7 +36,7 @@ contract InfraredBGTVault {
   function exit() external {}
 }
 
-contract BexLPGoldivault is Goldivault {
+contract InfraredBexLPGoldivault is Goldivault {
 
   constructor(
     address _ot,
@@ -81,7 +81,7 @@ contract BexLPGoldivault is Goldivault {
     uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
     uint256 yieldTokensLength = yieldTokens.length;
     for(uint8 i; i < yieldTokensLength; ++i) {
-      SafeTransferLib.safeTransfer(yieldTokens[i], multisig, (ERC20(yieldTokens[i]).balanceOf(address(this)) / 100) * yieldFee);
+      SafeTransferLib.safeTransfer(yieldTokens[i], multisig, ERC20(yieldTokens[i]).balanceOf(address(this)) * yieldFee / 100);
     }
     InfraredBGTVault(ibgtVault).stake(ibgtrewards);
   }

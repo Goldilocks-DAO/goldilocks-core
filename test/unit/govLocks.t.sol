@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { BaseTest } from "../BaseTest.t.sol";
-import { govLocks } from "../../src/governance/govLocks.sol";
+import { govLocks } from "../../src/core/goldigovernance/govLocks.sol";
 
 contract UnitgovLocksTest is BaseTest {
 

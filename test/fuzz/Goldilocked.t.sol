@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { BaseTest } from "../BaseTest.t.sol";
-import { Goldilocked } from "../../src/core/Goldilocked.sol";
+import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 
 contract FuzzGoldilockedTest is BaseTest {
 

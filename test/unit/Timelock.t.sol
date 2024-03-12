@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { BaseTest } from "../BaseTest.t.sol";
-import { Timelock } from "../../src/governance/Timelock.sol";
+import { Timelock } from "../../src/core/goldigovernance/Timelock.sol";
 
 contract UnitTimelockTest is BaseTest {
 

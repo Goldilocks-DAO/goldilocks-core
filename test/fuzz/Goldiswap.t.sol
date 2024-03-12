@@ -1,11 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-
-import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
-import { Goldiswap } from "../../src/core/Goldiswap.sol";
+import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 
 contract FuzzGoldiswapTest is BaseTest {
 

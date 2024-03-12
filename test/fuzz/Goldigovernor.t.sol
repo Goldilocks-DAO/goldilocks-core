@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
-import { Goldigovernor } from "../../src/governance/Goldigovernor.sol";
+import { Goldigovernor } from "../../src/core/goldigovernance/Goldigovernor.sol";
 
 contract FuzzGoldigovernorTest is BaseTest {
 
