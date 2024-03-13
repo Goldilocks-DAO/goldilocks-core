@@ -78,6 +78,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => uint256) public prgPerTokenDebt;
   mapping(address => uint256) public claimableRewardsPerGiBGTStored;
   mapping(address => uint256) public lastRewardUpdateTime;
+  mapping(address => uint256) public outstandingRewardsPerReward;
   mapping(address => mapping(address => uint256)) public claimableRewards;
   mapping(address => mapping(address => uint256)) public rewardPerTokenDebt;
 
@@ -503,11 +504,14 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Updates claimable rewards for user that is locking or claiming
   /// @param user Address to update claimable rewards for
   function _updateClaimableRewards(address user) internal {
-    iBGTVault(ibgtVault).getReward();
     uint256 rewardTokensLength = rewardTokens.length;
     for(uint8 i; i < rewardTokensLength; ++i) {
+      outstandingRewardsPerReward[rewardTokens[i]] = ERC20(rewardTokens[i]).balanceOf(address(this));
+    }
+    iBGTVault(ibgtVault).getReward();
+    for(uint8 i; i < rewardTokensLength; ++i) {
       address rewardToken = rewardTokens[i];
-      uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this));
+      uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewardsPerReward[rewardToken];
       claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken, outstandingRewards);
       lastRewardUpdateTime[rewardToken] = block.timestamp;
       if(user != address(0)) {
@@ -570,7 +574,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @notice Calculates claimable $PRG per $GiBGT
   /// @param rewardToken Token to calculate claimable reward
   function _claimableRewardPerGiBGT(address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
-    if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0) {
+    if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0 || outstandingRewards == 0 || totalStakedGiBGT == 0) {
       return claimableRewardsPerGiBGTStored[rewardToken];
     }
     return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards, totalStakedGiBGT);
@@ -828,6 +832,7 @@ contract Goldilend is ERC20, IERC721Receiver {
     if(msg.sender != multisig) revert NotMultisig();
     for(uint8 i; i < _rewardTokens.length; ++i) {
       rewardTokens.push(_rewardTokens[i]);
+      lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
     }
   }
 

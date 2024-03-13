@@ -135,7 +135,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     beradrome = new Beradrome();
     bondbear = new BondBear();
     bandbear = new BandBear();
-    ibgtvault = new iBGTVault(address(ibgt), address(ibgt));
+    ibgtvault = new iBGTVault(address(ibgt), address(ibgt), address(honey));
     bexvault = new BexLPVault(address(bexlp), address(ibgt));
 
     // deploy goldiswap
@@ -169,10 +169,13 @@ abstract contract BaseTest is Test, IERC721Receiver {
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
+    address[] memory rewardTokens = new address[](1);
+    rewardTokens[0] = address(honey);
     goldilend.setValue(100e18, nfts, values);
     goldilend.setShareRates(45, 5);
     goldilend.setDurations(7 days, 21 days);
     goldilend.setBorrowingActive(true);
+    goldilend.addRewardTokens(rewardTokens);
     deal(address(ibgt), address(goldilend), 1000e18);
     deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
 

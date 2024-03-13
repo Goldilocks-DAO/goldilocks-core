@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "./../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { iBGT } from "./iBGT.sol";
+import { Honey } from "./Honey.sol";
 
 contract iBGTVault {
 
@@ -12,15 +13,21 @@ contract iBGTVault {
 
   address depositToken;
   address ibgt;
+  address honey;
+  uint256 deployTime;
+  uint256 honeyPaid;
 
   error Stealing();
 
   constructor(
     address _depositToken,
-    address _ibgt
+    address _ibgt,
+    address _honey
   ) { 
     depositToken = _depositToken;
     ibgt = _ibgt;
+    honey = _honey;
+    deployTime = block.timestamp;
   }
 
   function stake(uint256 amount) external {
@@ -40,6 +47,11 @@ contract iBGTVault {
     uint256 tokens = FixedPointMathLib.mulWad(deposits[msg.sender], 100e18);
     uint256 yield = FixedPointMathLib.mulWad(daysStaked, tokens);
     iBGT(ibgt).mint(msg.sender, yield);
+    uint256 honeyMintAmount = _honeyMintAmount();
+    if(honeyMintAmount > 0) {
+      honeyPaid += honeyMintAmount;
+      Honey(honey).mint(msg.sender, honeyMintAmount);
+    }
   }
 
   function exit() external {
@@ -48,5 +60,11 @@ contract iBGTVault {
     uint256 yield = FixedPointMathLib.mulWad(daysStaked, tokens);
     iBGT(ibgt).mint(msg.sender, yield);
     SafeTransferLib.safeTransfer(depositToken, msg.sender, deposits[msg.sender]);
+  }
+
+  function _honeyMintAmount() internal view returns (uint256) {
+    uint256 time = block.timestamp - deployTime;
+    uint256 hoursSinceDeploy = FixedPointMathLib.divWad(time, 1 hours);
+    return hoursSinceDeploy - honeyPaid;
   }
 }

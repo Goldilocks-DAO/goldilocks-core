@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { govLocks } from "../../src/core/goldigovernance/govLocks.sol";
 
@@ -17,7 +18,7 @@ contract FuzzgovLocksTest is BaseTest {
     assertEq(govlocks.getVotes(address(this)), depositAmount);
   }
 
-  function testFuzWithdraw(uint256 withdrawAmount) public {
+  function testFuzzWithdraw(uint256 withdrawAmount) public {
     deal(address(goldiswap), address(this), withdrawAmount);
     goldiswap.approve(address(govlocks), withdrawAmount);
     govlocks.deposit(withdrawAmount);
@@ -29,6 +30,7 @@ contract FuzzgovLocksTest is BaseTest {
   }
 
   function testFuzzDelegateOther(address delegatee, uint256 delegateAmount) public {
+    vm.assume(delegatee != address(0));
     deal(address(goldiswap), address(this), delegateAmount);
     goldiswap.approve(address(govlocks), delegateAmount);
     govlocks.deposit(delegateAmount);

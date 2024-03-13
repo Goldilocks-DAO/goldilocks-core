@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../../lib/forge-std/src/Test.sol";
+import {FixedPointMathLib} from "./../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { INFT } from "../../src/mock/INFT.sol";
@@ -227,13 +228,41 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(goldilend.poolSize(), 1000e18 + txAmount+txAmount);
   }
 
+  function testLockHalf() public {
+    vm.store(address(goldilend), bytes32(uint256(17)), bytes32(uint256(100e18)));
+    vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(50e18)));
+    deal(address(ibgt), address(this), txAmount);
+    ibgt.approve(address(goldilend), txAmount);
+    goldilend.lock(txAmount);
+
+    assertEq(goldilend.balanceOf(address(this)), txAmount / 2);
+    assertEq(ibgt.balanceOf(address(this)), 0);
+    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount);
+    assertEq(goldilend.poolSize(), 100e18 + txAmount);
+  }
+
+  function testLockDouble() public {
+    vm.store(address(goldilend), bytes32(uint256(17)), bytes32(uint256(50e18)));
+    vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
+    deal(address(ibgt), address(this), txAmount);
+    ibgt.approve(address(goldilend), txAmount);
+    goldilend.lock(txAmount);
+
+    assertEq(goldilend.balanceOf(address(this)), txAmount * 2);
+    assertEq(ibgt.balanceOf(address(this)), 0);
+    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount);
+    assertEq(goldilend.poolSize(), 50e18 + txAmount);
+  }
+
   function testStakeSuccess() public {
-    deal(address(goldilend), address(this), 2e18);
-    goldilend.approve(address(goldilend), 2e18);
-    goldilend.stake(2e18);
+    deal(address(goldilend), address(this), txAmount);
+    goldilend.approve(address(goldilend), txAmount);
+    goldilend.stake(txAmount);
 
     assertEq(goldilend.balanceOf(address(this)), 0);
-    assertEq(goldilend.balanceOf(address(goldilend)), 2e18);
+    assertEq(goldilend.balanceOf(address(goldilend)), txAmount);
   }
 
   function testUnstakeFailInvalid() public {
@@ -305,9 +334,83 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(goldilocked.balanceOf(address(this)), oneDayPrgMaxBoosted + prgMintAmount);
   }
 
-  //todo:
   function testUpdateClaimableRewards() public {
+    deal(address(goldilend), address(this), 1e18);
+    goldilend.approve(address(goldilend), 1e18);
+    goldilend.stake(1e18);
+    vm.warp(2 hours + 1);
+    goldilend.updateClaimableRewards();
 
+
+    assertEq(goldilend.balanceOf(address(this)), 0);
+    assertEq(goldilend.balanceOf(address(goldilend)), 1e18);
+    assertEq(goldilend.claimableRewardsPerGiBGTStored(address(honey)), 2e18);
+  }
+
+  function testMultipleRewardMultipleStakerClaim() public {
+    address user1 = makeAddr("user1");
+    address user2 = makeAddr("user2");
+    address user3 = makeAddr("user3");
+    uint256 amt = 1e18;
+
+    deal(address(goldilend), user1, amt);
+    vm.prank(user1);
+    goldilend.approve(address(goldilend), amt);
+    vm.prank(user1);
+    goldilend.stake(amt);
+
+    vm.warp(15 minutes + 1);
+    goldilend.updateClaimableRewards();
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+
+    deal(address(goldilend), user2, amt);
+    vm.prank(user2);
+    goldilend.approve(address(goldilend), amt);
+    vm.prank(user2);
+    goldilend.stake(amt);
+
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+
+    vm.prank(user1);
+    goldilend.unstake(amt);
+    vm.prank(user1);
+    goldilend.claim();
+    deal(address(goldilend), user3, amt);
+    vm.prank(user3);
+    goldilend.approve(address(goldilend), amt);
+    vm.prank(user3);
+    goldilend.stake(amt);
+
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+    vm.warp(15 minutes + block.timestamp);
+    goldilend.updateClaimableRewards();
+
+    vm.prank(user2);
+    goldilend.claim();
+    vm.prank(user3);
+    goldilend.claim();
+
+    assertEq(honey.balanceOf(user1), 1e18);
+    assertEq(honey.balanceOf(user2), 125e16);
+    assertEq(honey.balanceOf(user3), 75e16);
   }
 
   function testSingleBorrowFailActive() public {
@@ -766,8 +869,8 @@ contract UnitGoldilendTest is BaseTest {
     rewardTokens[1] = address(0x699);
     goldilend.addRewardTokens(rewardTokens);
 
-    assertEq(goldilend.rewardTokens(0), address(0x69));
-    assertEq(goldilend.rewardTokens(1), address(0x699));
+    assertEq(goldilend.rewardTokens(1), address(0x69));
+    assertEq(goldilend.rewardTokens(2), address(0x699));
   }
 
 }
