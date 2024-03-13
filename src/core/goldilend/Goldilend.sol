@@ -79,7 +79,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => uint256) public prgPerTokenDebt;
   mapping(address => uint256) public claimableRewardsPerGiBGTStored;
   mapping(address => uint256) public lastRewardUpdateTime;
-  mapping(address => uint256) public outstandingRewards;
+  // mapping(address => uint256) public outstandingRewards;
   mapping(address => mapping(address => uint256)) public claimableRewards;
   mapping(address => mapping(address => uint256)) public rewardPerTokenDebt;
 
@@ -500,6 +500,24 @@ contract Goldilend is ERC20, IERC721Receiver {
     }
   }
 
+  // /// @notice Updates claimable rewards for user that is locking or claiming
+  // /// @param user Address to update claimable rewards for
+  // function _updateClaimableRewards(address user) internal {
+  //   iBGTVault(ibgtVault).getReward();
+  //   uint256 rewardTokensLength = rewardTokens.length;
+  //   for(uint8 i; i < rewardTokensLength; ++i) {
+  //     address rewardToken = rewardTokens[i];
+  //     outstandingRewards[rewardToken] = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewards[rewardToken];
+  //     claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken);
+  //     lastRewardUpdateTime[rewardToken] = block.timestamp;
+  //     if(user != address(0)) {
+  //       claimableRewards[user][rewardToken] = _calculateClaimableRewards(user, rewardToken);
+  //       rewardPerTokenDebt[user][rewardToken] = claimableRewardsPerGiBGTStored[rewardToken];
+  //     }
+  //     outstandingRewards[rewardToken] = 0;
+  //   }
+  // }
+
   /// @notice Updates claimable rewards for user that is locking or claiming
   /// @param user Address to update claimable rewards for
   function _updateClaimableRewards(address user) internal {
@@ -507,14 +525,13 @@ contract Goldilend is ERC20, IERC721Receiver {
     uint256 rewardTokensLength = rewardTokens.length;
     for(uint8 i; i < rewardTokensLength; ++i) {
       address rewardToken = rewardTokens[i];
-      outstandingRewards[rewardToken] = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewards[rewardToken];
-      claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken);
+      uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this));
+      claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken, outstandingRewards);
       lastRewardUpdateTime[rewardToken] = block.timestamp;
       if(user != address(0)) {
-        claimableRewards[user][rewardToken] = _calculateClaimableRewards(user, rewardToken);
+        claimableRewards[user][rewardToken] = _calculateClaimableRewards(user, rewardToken, outstandingRewards);
         rewardPerTokenDebt[user][rewardToken] = claimableRewardsPerGiBGTStored[rewardToken];
       }
-      outstandingRewards[rewardToken] = 0;
     }
   }
 
@@ -556,8 +573,8 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   /// @notice Calculates claimable rewards
   /// @param user Address to calculate claimable rewards for
-  function _calculateClaimableRewards(address user, address rewardToken) internal view returns (uint256) {
-    return FixedPointMathLib.mulWad(stakedGiBGT[user], _claimableRewardPerGiBGT(rewardToken) - rewardPerTokenDebt[user][rewardToken]) + claimableRewards[user][rewardToken];
+  function _calculateClaimableRewards(address user, address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
+    return FixedPointMathLib.mulWad(stakedGiBGT[user], _claimableRewardPerGiBGT(rewardToken, outstandingRewards) - rewardPerTokenDebt[user][rewardToken]) + claimableRewards[user][rewardToken];
   }
 
   /// @notice Calculates claimable $PRG per $GiBGT
@@ -568,13 +585,22 @@ contract Goldilend is ERC20, IERC721Receiver {
     return claimablePrgPerGiBGTStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastPrgUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
   }
 
+  // /// @notice Calculates claimable $PRG per $GiBGT
+  // /// @param rewardToken Token to calculate claimable reward
+  // function _claimableRewardPerGiBGT(address rewardToken) internal view returns (uint256) {
+  //   if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0) {
+  //     return claimableRewardsPerGiBGTStored[rewardToken];
+  //   }
+  //   return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards[rewardToken], totalStakedGiBGT);
+  // }
+
   /// @notice Calculates claimable $PRG per $GiBGT
   /// @param rewardToken Token to calculate claimable reward
-  function _claimableRewardPerGiBGT(address rewardToken) internal view returns (uint256) {
+  function _claimableRewardPerGiBGT(address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
     if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0) {
       return claimableRewardsPerGiBGTStored[rewardToken];
     }
-    return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards[rewardToken], totalStakedGiBGT);
+    return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards, totalStakedGiBGT);
   }
 
   /// @notice Calculates the fair value of NFTs being borrowed against
