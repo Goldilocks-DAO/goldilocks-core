@@ -20,7 +20,6 @@ pragma solidity ^0.8.20;
 import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
-import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
 import { Goldilocked } from "../goldiswap/Goldilocked.sol";
@@ -79,7 +78,6 @@ contract Goldilend is ERC20, IERC721Receiver {
   mapping(address => uint256) public prgPerTokenDebt;
   mapping(address => uint256) public claimableRewardsPerGiBGTStored;
   mapping(address => uint256) public lastRewardUpdateTime;
-  // mapping(address => uint256) public outstandingRewards;
   mapping(address => mapping(address => uint256)) public claimableRewards;
   mapping(address => mapping(address => uint256)) public rewardPerTokenDebt;
 
@@ -230,7 +228,9 @@ contract Goldilend is ERC20, IERC721Receiver {
 
   /// @notice Returns the current $GiBGT ratio
   function getGiBGTRatio() external view returns (uint256) {
-    return _GiBGTRatio();
+    uint256 supply = totalSupply();
+    uint256 _poolSize = poolSize;
+    return _GiBGTRatio(supply, _poolSize);
   }
 
   /// @notice Returns the fair value of NFTs
@@ -500,24 +500,6 @@ contract Goldilend is ERC20, IERC721Receiver {
     }
   }
 
-  // /// @notice Updates claimable rewards for user that is locking or claiming
-  // /// @param user Address to update claimable rewards for
-  // function _updateClaimableRewards(address user) internal {
-  //   iBGTVault(ibgtVault).getReward();
-  //   uint256 rewardTokensLength = rewardTokens.length;
-  //   for(uint8 i; i < rewardTokensLength; ++i) {
-  //     address rewardToken = rewardTokens[i];
-  //     outstandingRewards[rewardToken] = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewards[rewardToken];
-  //     claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken);
-  //     lastRewardUpdateTime[rewardToken] = block.timestamp;
-  //     if(user != address(0)) {
-  //       claimableRewards[user][rewardToken] = _calculateClaimableRewards(user, rewardToken);
-  //       rewardPerTokenDebt[user][rewardToken] = claimableRewardsPerGiBGTStored[rewardToken];
-  //     }
-  //     outstandingRewards[rewardToken] = 0;
-  //   }
-  // }
-
   /// @notice Updates claimable rewards for user that is locking or claiming
   /// @param user Address to update claimable rewards for
   function _updateClaimableRewards(address user) internal {
@@ -585,15 +567,6 @@ contract Goldilend is ERC20, IERC721Receiver {
     return claimablePrgPerGiBGTStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastPrgUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
   }
 
-  // /// @notice Calculates claimable $PRG per $GiBGT
-  // /// @param rewardToken Token to calculate claimable reward
-  // function _claimableRewardPerGiBGT(address rewardToken) internal view returns (uint256) {
-  //   if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0) {
-  //     return claimableRewardsPerGiBGTStored[rewardToken];
-  //   }
-  //   return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards[rewardToken], totalStakedGiBGT);
-  // }
-
   /// @notice Calculates claimable $PRG per $GiBGT
   /// @param rewardToken Token to calculate claimable reward
   function _claimableRewardPerGiBGT(address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
@@ -645,7 +618,7 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @dev Claims existing vault rewards and updates poolSize
   /// @param ibgtAmount Amount of $iBGT to stake
   function _refreshiBGT(uint256 ibgtAmount) internal {
-    IERC20(ibgt).approve(ibgtVault, ibgtAmount);
+    ERC20(ibgt).approve(ibgtVault, ibgtAmount);
     iBGTVault(ibgtVault).stake(ibgtAmount);
   }
 
@@ -653,13 +626,15 @@ contract Goldilend is ERC20, IERC721Receiver {
   /// @param lockAmount Amount of $iBGT to lock
   /// @return mintAmount Total supply of $GiBGT divided by the lending pool size multiplied by lockAmount
   function _GiBGTMintAmount(uint256 lockAmount) internal view returns (uint256) {
-    return poolSize > 0 ? FixedPointMathLib.mulWad(lockAmount, _GiBGTRatio()) : lockAmount;
+    uint256 supply = totalSupply();
+    uint256 _poolSize = poolSize;
+    return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _GiBGTRatio(supply, _poolSize)) : lockAmount;
   }
 
   /// @notice Calculates the current $GiBGT ratio
   /// @return gibgtRatio Total supply of $GiBGT divided by the lending pool size
-  function _GiBGTRatio() internal view returns (uint256) {
-    return FixedPointMathLib.divWad(totalSupply(), poolSize);
+  function _GiBGTRatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
+    return FixedPointMathLib.divWad(supply, _poolSize);
   }
 
   /// @notice Creates the struct containing the details of the boost

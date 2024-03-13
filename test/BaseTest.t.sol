@@ -111,6 +111,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 singleBorrowInterest = 45726853068117;
   uint256 singleBorrowInterestBoosted = 45452491949708;
   uint256 singleBorrowInterestMaxBoost = 2286342653405;
+  uint256 initialGiBGTRatio = 9900990099009900;
+  uint256 lockLockGiBGTRatio = 99009900990099000;
   address honeyjar = address(0xdddd);
 
   uint256 govLocksAmt = 5e18;

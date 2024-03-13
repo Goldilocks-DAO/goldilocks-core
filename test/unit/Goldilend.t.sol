@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "../../lib/forge-std/src/Test.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { INFT } from "../../src/mock/INFT.sol";
@@ -64,16 +65,13 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(goldilend.userClaimablePrg(address(this)), oneDayPrg);
   }
 
-  //todo: fix
-  // function testGetGiBGTRatio() public {
-  //   deal(address(ibgt), address(this), 11157e16);
-  //   ibgt.approve(address(goldilend), type(uint256).max);
-  //   goldilend.lock(100e18);
-  //   vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
-  //   vm.store(address(goldilend), bytes32(uint256(12)), bytes32(uint256(1000e18)));
+  function testGetGiBGTRatio() public {
+    deal(address(ibgt), address(this), txAmount);
+    ibgt.approve(address(goldilend), txAmount);
+    goldilend.lock(txAmount);
 
-  //   assertEq(goldilend.getGiBGTRatio(), 10e16);
-  // }
+    assertEq(goldilend.getGiBGTRatio(), initialGiBGTRatio);
+  }
 
   function testGetFairValues() public {
     address[] memory nfts = new address[](2);
@@ -199,15 +197,35 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(userBoost.partnerNFTs[1], address(beradrome));
   }
 
-  //todo: fix
-  //   function testLockSuccess() public {
-  //   vm.store(address(goldilend), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(1000e18)));
-  //   deal(address(ibgt), address(this), 100e18);
-  //   ibgt.approve(address(goldilend), type(uint256).max);
-  //   goldilend.lock(100e18);
+  function testLockSuccess() public {
+    deal(address(ibgt), address(this), txAmount);
+    ibgt.approve(address(goldilend), txAmount);
+    goldilend.lock(txAmount);
 
-  //   assertEq(goldilend.balanceOf(address(this)), 90909090909090909000);
-  // }
+    assertEq(goldilend.balanceOf(address(this)), txAmount);
+    assertEq(ibgt.balanceOf(address(this)), 0);
+    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount);
+    assertEq(goldilend.poolSize(), 1000e18 + txAmount);
+  }
+
+  function testLockLock() public {
+    deal(address(ibgt), address(this), txAmount);
+    ibgt.approve(address(goldilend), txAmount);
+    goldilend.lock(txAmount);
+    deal(address(ibgt), address(0xabc), txAmount);
+    vm.prank(address(0xabc));
+    ibgt.approve(address(goldilend), txAmount);
+    vm.prank(address(0xabc));
+    goldilend.lock(txAmount);
+
+    assertEq(goldilend.balanceOf(address(this)), txAmount);
+    assertEq(goldilend.balanceOf(address(0xabc)), lockLockGiBGTRatio);
+    assertEq(ibgt.balanceOf(address(this)), 0);
+    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount+txAmount);
+    assertEq(goldilend.poolSize(), 1000e18 + txAmount+txAmount);
+  }
 
   function testStakeSuccess() public {
     deal(address(goldilend), address(this), 2e18);
@@ -285,6 +303,11 @@ contract UnitGoldilendTest is BaseTest {
     goldilend.claim();
 
     assertEq(goldilocked.balanceOf(address(this)), oneDayPrgMaxBoosted + prgMintAmount);
+  }
+
+  //todo:
+  function testUpdateClaimableRewards() public {
+
   }
 
   function testSingleBorrowFailActive() public {
@@ -729,4 +752,22 @@ contract UnitGoldilendTest is BaseTest {
 
     assertEq(goldilend.ANNUAL_PORRIDGE_EMISSIONS(), 69);
   }
+
+  function testAddRewardTokensFailMultisig() public {
+    address[] memory rewardTokens = new address[](0);
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
+    goldilend.addRewardTokens(rewardTokens);
+  }
+
+  function testAddRewardTokensSuccess() public {
+    address[] memory rewardTokens = new address[](2);
+    rewardTokens[0] = address(0x69);
+    rewardTokens[1] = address(0x699);
+    goldilend.addRewardTokens(rewardTokens);
+
+    assertEq(goldilend.rewardTokens(0), address(0x69));
+    assertEq(goldilend.rewardTokens(1), address(0x699));
+  }
+
 }
