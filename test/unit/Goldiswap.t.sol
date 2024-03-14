@@ -146,7 +146,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
 
   function testPorridgeMintFailGoldilocked() public {
     vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotGoldilocked.selector));
-    goldiswap.porridgeMint(address(0x69), 69);
+    goldiswap.porridgeMint(address(0x69), 69, 69);
   }
 
   function testPorridgeMintSuccess() public {

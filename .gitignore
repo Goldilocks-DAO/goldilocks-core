@@ -11,5 +11,5 @@ whitelist/node_modules
 lib/
 
 price_tests/__pycache__
-infrared.md
+infrared/
 slither/

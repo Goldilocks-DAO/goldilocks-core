@@ -214,9 +214,10 @@ contract Goldilocked is ERC20 {
   /// @notice Burns $PRG to buy $LOCKS at floor price
   /// @param amount Amount of $PRG to burn
   function stir(uint256 amount) external {
+    uint256 cost = FixedPointMathLib.mulWad(amount, Goldiswap(goldiswap).floorPrice());
     _burn(msg.sender, amount);
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, goldiswap, FixedPointMathLib.mulWad(amount, Goldiswap(goldiswap).floorPrice()));
-    Goldiswap(goldiswap).porridgeMint(msg.sender, amount);
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, goldiswap, cost);
+    Goldiswap(goldiswap).porridgeMint(msg.sender, amount, cost);
     emit Stirred(msg.sender, amount);
   }
 

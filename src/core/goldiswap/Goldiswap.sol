@@ -354,8 +354,9 @@ contract Goldiswap is ERC20 {
   /// @dev Only Porridge contract can call this function
   /// @param to Recipient of minted $LOCKS tokens
   /// @param amount Amount of minted $LOCKS tokens
-  function porridgeMint(address to, uint256 amount) external {
+  function porridgeMint(address to, uint256 amount, uint256 cost) external {
     if(msg.sender != goldilocked) revert NotGoldilocked();
+    fsl += cost;
     _mint(to, amount);
   }
 
