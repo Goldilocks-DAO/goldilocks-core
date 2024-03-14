@@ -391,16 +391,6 @@ contract Goldigovernor {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Changes the address of the multisig address
-  /// @dev Used after deployment by deployment address
-  /// @param _multisig Address of the multisig
-  function setMultisig(address _multisig) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    address oldMultisig = multisig;
-    multisig = _multisig;
-    emit NewAdmin(oldMultisig, multisig);
-  }
-
   /// @notice Sets the voting delay
   /// @param newVotingDelay New voting delay, in blocks
   function setVotingDelay(uint256 newVotingDelay) external {

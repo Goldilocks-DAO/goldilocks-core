@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { Timelock } from "../../src/core/goldigovernance/Timelock.sol";
 import { Goldigovernor } from "../../src/core/goldigovernance/Goldigovernor.sol";
 
-contract FuzzTimelockTest is BaseTest {
+contract FuzzTimelockTest is BaseFuzzTest {
 
   function testFuzzQueueTransaction(
     address target,

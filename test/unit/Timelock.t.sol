@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Timelock } from "../../src/core/goldigovernance/Timelock.sol";
 
-contract UnitTimelockTest is BaseTest {
+contract UnitTimelockTest is BaseUnitTest {
 
-  function testQueueTransactionFailAdmin() public {
-    vm.expectRevert(abi.encodeWithSelector(Timelock.NotAdmin.selector));
+  function testQueueTransactionFailGoldigov() public {
+    vm.expectRevert(abi.encodeWithSelector(Timelock.NotGoldigov.selector));
     timelock.queueTransaction(address(0x69), 69, 69, "", "");
   }
 
@@ -28,8 +28,8 @@ contract UnitTimelockTest is BaseTest {
     assertEq(timelock.queuedTransactions(keccak256(abi.encode(targets[0], values[0], signatures[0], calldatas[0], 432001))), true);
   }
 
-  function testExecuteTransactionFailAdmin() public {
-    vm.expectRevert(abi.encodeWithSelector(Timelock.NotAdmin.selector));
+  function testExecuteTransactionFailGoldigov() public {
+    vm.expectRevert(abi.encodeWithSelector(Timelock.NotGoldigov.selector));
     timelock.executeTransaction(address(0x69), 69, 69, "", "");
   }
 
@@ -119,8 +119,8 @@ contract UnitTimelockTest is BaseTest {
     assertEq(executed, true);
   }
 
-  function testCancelTransactionFailAdmin() public {
-    vm.expectRevert(abi.encodeWithSelector(Timelock.NotAdmin.selector));
+  function testCancelTransactionFailGoldigov() public {
+    vm.expectRevert(abi.encodeWithSelector(Timelock.NotGoldigov.selector));
     timelock.cancelTransaction(address(0x69), 69, 69, "", "");
   }
 
@@ -149,32 +149,18 @@ contract UnitTimelockTest is BaseTest {
     assertEq(cancelled, true);
   }
 
-  function testSetAdminFailAdmin() public {
-    vm.expectRevert(abi.encodeWithSelector(Timelock.NotAdmin.selector));
-    timelock.setAdmin(address(0x69));
-  }
-
-  function testSetAdminSuccess() public {
-    vm.prank(address(goldigov));
-    timelock.setAdmin(address(0x69));
-    
-    assertEq(timelock.admin(), address(0x69));
-  }
-
-  function testSetDelayFailAdmin() public {
+  function testSetDelayFailMultisig() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Timelock.NotAdmin.selector));
+    vm.expectRevert(abi.encodeWithSelector(Timelock.NotMultisig.selector));
     timelock.setDelay(69);
   }
 
   function testSetDelayFailDelay() public {
-    vm.prank(address(goldigov));
     vm.expectRevert(abi.encodeWithSelector(Timelock.InvalidDelay.selector));
     timelock.setDelay(1 days);
   }
 
   function testSetDelaySuccess() public {
-    vm.prank(address(goldigov));
     timelock.setDelay(3 days);
 
     assertEq(timelock.delay(), 3 days);

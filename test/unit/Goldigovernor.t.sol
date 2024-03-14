@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldigovernor } from "../../src/core/goldigovernance/Goldigovernor.sol";
 
-contract UnitGoldigovernorTest is BaseTest {
+contract UnitGoldigovernorTest is BaseUnitTest {
 
   function testStateSuccess() public {
     proposySamePropose();
@@ -529,18 +529,6 @@ contract UnitGoldigovernorTest is BaseTest {
     Goldigovernor.ProposalState state = goldigov.state(1);
 
     assertEq(uint256(state), 6);
-  }
-
-  function testSetMultisigFailMultisig() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldigovernor.NotMultisig.selector));
-    goldigov.setMultisig(address(0x69));
-  }
-
-  function testSetMultisigSuccess() public {
-    goldigov.setMultisig(address(0x69));
-
-    assertEq(goldigov.multisig(), address(0x69));
   }
 
   function testSetVotingDelayFailMultisig() public {

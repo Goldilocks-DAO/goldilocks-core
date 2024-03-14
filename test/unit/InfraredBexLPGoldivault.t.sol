@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 
-contract UnitInfraredBexLPGoldivaultTest is BaseTest {
+contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
 
   function testOTName() public {
     assertEq(ot.name(), "oBexLPToken");

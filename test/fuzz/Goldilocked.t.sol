@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 
-contract FuzzGoldilockedTest is BaseTest {
+contract FuzzGoldilockedTest is BaseFuzzTest {
 
   function testFuzzStake(uint256 stakeAmount) public {
     vm.assume(stakeAmount < locksMintAmount);

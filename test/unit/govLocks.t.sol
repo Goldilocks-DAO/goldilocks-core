@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
-import { BaseTest } from "../BaseTest.t.sol";
 import { govLocks } from "../../src/core/goldigovernance/govLocks.sol";
 
-contract UnitgovLocksTest is BaseTest {
+contract UnitgovLocksTest is BaseUnitTest {
 
   function testgovLocksName() public {
     assertEq(govlocks.name(), "Governance Locks");

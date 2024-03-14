@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { INFT } from "../../src/mock/INFT.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
 
-contract UnitGoldilendTest is BaseTest {
+contract UnitGoldilendTest is BaseUnitTest {
 
   function testGiBGTName() public {
     assertEq(goldilend.name(), "GiBGT Token");

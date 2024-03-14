@@ -45,7 +45,6 @@ contract govLocks is ERC20 {
 
 
   address public immutable locks;
-  address public immutable goldigov;
   address public immutable goldilocked;
 
   mapping(address => uint256) public deposits;
@@ -61,19 +60,16 @@ contract govLocks is ERC20 {
 
   /// @notice Constructor of this contract
   /// @param _locks Address of $LOCKS  
-  /// @param _goldigov Address of the Goldigovernor contract
   /// @param _goldilocked Address of the Goldilocked contract
   /// @param honeyjar Address of Honeyjar
   /// @param honeyjarVotingPower Governance power to grant to Honeyjar
   constructor(
     address _locks,
-    address _goldigov,
     address _goldilocked,
     address honeyjar,
     uint256 honeyjarVotingPower
   ) {
     locks = _locks;
-    goldigov = _goldigov;
     goldilocked = _goldilocked;
     _moveDelegates(address(0), honeyjar, honeyjarVotingPower);
   }

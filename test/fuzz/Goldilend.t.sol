@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
 
-contract FuzzGoldilendTest is BaseTest {
+contract FuzzGoldilendTest is BaseFuzzTest {
 
   function testFuzzSingleBoost(uint256 time) public dealUserPartnerNFTs {
     vm.assume(time < type(uint256).max / 2);

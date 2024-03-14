@@ -33,7 +33,8 @@ contract Timelock {
   uint32 public constant MINIMUM_DELAY = 2 days;
   uint32 public constant MAXIMUM_DELAY = 30 days;
 
-  address public admin;
+  address public immutable goldigov;
+  address public immutable multisig;
 
   mapping(bytes32 => bool) public queuedTransactions;
 
@@ -46,11 +47,12 @@ contract Timelock {
   
 
   /// @notice Constructor of this contract
-  /// @param _admin Admin address
+  /// @param _goldigov Admin address
   /// @param _delay Delay the timelock will use, in blocks
-  constructor(address _admin, uint256 _delay) {
+  constructor(address _goldigov, address _multisig, uint256 _delay) {
     if(_delay < MINIMUM_DELAY || delay > MAXIMUM_DELAY) revert InvalidDelay();
-    admin = _admin;
+    goldigov = _goldigov;
+    multisig = _multisig;
     delay = _delay;
   }
 
@@ -62,7 +64,8 @@ contract Timelock {
 
   error InvalidDelay();
   error InvalidETA();
-  error NotAdmin();
+  error NotGoldigov();
+  error NotMultisig();
   error TxNotQueued();
   error TxLocked();
   error TxStale();
@@ -99,7 +102,7 @@ contract Timelock {
     bytes memory data,
     string memory signature
   ) external {
-    if(msg.sender != admin) revert NotAdmin();
+    if(msg.sender != goldigov) revert NotGoldigov();
     if(eta < block.timestamp + delay) revert InvalidETA();
     bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
     queuedTransactions[txHash] = true;
@@ -119,7 +122,7 @@ contract Timelock {
     bytes memory data, 
     string memory signature
   ) external payable {
-    if(msg.sender != admin) revert NotAdmin();
+    if(msg.sender != goldigov) revert NotGoldigov();
     bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
     if(!queuedTransactions[txHash]) revert TxNotQueued();
     if(block.timestamp < eta) revert TxLocked();
@@ -150,23 +153,15 @@ contract Timelock {
     bytes memory data, 
     string memory signature
   ) external {
-    if(msg.sender != admin) revert NotAdmin();
+    if(msg.sender != goldigov) revert NotGoldigov();
     bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
     queuedTransactions[txHash] = false;
     emit CancelTransaction(txHash, target, value, signature, data, eta);
   }
 
-  /// @notice Changes the address of the admin address
-  /// @param _admin Address of the Goldigovernor contract
-  function setAdmin(address _admin) external {
-    if(msg.sender != admin) revert NotAdmin();
-    admin = _admin;
-    emit NewAdmin(admin);
-  }
-
   /// @notice Sets the Timelock delay
   function setDelay(uint256 _delay) external {
-    if(msg.sender != admin) revert NotAdmin();
+    if(msg.sender != multisig) revert NotMultisig();
     if(_delay < MINIMUM_DELAY || delay > MAXIMUM_DELAY) revert InvalidDelay();
     delay = _delay;
     emit NewDelay(delay);

@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 
-contract DifferentialGoldiswapPriceTest is BaseTest {
+contract DifferentialGoldiswapPriceTest is BaseUnitTest {
 
   modifier dealGammHoney() {
     deal(address(honey), address(goldiswap), type(uint256).max / 2);

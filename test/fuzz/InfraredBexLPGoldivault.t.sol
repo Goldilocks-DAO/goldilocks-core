@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 
-contract FuzzInfraredBexLPGoldivaultTest is BaseTest {
+contract FuzzInfraredBexLPGoldivaultTest is BaseFuzzTest {
 
   function testFuzzDepositBexLP(uint256 depositAmount) public {
     vm.assume(depositAmount < 1e40);

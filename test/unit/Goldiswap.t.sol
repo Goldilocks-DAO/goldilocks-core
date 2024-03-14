@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 
-contract UnitGoldiswapTest is BaseTest {
+contract UnitGoldiswapTest is BaseUnitTest {
 
   function testLocksName() public {
     assertEq(goldiswap.name(), "Locks Token");

@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../lib/forge-std/src/Test.sol";
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { govLocks } from "../../src/core/goldigovernance/govLocks.sol";
 
-contract FuzzgovLocksTest is BaseTest {
+contract FuzzgovLocksTest is BaseFuzzTest {
 
   function testFuzzDeposit(uint256 depositAmount) public {
     deal(address(goldiswap), address(this), depositAmount);

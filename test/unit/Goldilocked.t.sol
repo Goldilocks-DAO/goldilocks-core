@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { BaseTest } from "../BaseTest.t.sol";
+import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 
-contract UnitGoldilockedTest is BaseTest {
+contract UnitGoldilockedTest is BaseUnitTest {
 
   function testPRGName() public {
     assertEq(goldilocked.name(), "Porridge");
