@@ -66,7 +66,8 @@ contract Goldilend is ERC20, IERC721Receiver {
   address public immutable hj;
   address public immutable ibgt;
   address public immutable ibgtVault;
-  address public multisig;
+  address public immutable multisig;
+  address public timelock;
 
   mapping(address => Boost) public boosts;
   mapping(address => Loan[]) public loans;
@@ -111,37 +112,29 @@ contract Goldilend is ERC20, IERC721Receiver {
   
 
   /// @notice Constructor of this contract
-  /// @param _startingPoolSize Starting size of the lending pool
-  /// @param _protocolInterestRate Interest rate of the protocol
-  /// @param _porridgeMultiple Emissions rate of $PRG for $iBGT in lending pool
-  /// @param _slope Degree of protocol interest rate
   /// @param _goldilocked Address of Goldilocked
   /// @param _multisig Address of the GoldilocksDAO multisig
+  /// @param _timelock Address of the GoldilocksDAO timelock
   /// @param _hj Address of Honeyjar
   /// @param _ibgt Address of $iBGT
   /// @param _ibgtVault Address of iBGTVault
   /// @param _partnerNFTs Partnership NFTs
   /// @param _partnerNFTBoosts Partnership NFTs Boosts
+  /// @param _rewardTokens Reward tokens from $iBGT staking
   constructor(
-    uint256 _startingPoolSize,
-    uint256 _protocolInterestRate,
-    uint256 _porridgeMultiple,
-    uint256 _slope,
     address _goldilocked,
+    address _timelock,
     address _multisig,
     address _hj,
     address _ibgt, 
     address _ibgtVault,
     address[] memory _partnerNFTs, 
-    uint8[] memory _partnerNFTBoosts
+    uint8[] memory _partnerNFTBoosts,
+    address[] memory _rewardTokens
   ) {
-    ANNUAL_PORRIDGE_EMISSIONS = 5e17;
-    poolSize = _startingPoolSize;
-    protocolInterestRate = _protocolInterestRate;
-    porridgeMultiple = _porridgeMultiple;
-    slope = _slope;
     goldilocked = _goldilocked;
     multisig = _multisig;
+    timelock = _timelock;
     hj = _hj;
     ibgt = _ibgt;
     ibgtVault = _ibgtVault;
@@ -149,6 +142,11 @@ contract Goldilend is ERC20, IERC721Receiver {
     for(uint8 i; i < _partnerNFTs.length; i++) {
       partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
     }
+    for(uint8 i; i < _rewardTokens.length; ++i) {
+      rewardTokens.push(_rewardTokens[i]);
+      lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
+    }
+    ANNUAL_PORRIDGE_EMISSIONS = 5e17;
   }
 
   /// @notice Returns the name of the $GiBGT token
@@ -168,6 +166,7 @@ contract Goldilend is ERC20, IERC721Receiver {
 
 
   error NotMultisig();
+  error NotTimelock();
   error NotHoneyjar();
   error NotActive();
   error ArrayMismatch();
@@ -731,50 +730,77 @@ contract Goldilend is ERC20, IERC721Receiver {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Changes the address of the multisig address
-  /// @dev Used after deployment by deployment address
-  /// @param _multisig Address of the multisig
-  function setMultisig(address _multisig) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    multisig = _multisig;
-  }
-
   /// @notice Allows the DAO to adjust the valuation of the NFTs to borrow against
   /// @param _totalValuation Total valuation of all NFTs able to be borrowed against
   /// @param _nfts NFTs that are able to be borrowed against
   /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation
-    function setValue(
-    uint256 _totalValuation,
+    function changeValue(
     address[] calldata _nfts,
-    uint256[] calldata _nftFairValues
+    uint256[] calldata _nftFairValues,
+    uint256 _totalValuation
   ) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    totalValuation = _totalValuation;
+    if(msg.sender != timelock) revert NotTimelock();
     for(uint256 i; i < _nftFairValues.length; i++) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
     }
+    totalValuation = _totalValuation;
   } 
 
   /// @notice Allows the DAO to adjust the interest rate for the protocol
   /// @param _protocolInterestRate New interest rate
-  function setProtocolInterestRate(uint256 _protocolInterestRate) external {
-    if(msg.sender != multisig) revert NotMultisig();
+  function changeProtocolInterestRate(uint256 _protocolInterestRate) external {
+    if(msg.sender != timelock) revert NotTimelock();
     protocolInterestRate = _protocolInterestRate;
   }
 
   /// @notice Allows the DAO to adjust shares of interest payment
   /// @param _multisigShare New share for multisig
   /// @param _honeyjarShare New share for honeyjar
-  function setShareRates(uint256 _multisigShare, uint256 _honeyjarShare) external {
-    if(msg.sender != multisig) revert NotMultisig();
+  function changeShareRates(uint256 _multisigShare, uint256 _honeyjarShare) external {
+    if(msg.sender != timelock) revert NotTimelock();
     multisigShare = _multisigShare;
     honeyjarShare = _honeyjarShare;
   }
 
-  /// @notice Allows the DAO to withdraw $iBGT in case of emergency
-  function emergencyWithdraw() external {
+  /// @notice Allows the DAO to adjust the degree of the protocol interest rate
+  /// @param _slope New slope
+  function changeSlope(uint256 _slope) external {
+    if(msg.sender != timelock) revert NotTimelock();
+    slope = _slope;
+  }
+
+  /// @notice Allows the DAO to adjust the min and max duration of loans
+  /// @param _minDuration New minimum duration
+  /// @param _maxDuration New maximum duration
+  function changeDurations(uint256 _minDuration, uint256 _maxDuration) external {
+    if(msg.sender != timelock) revert NotTimelock();
+    minDuration = _minDuration;
+    maxDuration = _maxDuration;
+  }
+
+  /// @notice Allows the DAO to change $PRG emissions
+  /// @param newPrgEmissions Sets the annual $PRG emission rate for $GiBGT staking
+  function changePrgEmissions(uint256 newPrgEmissions) external {
+    if(msg.sender != timelock) revert NotTimelock();
+    _updateClaimablePrg(address(0));
+    ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
+  }
+
+  /// @notice Allows multisig to add yield tokens to Goldilend
+  /// @param _rewardTokens Tokens to add to yieldTokens array
+  function addRewardTokens(address[] calldata _rewardTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
-    SafeTransferLib.safeTransfer(ibgt, multisig, poolSize - outstandingDebt);
+    for(uint8 i; i < _rewardTokens.length; ++i) {
+      rewardTokens.push(_rewardTokens[i]);
+      lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
+    }
+  }
+
+  /// @notice Allows multisig to activate or inactivate the protocol
+  /// @param _borrowingActive Value that activates or inactivates
+  function changeBorrowingActive(bool _borrowingActive) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    borrowingActive = _borrowingActive;
   }
 
   /// @notice Allows the multisig to claim interest
@@ -795,45 +821,37 @@ contract Goldilend is ERC20, IERC721Receiver {
     SafeTransferLib.safeTransfer(ibgt, hj, interestClaim);
   }
 
-  /// @notice Allows the DAO to change the degree of the protocol interest rate
-  /// @param _slope New slope
-  function setSlope(uint256 _slope) external {
+  /// @notice Allows the multisig to initialize the protocol
+  function initializeProtocol(
+    address[] calldata _nfts,
+    uint256[] calldata _nftFairValues,
+    uint256 _totalValuation,
+    uint256 _multisigShare,
+    uint256 _honeyjarShare,
+    uint256 _minDuration,
+    uint256 _maxDuration,
+    uint256 _startingPoolSize
+  ) external {
     if(msg.sender != multisig) revert NotMultisig();
-    slope = _slope;
-  }
-
-  /// @notice Allows the DAO to adjust the min and max duration of loans
-  /// @param _minDuration New minimum duration
-  /// @param _maxDuration New maximum duration
-  function setDurations(uint256 _minDuration, uint256 _maxDuration) external {
-    if(msg.sender != multisig) revert NotMultisig();
+    for(uint256 i; i < _nftFairValues.length; i++) {
+      nftFairValues[_nfts[i]] = _nftFairValues[i];
+    }
+    totalValuation = _totalValuation;
+    multisigShare = _multisigShare;
+    honeyjarShare = _honeyjarShare;
     minDuration = _minDuration;
     maxDuration = _maxDuration;
+    poolSize = _startingPoolSize;
+    protocolInterestRate = 1e17;
+    porridgeMultiple = 1e13;
+    slope = 10;
+    borrowingActive = true;
   }
 
-  /// @notice Allows the DAO to activate or inactivate the protocol
-  /// @param _borrowingActive Value that activates or inactivates
-  function setBorrowingActive(bool _borrowingActive) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    borrowingActive = _borrowingActive;
-  }
-
-  /// @notice Allows the DAO to change $PRG emissions
-  /// @param newPrgEmissions Sets the annual $PRG emission rate for $GiBGT staking
-  function changePrgEmissions(uint256 newPrgEmissions) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    _updateClaimablePrg(address(0));
-    ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
-  }
-
-  /// @notice Allows DAO to add yield tokens to Goldilend
-  /// @param _rewardTokens Tokens to add to yieldTokens array
-  function addRewardTokens(address[] calldata _rewardTokens) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    for(uint8 i; i < _rewardTokens.length; ++i) {
-      rewardTokens.push(_rewardTokens[i]);
-      lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
-    }
+  /// @notice Allows the DAO to sunset protocol
+  function sunsetProtocol() external {
+    if(msg.sender != timelock) revert NotTimelock();
+    SafeTransferLib.safeTransfer(ibgt, multisig, poolSize - outstandingDebt);
   }
 
 

@@ -52,7 +52,7 @@ contract Goldilocked is ERC20 {
   uint256 public ANNUAL_PORRIDGE_EMISSIONS;
   uint256 public lastUpdateTime;
   uint256 public claimablePrgPerLocksStored;
-  address public multisig;
+  address public timelock;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -64,7 +64,8 @@ contract Goldilocked is ERC20 {
   /// @param _goldiswap Address of Goldiswap  
   /// @param _goldilend Address of Goldilend contract
   /// @param _govlocks Address of govLocks contract
-  /// @param _honey Address of the HONEY contract
+  /// @param _honey Address of the $HONEY contract
+  /// @param _timelock Address of the Timelock contract
   /// @param allocationsAddress Addresses receiving $LOCKS
   /// @param allocationsAmt Amounts of $LOCKS to stake and lock
   /// @param initialSupply Initial supply of the $PRG token
@@ -73,6 +74,7 @@ contract Goldilocked is ERC20 {
     address _goldilend,
     address _govlocks,
     address _honey,
+    address _timelock,
     address[] memory allocationsAddress,
     uint256[] memory allocationsAmt,
     uint256 initialSupply
@@ -82,7 +84,7 @@ contract Goldilocked is ERC20 {
     goldilend = _goldilend;
     govlocks = _govlocks;
     honey = _honey;
-    multisig = msg.sender;
+    timelock = _timelock;
     deployTime = block.timestamp;
     vestingStart = block.timestamp + 90 days;
     vestingEnd = block.timestamp + 90 days + 365 days;
@@ -93,7 +95,7 @@ contract Goldilocked is ERC20 {
       i < 3 ? teamAllocations[allocationsAddress[i]] = allocationsAmt[i] : seedAllocations[allocationsAddress[i]] = allocationsAmt[i];
       govLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
     }
-    _mint(multisig, initialSupply);
+    _mint(msg.sender, initialSupply);
   }
 
   /// @notice Returns the name of the $PRG token
@@ -113,7 +115,7 @@ contract Goldilocked is ERC20 {
 
 
   error NotGoldilend();
-  error NotMultisig();
+  error NotTimelock();
   error NotVested();
   error Vesting();
   error InvalidUnstake();
@@ -353,16 +355,16 @@ contract Goldilocked is ERC20 {
   /// @notice Allows the DAO to change $PRG emissions
   /// @param newPrgEmissions Sets the annual $PRG emission rate for $LOCKS staking
   function changePrgEmissions(uint256 newPrgEmissions) external {
-    if(msg.sender != multisig) revert NotMultisig();
+    if(msg.sender != timelock) revert NotTimelock();
     _updateClaimablePrg(address(0));
     ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
   }
 
   /// @notice Allows the DAO to mint $PRG
   /// @param newPorridge Amount of $PRG to mint
-  function mintPorridge(uint256 newPorridge) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    _mint(msg.sender, newPorridge);
+  function mintPorridge(address multisig, uint256 newPorridge) external {
+    if(msg.sender != timelock) revert NotTimelock();
+    _mint(multisig, newPorridge);
   }
 
 }

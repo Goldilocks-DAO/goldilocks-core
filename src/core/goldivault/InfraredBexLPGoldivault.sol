@@ -23,30 +23,21 @@ import { Goldivault } from "../../core/goldivault/Goldivault.sol";
 import { iBGTVault } from "../../mock/iBGTVault.sol";
 import { BexLPVault } from "../../mock/BexLPVault.sol";
 
+
 contract InfraredBexLPGoldivault is Goldivault {
 
+
+  /// @notice Constructor of this contract
   constructor(
     address _ot,
     address _yt,
-    address _depositToken,
-    address _depositVault,
-    address _ibgt,
-    address _ibgtVault,
-    address _ired,
-    address _iredVault,
     address _multisig,
-    address[] memory _yieldTokens
+    address _timelock
   ) Goldivault(
     _ot,
     _yt,
-    _depositToken,
-    _depositVault,
-    _ibgt,
-    _ibgtVault,
-    _ired,
-    _iredVault,
     _multisig,
-    _yieldTokens
+    _timelock
   ) {}
 
   function _vaultDeposit(uint256 amount) internal override {

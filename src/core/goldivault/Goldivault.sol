@@ -43,15 +43,16 @@ abstract contract Goldivault {
   uint256 public yieldFee;
   uint256 public delay;
   uint256 public duration;
-  address public immutable ot;
-  address public immutable yt;
-  address public immutable depositToken;
-  address public immutable depositVault;
-  address public immutable ibgt;
-  address public immutable ibgtVault;
-  address public immutable ired;
-  address public immutable iredVault;
+  address public ot;
+  address public yt;
+  address public depositToken;
+  address public depositVault;
+  address public ibgt;
+  address public ibgtVault;
+  address public ired;
+  address public iredVault;
   address public multisig;
+  address public timelock;
   address[] public yieldTokens;
   bool public concluded;
 
@@ -62,35 +63,17 @@ abstract contract Goldivault {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Constructor of this contract
   constructor(
     address _ot,
     address _yt,
-    address _depositToken,
-    address _depositVault,
-    address _ibgt,
-    address _ibgtVault,
-    address _ired,
-    address _iredVault,
     address _multisig,
-    address[] memory _yieldTokens
+    address _timelock
   ) {
     ot = _ot;
     yt = _yt;
-    depositToken = _depositToken;
-    depositVault = _depositVault;
-    ibgt = _ibgt;
-    ibgtVault = _ibgtVault;
-    ired = _ired;
-    iredVault = _iredVault;
     multisig = _multisig;
-    concluded = false;
-    startTime = block.timestamp;
-    ERC20(_depositToken).approve(_depositVault, type(uint256).max);
-    ERC20(_ibgt).approve(_ibgtVault, type(uint256).max);
-    ERC20(_ired).approve(_iredVault, type(uint256).max);
-    for(uint8 i; i < _yieldTokens.length; ++i) {
-      yieldTokens.push(_yieldTokens[i]);
-    }
+    timelock = _timelock;
   }
 
 
@@ -104,6 +87,7 @@ abstract contract Goldivault {
   error NotExpired();
   error NotConcluded();
   error NotMultisig();
+  error NotTimelock();
   error AlreadyConcluded();
   error ExcessiveRedeem();
 
@@ -168,18 +152,39 @@ abstract contract Goldivault {
     _concludeVaultRewards();
   }
 
-  /// @notice Renews concluded vault
-  function renew() external {
-    if(msg.sender != multisig) revert NotMultisig();
-    if(concludeTime < block.timestamp || !concluded) revert NotConcluded();
-    startTime = block.timestamp;
-    endTime = block.timestamp + duration;
-    concluded = false;
-  }
-
   /// @notice Compounds yield from vault and restakes it
   function compound() external {
     _compoundVaultRewards();
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                    PERMISSIONED FUNCTIONS                  */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice Renews concluded vault
+  function renew() external {
+    if(msg.sender != timelock) revert NotTimelock();
+    if(!concluded) revert NotConcluded();
+    startTime = block.timestamp;
+    endTime = block.timestamp + duration;
+    concludeTime = 0;
+    concluded = false;
+  }
+
+  /// @notice Allows DAO to set protocol parameters
+  /// @param _earlyWithdrawalFee New early withdrawal fee
+  /// @param _yieldFee New vault fee
+  /// @param _delay New vault delay
+  /// @param _duration New vault duration
+  function changeProtocolParameters(uint256 _earlyWithdrawalFee, uint256 _yieldFee, uint256 _delay, uint256 _duration) external {
+    if(msg.sender != timelock) revert NotTimelock();
+    earlyWithdrawalFee = _earlyWithdrawalFee;
+    yieldFee = _yieldFee;
+    delay = _delay;
+    duration = _duration;
+    endTime = block.timestamp + _duration;
   }
 
   /// @notice Allows DAO to add yield tokens to vault
@@ -191,23 +196,40 @@ abstract contract Goldivault {
     }
   }
 
-  /// @notice Allows DAO to set early withdrawal fee
-  /// @param _earlyWithdrawalFee New early withdrawal fee
-  function setEarlyWithdrawalFee(uint256 _earlyWithdrawalFee) external {
+  /// @notice Allows the multisig to initialize the protocol
+  function initializeProtocol(
+    address _depositToken,
+    address _depositVault,
+    address _ibgt,
+    address _ibgtVault,
+    address _ired,
+    address _iredVault,
+    uint256 _earlyWithdrawalFee,
+    uint256 _yieldFee,
+    uint256 _delay,
+    uint256 _duration,
+    address[] memory _yieldTokens
+  ) external {
     if(msg.sender != multisig) revert NotMultisig();
+    depositToken = _depositToken;
+    depositVault = _depositVault;
+    ibgt = _ibgt;
+    ibgtVault = _ibgtVault;
+    ired = _ired;
+    iredVault = _iredVault;
     earlyWithdrawalFee = _earlyWithdrawalFee;
-  }
-
-  /// @notice Allows DAO to set protocol parameters
-  /// @param _yieldFee New vault fee
-  /// @param _delay New vault delay
-  /// @param _duration New vault duration
-  function setParameters(uint256 _yieldFee, uint256 _delay, uint256 _duration) external {
-    if(msg.sender != multisig) revert NotMultisig();
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
+    concluded = false;
+    startTime = block.timestamp;
     endTime = block.timestamp + _duration;
+    ERC20(_depositToken).approve(_depositVault, type(uint256).max);
+    ERC20(_ibgt).approve(_ibgtVault, type(uint256).max);
+    ERC20(_ired).approve(_iredVault, type(uint256).max);
+    for(uint8 i; i < _yieldTokens.length; ++i) {
+      yieldTokens.push(_yieldTokens[i]);
+    }
   }
 
 

@@ -106,6 +106,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 dayOfPrgDebt = 1369878868594621;
   uint256 oneDayPrgBoosted = 137808219178082178000;
   uint256 oneDayPrgMaxBoosted = 143835616438356150000;
+  uint256 govTimeYield = twoDaysPrg + twoDaysPrg + twoDaysPrg;
 
   uint256 goldilendDuration = 1209600;
   uint256 singleBorrowInterest = 45726853068117;
@@ -148,34 +149,37 @@ abstract contract BaseTest is Test, IERC721Receiver {
     uint8[] memory boosts = new uint8[](2);
     boosts[0] = 6;
     boosts[1] = 9;
+    address[] memory rewardTokens = new address[](1);
+    rewardTokens[0] = address(honey);
     goldilend = new Goldilend(
-      1000e18,
-      1e17,
-      1e13,
-      10,
       address(goldilockedComputed),
+      address(timelockComputed),
       address(this),
       honeyjar,
       address(ibgt),
       address(ibgtvault),
       boostNfts,
-      boosts
+      boosts,
+      rewardTokens
     );
 
-    // initial configuration of goldilend
+    // initialization of goldilend
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
-    address[] memory rewardTokens = new address[](1);
-    rewardTokens[0] = address(honey);
-    goldilend.setValue(100e18, nfts, values);
-    goldilend.setShareRates(45, 5);
-    goldilend.setDurations(7 days, 21 days);
-    goldilend.setBorrowingActive(true);
-    goldilend.addRewardTokens(rewardTokens);
+    goldilend.initializeProtocol(
+      nfts,
+      values,
+      100e18,
+      45,
+      5,
+      7 days, 
+      21 days,
+      1000e18
+    );
     deal(address(ibgt), address(goldilend), 1000e18);
     deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
 
@@ -194,7 +198,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAmt[1] = 12_000_000e18;
     allocationsAmt[2] = 10_000_000e18;
     allocationsAmt[3] = 7_000_000e18;
-    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), allocationsAddress, allocationsAmt, prgMintAmount);
+    goldilocked = new Goldilocked(address(goldiswap), address(goldilend), address(govlocks), address(honey), address(timelock), allocationsAddress, allocationsAmt, prgMintAmount);
 
     // deploy goldigovernor
     goldigov = new Goldigovernor(address(timelock), address(govlocks), address(this), 5761, 69, 4e18);
@@ -207,17 +211,22 @@ abstract contract BaseTest is Test, IERC721Receiver {
     goldivault = new InfraredBexLPGoldivault(
       address(ot),
       address(yt),
+      address(this),
+      address(timelock)
+    );
+    goldivault.initializeProtocol(
       address(bexlp),
       address(bexvault),
       address(ibgt),
       address(ibgtvault),
       address(ibgt),
       address(ibgtvault),
-      address(this),
+      30,
+      20,
+      1 days,
+      365 days,
       yieldTokens
     );
-    goldivault.setEarlyWithdrawalFee(30);
-    goldivault.setParameters(20, 1 days, 365 days);
   }
 
   modifier dealandApproveUserHoney() {

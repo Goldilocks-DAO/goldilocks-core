@@ -304,27 +304,71 @@ contract UnitGoldilockedTest is BaseTest {
     assertEq(goldilocked.balanceOf(address(this)), oneDayPrg + prgMintAmount);
   }
 
-  function testChangePorridgeEmissionsFailMultisig() public {
+  function testChangePorridgeEmissionsFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotMultisig.selector));
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotTimelock.selector));
     goldilocked.changePrgEmissions(69);
   }
 
   function testChangePorridgeEmissionsSuccess() public {
-    goldilocked.changePrgEmissions(69);
+    bytes memory _calldata = abi.encodeWithSignature("changePrgEmissions(uint256)", 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilocked);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory values = new uint256[](1);
+    values[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
+    assertEq(executed, true);
     assertEq(goldilocked.ANNUAL_PORRIDGE_EMISSIONS(), 69);
   }
 
-  function testMintPorridgeFailMultisig() public {
+  function testMintPorridgeFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotMultisig.selector));
-    goldilocked.mintPorridge(69);
+    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotTimelock.selector));
+    goldilocked.mintPorridge(address(0x69), 69);
   }
 
   function testMintPorridgeSuccess() public {
-    goldilocked.mintPorridge(69);
+    bytes memory _calldata = abi.encodeWithSignature("mintPorridge(address,uint256)", address(this), 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilocked);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory values = new uint256[](1);
+    values[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
+    assertEq(executed, true);
     assertEq(goldilocked.balanceOf(address(this)), 69 + prgMintAmount);
   }
 
@@ -387,11 +431,32 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), 1e18);
     goldilocked.stake(1e18);
     vm.warp(15768000 + 1);
-    goldilocked.changePrgEmissions(1e18);
+    bytes memory _calldata = abi.encodeWithSignature("changePrgEmissions(uint256)", 1e18);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilocked);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory values = new uint256[](1);
+    values[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days + block.timestamp);
+    goldigov.execute(1);
     vm.warp(block.timestamp + 15768000);
     goldilocked.claim();
+    uint256 extraGovTimeYield = 8219178082191780;
 
-    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, 75e16);
+    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, 75e16 + extraGovTimeYield);
   }
 
   function testChangePrgEmissionsDoubleAfterDay() public {
@@ -399,11 +464,31 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     vm.warp(1 days + 1);
-    goldilocked.changePrgEmissions(1e18);
+    bytes memory _calldata = abi.encodeWithSignature("changePrgEmissions(uint256)", 1e18);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilocked);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory values = new uint256[](1);
+    values[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days + block.timestamp);
+    goldigov.execute(1);
     vm.warp(block.timestamp + 1 days);
     goldilocked.claim();
 
-    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, oneDayPrg + twoDaysPrg);
+    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, oneDayPrg + twoDaysPrg + govTimeYield);
   }
 
   function testChangePrgEmissionsHalfAfterDay() public {
@@ -411,11 +496,31 @@ contract UnitGoldilockedTest is BaseTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     vm.warp(1 days + 1);
-    goldilocked.changePrgEmissions(25e16);
+    bytes memory _calldata = abi.encodeWithSignature("changePrgEmissions(uint256)", 25e16);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilocked);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory values = new uint256[](1);
+    values[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days + block.timestamp);
+    goldigov.execute(1);
     vm.warp(block.timestamp + 1 days);
     goldilocked.claim();
 
-    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, oneDayPrg + halfDayPrg);
+    assertEq(goldilocked.balanceOf(address(this)) - prgMintAmount, oneDayPrg + halfDayPrg + govTimeYield);
   }
 
   function testTeamUnstakeFail() public {

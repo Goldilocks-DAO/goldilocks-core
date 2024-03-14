@@ -67,6 +67,7 @@ contract FuzzInfraredBexLPGoldivaultTest is BaseTest {
     vm.assume(duration > 365 days + 1 && duration < 1e40);
     vm.warp(duration);
     goldivault.conclude();
+    vm.prank(address(timelock));
     goldivault.renew();
 
     assertEq(goldivault.concluded(), false);

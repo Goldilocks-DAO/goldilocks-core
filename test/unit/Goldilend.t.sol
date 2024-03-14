@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../lib/forge-std/src/Test.sol";
-import {FixedPointMathLib} from "./../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { INFT } from "../../src/mock/INFT.sol";
@@ -414,7 +412,7 @@ contract UnitGoldilendTest is BaseTest {
   }
 
   function testSingleBorrowFailActive() public {
-    goldilend.setBorrowingActive(false);
+    goldilend.changeBorrowingActive(false);
     vm.expectRevert(abi.encodeWithSelector(Goldilend.NotActive.selector));
     goldilend.borrow(69, 69, address(0x69), 69);
   }
@@ -486,7 +484,7 @@ contract UnitGoldilendTest is BaseTest {
 
   function testMultipleBorrowFailActive() public {
     (address[] memory nfts, uint256[] memory ids) = beras();
-    goldilend.setBorrowingActive(false);
+    goldilend.changeBorrowingActive(false);
     vm.expectRevert(abi.encodeWithSelector(Goldilend.NotActive.selector));
     goldilend.borrow(69, 69, nfts, ids);
   }
@@ -692,19 +690,7 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 1);
   }
 
-  function testSetMultisigFailMultisig() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.setMultisig(address(0x69));
-  }
-
-  function testSetMultisigSuccess() public {
-    goldilend.setMultisig(address(0x69));
-    
-    assertEq(goldilend.multisig(), address(0x69));
-  }
-
-  function testSetValueFailMultisig() public {
+  function testChangeValueFailTimelock() public {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
@@ -712,60 +698,245 @@ contract UnitGoldilendTest is BaseTest {
     values[0] = 50;
     values[1] = 50;
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.setValue(69, nfts, values);
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotTimelock.selector));
+    goldilend.changeValue(nfts, values, 69);
   }
 
-  function testSetValueSuccess() public {
+  function testChangeValueSuccess() public {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
-    goldilend.setValue(69, nfts, values);
+    bytes memory _calldata = abi.encodeWithSignature("changeValue(address[],uint256[],uint256)", nfts, values, 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilend);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
+    assertEq(executed, true);
     assertEq(goldilend.totalValuation(), 69);
     assertEq(goldilend.nftFairValues(address(bondbear)), 50);
     assertEq(goldilend.nftFairValues(address(bandbear)), 50);
   }
 
-  function testSetProtocolInterestRateFailMultisig() public {
+  function testChangeProtocolInterestRateFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.setProtocolInterestRate(69);
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotTimelock.selector));
+    goldilend.changeProtocolInterestRate(69);
   }
 
-  function testSetProtocolInterestRateSuccess() public {
-    goldilend.setProtocolInterestRate(69);
+  function testChangeProtocolInterestRateSuccess() public {
+    bytes memory _calldata = abi.encodeWithSignature("changeProtocolInterestRate(uint256)", 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilend);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
+    assertEq(executed, true);
     assertEq(goldilend.protocolInterestRate(), 69);
   }
 
-  function testSetShareRatesFailMultisig() public {
+  function testChangeShareRatesFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.setShareRates(69, 69);
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotTimelock.selector));
+    goldilend.changeShareRates(69, 69);
   }
 
-  function testSetShareRatesSuccess() public {
-    goldilend.setShareRates(69, 69);
+  function testChangeShareRatesSuccess() public {
+    bytes memory _calldata = abi.encodeWithSignature("changeShareRates(uint256,uint256)", 69, 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilend);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
+    assertEq(executed, true);
     assertEq(goldilend.multisigShare(), 69);
     assertEq(goldilend.honeyjarShare(), 69);
   }
 
-  function testEmergencyWithdrawFailMultisig() public {
+  function testChangeSlopeFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.emergencyWithdraw();
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotTimelock.selector));
+    goldilend.changeSlope(69);
   }
 
-  function testEmergencyWithdrawSuccess() public {
-    goldilend.emergencyWithdraw();
+  function testChangeSlopeSuccess() public {
+    bytes memory _calldata = abi.encodeWithSignature("changeSlope(uint256)", 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilend);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
-    assertEq(ibgt.balanceOf(address(this)), 1000e18);
-    assertEq(ibgt.balanceOf(address(goldilend)), 0);
+    assertEq(executed, true);
+    assertEq(goldilend.slope(), 69);
+  }
+
+  function testChangeDurationsFailTimelock() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotTimelock.selector));
+    goldilend.changeDurations(69, 69);
+  }
+
+  function testChangeDurationsSuccess() public {
+    bytes memory _calldata = abi.encodeWithSignature("changeDurations(uint256,uint256)", 69, 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilend);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
+
+    assertEq(executed, true);
+    assertEq(goldilend.minDuration(), 69);
+    assertEq(goldilend.maxDuration(), 69);
+  }
+
+  function testChangePrgEmissionsFailTimelock() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotTimelock.selector));
+    goldilend.changePrgEmissions(69);
+  }
+
+  function testChangePrgEmissionsSuccess() public {
+    bytes memory _calldata = abi.encodeWithSignature("changePrgEmissions(uint256)", 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilend);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
+
+    assertEq(executed, true);
+    assertEq(goldilend.ANNUAL_PORRIDGE_EMISSIONS(), 69);
+  }
+
+  function testAddRewardTokensFailMultisig() public {
+    address[] memory rewardTokens = new address[](0);
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
+    goldilend.addRewardTokens(rewardTokens);
+  }
+
+  function testAddRewardTokensSuccess() public {
+    address[] memory rewardTokens = new address[](2);
+    rewardTokens[0] = address(0x69);
+    rewardTokens[1] = address(0x699);
+    goldilend.addRewardTokens(rewardTokens);
+
+    assertEq(goldilend.rewardTokens(1), address(0x69));
+    assertEq(goldilend.rewardTokens(2), address(0x699));
+  }
+
+  function testChangeBorrowingActiveFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
+    goldilend.changeBorrowingActive(false);
+  }
+
+  function testChangeBorrowingActiveSuccess() public {
+    goldilend.changeBorrowingActive(false);
+    
+    assertEq(goldilend.borrowingActive(), false);
   }
 
   function testMultisigInterestClaimFailMultisig() public {
@@ -787,7 +958,7 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 2057708388065);
   }
 
-  function testHoneyjarInterestClaimFailMultisig() public {
+  function testHoneyjarInterestClaimFailHoneyjar() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(Goldilend.NotHoneyjar.selector));
     goldilend.honeyjarInterestClaim();
@@ -807,70 +978,88 @@ contract UnitGoldilendTest is BaseTest {
     assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 228634265340);
   }
 
-  function testSetSlopeFailMultisig() public {
+  function testInitializeProtocolFailMultisig() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.setSlope(69);
+    address[] memory nfts = new address[](0);
+    uint256[] memory values = new uint256[](0);    
+    goldilend.initializeProtocol(
+      nfts,
+      values,
+      100e18,
+      45,
+      5,
+      7 days, 
+      21 days,
+      1000e18
+    );
   }
 
-  function testSetSlopeSuccess() public {
-    goldilend.setSlope(69);
+  function testInitializeProtocolSuccess() public {
+    address[] memory nfts = new address[](2);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    uint256[] memory values = new uint256[](2);
+    values[0] = 50;
+    values[1] = 50;
+    goldilend.initializeProtocol(
+      nfts,
+      values,
+      100e18,
+      45,
+      5,
+      7 days, 
+      21 days,
+      1000e18
+    );
     
-    assertEq(goldilend.slope(), 69);
+    assertEq(goldilend.nftFairValues(address(bondbear)), 50);
+    assertEq(goldilend.nftFairValues(address(bandbear)), 50);
+    assertEq(goldilend.totalValuation(), 100e18);
+    assertEq(goldilend.multisigShare(), 45);
+    assertEq(goldilend.honeyjarShare(), 5);
+    assertEq(goldilend.minDuration(), 7 days);
+    assertEq(goldilend.maxDuration(), 21 days);
+    assertEq(goldilend.poolSize(), 1000e18);
+    assertEq(goldilend.protocolInterestRate(), 1e17);
+    assertEq(goldilend.porridgeMultiple(), 1e13);
+    assertEq(goldilend.slope(), 10);
+    assertEq(goldilend.borrowingActive(), true);
   }
 
-  function testSetDurationsFailMultisig() public {
+  function testSunsetProtocolFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.setDurations(69, 69);
+    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotTimelock.selector));
+    goldilend.sunsetProtocol();
   }
 
-  function testSetDurationsSuccess() public {
-    goldilend.setDurations(69, 69);
+  function testSunsetProtocolSuccess() public {
+    bytes memory _calldata = abi.encodeWithSignature("sunsetProtocol()");
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilend);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
-    assertEq(goldilend.minDuration(), 69);
-    assertEq(goldilend.maxDuration(), 69);
-  }
-
-  function testSetBorrowingActiveFailMultisig() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.setBorrowingActive(false);
-  }
-
-  function testSetBorrowingActiveSuccess() public {
-    goldilend.setBorrowingActive(false);
-    
-    assertEq(goldilend.borrowingActive(), false);
-  }
-
-  function testChangePrgEmissionsFailMultisig() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.changePrgEmissions(69);
-  }
-
-  function testChangePrgEmissionsSuccess() public {
-    goldilend.changePrgEmissions(69);
-
-    assertEq(goldilend.ANNUAL_PORRIDGE_EMISSIONS(), 69);
-  }
-
-  function testAddRewardTokensFailMultisig() public {
-    address[] memory rewardTokens = new address[](0);
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilend.NotMultisig.selector));
-    goldilend.addRewardTokens(rewardTokens);
-  }
-
-  function testAddRewardTokensSuccess() public {
-    address[] memory rewardTokens = new address[](2);
-    rewardTokens[0] = address(0x69);
-    rewardTokens[1] = address(0x699);
-    goldilend.addRewardTokens(rewardTokens);
-
-    assertEq(goldilend.rewardTokens(1), address(0x69));
-    assertEq(goldilend.rewardTokens(2), address(0x699));
+    assertEq(executed, true);
+    assertEq(ibgt.balanceOf(address(this)), 1000e18);
+    assertEq(ibgt.balanceOf(address(goldilend)), 0);
   }
 
 }
