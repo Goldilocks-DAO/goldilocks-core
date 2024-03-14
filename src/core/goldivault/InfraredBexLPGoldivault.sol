@@ -61,7 +61,7 @@ contract InfraredBexLPGoldivault is Goldivault {
     for(uint8 i; i < yieldTokensLength; ++i) {
       SafeTransferLib.safeTransfer(yieldTokens[i], multisig, ERC20(yieldTokens[i]).balanceOf(address(this)) * yieldFee / 100);
     }
-    iBGTVault(ibgtVault).stake(ibgtrewards - (ibgtrewards * yieldFee / 100));
+    iBGTVault(ibgtVault).stake(ibgtrewards * (1000 - yieldFee));
   }
 
 }
