@@ -1,4 +1,4 @@
-﻿# Goldiswap Smart Contract Documentation
+﻿﻿# Goldiswap Smart Contract Documentation
 
 ## Overview
 
@@ -136,17 +136,17 @@ Transfers HONEY to the user who is borrowing against their locks.
 - `amount`: Amount of HONEY to transfer.
 - `fee`: Fee that is sent to the treasury.
 
-### `porridgeMint(address to, uint256 amount)`
+### `porridgeMint(address to, uint256 amount, uint256 cost)`
 
 Mints LOCKS tokens from PORRIDGE token stirring.
 
 - `to`: Recipient of minted LOCKS tokens.
 - `amount`: Amount of minted LOCKS tokens.
+-  `cost`: Cost of the floor price of the minted LOCKS tokens.
 
 ### `injectLiquidity(uint256 amount)`
 
 Allows the DAO to inject liquidity into the contract.
 
 - `amount`: Amount of liquidity to add. 
-
 

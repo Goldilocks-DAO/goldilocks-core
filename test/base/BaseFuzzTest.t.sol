@@ -12,6 +12,10 @@ abstract contract BaseFuzzTest is BaseTest {
   uint256 oneDayPrg = 136986301369863000000;
   uint256 dayOfPrgDebt = 1369878868594621;
 
+  function setUp() public override {
+    deployProtocol();
+  }
+
   modifier dealUseriBGT() {
     deal(address(ibgt), address(this), type(uint256).max / 2);
     ibgt.approve(address(goldilend), type(uint256).max / 2);

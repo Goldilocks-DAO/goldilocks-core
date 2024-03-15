@@ -38,6 +38,10 @@ abstract contract BaseUnitTest is BaseTest {
   uint256 yearMockBexLPYield = 11574074074074000;  
   uint256 govLocksAmt = 5e18;
 
+  function setUp() public override {
+    deployProtocol();
+  }
+
   modifier dealandApproveUserHoney() {
     deal(address(honey), address(this), type(uint256).max / 2);
     honey.approve(address(goldiswap), type(uint256).max / 2);
@@ -70,7 +74,6 @@ abstract contract BaseUnitTest is BaseTest {
     deal(address(honey), address(goldiswap), type(uint256).max);
     _;
   }
-
 
   modifier dealUseriBGT() {
     deal(address(ibgt), address(this), type(uint256).max / 2);
@@ -191,6 +194,7 @@ abstract contract BaseUnitTest is BaseTest {
     uint256[] memory ids = new uint256[](2);
     ids[0] = 1;
     ids[1] = 1;
+
     return (nfts, ids);
   }
 
@@ -217,6 +221,7 @@ abstract contract BaseUnitTest is BaseTest {
     ids[5] = 5;
     IERC721(honeycomb).setApprovalForAll(address(goldilend), true);
     IERC721(beradrome).setApprovalForAll(address(goldilend), true);
+
     return (nfts, ids);
   }
 
@@ -227,6 +232,7 @@ abstract contract BaseUnitTest is BaseTest {
     uint256[] memory ids = new uint256[](2);
     ids[0] = 1;
     ids[1] = 1;
+    
     return (nfts, ids);
   }
 

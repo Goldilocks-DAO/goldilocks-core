@@ -77,7 +77,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
   yBexLPToken yt;
   BexLPToken bexlp;
   BexLPVault bexvault;
-  address honeyjar = address(0xdddd);
 
   uint256 initialFSL = 1_050_000e18;
   uint256 initialPSL = 320_000e18;
@@ -85,8 +84,11 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 prgMintAmount = 200_000_000e18;
   uint256 txAmount = 10e18;
   uint256 locksAmount = 100_000e18;
+  address honeyjar = address(0xdddd);
 
-  function setUp() public virtual {
+  function setUp() public virtual {}
+
+  function deployProtocol() public {
     
     // precompute addresses
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(13));
