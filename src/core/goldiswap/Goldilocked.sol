@@ -303,7 +303,7 @@ contract Goldilocked is ERC20 {
   /// @param user Address of user
   /// @param floorPrice Current floor price of $LOCKS
   function _borrowLimit(address user, uint256 floorPrice) internal view returns (uint256) {
-    uint256 staked = stakedLocks[msg.sender];
+    uint256 staked = stakedLocks[user];
     uint256 locked = _lockedLocks(user);
     return FixedPointMathLib.mulWad(floorPrice, staked - locked);
   }

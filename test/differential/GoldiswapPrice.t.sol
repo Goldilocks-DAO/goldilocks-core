@@ -311,7 +311,7 @@ contract DifferentialGoldiswapPriceTest is BaseUnitTest {
     uint256 pythonMarketPrice = abi.decode(result, (uint256));
     uint256 variance = pythonMarketPrice / 1000;
     assert(pythonMarketPrice + variance > solidityMarketPrice);
-    assert(pythonMarketPrice - variance < solidityMarketPrice);    
+    assert(pythonMarketPrice - variance < solidityMarketPrice);
   }
 
 }
