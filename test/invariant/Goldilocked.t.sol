@@ -5,8 +5,18 @@ import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
 
 contract InvariantGoldilockedTest is BaseInvariantTest {
 
-  function invariant_handlerStakedIsAlwaysZero() public {
-    assertEq(goldilocked.stakedLocks(address(goldilockedHandler)), 0);
+  function invariant_conservationOfLocks() public {
+    assertEq(
+      goldiswap.balanceOf(address(goldilockedHandler)) + goldilocked.stakedLocks(address(goldilockedHandler)),
+      goldilockedHandler.locksMintAmount()
+    );
+  }
+
+  function invariant_solvencyStakes() public {
+    assertEq(
+    goldilocked.stakedLocks(address(goldilockedHandler)),
+    goldilockedHandler.ghost_stakeSum() - goldilockedHandler.ghost_unstakeSum()
+    );
   }
 
 }
