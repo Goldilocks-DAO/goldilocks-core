@@ -170,7 +170,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAddress[26] = address(0x6969696969);
     allocationsAddress[27] = address(0x6969696969);
     allocationsAddress[28] = address(0x6969696969);
-    allocationsAddress[29] = address(0x6969696969);
+    allocationsAddress[29] = address(0x696969696969);
     uint256[] memory allocationsAmt = new uint256[](30);
     allocationsAmt[0] = 12_000_000e18;
     allocationsAmt[1] = 12_000_000e18;

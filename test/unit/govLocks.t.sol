@@ -136,6 +136,7 @@ contract UnitgovLocksTest is BaseUnitTest {
 
     assertEq(goldiswap.balanceOf(address(this)), 0);
     assertEq(govlocks.balanceOf(address(this)), govLocksAmt);
+    assertEq(govlocks.getVotes(address(this)), govLocksAmt);
   }
 
   function testWithdrawSuccess() public {
@@ -147,6 +148,7 @@ contract UnitgovLocksTest is BaseUnitTest {
 
     assertEq(goldiswap.balanceOf(address(this)), govLocksAmt);
     assertEq(govlocks.balanceOf(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
   }
 
   function testDelegateOtherSuccess() public {
@@ -187,6 +189,9 @@ contract UnitgovLocksTest is BaseUnitTest {
     assertEq(govlocks.getPriorVotes(address(0x6969), block.number - 1), 0);
     assertEq(govlocks.getPriorVotes(address(0x420420), block.number - 1), govLocksAmt);
     assertEq(govlocks.getPriorVotes(address(this), block.number - 1), 0);
+    assertEq(govlocks.getVotes(address(0x6969)), 0);
+    assertEq(govlocks.getVotes(address(0x420420)), govLocksAmt);
+    assertEq(govlocks.getVotes(address(this)), 0);
   }
 
   function testDelegateDelegateVote() public {
@@ -279,6 +284,121 @@ contract UnitgovLocksTest is BaseUnitTest {
     vm.warp(4);
 
     assertEq(govlocks.getVotes(honeyjar), 5_000_000e18);
+  }
+
+  function testWithdrawDelegate() public {
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
+    govlocks.withdraw(govLocksAmt);
+    govlocks.delegate(address(0xabccba));
+
+    assertEq(goldiswap.balanceOf(address(this)), govLocksAmt);
+    assertEq(govlocks.balanceOf(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
+    assertEq(govlocks.getVotes(address(0xabccba)), 0);
+  }
+
+  function testDelegateWithdraw() public {
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
+    govlocks.delegate(address(0xabccba));
+    assertEq(govlocks.getVotes(address(0xabccba)), govLocksAmt);
+    govlocks.withdraw(govLocksAmt);
+
+    assertEq(goldiswap.balanceOf(address(this)), govLocksAmt);
+    assertEq(govlocks.balanceOf(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
+    assertEq(govlocks.getVotes(address(0xabccba)), 0);
+  }
+
+  function testDepositTransfer() public {
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
+    SafeTransferLib.safeTransfer(address(govlocks), address(0xabccba), govLocksAmt);
+
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(0xabccba)), govLocksAmt);
+    assertEq(govlocks.getVotes(address(0xabccba)), 0);
+  }
+
+  function testDepositDelegateTransfer() public {
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
+    govlocks.delegate(address(0xabccba));
+    SafeTransferLib.safeTransfer(address(govlocks), address(0xabccba), govLocksAmt);
+
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(0xabccba)), govLocksAmt);
+    assertEq(govlocks.getVotes(address(0xabccba)), 0);
+  }
+
+  function testDepositTransferOtherDelegateSelf() public {
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
+    SafeTransferLib.safeTransfer(address(govlocks), address(0xabccba), govLocksAmt);
+    vm.prank(address(0xabccba));
+    govlocks.delegate(address(0xabccba));
+
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(0xabccba)), govLocksAmt);
+    assertEq(govlocks.getVotes(address(0xabccba)), govLocksAmt);
+  }
+
+  function testDepositDelegateTransferOtherDelegateSelf() public {
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
+    govlocks.delegate(address(0xabccba));
+    SafeTransferLib.safeTransfer(address(govlocks), address(0xabccba), govLocksAmt);
+    vm.prank(address(0xabccba));
+    govlocks.delegate(address(0xabccba));
+
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(0xabccba)), govLocksAmt);
+    assertEq(govlocks.getVotes(address(0xabccba)), govLocksAmt);
+  }
+
+  function testStakeDelegateStake() public dealStakeLocks {
+    vm.warp(1 days + 1);
+    deal(address(goldiswap), address(this), locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    govlocks.delegate(address(this));
+    goldilocked.stake(locksAmount);
+
+    assertEq(goldilocked.userStakedLocks(address(this)), locksAmount + locksAmount);
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), locksAmount + locksAmount);
+  }
+
+  function testStakeDepositDelegate() public {
+    deal(address(goldiswap), address(this), locksAmount+locksAmount);
+    goldiswap.approve(address(goldilocked), locksAmount);
+    goldiswap.approve(address(govlocks), locksAmount);
+    goldilocked.stake(locksAmount);
+    govlocks.deposit(locksAmount);
+    govlocks.delegate(address(this));
+
+    assertEq(goldilocked.userStakedLocks(address(this)), locksAmount);
+    assertEq(goldiswap.balanceOf(address(this)), 0);
+    assertEq(govlocks.balanceOf(address(this)), locksAmount);
+    assertEq(govlocks.getVotes(address(this)), locksAmount + locksAmount);
+  }
+
+  function testSeedInvestorVotes() public {
+    assertEq(govlocks.getVotes(address(0x696969696969)), 7_000_000e18);
   }
 
 }

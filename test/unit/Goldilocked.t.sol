@@ -102,6 +102,33 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.prgPerTokenDebt(address(this)), dayOfPrgDebt);
   }
 
+  function testDelegateOtherUnstakeSuccess() public dealStakeLocks {
+    govlocks.delegate(address(0xacb));
+    vm.warp(1 days + 1);
+    goldilocked.unstake(locksAmount);
+
+    assertEq(goldilocked.userStakedLocks(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
+    assertEq(govlocks.getVotes(address(0xacb)), 0);
+    assertEq(goldiswap.balanceOf(address(goldilocked)), locksMintAmount);
+    assertEq(goldiswap.balanceOf(address(this)), locksAmount);
+    assertEq(goldilocked.balanceOf(address(this)), prgMintAmount);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), dayOfPrgDebt);
+  }
+
+  function testDelegateSelfUnstakeSuccess() public dealStakeLocks {
+    govlocks.delegate(address(this));
+    vm.warp(1 days + 1);
+    goldilocked.unstake(locksAmount);
+
+    assertEq(goldilocked.userStakedLocks(address(this)), 0);
+    assertEq(govlocks.getVotes(address(this)), 0);
+    assertEq(goldiswap.balanceOf(address(goldilocked)), locksMintAmount);
+    assertEq(goldiswap.balanceOf(address(this)), locksAmount);
+    assertEq(goldilocked.balanceOf(address(this)), prgMintAmount);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), dayOfPrgDebt);
+  }
+
   function testStirSuccess() public dealStakeLocks {
     uint256 oneDayPrgCost = 1438356164383561500;
     uint256 oneDayLocksProceeds = 136986301369863000000;

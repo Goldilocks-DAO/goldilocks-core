@@ -1,16 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../../lib/forge-std/src/Test.sol";
+import { BaseHandler } from "../../base/BaseHandler.t.sol";
 import { Goldilocked } from "../../../src/core/goldiswap/Goldilocked.sol";
 import { Goldiswap } from "../../../src/core/goldiswap/Goldiswap.sol";
 
-contract GoldilockedHandler is Test {
+contract GoldilockedHandler is BaseHandler {
 
   Goldilocked public goldilocked;
   Goldiswap public goldiswap;
-
-  uint256 public locksMintAmount = 100_000_000e18;
 
   uint256 public ghost_stakeSum;
   uint256 public ghost_unstakeSum;
