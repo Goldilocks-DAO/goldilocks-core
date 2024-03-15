@@ -20,14 +20,14 @@ pragma solidity ^0.8.20;
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
-import { Goldiswap } from "./Goldiswap.sol";
-import { govLocks } from "../goldigovernance/govLocks.sol";
+import { IGoldilocked } from "../../interfaces/IGoldilocked.sol";
+import { Goldiswap } from "../../core/goldiswap/Goldiswap.sol";
+import { govLocks } from "../../core/goldigovernance/govLocks.sol";
 
 
 /// @title Goldilocked
-/// @author geeb
-/// @author ampnoob
-contract Goldilocked is ERC20 {
+/// @notice Mints Porridge for staked Locks and facilitates borrowing against Locks
+contract Goldilocked is IGoldilocked, ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -35,24 +35,56 @@ contract Goldilocked is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  mapping(address => uint256) public stakedLocks;
-  mapping(address => uint256) public claimablePrg;
-  mapping(address => uint256) public prgPerTokenDebt;
-  mapping(address => uint256) public borrowedHoney;
-  mapping(address => uint256) public seedAllocations;
-  mapping(address => uint256) public teamAllocations;
-
+  /// @notice Timestamp of contract deployment
   uint256 public immutable deployTime;
+
+  /// @notice Timestamp of seed investor vesting start
   uint256 public immutable vestingStart;
+
+  /// @notice Timestamp of seed investor vesting end
   uint256 public immutable vestingEnd;
+
+  /// @notice Address of Goldiswap
   address public immutable goldiswap;
+
+  /// @notice Address of Goldilend
   address public immutable goldilend;
+
+  /// @notice Address of GovLocks
   address public immutable govlocks;
+
+  /// @notice Address of Honey
   address public immutable honey;
+
+  /// @notice Address of Timelock
+  address public immutable timelock;
+
+  /// @notice Annual emission rate of Porridge
   uint256 public ANNUAL_PORRIDGE_EMISSIONS;
+
+  /// @notice Timestamp of last update of claimable Porridge reward
   uint256 public lastUpdateTime;
+
+  /// @notice Claimable Porridge per staked Locks
   uint256 public claimablePrgPerLocksStored;
-  address public timelock;
+  
+  /// @notice Maps user to amount of staked Locks
+  mapping(address => uint256) public stakedLocks;
+
+  /// @notice Maps user to amount of claimable Porridge
+  mapping(address => uint256) public claimablePrg;
+
+  /// @notice Maps user to amount of Porridge Reward Debt
+  mapping(address => uint256) public prgPerTokenDebt;
+
+  /// @notice Maps user to amount of borrowed Honey
+  mapping(address => uint256) public borrowedHoney;
+
+  /// @notice Maps seed investor to initial Locks allocation
+  mapping(address => uint256) public seedAllocations;
+
+  /// @notice Maps team member to initial Locks allocation
+  mapping(address => uint256) public teamAllocations;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -62,13 +94,13 @@ contract Goldilocked is ERC20 {
 
   /// @notice Constructor of this contract
   /// @param _goldiswap Address of Goldiswap  
-  /// @param _goldilend Address of Goldilend contract
-  /// @param _govlocks Address of govLocks contract
-  /// @param _honey Address of the $HONEY contract
-  /// @param _timelock Address of the Timelock contract
-  /// @param allocationsAddress Addresses receiving $LOCKS
-  /// @param allocationsAmt Amounts of $LOCKS to stake and lock
-  /// @param initialSupply Initial supply of the $PRG token
+  /// @param _goldilend Address of Goldilend
+  /// @param _govlocks Address of GovLocks
+  /// @param _honey Address of Honey
+  /// @param _timelock Address of Timelock
+  /// @param allocationsAddress Addresses receiving Locks
+  /// @param allocationsAmt Amounts of Locks to stake and lock
+  /// @param initialSupply Initial supply of Porridge
   constructor(
     address _goldiswap,
     address _goldilend,
@@ -98,43 +130,15 @@ contract Goldilocked is ERC20 {
     _mint(msg.sender, initialSupply);
   }
 
-  /// @notice Returns the name of the $PRG token
+  /// @notice Returns the name of the Porridge token
   function name() public pure override returns (string memory) {
     return "Porridge";
   }
 
-  /// @notice Returns the symbol of the $PRG token
+  /// @notice Returns the symbol of the Porridge token
   function symbol() public pure override returns (string memory) {
     return "PRG";
   }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           ERRORS                           */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  error NotGoldilend();
-  error NotTimelock();
-  error NotVested();
-  error Vesting();
-  error InvalidUnstake();
-  error LocksBorrowedAgainst();
-  error InsufficientBorrowLimit();
-  error ExcessiveRepay();
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           EVENTS                           */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  event Staked(address indexed user, uint256 amount);
-  event Unstaked(address indexed user, uint256 amount);
-  event Stirred(address indexed user, uint256 amount);
-  event Claimed(address indexed user, uint256 amount);
-  event Borrowed(address indexed user, uint256 amount);
-  event Repaid(address indexed user, uint256 amount);
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -142,39 +146,33 @@ contract Goldilocked is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Returns the staked $LOCKS of a user
-  /// @param user Address of user
+  /// @inheritdoc IGoldilocked
   function userStakedLocks(address user) external view returns (uint256) {
     return stakedLocks[user];
   }
 
-  /// @notice Returns the claimable yield of a user
-  /// @param user Address of user
+  /// @inheritdoc IGoldilocked
   function userClaimablePrg(address user) external view returns (uint256) {
     return _calculateClaimablePrg(user);
   }
 
-  /// @notice Returns the locked $LOCKS of a user
-  /// @param user Address of user
+  /// @inheritdoc IGoldilocked
   function userLockedLocks(address user) external view returns (uint256) {
     return _lockedLocks(user);
   }
 
-  /// @notice Returns the borrowed $HONEY of a user
-  /// @param user Address of user
+  /// @inheritdoc IGoldilocked
   function userBorrowedHoney(address user) external view returns (uint256) {
     return borrowedHoney[user];
   }
 
-  /// @notice Returns the borrow limit of a user
-  /// @param user Address of user
+  /// @inheritdoc IGoldilocked
   function userBorrowLimit(address user) external view returns (uint256) {
     uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
     return _borrowLimit(user, floorPrice);
   }
 
-  /// @notice Returns the amount of unvested $LOCKS of a user
-  /// @param user Address of user
+  /// @inheritdoc IGoldilocked
   function userVestingCheck(address user) external view returns (uint256) {
     return _vestingCheck(user, type(uint256).max);
   }
@@ -185,8 +183,7 @@ contract Goldilocked is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Stakes $LOCKS and begins earning $PRG
-  /// @param amount Amount of $LOCKS to stake
+  /// @inheritdoc IGoldilocked
   function stake(uint256 amount) external {
     if(seedAllocations[msg.sender] > 0) revert Vesting();
     _updateClaimablePrg(msg.sender);
@@ -196,8 +193,7 @@ contract Goldilocked is ERC20 {
     emit Staked(msg.sender, amount);
   }
 
-  /// @notice Unstakes $LOCKS and claims $PRG 
-  /// @param amount Amount of $LOCKS to unstake
+  /// @inheritdoc IGoldilocked
   function unstake(uint256 amount) external {
     uint256 vest = _vestingCheck(msg.sender, amount);
     if(amount > vest) revert NotVested();
@@ -211,8 +207,7 @@ contract Goldilocked is ERC20 {
     emit Unstaked(msg.sender, amount);
   }
 
-  /// @notice Burns $PRG to buy $LOCKS at floor price
-  /// @param amount Amount of $PRG to burn
+  /// @inheritdoc IGoldilocked
   function stir(uint256 amount) external {
     uint256 cost = FixedPointMathLib.mulWad(amount, Goldiswap(goldiswap).floorPrice());
     _burn(msg.sender, amount);
@@ -221,26 +216,23 @@ contract Goldilocked is ERC20 {
     emit Stirred(msg.sender, amount);
   }
 
-  /// @notice Claim $PRG rewards
+  /// @inheritdoc IGoldilocked
   function claim() external {
     _updateClaimablePrg(msg.sender);
     _claim(msg.sender, claimablePrg[msg.sender]);    
   }
 
-  /// @notice Lends out $HONEY using staked $LOCKS as collateral
-  /// @dev borrowLimit is floor price of $LOCKS * amount of available staked $LOCKS
-  /// @param amount Amount of $HONEY to borrow
+  /// @inheritdoc IGoldilocked
   function borrow(uint256 amount) external {
     uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
     if(!_borrowLimitCheck(amount, floorPrice)) revert InsufficientBorrowLimit();
     borrowedHoney[msg.sender] += amount;
-    uint256 fee = _calcFee(amount);
+    uint256 fee = amount * 3 / 100;
     Goldiswap(goldiswap).borrowTransfer(msg.sender, amount, fee);
     emit Borrowed(msg.sender, amount);
   }
 
-  /// @notice Settles $HONEY loans
-  /// @param amount Amount of $HONEY to repay
+  /// @inheritdoc IGoldilocked
   function repay(uint256 amount) external {
     if(borrowedHoney[msg.sender] < amount) revert ExcessiveRepay();
     borrowedHoney[msg.sender] -= amount;
@@ -250,39 +242,17 @@ contract Goldilocked is ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                      INTERNAL FUNCTIONS                    */
+  /*                   INTERNAL VIEW FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-
-  /// @notice Updates claimable $PRG for user that is staking, unstaking, or claiming
-  /// @param user Address to update claimable $PRG for
-  function _updateClaimablePrg(address user) internal {
-    claimablePrgPerLocksStored = _claimablePrgPerLocks();
-    lastUpdateTime = block.timestamp;
-    if(user != address(0)) {
-      claimablePrg[user] = _calculateClaimablePrg(user);
-      prgPerTokenDebt[user] = claimablePrgPerLocksStored;
-    }
-  }
-
-  /// @notice Calculates and distributes $PRG
-  /// @param claimer User that is claiming $PRG
-  /// @param claimable Amount of $PRG to be claimed
-  function _claim(address claimer, uint256 claimable) internal {
-    if(claimable > 0) {
-      claimablePrg[claimer] = 0;
-      _mint(claimer, claimable);
-      emit Claimed(claimer, claimable);
-    }
-  }
     
-  /// @notice Calculates claimable $PRG
-  /// @param user Address to calculate claimable $PRG for
+  /// @notice Calculates claimable Porridge
+  /// @param user Address of user
   function _calculateClaimablePrg(address user) internal view returns (uint256) {
     return FixedPointMathLib.mulWad(stakedLocks[user], _claimablePrgPerLocks() - prgPerTokenDebt[user]) + claimablePrg[user];
   }
 
-  /// @notice Calculates claimable $PRG per $LOCKS token
+  /// @notice Calculates claimable Porridge per Locks token
   function _claimablePrgPerLocks() internal view returns (uint256) {
     if(block.timestamp - lastUpdateTime == 0) {
       return claimablePrgPerLocksStored;
@@ -290,41 +260,34 @@ contract Goldilocked is ERC20 {
     return claimablePrgPerLocksStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
   }
 
-  /// @notice Checks if the user has enough borrowing power
-  /// @param amount Amount of $HONEY the user is requesting to borrow
-  /// @param floorPrice Current floor price of $LOCKS
+  /// @notice Checks if user has enough borrowing power
+  /// @param amount Amount of Honey user is requesting to borrow
+  /// @param floorPrice Locks floor price
   function _borrowLimitCheck(uint256 amount, uint256 floorPrice) internal view returns (bool) {
     uint256 limit = _borrowLimit(msg.sender, floorPrice);
     return limit >= amount;
   }
 
-  /// @notice Checks if the user has enough borrowing power
-  /// @dev limit = $LOCKS floor price * available staked $LOCKS
+  /// @notice Returns Honey borrow limit
+  /// @dev limit = Locks floor price * staked Locks - locked locks
   /// @param user Address of user
-  /// @param floorPrice Current floor price of $LOCKS
+  /// @param floorPrice Locks floor price
   function _borrowLimit(address user, uint256 floorPrice) internal view returns (uint256) {
     uint256 staked = stakedLocks[user];
     uint256 locked = _lockedLocks(user);
     return FixedPointMathLib.mulWad(floorPrice, staked - locked);
   }
 
-  /// @notice Calculates the amount of locked $LOCKS for user
+  /// @notice Calculates amount of locked Locks
   /// @dev locked locks = borrowed honey / floor price
-  /// @param user Address to calculate locked $LOCKS for
+  /// @param user Address of user
   function _lockedLocks(address user) internal view returns (uint256) {
     return FixedPointMathLib.divWad(borrowedHoney[user], Goldiswap(goldiswap).floorPrice());
   }
 
-  /// @notice Calculates the fee for borrowing
-  /// @dev 3% fee
-  /// @param amount Amount of $HONEY the user is requesting to borrow
-  function _calcFee(uint256 amount) internal pure returns (uint256) {
-    return amount * 3 / 100;
-  }
-
-  /// @notice Calculates the amount of vested tokens for the user
+  /// @notice Calculates amount of unvested Locks
   /// @param user Address of unstaker
-  /// @param amount Amount of $LOCKS to unstake
+  /// @param amount Amount of Locks to unstake
   function _vestingCheck(address user, uint256 amount) internal view returns (uint256) {
     if(teamAllocations[user] > 0) return 0;
     uint256 initialAllocation = seedAllocations[user];
@@ -340,29 +303,52 @@ contract Goldilocked is ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      INTERNAL FUNCTIONS                    */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice Updates claimable Porridge
+  /// @param user Address of user
+  function _updateClaimablePrg(address user) internal {
+    claimablePrgPerLocksStored = _claimablePrgPerLocks();
+    lastUpdateTime = block.timestamp;
+    if(user != address(0)) {
+      claimablePrg[user] = _calculateClaimablePrg(user);
+      prgPerTokenDebt[user] = claimablePrgPerLocksStored;
+    }
+  }
+
+  /// @notice Mints claimable Porridge
+  /// @param claimer User that is claiming Porridge
+  /// @param claimable Amount of Porridge to be claimed
+  function _claim(address claimer, uint256 claimable) internal {
+    if(claimable > 0) {
+      claimablePrg[claimer] = 0;
+      _mint(claimer, claimable);
+      emit Claimed(claimer, claimable);
+    }
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Mints $PRG to user who is staking $GiBGT
-  /// @dev Only Goldilend contract can call this function
-  /// @param to Recipient of minted $PRG tokens
-  /// @param amount Amount of minted $PRG tokens
+  /// @inheritdoc IGoldilocked
   function goldilendMint(address to, uint256 amount) external {
     if(msg.sender != goldilend) revert NotGoldilend();
     _mint(to, amount);
   }
 
-  /// @notice Allows the DAO to change $PRG emissions
-  /// @param newPrgEmissions Sets the annual $PRG emission rate for $LOCKS staking
+  /// @inheritdoc IGoldilocked
   function changePrgEmissions(uint256 newPrgEmissions) external {
     if(msg.sender != timelock) revert NotTimelock();
     _updateClaimablePrg(address(0));
     ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
   }
 
-  /// @notice Allows the DAO to mint $PRG
-  /// @param newPorridge Amount of $PRG to mint
+  /// @inheritdoc IGoldilocked
   function mintPorridge(address multisig, uint256 newPorridge) external {
     if(msg.sender != timelock) revert NotTimelock();
     _mint(multisig, newPorridge);

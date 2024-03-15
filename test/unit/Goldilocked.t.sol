@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
+import { IGoldilocked } from "../../src/interfaces/IGoldilocked.sol";
 
 contract UnitGoldilockedTest is BaseUnitTest {
 
@@ -42,7 +43,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testStakeLocksFailVesting() public {
     vm.prank(address(0x69420));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.Vesting.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.Vesting.selector));
     goldilocked.stake(1);
   }
 
@@ -75,18 +76,18 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testUnstakeFailVest() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
     goldilocked.unstake(1);
   }
 
   function testUnstakeFailInvalid() public dealStakeLocks {
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.InvalidUnstake.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.InvalidUnstake.selector));
     goldilocked.unstake(locksAmount + 1);
   }
 
   function testUnstakeFailBorrowed() public dealStakeLocks dealGoldiswapMaxHoney {
     goldilocked.borrow(borrowAmount);
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.LocksBorrowedAgainst.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.LocksBorrowedAgainst.selector));
     goldilocked.unstake(1);
   }
 
@@ -256,7 +257,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
   }
 
   function testBorrowHoneyFailLimit() public dealStakeLocks dealGoldiswapMaxHoney {
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.InsufficientBorrowLimit.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.InsufficientBorrowLimit.selector));
     goldilocked.borrow(borrowAmount + 1);
   }
 
@@ -271,7 +272,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testRepayHoneyFailExcessive() public dealStakeLocks dealGoldiswapMaxHoney {
     goldilocked.borrow(borrowAmount);
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.ExcessiveRepay.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.ExcessiveRepay.selector));
     goldilocked.repay(borrowAmount + 1);
   }
 
@@ -317,7 +318,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
   }
 
   function testGoldilendMintFailGoldilend() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotGoldilend.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotGoldilend.selector));
     goldilocked.goldilendMint(address(this), 69);
   }
 
@@ -333,7 +334,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testChangePorridgeEmissionsFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotTimelock.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotTimelock.selector));
     goldilocked.changePrgEmissions(69);
   }
 
@@ -367,7 +368,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testMintPorridgeFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotTimelock.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotTimelock.selector));
     goldilocked.mintPorridge(address(0x69), 69);
   }
 
@@ -406,7 +407,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     goldilocked.stake(locksAmount);
     goldilocked.borrow(borrowAmount);
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_100_000e18)));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.LocksBorrowedAgainst.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.LocksBorrowedAgainst.selector));
     goldilocked.unstake((locksAmount/2) + 1);
   }
 
@@ -433,7 +434,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     goldilocked.stake(locksAmount);
     goldilocked.borrow(borrowAmount);
     vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.InsufficientBorrowLimit.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.InsufficientBorrowLimit.selector));
     goldilocked.borrow(borrowAmount+1);
   }
 
@@ -552,13 +553,13 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testTeamUnstakeFail() public {
     vm.prank(address(0x42069));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
     goldilocked.unstake(1);
   }
 
   function testSeedUnstakeFail() public {
     vm.prank(address(0x69420));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
     goldilocked.unstake(1);
   }
 
@@ -570,7 +571,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     vm.prank(address(0x69420));
     goldilocked.repay(36750e18);
     vm.prank(address(0x69420));
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
     goldilocked.unstake(3_500_001e18);
   }
 
@@ -591,7 +592,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     honey.approve(address(goldilocked), 73500e18);
     goldilocked.repay(73500e18);
     goldilocked.unstake(3_500_000e18);
-    vm.expectRevert(abi.encodeWithSelector(Goldilocked.NotVested.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
     goldilocked.unstake(3_500_000e18);
     vm.stopPrank();
   }
