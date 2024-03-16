@@ -458,9 +458,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     govlocks.deposit(5e18);
     vm.prank(admin);
     govlocks.delegate(admin);
-    deal(address(goldiswap), address(this), 401e18);
-    goldiswap.approve(address(govlocks), 401e18);
-    govlocks.deposit(401e18);
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");

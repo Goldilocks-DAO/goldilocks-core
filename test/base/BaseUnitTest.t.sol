@@ -150,9 +150,9 @@ abstract contract BaseUnitTest is BaseTest {
     uint256[] memory values = new uint256[](2);
     values[0] = 0;
     values[1] = 0;
-    deal(address(goldiswap), address(this), 401e18);
-    goldiswap.approve(address(govlocks), 401e18);
-    govlocks.deposit(401e18);
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");

@@ -60,7 +60,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     uint256 value,
     uint256 votes
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     address[] memory targets = new address[](1);
     targets[0] = target;
     string[] memory signatures = new string[](1);
@@ -89,7 +89,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
   function testFuzzExecute(
     uint256 votes
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     vm.assume(votes < 1_000_000_000_000_000e18);
     address[] memory targets = new address[](2);
     targets[0] = address(0x69);
@@ -171,7 +171,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     uint256 value,
     uint256 votes
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     address[] memory targets = new address[](1);
     targets[0] = target;
     string[] memory signatures = new string[](1);
@@ -202,7 +202,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     uint256 value,
     uint256 votes
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     address[] memory targets = new address[](1);
     targets[0] = target;
     string[] memory signatures = new string[](1);
@@ -233,7 +233,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     uint256 value,
     uint256 votes
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     address[] memory targets = new address[](1);
     targets[0] = target;
     string[] memory signatures = new string[](1);
@@ -265,7 +265,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     uint256 votes,
     string memory reason
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     address[] memory targets = new address[](1);
     targets[0] = target;
     string[] memory signatures = new string[](1);
@@ -301,7 +301,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     uint256 votes,
     uint256 adminVotes
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     vm.assume(votes < 1_000_000_000_000_000e18);
     vm.assume(adminVotes < 1_000_000_000_000_000e18);
     address[] memory targets = new address[](2);

@@ -99,7 +99,7 @@ contract Goldigovernor {
   uint32 public constant proposalMaxOperations = 10;
 
   /// @notice Amount of votes to reach quorum
-  uint256 public constant quorumVotes = 400e18; // 4% of $LOCKS
+  uint256 public constant quorumVotes = 9_500_000e18; // 5% of LOCKS
 
   /// @notice Typehash of ERC721Domain
   bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");

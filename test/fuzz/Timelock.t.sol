@@ -14,7 +14,7 @@ contract FuzzTimelockTest is BaseFuzzTest {
     uint256 value,
     uint256 votes
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     address[] memory targets = new address[](1);
     targets[0] = target;
     string[] memory signatures = new string[](1);
@@ -40,7 +40,7 @@ contract FuzzTimelockTest is BaseFuzzTest {
   function testFuzzExecuteTransaction(
     uint256 votes
   ) public {
-    vm.assume(votes > 400e18);
+    vm.assume(votes > quorumVotesNum);
     address[] memory targets = new address[](2);
     targets[0] = address(0x69);
     targets[1] = address(0x69);
