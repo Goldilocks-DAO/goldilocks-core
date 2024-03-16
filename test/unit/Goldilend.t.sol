@@ -483,6 +483,11 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(userLoan.liquidated, false);
   }
 
+  function testInterestCalculation() public dealUserBeras {
+    (address[] memory nfts, uint256[] memory ids) = beras();
+    
+  }
+
   function testMultipleBorrowFailActive() public {
     (address[] memory nfts, uint256[] memory ids) = beras();
     goldilend.changeBorrowingActive(false);
