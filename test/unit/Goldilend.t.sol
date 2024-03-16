@@ -614,6 +614,25 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(goldilend.poolSize(), 1000e18 + (userLoanBefore.interest * 950 / 1000));
   }
 
+  function testRepayHalfSuccess() public dealUseriBGT dealUserBeras {
+    goldilend.borrow(1e18, goldilendDuration, address(bondbear), 1);
+    Goldilend.Loan memory userLoanBefore = goldilend.lookupLoan(address(this), 1);
+    goldilend.repay((1e18+userLoanBefore.interest) / 2, 1);
+    Goldilend.Loan memory userLoan = goldilend.lookupLoan(address(this), 1);
+
+    assertEq(IERC721(address(bondbear)).balanceOf(address(goldilend)), 1);
+    assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 0);
+    assertEq(userLoan.collateralNFTs[0], address(bondbear));
+    assertEq(userLoan.collateralNFTIds[0], 1);
+    assertEq(userLoan.borrowedAmount, ((1e18+userLoanBefore.interest) / 2)+1);
+    assertEq(userLoan.interest, userLoanBefore.interest / 2);
+    assertEq(userLoan.duration, goldilendDuration);
+    assertEq(userLoan.endDate, block.timestamp + goldilendDuration);
+    assertEq(userLoan.loanId, 1);
+    assertEq(userLoan.liquidated, false);
+    assertEq(goldilend.outstandingDebt(), 5e17+1);
+  }
+
   function testMultipleBorrowRepayTransfers() public dealUseriBGT dealUserBeras {
     (address[] memory nfts, uint256[] memory ids) = beras();
     goldilend.borrow(1e18, goldilendDuration, nfts, ids);

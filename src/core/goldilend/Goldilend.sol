@@ -346,7 +346,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 interest = _calculateInterest(borrowAmount, debt, duration);
     Boost memory userBoost = boosts[msg.sender];
     if(userBoost.expiry > block.timestamp + duration) {
-      uint256 discount = 50;
+      uint256 discount = 500;
       if(userBoost.boostMagnitude < discount) {
         discount = 1000 - userBoost.boostMagnitude;
       }
@@ -392,7 +392,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 interest = _calculateInterest(borrowAmount, debt, duration);
     Boost memory userBoost = boosts[msg.sender];
     if(userBoost.expiry > block.timestamp + duration) {
-      uint256 discount = 50;
+      uint256 discount = 500;
       if(userBoost.boostMagnitude < discount) {
         discount = 1000 - userBoost.boostMagnitude;
       }
@@ -442,7 +442,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function liquidate(address user, uint256 userLoanId) external {
     (Loan memory userLoan, uint256 index) = _lookupLoan(user, userLoanId);
-    if(block.timestamp < userLoan.endDate || userLoan.liquidated) revert Unliquidatable();
+    if(block.timestamp < userLoan.endDate || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
     loans[user][index].liquidated = true;
     loans[user][index].borrowedAmount = 0;
     outstandingDebt -= userLoan.borrowedAmount - userLoan.interest;
@@ -472,7 +472,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 claimable = FixedPointMathLib.mulWad(stakedGiBGT[user], _claimablePrgPerGiBGT() - prgPerTokenDebt[user]) + claimablePrg[user];
     Boost memory userBoost = boosts[user];
     if(userBoost.expiry > block.timestamp) {
-      uint256 prgBoost = userBoost.boostMagnitude < 50 ? userBoost.boostMagnitude : 50;
+      uint256 prgBoost = userBoost.boostMagnitude < 500 ? userBoost.boostMagnitude : 500;
       return claimable * (1000 + prgBoost) / 1000;
     }
     return claimable;
