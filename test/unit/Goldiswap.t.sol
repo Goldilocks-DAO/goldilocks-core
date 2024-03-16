@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
+import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { IGoldiswap } from "../../src/interfaces/IGoldiswap.sol";
 
@@ -165,46 +166,18 @@ contract UnitGoldiswapTest is BaseUnitTest {
     assertEq(goldiswap.balanceOf(address(this)), oneDayLocksProceeds + locksAmount);
   }
 
-  function testInjectLiquidityFailGoldigov() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotTimelock.selector));
-    goldiswap.injectLiquidity(69, 69);
-  }
-
   function testInjectLiquiditySuccess() public {
-    bytes memory _calldata = abi.encodeWithSignature("approve(address,uint256)", address(goldiswap), 69+69);
-    bytes memory _calldatta = abi.encodeWithSignature("injectLiquidity(uint256,uint256)", 69, 69);
-    deal(address(honey), address(timelock), 69+69);
-    address[] memory targets = new address[](2);
-    targets[0] = address(honey);
-    targets[1] = address(goldiswap);
-    string[] memory signatures = new string[](2);
-    signatures[0] = "";
-    signatures[1] = "";
-    bytes[] memory calldatas = new bytes[](2);
-    calldatas[0] = _calldata;
-    calldatas[1] = _calldatta;
-    uint256[] memory values = new uint256[](2);
-    values[0] = 0;
-    values[1] = 0;
-    deal(address(goldiswap), address(this), 401e18);
-    goldiswap.approve(address(govlocks), 401e18);
-    govlocks.deposit(401e18);
-    govlocks.delegate(address(this));
-    vm.roll(2);
-    goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
-    goldigov.castVote(1, 1);
-    vm.roll(5900);
-    goldigov.queue(1);
-    vm.warp(6 days);
-    goldigov.execute(1);
-    (, , , , , , , , , bool executed) = goldigov.proposals(1);
+    uint256 fsl = goldiswap.fsl();
+    uint256 psl = goldiswap.psl();
+    uint256 fslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(69e18, fsl), (fsl + psl));
+    uint256 pslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(69e18, psl), (fsl + psl));
+    deal(address(honey), address(this), 69e18);
+    honey.approve(address(goldiswap), 69e18);
+    goldiswap.injectLiquidity(69e18);
 
-    assertEq(executed, true);
-    assertEq(goldiswap.fsl(), initialFSL + 69);
-    assertEq(goldiswap.psl(), initialPSL + 69);
-    assertEq(honey.balanceOf(address(goldiswap)), 69+69);
+    assertEq(goldiswap.fsl(), initialFSL + fslLiq);
+    assertEq(goldiswap.psl(), initialPSL + pslLiq);
+    assertEq(honey.balanceOf(address(goldiswap)), 69e18);
     assertEq(honey.balanceOf(address(timelock)), 0);
   }
 

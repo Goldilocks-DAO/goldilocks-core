@@ -49,6 +49,10 @@ interface IGoldiswap {
   /// @param amount Amount of Locks to redeem
   function redeem(uint256 amount) external;
 
+  /// @notice Inject liquidity into Goldiswap
+  /// @param liquidity Liquidity added to Goldiswap
+  function injectLiquidity(uint256 liquidity) external;
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                   PERMISSIONED FUNCTIONS                   */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -65,11 +69,5 @@ interface IGoldiswap {
   /// @param to Recipient of minted Locks tokens
   /// @param amount Amount of minted Locks tokens
   function porridgeMint(address to, uint256 amount, uint256 cost) external;
-
-  /// @notice Allows the DAO to inject liquidity into the contract
-  /// @dev Callable only by Timelock
-  /// @param fslLiq Liquidity added to FSL
-  /// @param pslLiq Liquidity added to PSL
-  function injectLiquidity(uint256 fslLiq, uint256 pslLiq) external;
 
 }

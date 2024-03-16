@@ -84,7 +84,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 prgMintAmount = 200_000_000e18;
   uint256 txAmount = 10e18;
   uint256 locksAmount = 100_000e18;
-  address honeyjar = address(0xdddd);
+  address apdao = address(0xdddd);
 
   function setUp() public virtual {}
 
@@ -125,7 +125,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     govlocks = new GovLocks(
       address(goldiswap),
       address(goldilockedComputed),
-      honeyjar,
+      apdao,
       locksMintAmount / 20
     );
 
@@ -208,29 +208,23 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(govlocks),
       address(honey),
       address(timelock),
+      prgMintAmount,
+      5e17,
       allocationsAddress,
-      allocationsAmt,
-      prgMintAmount
+      allocationsAmt
     );
 
     // deploy goldilend
-    address[] memory boostNfts = new address[](2);
-    boostNfts[0] = address(honeycomb);
-    boostNfts[1] = address(beradrome);
-    uint8[] memory boosts = new uint8[](2);
-    boosts[0] = 6;
-    boosts[1] = 9;
+
     address[] memory rewardTokens = new address[](1);
     rewardTokens[0] = address(honey);
     goldilend = new Goldilend(
       address(goldilocked),
       address(timelock),
       address(this),
-      honeyjar,
+      apdao,
       address(ibgt),
       address(ibgtvault),
-      boostNfts,
-      boosts,
       rewardTokens
     );
 
@@ -241,16 +235,26 @@ abstract contract BaseTest is Test, IERC721Receiver {
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
-    goldilend.initializeProtocol(
-      nfts,
-      values,
-      100e18,
+    address[] memory boostNfts = new address[](2);
+    boostNfts[0] = address(honeycomb);
+    boostNfts[1] = address(beradrome);
+    uint8[] memory boosts = new uint8[](2);
+    boosts[0] = 6;
+    boosts[1] = 9;
+    goldilend.initializeParameters(
       45,
       5,
-      7 days, 
+      7 days,
       21 days,
-      1000e18
+      1000e18,
+      1e17,
+      1e13,
+      10,
+      5e17,
+      30 days
     );
+    goldilend.initializeBeras(100e18, nfts, values);
+    goldilend.initializePartners(boostNfts, boosts);
     deal(address(ibgt), address(goldilend), 1000e18);
     deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
 

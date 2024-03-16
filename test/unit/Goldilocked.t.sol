@@ -363,7 +363,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
     assertEq(executed, true);
-    assertEq(goldilocked.ANNUAL_PORRIDGE_EMISSIONS(), 69);
+    assertEq(goldilocked.annualPrgEmissions(), 69);
   }
 
   function testMintPorridgeFailTimelock() public {

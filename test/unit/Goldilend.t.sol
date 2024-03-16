@@ -805,7 +805,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(executed, true);
     assertEq(goldilend.multisigShare(), 69);
-    assertEq(goldilend.honeyjarShare(), 69);
+    assertEq(goldilend.apdaoShare(), 69);
   }
 
   function testChangeSlopeFailTimelock() public {
@@ -908,7 +908,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
     assertEq(executed, true);
-    assertEq(goldilend.ANNUAL_PORRIDGE_EMISSIONS(), 69);
+    assertEq(goldilend.annualPrgEmissions(), 69);
   }
 
   function testAddRewardTokensFailMultisig() public {
@@ -959,73 +959,180 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 2057708388065);
   }
 
-  function testHoneyjarInterestClaimFailHoneyjar() public {
+  function testAPDAOInterestClaimFailapdao() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotHoneyjar.selector));
-    goldilend.honeyjarInterestClaim();
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotAPDAO.selector));
+    goldilend.apdaoInterestClaim();
   }
 
-  function testHoneyjarInterestClaimSuccess() public dealUseriBGT dealUserBeras {
+  function testAPDAOInterestClaimSuccess() public dealUseriBGT dealUserBeras {
     goldilend.borrow(1e18, goldilendDuration, address(bondbear), 1);
     Goldilend.Loan memory userLoanBefore = goldilend.lookupLoan(address(this), 1);
     goldilend.repay(1e18+userLoanBefore.interest, 1);
-    uint256 honeyibgtBalanceBefore = ibgt.balanceOf(honeyjar);
+    uint256 honeyibgtBalanceBefore = ibgt.balanceOf(apdao);
     uint256 goldilendibgtBalanceBefore = ibgt.balanceOf(address(goldilend));
-    vm.prank(honeyjar);
-    goldilend.honeyjarInterestClaim();
+    vm.prank(apdao);
+    goldilend.apdaoInterestClaim();
 
-    assertEq(goldilend.honeyjarClaims(), 0);
-    assertEq(ibgt.balanceOf(honeyjar), honeyibgtBalanceBefore + 228634265340);
+    assertEq(goldilend.apdaoClaims(), 0);
+    assertEq(ibgt.balanceOf(apdao), honeyibgtBalanceBefore + 228634265340);
     assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 228634265340);
   }
 
-  function testInitializeProtocolFailMultisig() public {
+  function testInitializeParametersFailMultisig() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector));
-    address[] memory nfts = new address[](0);
-    uint256[] memory values = new uint256[](0);    
-    goldilend.initializeProtocol(
-      nfts,
-      values,
-      100e18,
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector)); 
+    goldilend.initializeParameters(
       45,
       5,
       7 days, 
       21 days,
-      1000e18
+      1000e18,
+      1e17,
+      1e13,
+      10,
+      1e17,
+      30 days
     );
   }
 
-  function testInitializeProtocolSuccess() public {
+  function testInitializeParametersSuccess() public {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
-    goldilend.initializeProtocol(
-      nfts,
-      values,
-      100e18,
+    goldilend.initializeParameters(
       45,
       5,
       7 days, 
       21 days,
-      1000e18
+      1000e18,
+      1e17,
+      1e13,
+      10,
+      5e17,
+      30 days
     );
     
-    assertEq(goldilend.nftFairValues(address(bondbear)), 50);
-    assertEq(goldilend.nftFairValues(address(bandbear)), 50);
-    assertEq(goldilend.totalValuation(), 100e18);
     assertEq(goldilend.multisigShare(), 45);
-    assertEq(goldilend.honeyjarShare(), 5);
+    assertEq(goldilend.apdaoShare(), 5);
     assertEq(goldilend.minDuration(), 7 days);
     assertEq(goldilend.maxDuration(), 21 days);
     assertEq(goldilend.poolSize(), 1000e18);
     assertEq(goldilend.protocolInterestRate(), 1e17);
     assertEq(goldilend.porridgeMultiple(), 1e13);
     assertEq(goldilend.slope(), 10);
-    assertEq(goldilend.borrowingActive(), true);
+    assertEq(goldilend.annualPrgEmissions(), 5e17);
+    assertEq(goldilend.boostLockDuration(), 30 days);
+  }
+
+  function testInitializeBerasFailMultisig() public {
+    address[] memory nfts = new address[](2);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    uint256[] memory values = new uint256[](2);
+    values[0] = 50;
+    values[1] = 50;
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector)); 
+    goldilend.initializeBeras(
+      100e18,
+      nfts,
+      values
+    );
+  }
+
+  function testInitializeBerasSuccess() public {
+    address[] memory nfts = new address[](2);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    uint256[] memory values = new uint256[](2);
+    values[0] = 50;
+    values[1] = 50;
+    goldilend.initializeBeras(
+      100e18,
+      nfts,
+      values
+    );
+
+    assertEq(goldilend.totalValuation(), 100e18);
+    assertEq(goldilend.nftFairValues(address(bondbear)), 50);
+    assertEq(goldilend.nftFairValues(address(bandbear)), 50);
+  }
+
+  function testInitializePartnersFailMultisig() public {
+    address[] memory boostNfts = new address[](2);
+    boostNfts[0] = address(honeycomb);
+    boostNfts[1] = address(beradrome);
+    uint8[] memory boosts = new uint8[](2);
+    boosts[0] = 6;
+    boosts[1] = 9;
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector)); 
+    goldilend.initializePartners(boostNfts, boosts);
+  }
+
+  function testInitializePartnersSuccess() public {
+    address[] memory boostNfts = new address[](2);
+    boostNfts[0] = address(honeycomb);
+    boostNfts[1] = address(beradrome);
+    uint8[] memory boosts = new uint8[](2);
+    boosts[0] = 6;
+    boosts[1] = 9;
+    goldilend.initializePartners(boostNfts, boosts);
+
+    assertEq(goldilend.partnerNFTBoosts(address(honeycomb)), 6);
+    assertEq(goldilend.partnerNFTBoosts(address(beradrome)), 9);
+  }
+
+  function testAdjustBoostsFailTimelock() public {
+    address[] memory boostNfts = new address[](2);
+    boostNfts[0] = address(honeycomb);
+    boostNfts[1] = address(beradrome);
+    uint8[] memory boosts = new uint8[](2);
+    boosts[0] = 6;
+    boosts[1] = 9;
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotTimelock.selector));
+    goldilend.adjustBoosts(boostNfts, boosts, 30 days);
+  }
+
+  function testAdjustBoostsSuccess() public {
+    address[] memory boostNfts = new address[](2);
+    boostNfts[0] = address(honeycomb);
+    boostNfts[1] = address(beradrome);
+    uint8[] memory boosts = new uint8[](2);
+    boosts[0] = 6;
+    boosts[1] = 9;
+    bytes memory _calldata = abi.encodeWithSignature("adjustBoosts(address[],uint8[],uint256)", boostNfts, boosts, 30 days);
+    address[] memory targets = new address[](1);
+    targets[0] = address(goldilend);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), 401e18);
+    goldiswap.approve(address(govlocks), 401e18);
+    govlocks.deposit(401e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(5900);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
+
+    assertEq(executed, true);
+    assertEq(goldilend.partnerNFTBoosts(address(honeycomb)), 6);
+    assertEq(goldilend.partnerNFTBoosts(address(beradrome)), 9);
+    assertEq(goldilend.boostLockDuration(), 30 days);
   }
 
   function testSunsetProtocolFailTimelock() public {

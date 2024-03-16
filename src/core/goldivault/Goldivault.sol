@@ -26,7 +26,8 @@ import { YieldToken } from "./YieldToken.sol";
 
 
 /// @title Goldivaults
-/// @notice Splits yield bearing tokens into ownership and yield tokens
+/// @notice Splits deposited assets into ownership tokens representing
+/// deposited assets and yield tokens representing future yield of those assets
 abstract contract Goldivault is IGoldivault {
 
 

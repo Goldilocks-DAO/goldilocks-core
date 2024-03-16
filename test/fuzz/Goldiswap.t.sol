@@ -58,18 +58,21 @@ contract FuzzGoldiswapTest is BaseFuzzTest {
     assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - borrowAmount);
   }
 
-  function testFuzzInjectLiquidity(uint256 fsl, uint256 psl) public {
-    vm.assume(fsl < type(uint256).max / 4);
-    vm.assume(psl < type(uint256).max / 4);
-    deal(address(honey), address(timelock), fsl + psl);
+  function testFuzzInjectLiquidity(uint256 liquidity) public {
+    vm.assume(liquidity < 1e40);
+    uint256 _fsl = goldiswap.fsl();
+    uint256 _psl = goldiswap.psl();
+    uint256 fslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _fsl), (_fsl + _psl));
+    uint256 pslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _psl), (_fsl + _psl));
+    deal(address(honey), address(timelock), liquidity);
     vm.prank(goldiswap.timelock());
-    honey.approve(address(goldiswap), fsl + psl);
+    honey.approve(address(goldiswap), liquidity);
     vm.prank(goldiswap.timelock());
-    goldiswap.injectLiquidity(fsl, psl);
+    goldiswap.injectLiquidity(liquidity);
 
-    assertEq(goldiswap.fsl(), initialFSL + fsl);
-    assertEq(goldiswap.psl(), initialPSL + psl);
-    assertEq(honey.balanceOf(address(goldiswap)), fsl + psl);
+    assertEq(goldiswap.fsl(), initialFSL + fslLiq);
+    assertEq(goldiswap.psl(), initialPSL + pslLiq);
+    assertEq(honey.balanceOf(address(goldiswap)), liquidity);
     assertEq(honey.balanceOf(address(this)), 0);
   }
 

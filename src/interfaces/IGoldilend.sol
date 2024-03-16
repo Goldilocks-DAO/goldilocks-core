@@ -32,7 +32,7 @@ interface IGoldilend {
 
   error NotMultisig();
   error NotTimelock();
-  error NotHoneyjar();
+  error NotAPDAO();
   error NotActive();
   error ArrayMismatch();
   error InvalidBoost();
@@ -81,10 +81,10 @@ interface IGoldilend {
   /// @param user Address of user for query
   function userClaimablePrg(address user) external view returns (uint256);
 
-  /// @notice Returns the current GiBGT ratio
+  /// @notice Returns current GiBGT ratio
   function getGiBGTRatio() external view returns (uint256);
 
-  /// @notice Returns the fair value of NFTs available for loan origination
+  /// @notice Returns fair value of NFTs available for loan origination
   function getFairValues(address[] calldata collateralNFTs) external view returns (uint256);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -185,8 +185,8 @@ interface IGoldilend {
   /// @notice Allows the DAO to adjust shares of interest payment
   /// @dev Callable only by Timelock
   /// @param _multisigShare New share for multisig
-  /// @param _honeyjarShare New share for honeyjar
-  function changeShareRates(uint256 _multisigShare, uint256 _honeyjarShare) external;
+  /// @param _apdaoShare New share for apdao
+  function changeShareRates(uint256 _multisigShare, uint256 _apdaoShare) external;
 
   /// @notice Allows the DAO to adjust the degree of the protocol interest rate
   /// @dev Callable only by Timelock
@@ -214,27 +214,70 @@ interface IGoldilend {
   /// @param _borrowingActive Value that activates or inactivates
   function changeBorrowingActive(bool _borrowingActive) external;
 
-  /// @notice Allows the multisig to claim interest
+  /// @notice Allows multisig to claim interest
   /// @dev Callable only by multisig
   /// @dev 4.5% of all protocol interest
   function multisigInterestClaim() external;
 
-  /// @notice Allows the honeyjar to claim interest
-  /// @dev Callable only by honeyjar
+  /// @notice Allows APDAO to claim interest
+  /// @dev Callable only by APDAO
   /// @dev 0.5% of all protocol interest
-  function honeyjarInterestClaim() external;
+  function apdaoInterestClaim() external;
 
-  /// @notice Allows the multisig to initialize the protocol
+  /// @notice Allows multisig to initialize the protocol parameters
   /// @dev Callable only by multisig
-  function initializeProtocol(
-    address[] calldata _nfts,
-    uint256[] calldata _nftFairValues,
-    uint256 _totalValuation,
+  /// @param _multisigShare Share of interest payments to multisig
+  /// @param _apdaoShare of interest payments to apdao
+  /// @param _minDuration Minimum loan duration
+  /// @param _maxDuration Maximum loan duration
+  /// @param _startingPoolSize Initial pool size
+  /// @param _protocolInterestRate Initial interest rate of protocol
+  /// @param _porridgeMultiple Initial amount of Porridge emitted per staked GiBGT annually
+  /// @param _slope Initial rate at which interest rate increases
+  /// @param _annualPrgEmissions Annual emissions rate of Porridge
+  /// @param _boostLockDuration Duration to lock partner NFT for boost
+  function initializeParameters(
     uint256 _multisigShare,
-    uint256 _honeyjarShare,
+    uint256 _apdaoShare,
     uint256 _minDuration,
     uint256 _maxDuration,
-    uint256 _startingPoolSize
+    uint256 _startingPoolSize,
+    uint256 _protocolInterestRate,
+    uint256 _porridgeMultiple,
+    uint256 _slope,
+    uint256 _annualPrgEmissions,
+    uint256 _boostLockDuration
+  ) external;
+
+  /// @notice Allows multisig to initalize bera nft fair values
+  /// @dev Callable only by multisig
+  /// @param _nfts Bera nft addresses
+  /// @param _nftFairValues Bera nft fair values
+  /// @param _totalValuation Total valuation of Bera nft fair values
+  function initializeBeras(
+    uint256 _totalValuation,
+    address[] calldata _nfts,
+    uint256[] calldata _nftFairValues
+  ) external;
+
+  /// @notice Allows multisig to initialize partner nft boosts
+  /// @dev Callable only by multisig
+  /// @param _partnerNFTs Partnership NFTs
+  /// @param _partnerNFTBoosts Partnership NFTs Boosts
+  function initializePartners(
+    address[] memory _partnerNFTs, 
+    uint8[] memory _partnerNFTBoosts
+  ) external;
+
+  /// @notice Allows the DAO to adjust the partner boosts
+  /// @dev Callable only by Timelock
+  /// @param _partnerNFTs Partnership NFTs
+  /// @param _partnerNFTBoosts Partnership NFTs Boosts
+  /// @param _boostLockDuration Duration to lock partner NFT for boost
+  function adjustBoosts(
+    address[] memory _partnerNFTs, 
+    uint8[] memory _partnerNFTBoosts,
+    uint256 _boostLockDuration
   ) external;
 
   /// @notice Allows the DAO to sunset protocol

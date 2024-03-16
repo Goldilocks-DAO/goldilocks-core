@@ -177,6 +177,15 @@ contract Goldiswap is IGoldiswap, ERC20 {
     emit Redeem(msg.sender, amount);
   }
 
+  /// @inheritdoc IGoldiswap
+  function injectLiquidity(uint256 liquidity) external {
+    uint256 _fsl = fsl;
+    uint256 _psl = psl;
+    fsl += FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _fsl), (_fsl + _psl));
+    psl += FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _psl), (_fsl + _psl));
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), liquidity);
+  }
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                   INTERNAL VIEW FUNCTIONS                  */
@@ -344,14 +353,6 @@ contract Goldiswap is IGoldiswap, ERC20 {
     if(msg.sender != goldilocked) revert NotGoldilocked();
     fsl += cost;
     _mint(to, amount);
-  }
-
-  /// @inheritdoc IGoldiswap
-  function injectLiquidity(uint256 fslLiq, uint256 pslLiq) external {
-    if(msg.sender != timelock) revert NotTimelock();
-    fsl += fslLiq;
-    psl += pslLiq;
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), fslLiq + pslLiq);
   }
 
 }

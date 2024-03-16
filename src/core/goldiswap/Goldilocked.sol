@@ -60,7 +60,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   address public immutable timelock;
 
   /// @notice Annual emission rate of Porridge
-  uint256 public ANNUAL_PORRIDGE_EMISSIONS;
+  uint256 public annualPrgEmissions;
 
   /// @notice Timestamp of last update of claimable Porridge reward
   uint256 public lastUpdateTime;
@@ -98,6 +98,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   /// @param _govlocks Address of GovLocks
   /// @param _honey Address of Honey
   /// @param _timelock Address of Timelock
+  /// @param _annualPrgEmissions Initial annual Porridge emissions
   /// @param allocationsAddress Addresses receiving Locks
   /// @param allocationsAmt Amounts of Locks to stake and lock
   /// @param initialSupply Initial supply of Porridge
@@ -107,11 +108,11 @@ contract Goldilocked is IGoldilocked, ERC20 {
     address _govlocks,
     address _honey,
     address _timelock,
+    uint256 initialSupply,
+    uint256 _annualPrgEmissions,
     address[] memory allocationsAddress,
-    uint256[] memory allocationsAmt,
-    uint256 initialSupply
+    uint256[] memory allocationsAmt
   ) {
-    ANNUAL_PORRIDGE_EMISSIONS = 5e17;
     goldiswap = _goldiswap;
     goldilend = _goldilend;
     govlocks = _govlocks;
@@ -120,6 +121,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     deployTime = block.timestamp;
     vestingStart = block.timestamp + 90 days;
     vestingEnd = block.timestamp + 90 days + 365 days;
+    annualPrgEmissions = _annualPrgEmissions;
     uint256 floor = IGoldiswap(goldiswap).floorPrice();
     for(uint8 i; i < allocationsAddress.length; i++) {
       stakedLocks[allocationsAddress[i]] = allocationsAmt[i];
@@ -257,7 +259,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     if(block.timestamp - lastUpdateTime == 0) {
       return claimablePrgPerLocksStored;
     }
-    return claimablePrgPerLocksStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
+    return claimablePrgPerLocksStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastUpdateTime, 365 days), annualPrgEmissions);
   }
 
   /// @notice Checks if user has enough borrowing power
@@ -345,7 +347,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   function changePrgEmissions(uint256 newPrgEmissions) external {
     if(msg.sender != timelock) revert NotTimelock();
     _updateClaimablePrg(address(0));
-    ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
+    annualPrgEmissions = newPrgEmissions;
   }
 
   /// @inheritdoc IGoldilocked

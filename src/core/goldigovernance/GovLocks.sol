@@ -70,17 +70,17 @@ contract GovLocks is ERC20 {
   /// @notice Constructor of this contract
   /// @param _locks Address of Locks
   /// @param _goldilocked Address of Goldilocked
-  /// @param honeyjar Address of Honeyjar
-  /// @param honeyjarVotingPower Governance power to grant to Honeyjar
+  /// @param apdao Address of APDAO
+  /// @param apdaoVotingPower Governance power to grant to APDAO
   constructor(
     address _locks,
     address _goldilocked,
-    address honeyjar,
-    uint256 honeyjarVotingPower
+    address apdao,
+    uint256 apdaoVotingPower
   ) {
     locks = _locks;
     goldilocked = _goldilocked;
-    _moveDelegates(address(0), honeyjar, honeyjarVotingPower);
+    _moveDelegates(address(0), apdao, apdaoVotingPower);
   }
 
   /// @notice Returns the name of GovLocks token

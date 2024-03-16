@@ -28,7 +28,7 @@ import { iBGTVault } from "../../mock/iBGTVault.sol";
 
 
 /// @title Goldilend
-/// @notice Berachain NFT Lending
+/// @notice Bong Bear (and rebase) Fixed Term NFT Lending
 contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
 
 
@@ -39,9 +39,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
 
   /// @notice Address of Goldilocked
   address public immutable goldilocked;
-
-  /// @notice Address of honeyjar
-  address public immutable hj;
 
   /// @notice Address of iBGT
   address public immutable ibgt;
@@ -54,6 +51,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
 
   /// @notice Address of Timelock
   address public immutable timelock;
+
+  /// @notice Address of APDAO
+  address public immutable apdao;
 
   /// @notice Timestamp of contract deployment
   uint256 public deployTime;
@@ -70,7 +70,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Size of lending pool
   uint256 public poolSize;
   
-  /// @notice Amount of porridge emitted per staked GiBGT annually
+  /// @notice Amount of Porridge emitted per staked GiBGT annually
   uint256 public porridgeMultiple;
 
   /// @notice Rate at which interest rate increases
@@ -82,20 +82,23 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Maximum loan duration
   uint256 public maxDuration;
 
+  /// @notice Duration to lock partner NFT for boost
+  uint256 public boostLockDuration;
+
   /// @notice Portion of interest payments to multisig
   uint256 public multisigClaims;
 
-  /// @notice Portion of interest payments to honeyjar
-  uint256 public honeyjarClaims;
+  /// @notice Portion of interest payments to apdao
+  uint256 public apdaoClaims;
 
   /// @notice Share of interest payments to multisig
   uint256 public multisigShare;
 
-  /// @notice Share of interest payments ot honeyjar
-  uint256 public honeyjarShare;
+  /// @notice Share of interest payments to apdao
+  uint256 public apdaoShare;
 
   /// @notice Annual emission rate of Porridge
-  uint256 public ANNUAL_PORRIDGE_EMISSIONS;
+  uint256 public annualPrgEmissions;
   
   /// @notice Total staked GiBGT
   uint256 public totalStakedGiBGT;
@@ -158,38 +161,30 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param _goldilocked Address of Goldilocked
   /// @param _multisig Address of the multisig
   /// @param _timelock Address of the multisig
-  /// @param _hj Address of Honeyjar
+  /// @param _apdao Address of APDAO
   /// @param _ibgt Address of iBGT
   /// @param _ibgtVault Address of iBGTVault
-  /// @param _partnerNFTs Partnership NFTs
-  /// @param _partnerNFTBoosts Partnership NFTs Boosts
   /// @param _rewardTokens Reward tokens from iBGT staking
   constructor(
     address _goldilocked,
     address _timelock,
     address _multisig,
-    address _hj,
+    address _apdao,
     address _ibgt, 
     address _ibgtVault,
-    address[] memory _partnerNFTs, 
-    uint8[] memory _partnerNFTBoosts,
     address[] memory _rewardTokens
   ) {
     goldilocked = _goldilocked;
     multisig = _multisig;
     timelock = _timelock;
-    hj = _hj;
+    apdao = _apdao;
     ibgt = _ibgt;
     ibgtVault = _ibgtVault;
     deployTime = block.timestamp;
-    for(uint8 i; i < _partnerNFTs.length; i++) {
-      partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
-    }
     for(uint8 i; i < _rewardTokens.length; ++i) {
       rewardTokens.push(_rewardTokens[i]);
       lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
     }
-    ANNUAL_PORRIDGE_EMISSIONS = 5e17;
   }
 
   /// @notice Returns the name of GiBGT token
@@ -392,9 +387,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
     if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
     if(collateralNFTs.length != collateralNFTIds.length) revert ArrayMismatch();
-    uint256 fairValue = _calculateFairValue(collateralNFTs);
     uint256 debt = outstandingDebt;
-    if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+    if(borrowAmount > _calculateFairValue(collateralNFTs) || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     uint256 interest = _calculateInterest(borrowAmount, debt, duration);
     Boost memory userBoost = boosts[msg.sender];
     if(userBoost.expiry > block.timestamp + duration) {
@@ -433,7 +427,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     outstandingDebt -= repayAmount - interest;
     loans[msg.sender][index].borrowedAmount -= repayAmount;
     loans[msg.sender][index].interest -= interest;
-    poolSize += userLoan.interest * (1000 - (multisigShare + honeyjarShare)) / 1000;
+    poolSize += userLoan.interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       for(uint256 i; i < userLoan.collateralNFTs.length; i++){
@@ -453,7 +447,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     loans[user][index].borrowedAmount = 0;
     outstandingDebt -= userLoan.borrowedAmount - userLoan.interest;
     if(msg.sender != multisig || block.timestamp < userLoan.endDate + 5 days) {
-      poolSize += userLoan.interest * (1000 - (multisigShare + honeyjarShare)) / 1000;
+      poolSize += userLoan.interest * (1000 - (multisigShare + apdaoShare)) / 1000;
       _updateInterestClaims(userLoan.interest);
       SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), userLoan.borrowedAmount);
     }
@@ -495,7 +489,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(block.timestamp - lastPrgUpdateTime == 0) {
       return claimablePrgPerGiBGTStored;
     }
-    return claimablePrgPerGiBGTStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastPrgUpdateTime, 365 days), ANNUAL_PORRIDGE_EMISSIONS);
+    return claimablePrgPerGiBGTStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastPrgUpdateTime, 365 days), annualPrgEmissions);
   }
 
   /// @notice Calculates claimable Porridge per GiBGT
@@ -648,7 +642,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       newUserBoost = Boost({
         partnerNFTs: nft,
         partnerNFTIds: id,
-        expiry: block.timestamp + 30 days,
+        expiry: block.timestamp + boostLockDuration,
         boostMagnitude: magnitude
       });
     }
@@ -662,7 +656,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       newUserBoost = Boost({
         partnerNFTs: nfts,
         partnerNFTIds: ids,
-        expiry: block.timestamp + 30 days,
+        expiry: block.timestamp + boostLockDuration,
         boostMagnitude: magnitude
       });
     }
@@ -684,7 +678,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       newUserBoost = Boost({
         partnerNFTs: partnerNFTs,
         partnerNFTIds: partnerNFTIds,
-        expiry: block.timestamp + 30 days,
+        expiry: block.timestamp + boostLockDuration,
         boostMagnitude: magnitude
       });
     }
@@ -700,18 +694,18 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       newUserBoost = Boost({
         partnerNFTs: nfts,
         partnerNFTIds: ids,
-        expiry: block.timestamp + 30 days,
+        expiry: block.timestamp + boostLockDuration,
         boostMagnitude: magnitude
       });
     }
   }
 
-  /// @notice Update internal variables tracking amount of interest for multisig and honeyjar
-  /// @dev Multisig can claim 4.5% and honeyjar can claim 0.5% of interest paid
+  /// @notice Update internal variables tracking amount of interest for multisig and apdao
+  /// @dev Multisig can claim 4.5% and apdao can claim 0.5% of interest paid
   /// @param interest Interest paid during repayment
   function _updateInterestClaims(uint256 interest) internal {
     multisigClaims += interest * multisigShare / 1000;
-    honeyjarClaims += interest * honeyjarShare / 1000;
+    apdaoClaims += interest * apdaoShare / 1000;
   }
 
 
@@ -740,10 +734,10 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
-  function changeShareRates(uint256 _multisigShare, uint256 _honeyjarShare) external {
+  function changeShareRates(uint256 _multisigShare, uint256 _apdaoShare) external {
     if(msg.sender != timelock) revert NotTimelock();
     multisigShare = _multisigShare;
-    honeyjarShare = _honeyjarShare;
+    apdaoShare = _apdaoShare;
   }
 
   /// @inheritdoc IGoldilend
@@ -763,7 +757,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   function changePrgEmissions(uint256 newPrgEmissions) external {
     if(msg.sender != timelock) revert NotTimelock();
     _updateClaimablePrg(address(0));
-    ANNUAL_PORRIDGE_EMISSIONS = newPrgEmissions;
+    annualPrgEmissions = newPrgEmissions;
   }
 
   /// @inheritdoc IGoldilend
@@ -790,38 +784,75 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
-  function honeyjarInterestClaim() external {
-    if(msg.sender != hj) revert NotHoneyjar();
-    uint256 interestClaim = honeyjarClaims;
-    honeyjarClaims = 0;
-    SafeTransferLib.safeTransfer(ibgt, hj, interestClaim);
+  function apdaoInterestClaim() external {
+    if(msg.sender != apdao) revert NotAPDAO();
+    uint256 interestClaim = apdaoClaims;
+    apdaoClaims = 0;
+    SafeTransferLib.safeTransfer(ibgt, apdao, interestClaim);
   }
 
   /// @inheritdoc IGoldilend
-  function initializeProtocol(
-    address[] calldata _nfts,
-    uint256[] calldata _nftFairValues,
-    uint256 _totalValuation,
+  function initializeParameters(
     uint256 _multisigShare,
-    uint256 _honeyjarShare,
+    uint256 _apdaoShare,
     uint256 _minDuration,
     uint256 _maxDuration,
-    uint256 _startingPoolSize
+    uint256 _startingPoolSize,
+    uint256 _protocolInterestRate,
+    uint256 _porridgeMultiple,
+    uint256 _slope,
+    uint256 _annualPrgEmissions,
+    uint256 _boostLockDuration
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
-    for(uint256 i; i < _nftFairValues.length; i++) {
-      nftFairValues[_nfts[i]] = _nftFairValues[i];
-    }
-    totalValuation = _totalValuation;
     multisigShare = _multisigShare;
-    honeyjarShare = _honeyjarShare;
+    apdaoShare = _apdaoShare;
     minDuration = _minDuration;
     maxDuration = _maxDuration;
     poolSize = _startingPoolSize;
-    protocolInterestRate = 1e17;
-    porridgeMultiple = 1e13;
-    slope = 10;
+    protocolInterestRate = _protocolInterestRate;
+    porridgeMultiple = _porridgeMultiple;
+    slope = _slope;
+    annualPrgEmissions = _annualPrgEmissions;
+    boostLockDuration = _boostLockDuration;
+  }
+
+  /// @inheritdoc IGoldilend
+  function initializeBeras(
+    uint256 _totalValuation,
+    address[] calldata _nfts,
+    uint256[] calldata _nftFairValues
+  ) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    totalValuation = _totalValuation;
+    for(uint256 i; i < _nftFairValues.length; i++) {
+      nftFairValues[_nfts[i]] = _nftFairValues[i];
+    }
     borrowingActive = true;
+  }
+
+  /// @inheritdoc IGoldilend
+  function initializePartners(
+    address[] memory _partnerNFTs, 
+    uint8[] memory _partnerNFTBoosts
+  ) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    for(uint8 i; i < _partnerNFTs.length; i++) {
+      partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
+    }
+  }
+
+  /// @inheritdoc IGoldilend
+  function adjustBoosts(
+    address[] memory _partnerNFTs, 
+    uint8[] memory _partnerNFTBoosts,
+    uint256 _boostLockDuration
+  ) external {
+    if(msg.sender != timelock) revert NotTimelock();
+    for(uint8 i; i < _partnerNFTs.length; i++) {
+      partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
+    }
+    boostLockDuration = _boostLockDuration;
   }
 
   /// @inheritdoc IGoldilend
