@@ -3,9 +3,9 @@ sys.path.append('price_tests')
 from market_functions import buy, floor_raise, get_initital_target_ratio
 from eth_abi import encode
 
-fsl = 1050000
-psl = 320000
-supply = 100000000
+fsl = 1140000
+psl = 400000
+supply = 190000000
 floor_price = fsl/supply
 market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**6)
 target = get_initital_target_ratio()

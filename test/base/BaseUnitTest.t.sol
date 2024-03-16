@@ -7,17 +7,17 @@ import { INFT } from "../../src/mock/INFT.sol";
 
 abstract contract BaseUnitTest is BaseTest {
 
-  uint256 costOf10Locks = 262883805905681940;
-  uint256 taxof10Locks = 788651417717045;
-  uint256 proceedsof10Locks = 249739615610397843;
-  uint256 startingFloorPrice = 10500000000000000;
+  uint256 costOf10Locks = 187938603930731900;
+  uint256 taxof10Locks = 563815811792195;
+  uint256 proceedsof10Locks = 178541673734195305;
+  uint256 startingFloorPrice = 6e15;
   uint256 randomFloorPrice = 5362996113397347965249;
-  uint256 startingMarketPrice = 26288380590568194;
+  uint256 startingMarketPrice = 18793860393073190;
   uint256 randomMarketPrice = 17195479260432920174524;
-  uint256 decreasedTargetRatio = 313600037037037037;
-  uint256 maxDecreasedTargetRatio = 304000000000000000;
+  uint256 decreasedTargetRatio = 372400043981481481;
+  uint256 maxDecreasedTargetRatio = 361000000000000000;
 
-  uint256 borrowAmount = 1_050e18;
+  uint256 borrowAmount = 600e18;
   uint256 oneDayPrg = 136986301369863000000;
   uint256 halfDayPrg = 68493150684931500000;
   uint256 oneDayHalfPrg = 205479452054794500000;

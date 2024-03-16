@@ -78,9 +78,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
   BexLPToken bexlp;
   BexLPVault bexvault;
 
-  uint256 initialFSL = 1_050_000e18;
-  uint256 initialPSL = 320_000e18;
-  uint256 locksMintAmount = 100_000_000e18;
+  uint256 initialFSL = 1_140_000e18;
+  uint256 initialPSL = 400_000e18;
+  uint256 locksMintAmount = 190_000_000e18;
   uint256 prgMintAmount = 200_000_000e18;
   uint256 txAmount = 10e18;
   uint256 locksAmount = 100_000e18;

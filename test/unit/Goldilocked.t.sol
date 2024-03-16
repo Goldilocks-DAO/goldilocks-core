@@ -131,7 +131,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
   }
 
   function testStirSuccess() public dealStakeLocks {
-    uint256 oneDayPrgCost = 1438356164383561500;
+    uint256 oneDayPrgCost = 821917808219178000;
     uint256 oneDayLocksProceeds = 136986301369863000000;
     deal(address(honey), address(this), oneDayPrgCost);
     honey.approve(address(goldilocked), oneDayPrgCost);
@@ -406,7 +406,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     goldilocked.borrow(borrowAmount);
-    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_100_000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_280_000e18)));
     vm.expectRevert(abi.encodeWithSelector(IGoldilocked.LocksBorrowedAgainst.selector));
     goldilocked.unstake((locksAmount/2) + 1);
   }
@@ -417,7 +417,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     goldilocked.borrow(borrowAmount);
-    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_100_000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_280_000e18)));
     goldilocked.unstake(locksAmount/2);
 
     assertEq(goldiswap.balanceOf(address(this)), locksAmount/2);
@@ -433,7 +433,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     goldilocked.borrow(borrowAmount);
-    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_280_000e18)));
     vm.expectRevert(abi.encodeWithSelector(IGoldilocked.InsufficientBorrowLimit.selector));
     goldilocked.borrow(borrowAmount+1);
   }
@@ -444,7 +444,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
     goldilocked.borrow(borrowAmount);
-    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2100000e18)));
+    vm.store(address(goldiswap), bytes32(uint256(0)), bytes32(uint256(2_280_000e18)));
     goldilocked.borrow(borrowAmount);
 
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount);
@@ -587,10 +587,10 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testSeedUnstakeFailBeforeVest() public {
     vm.warp(7776000 + 15768000 + 1);
-    deal(address(honey), address(0x69420), 73500e18);
+    deal(address(honey), address(0x69420), 42000e18);
     vm.startPrank(address(0x69420));
-    honey.approve(address(goldilocked), 73500e18);
-    goldilocked.repay(73500e18);
+    honey.approve(address(goldilocked), 42000e18);
+    goldilocked.repay(42000e18);
     goldilocked.unstake(3_500_000e18);
     vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
     goldilocked.unstake(3_500_000e18);
@@ -599,10 +599,10 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testSeedUnstakeFullVestSuccess() public {
     vm.warp(90 days + 365 days + 1);
-    deal(address(honey), address(0x69420), 73500e18);
+    deal(address(honey), address(0x69420), 42000e18);
     vm.startPrank(address(0x69420));
-    honey.approve(address(goldilocked), 73500e18);
-    goldilocked.repay(73500e18);
+    honey.approve(address(goldilocked), 42000e18);
+    goldilocked.repay(42000e18);
     goldilocked.unstake(7_000_000e18);
     vm.stopPrank();
     
@@ -614,12 +614,12 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testSeedUnstakeRestakeFail() public {
     vm.warp(7776000 + 15768000 + 1);
-    deal(address(honey), address(0x69420), 73500e18);
+    deal(address(honey), address(0x69420), 42000e18);
     deal(address(goldiswap), address(0x69420), 1e18);
     vm.startPrank(address(0x69420));
-    honey.approve(address(goldilocked), 73500e18);
+    honey.approve(address(goldilocked), 42000e18);
     goldiswap.approve(address(goldilocked), 1e18);
-    goldilocked.repay(73500e18);
+    goldilocked.repay(42000e18);
     goldilocked.unstake(3_500_000e18);
     vm.stopPrank();
     vm.warp(block.timestamp + 15768000);

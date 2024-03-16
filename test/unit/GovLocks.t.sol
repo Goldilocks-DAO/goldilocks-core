@@ -283,7 +283,7 @@ contract UnitGovLocksTest is BaseUnitTest {
     govlocks.delegate(honeyjar);
     vm.warp(4);
 
-    assertEq(govlocks.getVotes(honeyjar), 5_000_000e18);
+    assertEq(govlocks.getVotes(honeyjar), 95_000_000e17);
   }
 
   function testWithdrawDelegate() public {

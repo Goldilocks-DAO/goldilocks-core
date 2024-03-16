@@ -75,7 +75,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
   }
 
   function testRedeemSuccess() public dealLocks dealGoldiswapHoney {
-    uint256 rawTotal = 105000000000000000;
+    uint256 rawTotal = 60000000000000000;
     goldiswap.redeem(txAmount);
 
     assertEq(goldiswap.fsl(), initialFSL - rawTotal);
@@ -87,13 +87,13 @@ contract UnitGoldiswapTest is BaseUnitTest {
   function testFloorDecreaseNoDecrease() public dealLocks dealGoldiswapHoney {
     goldiswap.sell(txAmount, 0);
 
-    assertEq(goldiswap.targetRatio(), 32e16);
+    assertEq(goldiswap.targetRatio(), 38e16);
   }
 
   function testFloorDecreaseNotElapsed() public dealLocks dealGoldiswapHoney {
     goldiswap.sell(txAmount, 0);
     
-    assertEq(goldiswap.targetRatio(), 32e16);
+    assertEq(goldiswap.targetRatio(), 38e16);
     assertEq(goldiswap.lastFloorDecrease(), 1);
   }
 
@@ -133,8 +133,6 @@ contract UnitGoldiswapTest is BaseUnitTest {
   }
 
   function testBorrowTransferSuccess() public {
-    uint256 locksAmount = 100000e18;
-    uint256 borrowAmount = 1050e18;
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);

@@ -60,7 +60,7 @@ interface IGoldiswap {
   /// @param fee Fee sent to treasury
   function borrowTransfer(address to, uint256 amount, uint256 fee) external;
 
-  /// @notice Mints Porridge tokens from Porridge token stirring
+  /// @notice Mints Locks tokens from Porridge token stirring
   /// @dev Callable only by Goldilocked
   /// @param to Recipient of minted Locks tokens
   /// @param amount Amount of minted Locks tokens

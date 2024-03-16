@@ -40,7 +40,7 @@ contract FuzzGoldilockedTest is BaseFuzzTest {
   function testFuzzStir(uint256 stirAmount) public {
     vm.assume(stirAmount < locksMintAmount);
     vm.assume(stirAmount > 1e5);
-    uint256 oneDayPrgCost = 1438356164383561500;
+    uint256 oneDayPrgCost = 821917808219178000;
     uint256 oneDayLocksProceeds = 136986301369863000000;
     deal(address(goldiswap), address(this), stirAmount);
     goldiswap.approve(address(goldilocked), stirAmount);

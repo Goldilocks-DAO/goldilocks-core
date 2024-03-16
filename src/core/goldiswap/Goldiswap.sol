@@ -58,7 +58,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
   uint256 public psl;
 
   /// @notice Target ratio between PSL and FSL
-  uint256 public targetRatio = 32e16;
+  uint256 public targetRatio = 38e16;
 
   /// @notice Timestamp of last floor increase
   uint256 public lastFloorIncrease;
