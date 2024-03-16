@@ -130,12 +130,12 @@ contract Goldilocked is IGoldilocked, ERC20 {
     _mint(msg.sender, initialSupply);
   }
 
-  /// @notice Returns the name of the Porridge token
+  /// @notice Returns the name of Porridge token
   function name() public pure override returns (string memory) {
     return "Porridge";
   }
 
-  /// @notice Returns the symbol of the Porridge token
+  /// @notice Returns the symbol of Porridge token
   function symbol() public pure override returns (string memory) {
     return "PRG";
   }

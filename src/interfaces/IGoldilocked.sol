@@ -95,10 +95,12 @@ interface IGoldilocked {
   function goldilendMint(address to, uint256 amount) external;
 
   /// @notice Allows the DAO to change Porridge emissions
+  /// @dev Callable only by Timelock
   /// @param newPrgEmissions Sets the annual Porridge emission rate for Locks staking
   function changePrgEmissions(uint256 newPrgEmissions) external;
 
   /// @notice Allows the DAO to mint Porridge
+  /// @dev Callable only by Timelock
   /// @param multisig Address of multisig
   /// @param newPorridge Amount of Porridge to mint
   function mintPorridge(address multisig, uint256 newPorridge) external;

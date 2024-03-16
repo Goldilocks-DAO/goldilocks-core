@@ -3,11 +3,12 @@ pragma solidity ^0.8.20;
 
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
+import { IGoldiswap } from "../../src/interfaces/IGoldiswap.sol";
 
 contract UnitGoldiswapTest is BaseUnitTest {
 
   function testLocksName() public {
-    assertEq(goldiswap.name(), "Locks Token");
+    assertEq(goldiswap.name(), "Locks");
   }
 
   function testLocksSymbol() public {
@@ -39,7 +40,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
   }
 
   function testBuyFailSlippage() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldiswap.ExcessiveSlippage.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.ExcessiveSlippage.selector));
     goldiswap.buy(txAmount, 0);
   }
 
@@ -62,7 +63,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
   }
 
   function testSellFailSlippage() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldiswap.ExcessiveSlippage.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.ExcessiveSlippage.selector));
     goldiswap.sell(txAmount, type(uint256).max);
   }
 
@@ -127,7 +128,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
   }
 
   function testBorrowTransferFailGoldilocked() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotGoldilocked.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotGoldilocked.selector));
     goldiswap.borrowTransfer(address(0x69), 69, 69);
   }
 
@@ -145,7 +146,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
   }
 
   function testPorridgeMintFailGoldilocked() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotGoldilocked.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotGoldilocked.selector));
     goldiswap.porridgeMint(address(0x69), 69, 69);
   }
 
@@ -168,7 +169,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
 
   function testInjectLiquidityFailGoldigov() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldiswap.NotTimelock.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotTimelock.selector));
     goldiswap.injectLiquidity(69, 69);
   }
 

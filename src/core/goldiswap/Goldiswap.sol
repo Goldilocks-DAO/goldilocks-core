@@ -13,20 +13,19 @@ pragma solidity ^0.8.20;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ========================================== Goldiswap =========================================
+// ======================================== Goldiswap ===========================================
 // ==============================================================================================
 
 
 import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
+import { IGoldiswap } from "../../interfaces/IGoldiswap.sol";
 
 
 /// @title Goldiswap
-/// @notice Novel AMM & Facilitator of $LOCKS token 
-/// @author geeb
-/// @author ampnoob
-contract Goldiswap is ERC20 {
+/// @notice Novel AMM and facilitator of Locks token
+contract Goldiswap is IGoldiswap, ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -34,20 +33,39 @@ contract Goldiswap is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   
+  /// @notice Maximum percentage decrease in target ratio
   uint256 public immutable MAX_FLOOR_REDUCE = 5e18;
+
+  /// @notice Maximum ratio between PSL and FSL
   uint256 public immutable MAX_RATIO = 45e16;
 
+  /// @notice Address of Goldilocked
+  address public immutable goldilocked;
+  
+  /// @notice Address of Honey
+  address public immutable honey;
+
+  /// @notice Address of multisig
+  address public immutable multisig;
+
+  /// @notice Address of Timelock
+  address public immutable timelock;
+
+  /// @notice Floor supporting liquidity
   uint256 public fsl;
+
+  /// @notice Price supporting liquidity
   uint256 public psl;
+
+  /// @notice Target ratio between PSL and FSL
   uint256 public targetRatio = 32e16;
 
-  uint256 public lastFloorRaise;
+  /// @notice Timestamp of last floor increase
+  uint256 public lastFloorIncrease;
+
+  /// @notice Timestamp of last floor decrease
   uint256 public lastFloorDecrease;
 
-  address public immutable goldilocked;
-  address public immutable honey;
-  address public immutable multisig;
-  address public immutable timelock;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -59,9 +77,9 @@ contract Goldiswap is ERC20 {
   /// @param _fsl Initial value of FSL
   /// @param _psl Initial value of PSL
   /// @param _goldilocked Address of Goldilocked
-  /// @param _honey Address of $HONEY
-  /// @param _multisig Address of the GoldilocksDAO multisig
-  /// @param initialSupply Initial supply of the $LOCKS token
+  /// @param _honey Address of Honey
+  /// @param _multisig Address of multisig
+  /// @param initialSupply Initial supply of Locks token
   constructor(
     uint256 _fsl,
     uint256 _psl,
@@ -77,41 +95,20 @@ contract Goldiswap is ERC20 {
     honey = _honey;
     multisig = _multisig;
     timelock = _timelock;
-    lastFloorRaise = block.timestamp;
+    lastFloorIncrease = block.timestamp;
     lastFloorDecrease = block.timestamp;
     _mint(goldilocked, initialSupply);
   }
 
-  /// @notice Returns the name of the $LOCKS token
+  /// @notice Returns the name of Locks token
   function name() public pure override returns (string memory) {
-    return "Locks Token";
+    return "Locks";
   }
 
-  /// @notice Returns the symbol of the $LOCKS token
+  /// @notice Returns the symbol of Locks token
   function symbol() public pure override returns (string memory) {
     return "LOCKS";
   }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           ERRORS                           */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  error NotGoldilocked();
-  error NotMultisig();
-  error NotTimelock();
-  error ExcessiveSlippage();
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           EVENTS                           */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  event Buy(address indexed user, uint256 amount);
-  event Sale(address indexed user, uint256 amount);
-  event Redeem(address indexed user, uint256 amount);
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -119,14 +116,12 @@ contract Goldiswap is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Returns the $LOCKS floor price
-  /// @return $LOCKS floor price
+  /// @inheritdoc IGoldiswap
   function floorPrice() external view returns (uint256) {
     return _floorPrice(fsl, totalSupply());
   }
 
-  /// @notice Returns the $LOCKS market price
-  /// @return $LOCKS market price
+  /// @inheritdoc IGoldiswap
   function marketPrice() external view returns (uint256) {
     return _marketPrice(fsl, psl, totalSupply());
   }
@@ -137,9 +132,7 @@ contract Goldiswap is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Buys $LOCKS tokens with $HONEY tokens
-  /// @param amount Amount of $LOCKS to buy
-  /// @param maxAmount Maximum amount of $HONEY to spend
+  /// @inheritdoc IGoldiswap
   function buy(uint256 amount, uint256 maxAmount) external {
     (
       uint256 _fsl, 
@@ -150,16 +143,14 @@ contract Goldiswap is ERC20 {
     if(price + tax > maxAmount) revert ExcessiveSlippage();
     fsl = _fsl;
     psl = _psl;
-    _floorRaise();
+    _floorIncrease();
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), price);
     SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
     _mint(msg.sender, amount);
     emit Buy(msg.sender, amount);
   }
 
-  /// @notice Sells $LOCKS tokens for $HONEY tokens
-  /// @param amount Amount of $LOCKS to sell
-  /// @param minAmount Minimum amount of $HONEY to receive
+  /// @inheritdoc IGoldiswap
   function sell(uint256 amount, uint256 minAmount) external {
     (
       uint256 _fsl,
@@ -176,47 +167,44 @@ contract Goldiswap is ERC20 {
     emit Sale(msg.sender, amount);
   }
 
-  /// @notice Redeems $LOCKS tokens for floor value
-  /// @param amount Amount of $LOCKS to redeem
+  /// @inheritdoc IGoldiswap
   function redeem(uint256 amount) external {
-    uint256 _rawTotal = FixedPointMathLib.mulWad(amount, _floorPrice(fsl, totalSupply()));
-    fsl -= _rawTotal;
-    _floorRaise();
+    uint256 redemption = FixedPointMathLib.mulWad(amount, _floorPrice(fsl, totalSupply()));
+    fsl -= redemption;
+    _floorIncrease();
     _burn(msg.sender, amount);
-    SafeTransferLib.safeTransfer(honey, msg.sender, _rawTotal);
+    SafeTransferLib.safeTransfer(honey, msg.sender, redemption);
     emit Redeem(msg.sender, amount);
   }
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                      INTERNAL FUNCTIONS                    */
+  /*                   INTERNAL VIEW FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Calculates floor price of $LOCKS
-  /// @dev fsl / supply
+  /// @notice Calculates Locks floor price
+  /// @dev floor = fsl / supply
   /// @param _fsl Current fsl
   /// @param _supply Current supply
-  /// @return floor $LOCKS floor price
-  function _floorPrice(uint256 _fsl, uint256 _supply) internal pure returns (uint256 floor) {
-    floor = FixedPointMathLib.divWad(_fsl, _supply);
+  function _floorPrice(uint256 _fsl, uint256 _supply) internal pure returns (uint256) {
+    return FixedPointMathLib.divWad(_fsl, _supply);
   }
   
-  /// @notice Calculates market price of $LOCKS
-  /// @dev (fsl / supply) + ((psl / supply) * ((psl + fsl) / fsl)**6)
+  /// @notice Calculates Locks market
+  /// @dev market = (fsl / supply) + ((psl / supply) * ((psl + fsl) / fsl)**6)
   /// @param _fsl Current fsl
   /// @param _psl Current psl
   /// @param _supply Current supply
-  /// @return market $LOCKS market price
-  function _marketPrice(uint256 _fsl, uint256 _psl, uint256 _supply) internal pure returns (uint256 market) {
-    market = FixedPointMathLib.divWad(_fsl, _supply) + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(_psl, _supply), _pow(FixedPointMathLib.divWad(_psl + _fsl, _fsl), 6));
+  function _marketPrice(uint256 _fsl, uint256 _psl, uint256 _supply) internal pure returns (uint256) {
+    return FixedPointMathLib.divWad(_fsl, _supply) + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(_psl, _supply), _pow(FixedPointMathLib.divWad(_psl + _fsl, _fsl), 6));
   }
 
-  /// @notice Loops through the amount of $LOCKS tokens to buy and calculates total price
-  /// @param _fsl Temporary variable for FSL
-  /// @param _psl Temporary variable for PSL
-  /// @param _supply Temporary variable for Supply
-  /// @param leftover Temporary variable for amount of $LOCKS tokens
+  /// @notice Loops through amount of Locks tokens to buy and calculates total price
+  /// @param _fsl Temporary variable for fsl
+  /// @param _psl Temporary variable for psl
+  /// @param _supply Temporary variable for supply
+  /// @param leftover Temporary variable for amount of Locks tokens
   /// @return (FSL, PSL, supply and price)
   function _buyLoop(uint256 _fsl, uint256 _psl, uint256 _supply, uint256 leftover) internal pure returns (uint256, uint256, uint256) {
     uint256 market;
@@ -253,11 +241,11 @@ contract Goldiswap is ERC20 {
     return (_fsl, _psl, _buyPrice);
   }
 
-  /// @notice Loops through the amount of $LOCKS tokens to sell and calculates sale amount
-  /// @param _fsl Temporary variable for FSL
-  /// @param _psl Temporary variable for PSL
-  /// @param _supply Temporary variable for Supply
-  /// @param leftover Temporary variable for amount of $LOCKS tokens to sell
+  /// @notice Loops through amount of Locks tokens to sell and calculates sale amount
+  /// @param _fsl Temporary variable for fsl
+  /// @param _psl Temporary variable for psl
+  /// @param _supply Temporary variable for supply
+  /// @param leftover Temporary variable for amount of Locks tokens to sell
   /// @return (FSL, PSL, supply and proceeds)
   function _sellLoop(uint256 _fsl, uint256 _psl, uint256 _supply, uint256 leftover) internal pure returns (uint256, uint256, uint256) {
     uint256 market;
@@ -299,30 +287,35 @@ contract Goldiswap is ERC20 {
     }
   }
 
-  /// @notice If target ratio of the PSL and FSL is exceeded, increases the FSL and target ratio and decreases the PSL
-  /// @dev raiseAmount = (psl / fsl) * (psl / 32)
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      INTERNAL FUNCTIONS                    */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice If target ratio is exceeded, increase fsl and target ratio and decrease psl
+  /// @dev increaseAmount = (psl / fsl) * (psl / 32)
   /// @dev targetRatio increases by targetRatio / 50
-  function _floorRaise() internal {
+  function _floorIncrease() internal {
     uint256 currentRatio = FixedPointMathLib.divWad(psl, fsl);
     if(currentRatio > targetRatio) {
-      uint256 raiseAmount = FixedPointMathLib.mulWad(currentRatio, psl / 32);
-      psl -= raiseAmount;
-      fsl += raiseAmount;
-      lastFloorRaise = block.timestamp;
+      uint256 increaseAmount = FixedPointMathLib.mulWad(currentRatio, psl / 32);
+      psl -= increaseAmount;
+      fsl += increaseAmount;
+      lastFloorIncrease = block.timestamp;
       if(currentRatio < MAX_RATIO) {
         targetRatio += targetRatio / 50;
       }
     }
   }
 
-  /// @notice If a day has elapsed since the last floor increase and decrease, decrease the target ratio
+  /// @notice If day has elapsed since last floor increase and decrease, decrease the target ratio
   /// @dev decreaseFactor is days since last floor increase
-  /// @dev max floor reduce is 5%
   function _floorDecrease() internal {
-    uint256 elapsedRaise = block.timestamp - lastFloorRaise;
-    uint256 elapsedDrop = block.timestamp - lastFloorDecrease;
-    if (elapsedRaise >= 1 days && elapsedDrop >= 1 days) {
-      uint256 decreaseFactor = FixedPointMathLib.divWad(elapsedRaise, 1 days);
+    uint256 elapsedIncrease = block.timestamp - lastFloorIncrease;
+    uint256 elapsedDecrease = block.timestamp - lastFloorDecrease;
+    if (elapsedIncrease >= 1 days && elapsedDecrease >= 1 days) {
+      uint256 decreaseFactor = FixedPointMathLib.divWad(elapsedIncrease, 1 days);
       if(decreaseFactor > MAX_FLOOR_REDUCE) {
         targetRatio = FixedPointMathLib.mulWad(targetRatio / 100, 100e18 - MAX_FLOOR_REDUCE);
       }
@@ -339,30 +332,21 @@ contract Goldiswap is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Transfers $HONEY to user who is borrowing against their locks
-  /// @dev Only Borrow contract can call this function
-  /// @param to Address to transfer $HONEY to
-  /// @param amount Amount of $HONEY to transfer
-  /// @param fee Fee that is sent to treasury
+  /// @inheritdoc IGoldiswap
   function borrowTransfer(address to, uint256 amount, uint256 fee) external {
     if(msg.sender != goldilocked) revert NotGoldilocked();
     SafeTransferLib.safeTransfer(honey, to, amount - fee);
     SafeTransferLib.safeTransfer(honey, multisig, fee);
   }
 
-  /// @notice Mints $PRG tokens from $PRG token stirring
-  /// @dev Only Porridge contract can call this function
-  /// @param to Recipient of minted $LOCKS tokens
-  /// @param amount Amount of minted $LOCKS tokens
+  /// @inheritdoc IGoldiswap
   function porridgeMint(address to, uint256 amount, uint256 cost) external {
     if(msg.sender != goldilocked) revert NotGoldilocked();
     fsl += cost;
     _mint(to, amount);
   }
 
-  /// @notice Allows the DAO to inject liquidity into the contract
-  /// @param fslLiq Liquidity added to FSL
-  /// @param pslLiq Liquidity added to PSL
+  /// @inheritdoc IGoldiswap
   function injectLiquidity(uint256 fslLiq, uint256 pslLiq) external {
     if(msg.sender != timelock) revert NotTimelock();
     fsl += fslLiq;
