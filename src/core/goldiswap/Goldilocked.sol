@@ -21,8 +21,8 @@ import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { IGoldilocked } from "../../interfaces/IGoldilocked.sol";
-import { Goldiswap } from "../../core/goldiswap/Goldiswap.sol";
-import { govLocks } from "../../core/goldigovernance/govLocks.sol";
+import { IGoldiswap } from "../../interfaces/IGoldiswap.sol";
+import { GovLocks } from "../../core/goldigovernance/GovLocks.sol";
 
 
 /// @title Goldilocked
@@ -74,7 +74,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   /// @notice Maps user to amount of claimable Porridge
   mapping(address => uint256) public claimablePrg;
 
-  /// @notice Maps user to amount of Porridge Reward Debt
+  /// @notice Maps user to amount of Porridge reward debt
   mapping(address => uint256) public prgPerTokenDebt;
 
   /// @notice Maps user to amount of borrowed Honey
@@ -120,12 +120,12 @@ contract Goldilocked is IGoldilocked, ERC20 {
     deployTime = block.timestamp;
     vestingStart = block.timestamp + 90 days;
     vestingEnd = block.timestamp + 90 days + 365 days;
-    uint256 floor = Goldiswap(goldiswap).floorPrice();
+    uint256 floor = IGoldiswap(goldiswap).floorPrice();
     for(uint8 i; i < allocationsAddress.length; i++) {
       stakedLocks[allocationsAddress[i]] = allocationsAmt[i];
       borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
       i < 3 ? teamAllocations[allocationsAddress[i]] = allocationsAmt[i] : seedAllocations[allocationsAddress[i]] = allocationsAmt[i];
-      govLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
+      GovLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
     }
     _mint(msg.sender, initialSupply);
   }
@@ -168,7 +168,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
 
   /// @inheritdoc IGoldilocked
   function userBorrowLimit(address user) external view returns (uint256) {
-    uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
+    uint256 floorPrice = IGoldiswap(goldiswap).floorPrice();
     return _borrowLimit(user, floorPrice);
   }
 
@@ -188,9 +188,9 @@ contract Goldilocked is IGoldilocked, ERC20 {
     if(seedAllocations[msg.sender] > 0) revert Vesting();
     _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] += amount;
-    govLocks(govlocks).updateStakedBalance(address(0), msg.sender, amount);
+    GovLocks(govlocks).updateStakedBalance(address(0), msg.sender, amount);
     SafeTransferLib.safeTransferFrom(goldiswap, msg.sender, address(this), amount);
-    emit Staked(msg.sender, amount);
+    emit Stake(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldilocked
@@ -202,18 +202,18 @@ contract Goldilocked is IGoldilocked, ERC20 {
     if(amount > _stakedLocks - _lockedLocks(msg.sender)) revert LocksBorrowedAgainst();
     _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] -= amount;
-    govLocks(govlocks).updateStakedBalance(msg.sender, address(0), amount);
+    GovLocks(govlocks).updateStakedBalance(msg.sender, address(0), amount);
     SafeTransferLib.safeTransfer(goldiswap, msg.sender, amount);
-    emit Unstaked(msg.sender, amount);
+    emit Unstake(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldilocked
   function stir(uint256 amount) external {
-    uint256 cost = FixedPointMathLib.mulWad(amount, Goldiswap(goldiswap).floorPrice());
+    uint256 cost = FixedPointMathLib.mulWad(amount, IGoldiswap(goldiswap).floorPrice());
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransferFrom(honey, msg.sender, goldiswap, cost);
-    Goldiswap(goldiswap).porridgeMint(msg.sender, amount, cost);
-    emit Stirred(msg.sender, amount);
+    IGoldiswap(goldiswap).porridgeMint(msg.sender, amount, cost);
+    emit Stir(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldilocked
@@ -224,12 +224,12 @@ contract Goldilocked is IGoldilocked, ERC20 {
 
   /// @inheritdoc IGoldilocked
   function borrow(uint256 amount) external {
-    uint256 floorPrice = Goldiswap(goldiswap).floorPrice();
+    uint256 floorPrice = IGoldiswap(goldiswap).floorPrice();
     if(!_borrowLimitCheck(amount, floorPrice)) revert InsufficientBorrowLimit();
     borrowedHoney[msg.sender] += amount;
     uint256 fee = amount * 3 / 100;
-    Goldiswap(goldiswap).borrowTransfer(msg.sender, amount, fee);
-    emit Borrowed(msg.sender, amount);
+    IGoldiswap(goldiswap).borrowTransfer(msg.sender, amount, fee);
+    emit Borrow(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldilocked
@@ -237,7 +237,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     if(borrowedHoney[msg.sender] < amount) revert ExcessiveRepay();
     borrowedHoney[msg.sender] -= amount;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, goldiswap, amount);
-    emit Repaid(msg.sender, amount);
+    emit Repay(msg.sender, amount);
   }
 
 
@@ -282,7 +282,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   /// @dev locked locks = borrowed honey / floor price
   /// @param user Address of user
   function _lockedLocks(address user) internal view returns (uint256) {
-    return FixedPointMathLib.divWad(borrowedHoney[user], Goldiswap(goldiswap).floorPrice());
+    return FixedPointMathLib.divWad(borrowedHoney[user], IGoldiswap(goldiswap).floorPrice());
   }
 
   /// @notice Calculates amount of unvested Locks
@@ -325,7 +325,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     if(claimable > 0) {
       claimablePrg[claimer] = 0;
       _mint(claimer, claimable);
-      emit Claimed(claimer, claimable);
+      emit Claim(claimer, claimable);
     }
   }
 

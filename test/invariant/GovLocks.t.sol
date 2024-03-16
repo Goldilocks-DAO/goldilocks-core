@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
 
-contract InvariantgovLockstest is BaseInvariantTest {
+contract InvariantGovLockstest is BaseInvariantTest {
 
   function invariant_conservationOfLocks() public {
     assertEq(
@@ -22,7 +22,7 @@ contract InvariantgovLockstest is BaseInvariantTest {
   function invariant_solvencyBalances() public {
     uint256 sumOfBalances = govlocksHandler.reduceActors(
       0,
-      this.accumulategovLocksBalance
+      this.accumulateGovLocksBalance
     );
     assertEq(
       sumOfBalances,
@@ -33,7 +33,7 @@ contract InvariantgovLockstest is BaseInvariantTest {
   function invariant_solvencyVotes() public {
     uint256 sumOfVotes = govlocksHandler.reduceActors(
       0,
-      this.accumulategovLocksVotes
+      this.accumulateGovLocksVotes
     );
     uint256 sumOfStaked = govlocksHandler.reduceActors(
       0,

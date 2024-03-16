@@ -8,12 +8,12 @@ interface IGoldilocked {
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  event Staked(address indexed user, uint256 amount);
-  event Unstaked(address indexed user, uint256 amount);
-  event Stirred(address indexed user, uint256 amount);
-  event Claimed(address indexed user, uint256 amount);
-  event Borrowed(address indexed user, uint256 amount);
-  event Repaid(address indexed user, uint256 amount);
+  event Stake(address indexed user, uint256 amount);
+  event Unstake(address indexed user, uint256 amount);
+  event Stir(address indexed user, uint256 amount);
+  event Claim(address indexed user, uint256 amount);
+  event Borrow(address indexed user, uint256 amount);
+  event Repay(address indexed user, uint256 amount);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           ERRORS                           */

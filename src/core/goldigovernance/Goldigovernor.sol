@@ -18,13 +18,12 @@ pragma solidity ^0.8.20;
 
 
 import { Timelock } from "./Timelock.sol";
-import { govLocks } from "./govLocks.sol";
+import { GovLocks } from "./GovLocks.sol";
 
 
 /// @title Goldigovernor
-/// @notice Governance contract for Goldilocks Protocol & Goldilocks DAO
+/// @notice Governor contract for Goldilocks DAO
 /// @dev Forked from Uniswap governance contracts, https://etherscan.io/address/0x408ed6354d4973f66138c91495f2f2fcbd8724c3
-/// @author geeb
 contract Goldigovernor {
 
 
@@ -74,29 +73,66 @@ contract Goldigovernor {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Name of contract
   string public constant name = "Goldigovernor";
+
+
+  /// @notice Minimum proposal threshold
   uint256 public constant MIN_PROPOSAL_THRESHOLD = 1e18;
+
+  /// @notice Maximum proposal threshold
   uint256 public constant MAX_PROPOSAL_THRESHOLD = 10_000_000e18;
+
+  /// @notice Minimum voting period
   uint32 public constant MIN_VOTING_PERIOD = 5760; // About 24 hours
+
+  /// @notice Maximum voting period
   uint32 public constant MAX_VOTING_PERIOD = 80640; // About 2 weeks
+
+  /// @notice Minimum voting delay
   uint32 public constant MIN_VOTING_DELAY = 1;
+
+  /// @notice Maximum voting delay
   uint32 public constant MAX_VOTING_DELAY = 40320; // About 1 week
+
+  /// @notice Maximum transactions in one proposal
   uint32 public constant proposalMaxOperations = 10;
+
+  /// @notice Amount of votes to reach quorum
   uint256 public constant quorumVotes = 400e18; // 4% of $LOCKS
 
+  /// @notice Typehash of ERC721Domain
   bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
+
+  /// @notice Typehash of ballot
   bytes32 public constant BALLOT_TYPEHASH = keccak256("Ballot(uint256 proposalId,uint8 support)");
 
+  /// @notice Address of timelock
   address public immutable timelock;
-  address public immutable govlocks;
-  address public multisig;
 
+  /// @notice Address of GovLocks
+  address public immutable govlocks;
+
+  /// @notice Address of multisig
+  address public immutable multisig;
+
+
+  /// @notice Maps proposal id to proposal
   mapping(uint256 => Proposal) public proposals;
+
+  /// @notice Maps user to latest proposal id
   mapping(address => uint256) public latestProposalIds;
 
+  /// @notice Delay to start voting on a proposal
   uint256 public votingDelay;
+
+  /// @notice Period to vote on a proposal
   uint256 public votingPeriod;
+
+  /// @notice Threshold to create a proposal
   uint256 public proposalThreshold;
+
+  /// @notice Total amount of proposals
   uint256 public proposalCount;
 
 
@@ -106,9 +142,9 @@ contract Goldigovernor {
 
 
   /// @notice Constructor of this contract
-  /// @param _timelock Address of the Timelock
-  /// @param _govlocks Address of $LOCKS
-  /// @param _multisig Address of the GoldilocksDAO multisig
+  /// @param _timelock Address of Timelock
+  /// @param _govlocks Address of Locks
+  /// @param _multisig Address of multisig
   /// @param _votingPeriod Duration of voting on a proposal, in blocks
   /// @param _votingDelay Delay before voting on a proposal may take place, once proposed, in blocks
   /// @param _proposalThreshold Number of votes required in order for a voter to become a proposer
@@ -221,7 +257,7 @@ contract Goldigovernor {
     bytes[] memory calldatas,
     string memory description
   ) external returns (uint256) {
-    if(govLocks(govlocks).getPriorVotes(msg.sender, block.number - 1) <= proposalThreshold) revert BelowThreshold();
+    if(GovLocks(govlocks).getPriorVotes(msg.sender, block.number - 1) <= proposalThreshold) revert BelowThreshold();
     if(targets.length != values.length || targets.length != signatures.length || targets.length != calldatas.length) revert ArrayMismatch();
     if(targets.length == 0) revert InvalidProposalAction();
     if(targets.length > proposalMaxOperations) revert InvalidProposalAction();
@@ -287,7 +323,7 @@ contract Goldigovernor {
     if(_getProposalState(proposalId) == ProposalState.Executed) revert InvalidProposalState();
     Proposal storage proposal = proposals[proposalId];
     if(msg.sender != proposal.proposer) revert NotProposer();
-    if(govLocks(govlocks).getPriorVotes(proposal.proposer, block.number - 1) > proposalThreshold) revert AboveThreshold();
+    if(GovLocks(govlocks).getPriorVotes(proposal.proposer, block.number - 1) > proposalThreshold) revert AboveThreshold();
     proposal.cancelled = true;
     uint256 targetsLength = proposal.targets.length;
     for (uint256 i = 0; i < targetsLength; i++) {
@@ -364,7 +400,7 @@ contract Goldigovernor {
     Proposal storage proposal = proposals[proposalId];
     Receipt storage voterReceipt = proposal.receipts[voter];
     if(voterReceipt.hasVoted != false) revert AlreadyVoted();
-    uint256 votes = govLocks(govlocks).getPriorVotes(voter, proposal.startBlock);
+    uint256 votes = GovLocks(govlocks).getPriorVotes(voter, proposal.startBlock);
     if (support == 0) {
       proposal.againstVotes = proposal.againstVotes + votes;
     } else if (support == 1) {

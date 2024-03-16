@@ -5,6 +5,7 @@ import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
+import { IGoldilend } from "../../src/interfaces/IGoldilend.sol";
 
 contract FuzzGoldilendTest is BaseFuzzTest {
 
@@ -163,7 +164,7 @@ contract FuzzGoldilendTest is BaseFuzzTest {
       assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 1);
     }
     else {
-      vm.expectRevert(abi.encodeWithSelector(Goldilend.Unliquidatable.selector));
+      vm.expectRevert(abi.encodeWithSelector(IGoldilend.Unliquidatable.selector));
       goldilend.liquidate(address(this), 1);
     }
   }

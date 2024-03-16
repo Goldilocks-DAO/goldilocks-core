@@ -4,12 +4,12 @@ pragma solidity ^0.8.20;
 import { BaseTest } from "./BaseTest.t.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { GoldilockedHandler } from "../invariant/handlers/GoldilockedHandler.t.sol";
-import { govLocksHandler } from "../invariant/handlers/govLocksHandler.t.sol";
+import { GovLocksHandler } from "../invariant/handlers/GovLocksHandler.t.sol";
 
 abstract contract BaseInvariantTest is BaseTest {
 
   GoldilockedHandler public goldilockedHandler;
-  govLocksHandler public govlocksHandler;
+  GovLocksHandler public govlocksHandler;
 
   function setUp() public override {
     deployProtocol();
@@ -17,14 +17,14 @@ abstract contract BaseInvariantTest is BaseTest {
     goldilockedHandler = new GoldilockedHandler(goldilocked, goldiswap);
     targetContract(address(goldilockedHandler));
 
-    govlocksHandler = new govLocksHandler(govlocks, goldilocked, goldiswap);
+    govlocksHandler = new GovLocksHandler(govlocks, goldilocked, goldiswap);
     bytes4[] memory selectors = new bytes4[](6);
-    selectors[0] = govLocksHandler.deposit.selector;
-    selectors[1] = govLocksHandler.withdraw.selector;
-    selectors[2] = govLocksHandler.delegate.selector;
-    selectors[3] = govLocksHandler.approve.selector;
-    selectors[4] = govLocksHandler.transfer.selector;
-    selectors[5] = govLocksHandler.transferFrom.selector;
+    selectors[0] = govlocksHandler.deposit.selector;
+    selectors[1] = govlocksHandler.withdraw.selector;
+    selectors[2] = govlocksHandler.delegate.selector;
+    selectors[3] = govlocksHandler.approve.selector;
+    selectors[4] = govlocksHandler.transfer.selector;
+    selectors[5] = govlocksHandler.transferFrom.selector;
     targetSelector(FuzzSelector({
       addr: address(govlocksHandler),
       selectors: selectors
@@ -32,11 +32,11 @@ abstract contract BaseInvariantTest is BaseTest {
     targetContract(address(govlocksHandler));
   }
 
-  function accumulategovLocksBalance(uint256 balance, address caller) external view returns (uint256) {
+  function accumulateGovLocksBalance(uint256 balance, address caller) external view returns (uint256) {
     return balance + ERC20(govlocks).balanceOf(caller);
   }
 
-  function accumulategovLocksVotes(uint256 votes, address caller) external view returns (uint256) {
+  function accumulateGovLocksVotes(uint256 votes, address caller) external view returns (uint256) {
     return votes + govlocks.getVotes(caller);
   }
 

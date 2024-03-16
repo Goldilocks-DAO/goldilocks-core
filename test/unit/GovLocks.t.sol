@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
-import { govLocks } from "../../src/core/goldigovernance/govLocks.sol";
+import { GovLocks } from "../../src/core/goldigovernance/GovLocks.sol";
 
-contract UnitgovLocksTest is BaseUnitTest {
+contract UnitGovLocksTest is BaseUnitTest {
 
   function testgovLocksName() public {
     assertEq(govlocks.name(), "Governance Locks");
@@ -31,7 +31,7 @@ contract UnitgovLocksTest is BaseUnitTest {
     govlocks.deposit(govLocksAmt);
     govlocks.delegate(address(this));
     vm.roll(2);
-    vm.expectRevert(abi.encodeWithSelector(govLocks.NoSuchBlock.selector));
+    vm.expectRevert(abi.encodeWithSelector(GovLocks.NoSuchBlock.selector));
     govlocks.getPriorVotes(address(this), 2);
   }
 
@@ -261,7 +261,7 @@ contract UnitgovLocksTest is BaseUnitTest {
   }
 
   function testUpdateStakedBalanceFailGoldilocked() public {
-    vm.expectRevert(abi.encodeWithSelector(govLocks.NotGoldilocked.selector));
+    vm.expectRevert(abi.encodeWithSelector(GovLocks.NotGoldilocked.selector));
     govlocks.updateStakedBalance(address(0x69), address(0x69), govLocksAmt);
   }
 

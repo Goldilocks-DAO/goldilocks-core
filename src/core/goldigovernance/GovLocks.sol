@@ -13,7 +13,7 @@ pragma solidity ^0.8.20;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ========================================= govLocks ===========================================
+// ========================================= GovLocks ===========================================
 // ==============================================================================================
 
 
@@ -22,10 +22,9 @@ import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 
 
 /// @title Governance Locks
-/// @notice Governance wrapper for $LOCKS token
+/// @notice Governance wrapper for Locks token
 /// @dev Forked from Uniswap token contract, https://etherscan.io/address/0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984
-/// @author geeb
-contract govLocks is ERC20 {
+contract GovLocks is ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -44,12 +43,22 @@ contract govLocks is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Address of Locks token
   address public immutable locks;
+
+  /// @notice Address of Goldilocked
   address public immutable goldilocked;
 
+  /// @notice Maps user to amount of Locks deposited
   mapping(address => uint256) public deposits;
+
+  /// @notice Maps user to delegated address
   mapping(address => address) public delegates;
+
+  /// @notice Maps user to amount of checkpoints
   mapping(address => uint256) public numCheckpoints;
+
+  /// @notice Maps user to a block number to a checkpoint
   mapping(address => mapping(uint256 => Checkpoint)) public checkpoints;
 
 
@@ -59,8 +68,8 @@ contract govLocks is ERC20 {
 
 
   /// @notice Constructor of this contract
-  /// @param _locks Address of $LOCKS  
-  /// @param _goldilocked Address of the Goldilocked contract
+  /// @param _locks Address of Locks
+  /// @param _goldilocked Address of Goldilocked
   /// @param honeyjar Address of Honeyjar
   /// @param honeyjarVotingPower Governance power to grant to Honeyjar
   constructor(
@@ -74,12 +83,12 @@ contract govLocks is ERC20 {
     _moveDelegates(address(0), honeyjar, honeyjarVotingPower);
   }
 
-  /// @notice Returns the name of the $LOCKS token
+  /// @notice Returns the name of GovLocks token
   function name() public pure override returns (string memory) {
     return "Governance Locks";
   }
 
-  /// @notice Returns the symbol of the $LOCKS token
+  /// @notice Returns the symbol of GovLocks token
   function symbol() public pure override returns (string memory) {
     return "govLOCKS";
   }
@@ -116,16 +125,15 @@ contract govLocks is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Returns current votes balance for user
-  /// @param user Address to return votes balance
+  /// @notice Returns current votes balance
+  /// @param user Address of user for query
   function getVotes(address user) external view returns (uint256) {
     uint256 nCheckpoints = numCheckpoints[user];
     return nCheckpoints > 0 ? checkpoints[user][nCheckpoints - 1].votes : 0;
   }
 
-  /// @notice Returns votes balance for user from prior block
-  /// @param user Address to return votes balance
-  /// @param blockNumber Block to return votes balance for
+  /// @notice Returns votes balance from prior block
+  /// @param user Address of user for query
   function getPriorVotes(address user, uint256 blockNumber) external view returns (uint256) {
     if(blockNumber >= block.number) revert NoSuchBlock();
     uint256 nCheckpoints = numCheckpoints[user];
@@ -156,13 +164,14 @@ contract govLocks is ERC20 {
     return checkpoints[user][lower].votes;
   }
 
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Deposits $LOCKS to mint $govLOCKS
-  /// @param amount Amount of $LOCKS to deposit
+  /// @notice Deposits Locks to mint GovLocks
+  /// @param amount Amount of Locks to deposit
   function deposit(uint256 amount) external {
     deposits[msg.sender] += amount;
     _moveDelegates(address(0), delegates[msg.sender], amount);
@@ -170,8 +179,8 @@ contract govLocks is ERC20 {
     _mint(msg.sender, amount);
   }
 
-  /// @notice Withdraws $LOCKS to burn $govLOCKS
-  /// @param amount Amount of $LOCKS to withdraw
+  /// @notice Withdraws Locks to burn Govlocks
+  /// @param amount Amount of Locks to withdraw
   function withdraw(uint256 amount) external {
     deposits[msg.sender] -= amount;
     _moveDelegates(delegates[msg.sender], address(0), amount);
@@ -179,8 +188,8 @@ contract govLocks is ERC20 {
     SafeTransferLib.safeTransfer(locks, msg.sender, amount);
   }
 
-  // /// @notice Delegates votes from msg.sender to delegatee
-  // /// @param delegatee Address to delegate votes to
+  /// @notice Delegates votes from msg.sender to delegatee
+  /// @param delegatee Address to delegate votes to
   function delegate(address delegatee) external {
     _delegate(msg.sender, delegatee);
   }
@@ -191,6 +200,7 @@ contract govLocks is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Delegates votes from delegator to delegateee
   function _delegate(address delegator, address delegatee) internal {
     address currentDelegate = delegates[delegator];
     uint256 delegatorBalance = balanceOf(delegator);
@@ -199,6 +209,7 @@ contract govLocks is ERC20 {
     emit DelegateChanged(delegator, currentDelegate, delegatee);
   }
 
+  /// @notice Delegates votes from delegator to delegateee
   function _moveDelegates(address srcRep, address dstRep, uint256 amt) internal {
     if (srcRep != dstRep && amt > 0) {
       if (srcRep != address(0)) {
@@ -216,6 +227,7 @@ contract govLocks is ERC20 {
     }
   }
 
+  /// @notice Writes vote balance checkpoint
   function _writeCheckpoint(
     address delegatee, 
     uint256 nCheckpoints, 
@@ -231,11 +243,13 @@ contract govLocks is ERC20 {
     emit DelegateVotesChanged(delegatee, oldVotes, newVotes);
   }
 
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTION                   */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Moves delegated votes during Locks stake or unstake
   function updateStakedBalance(address from, address to, uint256 amt) external {
     if(msg.sender != goldilocked) revert NotGoldilocked();
     _moveDelegates(from, to, amt);
@@ -247,6 +261,7 @@ contract govLocks is ERC20 {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Moves delegated votes after a token transfer
   function _afterTokenTransfer(address from, address to, uint256 amt) internal override {
     if(from != address(0) && to != address(0)) {
       _moveDelegates(delegates[from], delegates[to], amt);

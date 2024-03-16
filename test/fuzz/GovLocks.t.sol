@@ -2,9 +2,9 @@
 pragma solidity ^0.8.20;
 
 import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
-import { govLocks } from "../../src/core/goldigovernance/govLocks.sol";
+import { GovLocks } from "../../src/core/goldigovernance/GovLocks.sol";
 
-contract FuzzgovLocksTest is BaseFuzzTest {
+contract FuzzGovLocksTest is BaseFuzzTest {
 
   function testFuzzDeposit(uint256 depositAmount) public {
     deal(address(goldiswap), address(this), depositAmount);

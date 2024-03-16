@@ -18,9 +18,8 @@ pragma solidity ^0.8.20;
 
 
 /// @title Timelock
-/// @notice Timelock contract for Goldilocks Protocol & Goldilocks DAO
+/// @notice Timelock contract for Goldilocks DAO
 /// @dev Forked from Uniswap governance contracts, https://etherscan.io/address/0x1a9C8182C09F50C8318d769245beA52c32BE35BC
-/// @author geeb
 contract Timelock {
 
 
@@ -29,15 +28,25 @@ contract Timelock {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Grace period of a transaciton going stale
   uint32 public constant GRACE_PERIOD = 14 days;
+  
+  /// @notice Minimum delay for queueing a transaction
   uint32 public constant MINIMUM_DELAY = 2 days;
+
+  /// @notice Maximum delay for queueing a transaction
   uint32 public constant MAXIMUM_DELAY = 30 days;
 
+  /// @notice Address of Goldigovernor
   address public immutable goldigov;
+
+  /// @notice Address of multisig
   address public immutable multisig;
 
+  /// @notice Maps transaction hash to boolean
   mapping(bytes32 => bool) public queuedTransactions;
 
+  /// @notice Delay for queueing a transaction
   uint256 public delay;
 
 
@@ -47,7 +56,7 @@ contract Timelock {
   
 
   /// @notice Constructor of this contract
-  /// @param _goldigov Admin address
+  /// @param _goldigov Goldigovernor address
   /// @param _delay Delay the timelock will use, in blocks
   constructor(address _goldigov, address _multisig, uint256 _delay) {
     if(_delay < MINIMUM_DELAY || delay > MAXIMUM_DELAY) revert InvalidDelay();
@@ -160,6 +169,7 @@ contract Timelock {
   }
 
   /// @notice Sets the Timelock delay
+  /// @param _delay New Timelock delay
   function setDelay(uint256 _delay) external {
     if(msg.sender != multisig) revert NotMultisig();
     if(_delay < MINIMUM_DELAY || delay > MAXIMUM_DELAY) revert InvalidDelay();

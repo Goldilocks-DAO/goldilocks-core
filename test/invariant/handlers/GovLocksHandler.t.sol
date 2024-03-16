@@ -6,19 +6,19 @@ import { BaseHandler } from "../../base/BaseHandler.t.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { Goldilocked } from "../../../src/core/goldiswap/Goldilocked.sol";
 import { Goldiswap } from "../../../src/core/goldiswap/Goldiswap.sol";
-import { govLocks } from "../../../src/core/goldigovernance/govLocks.sol";
+import { GovLocks } from "../../../src/core/goldigovernance/GovLocks.sol";
 
-contract govLocksHandler is BaseHandler {
+contract GovLocksHandler is BaseHandler {
 
   Goldilocked public goldilocked;
   Goldiswap public goldiswap;
-  govLocks public govlocks;
+  GovLocks public govlocks;
 
   uint256 public ghost_depositSum;
   uint256 public ghost_withdrawSum;
   uint256 public ghost_zeroWithdrawals;
 
-  constructor(govLocks _govlocks, Goldilocked _goldilocked, Goldiswap _goldiswap) {
+  constructor(GovLocks _govlocks, Goldilocked _goldilocked, Goldiswap _goldiswap) {
     goldilocked = _goldilocked;
     goldiswap = _goldiswap;
     govlocks =_govlocks;

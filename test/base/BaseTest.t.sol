@@ -14,7 +14,7 @@ import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 import { Goldigovernor } from "../../src/core/goldigovernance/Goldigovernor.sol";
 import { Timelock } from "../../src/core/goldigovernance/Timelock.sol";
-import { govLocks } from "../../src/core/goldigovernance/govLocks.sol";
+import { GovLocks } from "../../src/core/goldigovernance/GovLocks.sol";
 import { Honey } from "../../src/mock/Honey.sol";
 import { iBGT } from "../../src/mock/iBGT.sol";
 import { HoneyComb } from "../../src/mock/HoneyComb.sol";
@@ -61,7 +61,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
 
   Goldiswap goldiswap;
   Goldilend goldilend;
-  govLocks govlocks;
+  GovLocks govlocks;
   Timelock timelock;
   Goldilocked goldilocked;
   Goldigovernor goldigov;
@@ -122,7 +122,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     );
 
     // deploy govlocks
-    govlocks = new govLocks(
+    govlocks = new GovLocks(
       address(goldiswap),
       address(goldilockedComputed),
       honeyjar,

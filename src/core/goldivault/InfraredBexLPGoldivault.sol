@@ -24,8 +24,8 @@ import { iBGTVault } from "../../mock/iBGTVault.sol";
 import { BexLPVault } from "../../mock/BexLPVault.sol";
 
 
+/// @title InfraredBexLPGoldivault
 contract InfraredBexLPGoldivault is Goldivault {
-
 
   /// @notice Constructor of this contract
   constructor(

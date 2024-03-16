@@ -20,15 +20,14 @@ pragma solidity ^0.8.20;
 import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
+import { IGoldivault } from "../../interfaces/IGoldivault.sol";
 import { OwnershipToken } from "./OwnershipToken.sol";
 import { YieldToken } from "./YieldToken.sol";
 
 
 /// @title Goldivaults
-/// @notice Splits yield bearing tokens in yield and principal tokens
-/// @author ampnoob
-/// @author geeb
-abstract contract Goldivault {
+/// @notice Splits yield bearing tokens into ownership and yield tokens
+abstract contract Goldivault is IGoldivault {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -36,26 +35,62 @@ abstract contract Goldivault {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Timestamp of vault start time
   uint256 public startTime;
-  uint256 public endTime;
-  uint256 public concludeTime;
-  uint256 public earlyWithdrawalFee;
-  uint256 public yieldFee;
-  uint256 public delay;
-  uint256 public duration;
-  address public ot;
-  address public yt;
-  address public depositToken;
-  address public depositVault;
-  address public ibgt;
-  address public ibgtVault;
-  address public ired;
-  address public iredVault;
-  address public multisig;
-  address public timelock;
-  address[] public yieldTokens;
-  bool public concluded;
 
+  /// @notice Timestamp of vault end time
+  uint256 public endTime;
+
+  /// @notice Timestamp of vault conclude time
+  uint256 public concludeTime;
+
+  /// @notice Fee charged for early withdrawal
+  uint256 public earlyWithdrawalFee;
+
+  /// @notice Fee charged for yield
+  uint256 public yieldFee;
+
+  /// @notice Delay period after vault concludes before redemption is allowed
+  uint256 public delay;
+
+  /// @notice Duration of vault
+  uint256 public duration;
+
+  /// @notice Address of ownership token
+  address public ot;
+
+  /// @notice Address of yield token
+  address public yt;
+
+  /// @notice Address of deposit token
+  address public depositToken;
+
+  /// @notice Address of deposit vault
+  address public depositVault;
+
+  /// @notice Address of iBGT
+  address public ibgt;
+
+  /// @notice Address of iBGT vault
+  address public ibgtVault;
+
+  /// @notice Address of iRED
+  address public ired;
+
+  /// @notice Address of iRED vault
+  address public iredVault;
+
+  /// @notice Address of multisig
+  address public multisig;
+
+  /// @notice Address of Timelock
+  address public timelock;
+
+  /// @notice Addresses of yield tokens
+  address[] public yieldTokens;
+
+  /// @notice Boolean value if vault is concluded
+  bool public concluded;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -64,6 +99,10 @@ abstract contract Goldivault {
 
 
   /// @notice Constructor of this contract
+  /// @param _ot Address of ownership token
+  /// @param _yt Address of yield token
+  /// @param _multisig Address of multisig
+  /// @param _timelock Address of Timelock
   constructor(
     address _ot,
     address _yt,
@@ -78,27 +117,11 @@ abstract contract Goldivault {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           ERRORS                           */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  error InsufficientTime();
-  error InvalidRedemption();
-  error NotExpired();
-  error NotConcluded();
-  error NotMultisig();
-  error NotTimelock();
-  error AlreadyConcluded();
-  error ExcessiveRedeem();
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Deposits asset into vault to receive ownership and yield tokens
-  /// @param amount Amount of tokens to deposit
+  /// @inheritdoc IGoldivault
   function deposit(uint256 amount) external {
     uint256 remainingTime = endTime - block.timestamp;
     if(remainingTime < 1 days) revert InsufficientTime();
@@ -107,25 +130,10 @@ abstract contract Goldivault {
     _vaultDeposit(amount);
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    emit Deposit(msg.sender, amount);
   }
 
-  /// @notice Redeems yield tokens for share of yield accrued to vault
-  /// @param amount Amount of tokens to redeem
-  function redeemYield(uint256 amount) external {
-    if(amount == 0) revert InvalidRedemption();
-    if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
-    uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
-    YieldToken(yt).burnYT(msg.sender, amount);
-    uint256 yieldTokensLength = yieldTokens.length;
-    for(uint8 i; i < yieldTokensLength; ++i) {
-      uint256 finalYield = ERC20(yieldTokens[i]).balanceOf(address(this));
-      uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
-      SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
-    }
-  }
-
-  /// @notice Withdraws tokens from the vault 
-  /// @param amount Amount of tokens to redeem
+  /// @inheritdoc IGoldivault
   function redeemOwnership(uint256 amount) external {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
@@ -137,22 +145,40 @@ abstract contract Goldivault {
     if(remainingTime > 0) {
       SafeTransferLib.safeTransfer(depositToken, msg.sender, amount * (1000 - _fee) / 1000);
       SafeTransferLib.safeTransfer(depositToken, multisig, amount * _fee / 1000);
+      emit OwnershipTokenRedemption(msg.sender, amount * (1000 - _fee) / 1000);
     }
     else {
       SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
+      emit OwnershipTokenRedemption(msg.sender, amount);
     }
   }
 
-  /// @notice Concludes the vault at expiry
+  /// @inheritdoc IGoldivault
+  function redeemYield(uint256 amount) external {
+    if(amount == 0) revert InvalidRedemption();
+    if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
+    uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
+    YieldToken(yt).burnYT(msg.sender, amount);
+    uint256 yieldTokensLength = yieldTokens.length;
+    for(uint8 i; i < yieldTokensLength; ++i) {
+      uint256 finalYield = ERC20(yieldTokens[i]).balanceOf(address(this));
+      uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
+      SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
+    }
+    emit YieldTokenRedemption(msg.sender, amount);
+  }
+
+  /// @inheritdoc IGoldivault
   function conclude() external {
     if(block.timestamp < endTime) revert NotExpired();
     if(concluded) revert AlreadyConcluded();
     concluded = true;
     concludeTime = block.timestamp;
     _concludeVaultRewards();
+    emit Conclude(block.timestamp);
   }
 
-  /// @notice Compounds yield from vault and restakes it
+  /// @inheritdoc IGoldivault
   function compound() external {
     _compoundVaultRewards();
   }
@@ -163,7 +189,7 @@ abstract contract Goldivault {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Renews concluded vault
+  /// @inheritdoc IGoldivault
   function renew() external {
     if(msg.sender != timelock) revert NotTimelock();
     if(!concluded) revert NotConcluded();
@@ -173,12 +199,13 @@ abstract contract Goldivault {
     concluded = false;
   }
 
-  /// @notice Allows DAO to set protocol parameters
-  /// @param _earlyWithdrawalFee New early withdrawal fee
-  /// @param _yieldFee New vault fee
-  /// @param _delay New vault delay
-  /// @param _duration New vault duration
-  function changeProtocolParameters(uint256 _earlyWithdrawalFee, uint256 _yieldFee, uint256 _delay, uint256 _duration) external {
+  /// @inheritdoc IGoldivault
+  function changeProtocolParameters(
+    uint256 _earlyWithdrawalFee,
+    uint256 _yieldFee,
+    uint256 _delay,
+    uint256 _duration
+  ) external {
     if(msg.sender != timelock) revert NotTimelock();
     earlyWithdrawalFee = _earlyWithdrawalFee;
     yieldFee = _yieldFee;
@@ -187,8 +214,7 @@ abstract contract Goldivault {
     endTime = block.timestamp + _duration;
   }
 
-  /// @notice Allows DAO to add yield tokens to vault
-  /// @param _yieldTokens Tokens to add to yieldTokens array
+  /// @inheritdoc IGoldivault
   function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
     for(uint8 i; i < _yieldTokens.length; ++i) {
@@ -196,7 +222,7 @@ abstract contract Goldivault {
     }
   }
 
-  /// @notice Allows the multisig to initialize the protocol
+  /// @inheritdoc IGoldivault
   function initializeProtocol(
     address _depositToken,
     address _depositVault,

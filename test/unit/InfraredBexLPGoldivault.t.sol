@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
+import { IGoldivault } from "../../src/interfaces/IGoldivault.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 
@@ -50,7 +51,7 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
 
   function testDepositFailTime() public {
     vm.warp(1 + 364 days + 69);
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.InsufficientTime.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.InsufficientTime.selector));
     goldivault.deposit(69);
   }
 
@@ -65,12 +66,12 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
   }
 
   function testRedeemYieldFailInvalid() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.InvalidRedemption.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.InvalidRedemption.selector));
     goldivault.redeemYield(0);
   }
 
   function testRedeemYieldFailConcluded() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.NotConcluded.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotConcluded.selector));
     goldivault.redeemYield(txAmount);
   }
 
@@ -96,7 +97,7 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
   }
 
   function testRedeemOwnershipFailInvalid() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.InvalidRedemption.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.InvalidRedemption.selector));
     goldivault.redeemOwnership(0);
   }
 
@@ -147,14 +148,14 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
   }
 
   function testConcludeFailExpired() public {
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.NotExpired.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotExpired.selector));
     goldivault.conclude();
   }
 
   function testConcludeFailAlready() public {
     vm.warp(366 days);
     goldivault.conclude();
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.AlreadyConcluded.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.AlreadyConcluded.selector));
     goldivault.conclude();
   }
 
@@ -172,13 +173,13 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
 
   function testRenewFailTimelock() public {
     vm.prank(address(0xbbbb));
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.NotTimelock.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotTimelock.selector));
     goldivault.renew();
   }
 
   function testRenewFailConcluded() public {
     vm.prank(address(timelock));
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.NotConcluded.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotConcluded.selector));
     goldivault.renew();
   }
 
@@ -217,7 +218,7 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
 
   function testChangeProtocolParametersFailTimelock() public {
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.NotTimelock.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotTimelock.selector));
     goldivault.changeProtocolParameters(69, 69, 69, 69);
   }
 
@@ -255,7 +256,7 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
   function testAddYieldTokensFailMultisig() public {
     address[] memory yieldTokens = new address[](0);
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.NotMultisig.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotMultisig.selector));
     goldivault.addYieldTokens(yieldTokens);
   }
 
@@ -270,7 +271,7 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
   function testInitializeProtocolFailMultisig() public {
     address[] memory yieldTokens = new address[](0);
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldivault.NotMultisig.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotMultisig.selector));
     goldivault.initializeProtocol(
       address(bexlp),
       address(bexvault),
