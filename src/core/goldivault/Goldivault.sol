@@ -63,6 +63,9 @@ abstract contract Goldivault is IGoldivault {
   /// @notice Address of yield token
   address public yt;
 
+  /// @notice Amount of deposit token in vault
+  uint256 public depositTokenAmount;
+
   /// @notice Address of deposit token
   address public depositToken;
 
@@ -129,6 +132,7 @@ abstract contract Goldivault is IGoldivault {
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
     _vaultDeposit(amount);
+    depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     emit Deposit(msg.sender, amount);
@@ -142,6 +146,7 @@ abstract contract Goldivault is IGoldivault {
     OwnershipToken(ot).burnOT(msg.sender, amount);
     YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken(amount);
+    depositTokenAmount -= amount;
     uint256 _fee = earlyWithdrawalFee;
     if(remainingTime > 0) {
       SafeTransferLib.safeTransfer(depositToken, msg.sender, amount * (1000 - _fee) / 1000);
@@ -162,7 +167,13 @@ abstract contract Goldivault is IGoldivault {
     YieldToken(yt).burnYT(msg.sender, amount);
     uint256 yieldTokensLength = yieldTokens.length;
     for(uint8 i; i < yieldTokensLength; ++i) {
-      uint256 finalYield = ERC20(yieldTokens[i]).balanceOf(address(this));
+      uint256 finalYield;
+      if(yieldTokens[i] == depositToken) {
+        finalYield = ERC20(yieldTokens[i]).balanceOf(address(this)) - depositTokenAmount;
+      }
+      else {
+        finalYield = ERC20(yieldTokens[i]).balanceOf(address(this));
+      }
       uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
       SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
     }

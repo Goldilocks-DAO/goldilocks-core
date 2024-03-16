@@ -37,8 +37,8 @@ contract iBGTVault {
   }
 
   function withdraw(uint256 amount) external {
-    if(deposits[msg.sender] < amount) revert Stealing();
-    deposits[msg.sender] -= amount;
+    // if(deposits[msg.sender] < amount) revert Stealing();
+    // deposits[msg.sender] -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
   }
   
@@ -62,7 +62,7 @@ contract iBGTVault {
     SafeTransferLib.safeTransfer(depositToken, msg.sender, deposits[msg.sender]);
   }
 
-  function _honeyMintAmount() internal view returns (uint256) {
+  function _honeyMintAmount() public view returns (uint256) {
     uint256 time = block.timestamp - deployTime;
     uint256 hoursSinceDeploy = FixedPointMathLib.divWad(time, 1 hours);
     return hoursSinceDeploy - honeyPaid;

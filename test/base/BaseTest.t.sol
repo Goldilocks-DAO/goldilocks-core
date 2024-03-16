@@ -216,7 +216,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
     );
 
     // deploy goldilend
-
     address[] memory rewardTokens = new address[](1);
     rewardTokens[0] = address(honey);
     goldilend = new Goldilend(
@@ -246,7 +245,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
       45,
       5,
       7 days,
-      21 days,
+      365 days,
       1000e18,
       1e17,
       1e13,
