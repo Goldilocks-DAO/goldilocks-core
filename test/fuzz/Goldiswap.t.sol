@@ -51,11 +51,11 @@ contract FuzzGoldiswapTest is BaseFuzzTest {
     deal(address(goldiswap), address(this), borrowTransferAmount);
     goldiswap.approve(address(goldilocked), borrowTransferAmount);
     goldilocked.stake(borrowTransferAmount);
-    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(honey), address(goldiswap), type(uint256).max / 2);
     goldilocked.borrow(borrowAmount);
 
     assertEq(honey.balanceOf(address(this)), borrowAmount);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - borrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2) - borrowAmount);
   }
 
   function testFuzzInjectLiquidity(uint256 liquidity) public {
@@ -72,7 +72,7 @@ contract FuzzGoldiswapTest is BaseFuzzTest {
 
     assertEq(goldiswap.fsl(), initialFSL + fslLiq);
     assertEq(goldiswap.psl(), initialPSL + pslLiq);
-    assertEq(honey.balanceOf(address(goldiswap)), liquidity);
+    assertEq(honey.balanceOf(address(goldiswap)), liquidity + initialPSL);
     assertEq(honey.balanceOf(address(this)), 0);
   }
 

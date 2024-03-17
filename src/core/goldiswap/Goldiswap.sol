@@ -66,7 +66,8 @@ contract Goldiswap is IGoldiswap, ERC20 {
   /// @notice Timestamp of last floor decrease
   uint256 public lastFloorDecrease;
 
-
+  /// @notice Indicates if trading is active
+  bool public tradingActive;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          CONSTRUCTOR                       */
@@ -134,6 +135,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
 
   /// @inheritdoc IGoldiswap
   function buy(uint256 amount, uint256 maxAmount) external {
+    if(!tradingActive) revert NotActive();
     (
       uint256 _fsl, 
       uint256 _psl, 
@@ -152,6 +154,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
 
   /// @inheritdoc IGoldiswap
   function sell(uint256 amount, uint256 minAmount) external {
+    if(!tradingActive) revert NotActive();
     (
       uint256 _fsl,
       uint256 _psl,
@@ -353,6 +356,13 @@ contract Goldiswap is IGoldiswap, ERC20 {
     if(msg.sender != goldilocked) revert NotGoldilocked();
     fsl += cost;
     _mint(to, amount);
+  }
+
+  /// @inheritdoc IGoldiswap
+  function initializeProtocol(uint256 amount) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    tradingActive = true;
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), amount);
   }
 
 }

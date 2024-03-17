@@ -21,6 +21,7 @@ interface IGoldilocked {
 
   error NotGoldilend();
   error NotTimelock();
+  error NotMultisig();
   error NotVested();
   error Vesting();
   error InvalidUnstake();
@@ -101,8 +102,12 @@ interface IGoldilocked {
 
   /// @notice Allows the DAO to mint Porridge
   /// @dev Callable only by Timelock
-  /// @param multisig Address of multisig
   /// @param newPorridge Amount of Porridge to mint
-  function mintPorridge(address multisig, uint256 newPorridge) external;
+  function mintPorridge(uint256 newPorridge) external;
+
+  /// @notice Allows multisig to set Goldilend address
+  /// @dev Callable only by multisig
+  /// @param _goldilend Address of Goldilend
+  function setGoldilendAddress(address _goldilend) external;
 
 }

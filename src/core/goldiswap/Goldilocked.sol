@@ -47,9 +47,6 @@ contract Goldilocked is IGoldilocked, ERC20 {
   /// @notice Address of Goldiswap
   address public immutable goldiswap;
 
-  /// @notice Address of Goldilend
-  address public immutable goldilend;
-
   /// @notice Address of GovLocks
   address public immutable govlocks;
 
@@ -58,6 +55,12 @@ contract Goldilocked is IGoldilocked, ERC20 {
 
   /// @notice Address of Timelock
   address public immutable timelock;
+
+  /// @notice Address of multisig
+  address public immutable multisig;
+
+  /// @notice Address of Goldilend
+  address public goldilend;
 
   /// @notice Annual emission rate of Porridge
   uint256 public annualPrgEmissions;
@@ -98,6 +101,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   /// @param _govlocks Address of GovLocks
   /// @param _honey Address of Honey
   /// @param _timelock Address of Timelock
+  /// @param _multisig Address of multisig
   /// @param _annualPrgEmissions Initial annual Porridge emissions
   /// @param allocationsAddress Addresses receiving Locks
   /// @param allocationsAmt Amounts of Locks to stake and lock
@@ -108,6 +112,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     address _govlocks,
     address _honey,
     address _timelock,
+    address _multisig,
     uint256 initialSupply,
     uint256 _annualPrgEmissions,
     address[] memory allocationsAddress,
@@ -118,6 +123,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     govlocks = _govlocks;
     honey = _honey;
     timelock = _timelock;
+    multisig = _multisig;
     deployTime = block.timestamp;
     vestingStart = block.timestamp + 90 days;
     vestingEnd = block.timestamp + 90 days + 365 days;
@@ -351,9 +357,15 @@ contract Goldilocked is IGoldilocked, ERC20 {
   }
 
   /// @inheritdoc IGoldilocked
-  function mintPorridge(address multisig, uint256 newPorridge) external {
+  function mintPorridge(uint256 newPorridge) external {
     if(msg.sender != timelock) revert NotTimelock();
     _mint(multisig, newPorridge);
+  }
+
+  /// @inheritdoc IGoldilocked
+  function setGoldilendAddress(address _goldilend) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    goldilend = _goldilend;
   }
 
 }

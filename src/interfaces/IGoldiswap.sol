@@ -19,6 +19,7 @@ interface IGoldiswap {
   error NotGoldilocked();
   error NotMultisig();
   error NotTimelock();
+  error NotActive();
   error ExcessiveSlippage();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -69,5 +70,10 @@ interface IGoldiswap {
   /// @param to Recipient of minted Locks tokens
   /// @param amount Amount of minted Locks tokens
   function porridgeMint(address to, uint256 amount, uint256 cost) external;
+
+  /// @notice Allows multisig to initialize protocol
+  /// @dev Callable only by multisig
+  /// @param amount Amount of Honey
+  function initializeProtocol(uint256 amount) external;
 
 }

@@ -142,7 +142,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldiswap.balanceOf(address(this)), oneDayLocksProceeds + locksAmount);
     assertEq(goldilocked.balanceOf(address(this)), prgMintAmount - oneDayPrg);
     assertEq(honey.balanceOf(address(this)), 0);
-    assertEq(honey.balanceOf(address(goldiswap)), oneDayPrgCost);
+    assertEq(honey.balanceOf(address(goldiswap)), oneDayPrgCost + initialPSL);
   }
 
   function testYieldHalfDay() public dealStakeLocks {
@@ -267,7 +267,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.userLockedLocks(address(this)), locksAmount);
     assertEq(goldilocked.userBorrowedHoney(address(this)), borrowAmount);
     assertEq(honey.balanceOf(address(this)), borrowAmount);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - borrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2) - borrowAmount);
   }
 
   function testRepayHoneyFailExcessive() public dealStakeLocks dealGoldiswapMaxHoney {
@@ -285,7 +285,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.borrowedHoney(address(this)), 0);
     assertEq(goldilocked.stakedLocks(address(this)), locksAmount);
     assertEq(honey.balanceOf(address(this)), 0);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max);
+    assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2));
   }
 
   function testHalfRepayHoneySuccess() public dealStakeLocks dealGoldiswapMaxHoney {
@@ -297,7 +297,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.borrowedHoney(address(this)), borrowAmount / 2);
     assertEq(goldilocked.stakedLocks(address(this)), locksAmount);
     assertEq(honey.balanceOf(address(this)), borrowAmount / 2);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - (borrowAmount / 2));
+    assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2) - (borrowAmount / 2));
   }
 
   function testTeamVest() public {    
@@ -369,11 +369,11 @@ contract UnitGoldilockedTest is BaseUnitTest {
   function testMintPorridgeFailTimelock() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotTimelock.selector));
-    goldilocked.mintPorridge(address(0x69), 69);
+    goldilocked.mintPorridge(69);
   }
 
   function testMintPorridgeSuccess() public {
-    bytes memory _calldata = abi.encodeWithSignature("mintPorridge(address,uint256)", address(this), 69);
+    bytes memory _calldata = abi.encodeWithSignature("mintPorridge(uint256)", 69);
     address[] memory targets = new address[](1);
     targets[0] = address(goldilocked);
     string[] memory signatures = new string[](1);
@@ -400,6 +400,18 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.balanceOf(address(this)), 69 + prgMintAmount);
   }
 
+  function testSetGoldilendAddressFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotMultisig.selector));
+    goldilocked.setGoldilendAddress(address(0x69));
+  }
+
+  function testSetGoldilendAddressSuccess() public {
+    goldilocked.setGoldilendAddress(address(0x69));
+
+    assertEq(goldilocked.goldilend(), address(0x69));
+  }
+
   function testUnstakeAfterFloorIncreaseFail() public {
     deal(address(honey), address(goldiswap), type(uint256).max);
     deal(address(goldiswap), address(this), locksAmount);
@@ -412,7 +424,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
   }
 
   function testUnstakeAfterFloorIncreaseSuccess() public {
-    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(honey), address(goldiswap), type(uint256).max / 2);
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
@@ -424,7 +436,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount/2);
     assertEq(goldilocked.userLockedLocks(address(this)), locksAmount/2);
     assertEq(honey.balanceOf(address(this)), borrowAmount);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - borrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2) - borrowAmount);
   }
 
   function testBorrowFurtherBorrowFail() public {
@@ -439,7 +451,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
   }
 
   function testBorrowFurtherBorrowSuccess() public {
-    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(honey), address(goldiswap), type(uint256).max / 2);
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
@@ -451,7 +463,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.userLockedLocks(address(this)), locksAmount);
     assertEq(goldilocked.userBorrowedHoney(address(this)), borrowAmount*2);
     assertEq(honey.balanceOf(address(this)), borrowAmount*2);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - (borrowAmount*2));
+    assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2) - (borrowAmount*2));
   }
 
   function testChangePrgEmissionsDoubleAfterHalfYear() public {

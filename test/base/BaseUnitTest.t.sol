@@ -60,7 +60,7 @@ abstract contract BaseUnitTest is BaseTest {
   }
 
   modifier dealGoldiswapHoney() {
-    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(honey), address(goldiswap), type(uint256).max / 2);
     _;
   }
 
@@ -72,7 +72,7 @@ abstract contract BaseUnitTest is BaseTest {
   }
 
   modifier dealGoldiswapMaxHoney() {
-    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(honey), address(goldiswap), type(uint256).max / 2);
     _;
   }
 

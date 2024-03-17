@@ -54,7 +54,7 @@ contract FuzzGoldilockedTest is BaseFuzzTest {
     assertEq(goldiswap.balanceOf(address(this)), oneDayLocksProceeds + stirAmount);
     assertEq(goldilocked.balanceOf(address(this)), prgMintAmount - oneDayPrg);
     assertEq(honey.balanceOf(address(this)), 0);
-    assertEq(honey.balanceOf(address(goldiswap)), oneDayPrgCost);
+    assertEq(honey.balanceOf(address(goldiswap)), oneDayPrgCost + initialPSL);
   }
 
   function testFuzzClaim(uint256 claimAmount) public {
@@ -77,7 +77,7 @@ contract FuzzGoldilockedTest is BaseFuzzTest {
     uint256 fuzzedBorrowAmount = FixedPointMathLib.mulWad(borrowHoneyAmount, goldiswap.floorPrice());
     uint256 lockedLocksAmount = FixedPointMathLib.divWad(fuzzedBorrowAmount, goldiswap.floorPrice());
     deal(address(goldiswap), address(this), borrowHoneyAmount);
-    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(honey), address(goldiswap), type(uint256).max / 2);
     goldiswap.approve(address(goldilocked), borrowHoneyAmount);
     goldilocked.stake(borrowHoneyAmount);
     goldilocked.borrow(fuzzedBorrowAmount);
@@ -85,7 +85,7 @@ contract FuzzGoldilockedTest is BaseFuzzTest {
     assertEq(goldilocked.userLockedLocks(address(this)), lockedLocksAmount);
     assertEq(goldilocked.userBorrowedHoney(address(this)), fuzzedBorrowAmount);
     assertEq(honey.balanceOf(address(this)), fuzzedBorrowAmount);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - fuzzedBorrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2) - fuzzedBorrowAmount);
   }
 
   function testFuzzRepayHoney(uint256 repayHoneyAmount) public {
@@ -93,7 +93,7 @@ contract FuzzGoldilockedTest is BaseFuzzTest {
     vm.assume(repayHoneyAmount > 1e5);
     uint256 fuzzedBorrowAmount = FixedPointMathLib.mulWad(repayHoneyAmount, goldiswap.floorPrice());
     deal(address(goldiswap), address(this), repayHoneyAmount);
-    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(honey), address(goldiswap), type(uint256).max / 2);
     goldiswap.approve(address(goldilocked), repayHoneyAmount);
     goldilocked.stake(repayHoneyAmount);
     goldilocked.borrow(fuzzedBorrowAmount);
@@ -104,7 +104,7 @@ contract FuzzGoldilockedTest is BaseFuzzTest {
     assertEq(goldilocked.borrowedHoney(address(this)), 0);
     assertEq(goldilocked.stakedLocks(address(this)), repayHoneyAmount);
     assertEq(honey.balanceOf(address(this)), 0);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max);
+    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max / 2);
   }
 
 }

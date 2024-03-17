@@ -40,6 +40,12 @@ contract UnitGoldiswapTest is BaseUnitTest {
     assertEq(goldiswap.marketPrice(), randomMarketPrice);
   }
 
+  function testBuyFailActive() public {
+    vm.store(address(goldiswap), bytes32(uint256(5)), bytes32(uint256(0)));
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotActive.selector));
+    goldiswap.buy(txAmount, 0);
+  }
+
   function testBuyFailSlippage() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldiswap.ExcessiveSlippage.selector));
     goldiswap.buy(txAmount, 0);
@@ -61,6 +67,12 @@ contract UnitGoldiswapTest is BaseUnitTest {
 
     assertEq(goldiswap.balanceOf(address(0xbbb)), txAmount);
     assertEq(honey.balanceOf(address(0xbbb)), (type(uint256).max / 2) - costOf10Locks - taxof10Locks);
+  }
+
+  function testSellFailActive() public {
+    vm.store(address(goldiswap), bytes32(uint256(5)), bytes32(uint256(0)));
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotActive.selector));
+    goldiswap.sell(txAmount, type(uint256).max);
   }
 
   function testSellFailSlippage() public {
@@ -137,11 +149,11 @@ contract UnitGoldiswapTest is BaseUnitTest {
     deal(address(goldiswap), address(this), locksAmount);
     goldiswap.approve(address(goldilocked), locksAmount);
     goldilocked.stake(locksAmount);
-    deal(address(honey), address(goldiswap), type(uint256).max);
+    deal(address(honey), address(goldiswap), type(uint256).max / 2);
     goldilocked.borrow(borrowAmount);
 
     assertEq(honey.balanceOf(address(this)), borrowAmount);
-    assertEq(honey.balanceOf(address(goldiswap)), type(uint256).max - borrowAmount);
+    assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2) - borrowAmount);
   }
 
   function testPorridgeMintFailGoldilocked() public {
@@ -166,6 +178,21 @@ contract UnitGoldiswapTest is BaseUnitTest {
     assertEq(goldiswap.balanceOf(address(this)), oneDayLocksProceeds + locksAmount);
   }
 
+  function testInitializeProtocolFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotMultisig.selector));
+    goldiswap.initializeProtocol(69);
+  }
+
+  function testInitializeProtocolSuccess() public {
+    deal(address(honey), address(this), 69);
+    honey.approve(address(goldiswap), 69);
+    goldiswap.initializeProtocol(69);
+
+    assertEq(goldiswap.tradingActive(), true);
+    assertEq(honey.balanceOf(address(goldiswap)), 69);
+  }
+
   function testInjectLiquiditySuccess() public {
     uint256 fsl = goldiswap.fsl();
     uint256 psl = goldiswap.psl();
@@ -177,7 +204,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
 
     assertEq(goldiswap.fsl(), initialFSL + fslLiq);
     assertEq(goldiswap.psl(), initialPSL + pslLiq);
-    assertEq(honey.balanceOf(address(goldiswap)), 69e18);
+    assertEq(honey.balanceOf(address(goldiswap)), 69e18 + initialPSL);
     assertEq(honey.balanceOf(address(timelock)), 0);
   }
 
