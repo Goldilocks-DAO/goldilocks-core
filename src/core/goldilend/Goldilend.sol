@@ -69,9 +69,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
 
   /// @notice Size of lending pool
   uint256 public poolSize;
-  
-  /// @notice Amount of Porridge emitted per staked GiBGT annually
-  uint256 public porridgeMultiple;
 
   /// @notice Rate at which interest rate increases
   uint256 public slope;
@@ -426,7 +423,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(block.timestamp > userLoan.endDate) revert LoanExpired();
     uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoan.interest, userLoan.borrowedAmount);
     uint256 interest = FixedPointMathLib.mulWadUp(repayAmount, interestLoanRatio);
-    outstandingDebt -= repayAmount - interest;
+    outstandingDebt -= repayAmount - interest > outstandingDebt ? outstandingDebt : repayAmount - interest;
     loans[msg.sender][index].borrowedAmount -= repayAmount;
     loans[msg.sender][index].interest -= interest;
     poolSize += userLoan.interest * (1000 - (multisigShare + apdaoShare)) / 1000;
@@ -521,12 +518,12 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 borrowAmount, 
     uint256 debt,
     uint256 duration
-  ) internal view returns (uint256 interest) {
+  ) internal view returns (uint256) {
     uint256 rate = protocolInterestRate;
     uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + 5e17;
-    uint256 interestRate = rate + FixedPointMathLib.mulWad(slope * rate, FixedPointMathLib.mulWad(ratio, FixedPointMathLib.divWad(duration, 365 days)));
+    uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, FixedPointMathLib.divWad(duration, 365 days)));
     uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), FixedPointMathLib.divWad(duration, 365 days));
-    interest = interestAdjusted / 100;
+    return interestAdjusted / 100;
   }
 
   /// @notice Finds the loan by userId
@@ -802,7 +799,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 _maxDuration,
     uint256 _startingPoolSize,
     uint256 _protocolInterestRate,
-    uint256 _porridgeMultiple,
     uint256 _slope,
     uint256 _annualPrgEmissions,
     uint256 _boostLockDuration
@@ -814,7 +810,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     maxDuration = _maxDuration;
     poolSize = _startingPoolSize;
     protocolInterestRate = _protocolInterestRate;
-    porridgeMultiple = _porridgeMultiple;
     slope = _slope;
     annualPrgEmissions = _annualPrgEmissions;
     boostLockDuration = _boostLockDuration;

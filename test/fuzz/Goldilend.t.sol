@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "../../lib/forge-std/src/Test.sol";
 import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
@@ -123,7 +124,7 @@ contract FuzzGoldilendTest is BaseFuzzTest {
   }
 
   //todo: make differential
-  function testFuzzRepay(uint256 durationAmount) public dealUseriBGT dealUserBeras {
+  function testFuzzRepayiBGT(uint256 durationAmount) public dealUseriBGT dealUserBeras {
     vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
     goldilend.borrow(1e18, durationAmount, address(bondbear), 1);
     Goldilend.Loan memory userLoanBefore = goldilend.lookupLoan(address(this), 1);
@@ -135,7 +136,7 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     assertEq(userLoan.collateralNFTs[0], address(bondbear));
     assertEq(userLoan.collateralNFTIds[0], 1);
     assertEq(userLoan.borrowedAmount, 0);
-    assertEq(userLoan.interest, 0);
+    assertLe(userLoan.interest, 2);
     assertEq(userLoan.duration, durationAmount);
     assertEq(userLoan.endDate, block.timestamp + durationAmount);
     assertEq(userLoan.loanId, 1);

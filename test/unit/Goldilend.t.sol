@@ -483,9 +483,16 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(userLoan.liquidated, false);
   }
 
-  function testInterestCalculation() public dealUserBeras {
+  function testInterestCalculation1() public dealUserBeras {
+    // vm.store(address(goldilend), bytes32(uint256(2)), bytes32(uint256(20e18))); // rate
+    vm.store(address(goldilend), bytes32(uint256(3)), bytes32(uint256(1000e18))); // debt
+    vm.store(address(goldilend), bytes32(uint256(4)), bytes32(uint256(2000e18))); // pool size
+    // vm.store(address(goldilend), bytes32(uint256(5)), bytes32(uint256(12e18))); // slope
     (address[] memory nfts, uint256[] memory ids) = beras();
-    
+    goldilend.borrow(100e18, 90 days, nfts, ids);
+    Goldilend.Loan memory userLoan = goldilend.lookupLoan(address(this), 1);
+
+    assertEq(userLoan.interest, interestCalculation1);
   }
 
   function testMultipleBorrowFailActive() public {
@@ -629,13 +636,13 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 0);
     assertEq(userLoan.collateralNFTs[0], address(bondbear));
     assertEq(userLoan.collateralNFTIds[0], 1);
-    assertEq(userLoan.borrowedAmount, ((1e18+userLoanBefore.interest) / 2)+1);
+    assertEq(userLoan.borrowedAmount, ((1e18+userLoanBefore.interest) / 2));
     assertEq(userLoan.interest, userLoanBefore.interest / 2);
     assertEq(userLoan.duration, goldilendDuration);
     assertEq(userLoan.endDate, block.timestamp + goldilendDuration);
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
-    assertEq(goldilend.outstandingDebt(), 5e17+1);
+    assertEq(goldilend.outstandingDebt(), 5e17);
   }
 
   function testMultipleBorrowRepayTransfers() public dealUseriBGT dealUserBeras {
@@ -979,8 +986,8 @@ contract UnitGoldilendTest is BaseUnitTest {
     goldilend.multisigInterestClaim();
     
     assertEq(goldilend.multisigClaims(), 0);
-    assertEq(ibgt.balanceOf(address(this)), multisigibgtBalanceBefore + 2057708388065);
-    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 2057708388065);
+    assertEq(ibgt.balanceOf(address(this)), multisigibgtBalanceBefore + 205770838806530);
+    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 205770838806530);
   }
 
   function testAPDAOInterestClaimFailapdao() public {
@@ -999,8 +1006,8 @@ contract UnitGoldilendTest is BaseUnitTest {
     goldilend.apdaoInterestClaim();
 
     assertEq(goldilend.apdaoClaims(), 0);
-    assertEq(ibgt.balanceOf(apdao), honeyibgtBalanceBefore + 228634265340);
-    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 228634265340);
+    assertEq(ibgt.balanceOf(apdao), honeyibgtBalanceBefore + 22863426534058);
+    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 22863426534058);
   }
 
   function testInitializeParametersFailMultisig() public {
@@ -1013,7 +1020,6 @@ contract UnitGoldilendTest is BaseUnitTest {
       21 days,
       1000e18,
       1e17,
-      1e13,
       10,
       1e17,
       30 days
@@ -1034,7 +1040,6 @@ contract UnitGoldilendTest is BaseUnitTest {
       21 days,
       1000e18,
       1e17,
-      1e13,
       10,
       5e17,
       30 days
@@ -1046,7 +1051,6 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(goldilend.maxDuration(), 21 days);
     assertEq(goldilend.poolSize(), 1000e18);
     assertEq(goldilend.protocolInterestRate(), 1e17);
-    assertEq(goldilend.porridgeMultiple(), 1e13);
     assertEq(goldilend.slope(), 10);
     assertEq(goldilend.annualPrgEmissions(), 5e17);
     assertEq(goldilend.boostLockDuration(), 30 days);

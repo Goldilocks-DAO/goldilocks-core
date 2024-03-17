@@ -232,7 +232,6 @@ interface IGoldilend {
   /// @param _maxDuration Maximum loan duration
   /// @param _startingPoolSize Initial pool size
   /// @param _protocolInterestRate Initial interest rate of protocol
-  /// @param _porridgeMultiple Initial amount of Porridge emitted per staked GiBGT annually
   /// @param _slope Initial rate at which interest rate increases
   /// @param _annualPrgEmissions Annual emissions rate of Porridge
   /// @param _boostLockDuration Duration to lock partner NFT for boost
@@ -243,7 +242,6 @@ interface IGoldilend {
     uint256 _maxDuration,
     uint256 _startingPoolSize,
     uint256 _protocolInterestRate,
-    uint256 _porridgeMultiple,
     uint256 _slope,
     uint256 _annualPrgEmissions,
     uint256 _boostLockDuration

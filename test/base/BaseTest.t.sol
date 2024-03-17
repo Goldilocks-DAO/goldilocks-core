@@ -134,6 +134,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     goldigov = new Goldigovernor(
       address(timelock),
       address(govlocks),
+      address(goldiswap),
       address(this),
       5761,
       69,
@@ -247,9 +248,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
       7 days,
       365 days,
       1000e18,
-      1e17,
-      1e13,
-      10,
+      10e18,
+      10e18,
       5e17,
       30 days
     );

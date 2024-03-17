@@ -17,8 +17,9 @@ pragma solidity ^0.8.20;
 // ==============================================================================================
 
 
-import { Timelock } from "./Timelock.sol";
-import { GovLocks } from "./GovLocks.sol";
+import { Timelock } from "../../core/goldigovernance/Timelock.sol";
+import { GovLocks } from "../../core/goldigovernance/GovLocks.sol";
+import { Goldiswap } from "../../core/goldiswap/Goldiswap.sol";
 
 
 /// @title Goldigovernor
@@ -113,6 +114,9 @@ contract Goldigovernor {
   /// @notice Address of GovLocks
   address public immutable govlocks;
 
+  /// @notice Address of Goldiswap
+  address public immutable goldiswap;
+
   /// @notice Address of multisig
   address public immutable multisig;
 
@@ -144,6 +148,7 @@ contract Goldigovernor {
   /// @notice Constructor of this contract
   /// @param _timelock Address of Timelock
   /// @param _govlocks Address of Locks
+  /// @param _goldiswap Address of Goldiswap
   /// @param _multisig Address of multisig
   /// @param _votingPeriod Duration of voting on a proposal, in blocks
   /// @param _votingDelay Delay before voting on a proposal may take place, once proposed, in blocks
@@ -151,6 +156,7 @@ contract Goldigovernor {
   constructor(
     address _timelock,
     address _govlocks,
+    address _goldiswap,
     address _multisig,
     uint256 _votingPeriod,
     uint256 _votingDelay,
@@ -161,6 +167,7 @@ contract Goldigovernor {
     if(_proposalThreshold < MIN_PROPOSAL_THRESHOLD || _proposalThreshold > MAX_PROPOSAL_THRESHOLD) revert InvalidVotingParameter();
     timelock = _timelock;
     govlocks = _govlocks;
+    goldiswap = _goldiswap;
     multisig = _multisig;
     votingPeriod = _votingPeriod;
     votingDelay = _votingDelay;
@@ -373,7 +380,7 @@ contract Goldigovernor {
     else if (block.number <= proposal.endBlock) return ProposalState.Active;
     else if (proposal.eta == 0) return ProposalState.Succeeded;
     else if (proposal.executed) return ProposalState.Executed;
-    else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < quorumVotes) {
+    else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < Goldiswap(goldiswap).totalSupply() / 20) {
       return ProposalState.Defeated;
     } 
     else if (block.timestamp >= proposal.eta + Timelock(timelock).GRACE_PERIOD()) {

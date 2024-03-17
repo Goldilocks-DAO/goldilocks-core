@@ -29,9 +29,10 @@ abstract contract BaseUnitTest is BaseTest {
   uint256 govTimeYield = twoDaysPrg + twoDaysPrg + twoDaysPrg;
 
   uint256 goldilendDuration = 1209600;
-  uint256 singleBorrowInterest = 45726853068117;
-  uint256 singleBorrowInterestBoosted = 45452491949708;
-  uint256 singleBorrowInterestMaxBoost = 43394783561643;
+  uint256 singleBorrowInterest = 4572685306811784;
+  uint256 singleBorrowInterestBoosted = 4545249194970913;
+  uint256 singleBorrowInterestMaxBoost = 4339478356164383;
+  uint256 interestCalculation1 = 8849690373428410538;
   uint256 initialGiBGTRatio = 9900990099009900;
   uint256 lockLockGiBGTRatio = 99009900990099000;
 
