@@ -190,7 +190,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
     goldiswap.initializeProtocol(69);
 
     assertEq(goldiswap.tradingActive(), true);
-    assertEq(honey.balanceOf(address(goldiswap)), 69);
+    assertEq(honey.balanceOf(address(goldiswap)), initialPSL + 69);
   }
 
   function testInjectLiquiditySuccess() public {

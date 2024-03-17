@@ -49,4 +49,9 @@ abstract contract BaseInvariantTest is BaseTest {
     return new address[](0);
   }
 
+  function assertStakedLocksBalanceLteTotalSupply(address account) external returns (address[] memory) {
+    assertLe(goldilocked.stakedLocks(account), goldiswap.totalSupply());
+    return new address[](0);
+  }
+
 }

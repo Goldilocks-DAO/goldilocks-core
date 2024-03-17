@@ -23,7 +23,7 @@ contract GovLocksHandler is BaseHandler {
     goldiswap = _goldiswap;
     govlocks =_govlocks;
     deal(address(goldiswap), address(this), locksMintAmount);
-    goldiswap.approve(address(govlocks), type(uint256).max);
+    // goldiswap.approve(address(govlocks), type(uint256).max);
   }
 
   function deposit(uint256 amount) public createActor countCall("deposit") {
@@ -31,7 +31,7 @@ contract GovLocksHandler is BaseHandler {
 
     sendLocks(currentActor, amount);
     vm.startPrank(currentActor);
-    goldiswap.approve(address(govlocks), type(uint256).max);
+    goldiswap.approve(address(govlocks), amount);
     govlocks.deposit(amount);
     vm.stopPrank();
 
@@ -70,52 +70,52 @@ contract GovLocksHandler is BaseHandler {
   }
 
   function approve(
-  uint256 actorSeed,
-  uint256 spenderSeed,
-  uint256 amount
-) public useActor(actorSeed) countCall("approve") {
-  address spender = randomActor(spenderSeed);
+    uint256 actorSeed,
+    uint256 spenderSeed,
+    uint256 amount
+  ) public useActor(actorSeed) countCall("approve") {
+    address spender = randomActor(spenderSeed);
 
-  vm.prank(currentActor);
-  govlocks.approve(spender, amount);
-}
-
-function transfer(
-  uint256 actorSeed,
-  uint256 toSeed,
-  uint256 amount
-) public useActor(actorSeed) countCall("transfer") {
-  address to = randomActor(toSeed);
-  amount = bound(amount, 0, govlocks.balanceOf(currentActor));
-
-  vm.prank(currentActor);
-  govlocks.transfer(to, amount);
-}
-
-function transferFrom(
-  uint256 actorSeed,
-  uint256 fromSeed,
-  uint256 toSeed,
-  bool _approve,
-  uint256 amount
-) public useActor(actorSeed) countCall("transferFrom")
-{
-  address from = randomActor(fromSeed);
-  address to = randomActor(toSeed);
-
-  amount = bound(amount, 0, govlocks.balanceOf(from));
-
-  if(_approve) {
-    vm.prank(from);
-    govlocks.approve(currentActor, amount);
+    vm.prank(currentActor);
+    govlocks.approve(spender, amount);
   }
-  else {
-    amount = bound(amount, 0, govlocks.allowance(currentActor, from));
-  }  
 
-  vm.prank(currentActor);
-  govlocks.transferFrom(from, to, amount);
-}
+  function transfer(
+    uint256 actorSeed,
+    uint256 toSeed,
+    uint256 amount
+  ) public useActor(actorSeed) countCall("transfer") {
+    address to = randomActor(toSeed);
+    amount = bound(amount, 0, govlocks.balanceOf(currentActor));
+
+    vm.prank(currentActor);
+    govlocks.transfer(to, amount);
+  }
+
+  function transferFrom(
+    uint256 actorSeed,
+    uint256 fromSeed,
+    uint256 toSeed,
+    bool _approve,
+    uint256 amount
+  ) public useActor(actorSeed) countCall("transferFrom")
+  {
+    address from = randomActor(fromSeed);
+    address to = randomActor(toSeed);
+
+    amount = bound(amount, 0, govlocks.balanceOf(from));
+
+    if(_approve) {
+      vm.prank(from);
+      govlocks.approve(currentActor, amount);
+    }
+    else {
+      amount = bound(amount, 0, govlocks.allowance(currentActor, from));
+    }  
+
+    vm.prank(currentActor);
+    govlocks.transferFrom(from, to, amount);
+  }
 
   function sendLocks(address actor, uint256 amount) internal {
     SafeTransferLib.safeTransfer(address(goldiswap), actor, amount);
