@@ -44,7 +44,6 @@ interface IGoldilend {
   error InvalidCollateral();
   error BorrowLimitExceeded();
   error ExcessiveRepay();
-  error LoanNotFound();
   error LoanExpired();
   error Unliquidatable();
 
@@ -64,18 +63,15 @@ interface IGoldilend {
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @notice Returns details of all loans originated from user
-  /// @param user Address of user for query
-  function lookupLoans(address user) external view returns (Loan[] memory userLoans);
 
   /// @notice Returns details of a specific loan
   /// @param user Address of user for query
-  /// @param userLoanId Id of loan
-  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory loan);
+  /// @param _userLoanId Id of loan
+  function lookupLoan(address user, uint256 _userLoanId) external view returns (Loan memory);
   
   /// @notice Returns details of a boost
   /// @param user Address of user for query
-  function lookupBoost(address user) external view returns (Boost memory userBoost);
+  function lookupBoost(address user) external view returns (Boost memory);
 
   /// @notice Returns claimable Porridge of GiBGT staker
   /// @param user Address of user for query

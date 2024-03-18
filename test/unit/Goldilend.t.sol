@@ -17,23 +17,6 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(goldilend.symbol(), "GiBGT");
   }
 
-  function testLookupLoans() public dealUserBeras {
-    goldilend.borrow(1e18, goldilendDuration, address(bondbear), 1);
-    goldilend.borrow(1e18, goldilendDuration, address(bandbear), 1);
-    Goldilend.Loan[] memory userLoans = goldilend.lookupLoans(address(this));
-
-    assertEq(userLoans[0].duration, goldilendDuration);
-    assertEq(userLoans[0].collateralNFTs[0], address(bondbear));
-    assertEq(userLoans[0].borrowedAmount, 1e18 + singleBorrowInterest);
-    assertEq(userLoans[1].duration, goldilendDuration);
-    assertEq(userLoans[1].collateralNFTs[0], address(bandbear));
-  }
-
-  function testLookupLoanFailNotFound() public {
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.LoanNotFound.selector));
-    goldilend.lookupLoan(address(this), 2);
-  }
-
   function testLookupLoan() public dealUserBeras {
     goldilend.borrow(1e18, goldilendDuration, address(bondbear), 1);
     Goldilend.Loan memory userLoan = goldilend.lookupLoan(address(this), 1);
@@ -94,6 +77,19 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(IERC721(honeycomb).balanceOf(address(goldilend)), 1);
     assertEq(userBoost.expiry, 30 days + 1);
     assertEq(userBoost.boostMagnitude, 6);
+  }
+
+  function testRepeatedBoostSuccess() public dealUserPartnerNFTs {
+    goldilend.boost(address(honeycomb), 1);
+    goldilend.boost(address(beradrome), 1);
+    Goldilend.Boost memory userBoost = goldilend.lookupBoost(address(this));
+
+    assertEq(IERC721(honeycomb).balanceOf(address(this)), 0);
+    assertEq(IERC721(honeycomb).balanceOf(address(goldilend)), 1);
+    assertEq(IERC721(beradrome).balanceOf(address(this)), 0);
+    assertEq(IERC721(beradrome).balanceOf(address(goldilend)), 1);
+    assertEq(userBoost.expiry, 30 days + 1);
+    assertEq(userBoost.boostMagnitude, 15);
   }
 
   function testMultipleBoostFailPartner() public {
