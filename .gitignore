@@ -13,3 +13,4 @@ lib/
 price_tests/__pycache__
 infrared/
 slither/
+whitelist/
