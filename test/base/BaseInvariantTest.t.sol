@@ -18,7 +18,7 @@ abstract contract BaseInvariantTest is BaseTest {
   function setUp() public override {
     deployProtocol();
 
-    goldiswapHandler = new GoldiswapHandler(goldiswap);
+    goldiswapHandler = new GoldiswapHandler(goldiswap, honey);
     bytes4[] memory goldiswapSelectors = new bytes4[](3);
     goldiswapSelectors[0] = goldiswapHandler.approve.selector;
     goldiswapSelectors[1] = goldiswapHandler.transfer.selector;
@@ -97,6 +97,11 @@ abstract contract BaseInvariantTest is BaseTest {
 
   function assertLocksBalanceLteTotalSupply(address account) external returns (address[] memory) {
     assertLe(goldiswap.balanceOf(account), goldiswap.totalSupply());
+    return new address[](0);
+  }
+
+  function assertHoneyBalanceLteInitalDeal(address account) external returns (address[] memory) {
+    assertLe(honey.balanceOf(account), 100_000e18);
     return new address[](0);
   }
 

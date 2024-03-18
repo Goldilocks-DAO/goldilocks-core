@@ -9,4 +9,8 @@ contract InvariantGoldiswapTest is BaseInvariantTest {
     goldilendHandler.forEachActor(this.assertLocksBalanceLteTotalSupply);
   }
 
+  function invariant_solvencyBalances() public {
+    goldiswapHandler.forEachActor(this.assertHoneyBalanceLteInitalDeal);
+  }
+
 }

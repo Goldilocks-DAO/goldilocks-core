@@ -23,7 +23,6 @@ contract GovLocksHandler is BaseHandler {
     goldiswap = _goldiswap;
     govlocks =_govlocks;
     deal(address(goldiswap), address(this), locksMintAmount);
-    // goldiswap.approve(address(govlocks), type(uint256).max);
   }
 
   function deposit(uint256 amount) public createActor countCall("deposit") {
