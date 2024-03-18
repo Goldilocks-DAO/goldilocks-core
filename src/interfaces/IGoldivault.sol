@@ -56,6 +56,11 @@ interface IGoldivault {
   /// @dev Callable only by Timelock
   function renew() external;
 
+  /// @notice Allows the multisig to add yield tokens to vault
+  /// @dev Callable only by multisig
+  /// @param _yieldTokens Tokens to add to yieldTokens array
+  function addYieldTokens(address[] calldata _yieldTokens) external;
+
   /// @notice Allows DAO to set protocol parameters
   /// @dev Callable only by Timelock
   /// @param _earlyWithdrawalFee New early withdrawal fee
@@ -68,11 +73,6 @@ interface IGoldivault {
     uint256 _delay,
     uint256 _duration
   ) external;
-
-  /// @notice Allows the multisig to add yield tokens to vault
-  /// @dev Callable only by multisig
-  /// @param _yieldTokens Tokens to add to yieldTokens array
-  function addYieldTokens(address[] calldata _yieldTokens) external;
 
   /// @notice Allows the multisig to initialize the protocol
   /// @dev Callable only by multisig

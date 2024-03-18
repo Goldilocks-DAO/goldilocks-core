@@ -220,6 +220,14 @@ abstract contract Goldivault is IGoldivault {
   }
 
   /// @inheritdoc IGoldivault
+  function addYieldTokens(address[] calldata _yieldTokens) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    for(uint8 i; i < _yieldTokens.length; ++i) {
+      yieldTokens.push(_yieldTokens[i]);
+    }
+  }
+
+  /// @inheritdoc IGoldivault
   function changeProtocolParameters(
     uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
@@ -232,14 +240,6 @@ abstract contract Goldivault is IGoldivault {
     delay = _delay;
     duration = _duration;
     endTime = block.timestamp + _duration;
-  }
-
-  /// @inheritdoc IGoldivault
-  function addYieldTokens(address[] calldata _yieldTokens) external {
-    if(msg.sender != multisig) revert NotMultisig();
-    for(uint8 i; i < _yieldTokens.length; ++i) {
-      yieldTokens.push(_yieldTokens[i]);
-    }
   }
 
   /// @inheritdoc IGoldivault
