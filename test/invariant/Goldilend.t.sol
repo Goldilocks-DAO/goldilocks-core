@@ -3,10 +3,10 @@ pragma solidity ^0.8.20;
 
 import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
 
-contract InvariantGoldiswapTest is BaseInvariantTest {
+contract InvariantGoldilendTest is BaseInvariantTest {
 
   function invariant_depositorBalances() public {
-    goldilendHandler.forEachActor(this.assertLocksBalanceLteTotalSupply);
+    goldilendHandler.forEachActor(this.assertGoldilendBalanceLteTotalSupply);
   }
 
 }

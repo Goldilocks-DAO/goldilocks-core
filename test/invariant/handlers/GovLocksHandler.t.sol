@@ -121,14 +121,14 @@ contract GovLocksHandler is BaseHandler {
     SafeTransferLib.safeTransfer(address(goldiswap), actor, amount);
   }
 
-  function callSummary() external view {
-    console.log("call summary:");
-    console.log("-------------------");
-    console.log("deposit", calls["deposit"]);
-    console.log("withdraw", calls["withdraw"]);
-    console.log("delegate", calls["delegate"]);
-    console.log("-------------------");
+  // function callSummary() external view {
+  //   console.log("call summary:");
+  //   console.log("-------------------");
+  //   console.log("deposit", calls["deposit"]);
+  //   console.log("withdraw", calls["withdraw"]);
+  //   console.log("delegate", calls["delegate"]);
+  //   console.log("-------------------");
 
-    console.log("Zero withdrawals:", ghost_zeroWithdrawals);
-  }
+  //   console.log("Zero withdrawals:", ghost_zeroWithdrawals);
+  // }
 }

@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../../lib/forge-std/src/Test.sol";
 import { BaseHandler } from "../../base/BaseHandler.t.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { Goldilocked } from "../../../src/core/goldiswap/Goldilocked.sol";
@@ -20,7 +19,6 @@ contract GoldilockedHandler is BaseHandler {
     goldilocked = _goldilocked;
     goldiswap = _goldiswap;
     deal(address(goldiswap), address(this), locksMintAmount);
-    // goldiswap.approve(address(goldilocked), type(uint256).max);
   }
 
   function stake(uint256 amount) public createActor countCall("stake") {
@@ -99,13 +97,4 @@ contract GoldilockedHandler is BaseHandler {
     SafeTransferLib.safeTransfer(address(goldiswap), actor, amount);
   }
 
-  function callSummary() external view {
-    console.log("call summary:");
-    console.log("-------------------");
-    console.log("stake", calls["stake"]);
-    console.log("unstake", calls["unstake"]);
-    console.log("-------------------");
-
-    console.log("Zero unstakes:", ghost_zeroUnstakes);
-  }
 }

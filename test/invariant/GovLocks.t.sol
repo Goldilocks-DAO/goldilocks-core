@@ -46,7 +46,7 @@ contract InvariantGovLocksTest is BaseInvariantTest {
   }
 
   function invariant_depositorBalances() public {
-    govlocksHandler.forEachActor(this.assertgovlocksBalanceLteTotalSupply);
+    govlocksHandler.forEachActor(this.assertGovlocksBalanceLteTotalSupply);
   }
 
   // function invariant_callSummary() public view {

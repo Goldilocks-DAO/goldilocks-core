@@ -2,14 +2,14 @@
 pragma solidity ^0.8.20;
 
 import { BaseHandler } from "../../base/BaseHandler.t.sol";
-import { Goldiswap } from "../../../src/core/goldiswap/Goldiswap.sol";
+import { Goldilend } from "../../../src/core/goldilend/Goldilend.sol";
 
-contract GoldiswapHandler is BaseHandler {
+contract GoldilendHandler is BaseHandler {
 
-  Goldiswap public goldiswap;
+  Goldilend public goldilend;
 
-  constructor(Goldiswap _goldiswap) {
-    goldiswap = _goldiswap;
+  constructor(Goldilend _goldilend) {
+    goldilend = _goldilend;
   }
 
   function approve(
@@ -20,7 +20,7 @@ contract GoldiswapHandler is BaseHandler {
     address spender = randomActor(spenderSeed);
 
     vm.prank(currentActor);
-    goldiswap.approve(spender, amount);
+    goldilend.approve(spender, amount);
   }
 
   function transfer(
@@ -29,10 +29,10 @@ contract GoldiswapHandler is BaseHandler {
     uint256 amount
   ) public useActor(actorSeed) countCall("transfer") {
     address to = randomActor(toSeed);
-    amount = bound(amount, 0, goldiswap.balanceOf(currentActor));
+    amount = bound(amount, 0, goldilend.balanceOf(currentActor));
 
     vm.prank(currentActor);
-    goldiswap.transfer(to, amount);
+    goldilend.transfer(to, amount);
   }
 
   function transferFrom(
@@ -46,18 +46,18 @@ contract GoldiswapHandler is BaseHandler {
     address from = randomActor(fromSeed);
     address to = randomActor(toSeed);
 
-    amount = bound(amount, 0, goldiswap.balanceOf(from));
+    amount = bound(amount, 0, goldilend.balanceOf(from));
 
     if(_approve) {
       vm.prank(from);
-      goldiswap.approve(currentActor, amount);
+      goldilend.approve(currentActor, amount);
     }
     else {
-      amount = bound(amount, 0, goldiswap.allowance(currentActor, from));
+      amount = bound(amount, 0, goldilend.allowance(currentActor, from));
     }  
 
     vm.prank(currentActor);
-    goldiswap.transferFrom(from, to, amount);
+    goldilend.transferFrom(from, to, amount);
   }
 
 }

@@ -6,18 +6,23 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { GoldiswapHandler } from "../invariant/handlers/GoldiswapHandler.t.sol";
 import { GoldilockedHandler } from "../invariant/handlers/GoldilockedHandler.t.sol";
 import { GovLocksHandler } from "../invariant/handlers/GovLocksHandler.t.sol";
+import { GoldilendHandler } from "../invariant/handlers/GoldilendHandler.t.sol";
 
 abstract contract BaseInvariantTest is BaseTest {
 
   GoldilockedHandler public goldilockedHandler;
   GovLocksHandler public govlocksHandler;
   GoldiswapHandler public goldiswapHandler;
+  GoldilendHandler public goldilendHandler;
 
   function setUp() public override {
     deployProtocol();
 
     goldiswapHandler = new GoldiswapHandler(goldiswap);
-    bytes4[] memory goldiswapSelectors = new bytes4[](0);
+    bytes4[] memory goldiswapSelectors = new bytes4[](3);
+    goldiswapSelectors[0] = goldiswapHandler.approve.selector;
+    goldiswapSelectors[1] = goldiswapHandler.transfer.selector;
+    goldiswapSelectors[2] = goldiswapHandler.transferFrom.selector;
     targetSelector(FuzzSelector({
       addr: address(goldiswapHandler),
       selectors: goldiswapSelectors
@@ -50,6 +55,17 @@ abstract contract BaseInvariantTest is BaseTest {
       selectors: govLocksSelectors
     }));
     targetContract(address(govlocksHandler));
+
+    goldilendHandler = new GoldilendHandler(goldilend);
+    bytes4[] memory goldilendSelectors = new bytes4[](3);
+    goldilendSelectors[0] = goldilendHandler.approve.selector;
+    goldilendSelectors[1] = goldilendHandler.transfer.selector;
+    goldilendSelectors[2] = goldilendHandler.transferFrom.selector;
+    targetSelector(FuzzSelector({
+      addr: address(goldilendHandler),
+      selectors: goldilendSelectors
+    }));
+    targetContract(address(goldilendHandler));
   }
 
   function accumulateGovLocksBalance(uint256 balance, address caller) external view returns (uint256) {
@@ -64,13 +80,23 @@ abstract contract BaseInvariantTest is BaseTest {
     return staked + goldilocked.stakedLocks(caller);
   }
 
-  function assertgovlocksBalanceLteTotalSupply(address account) external returns (address[] memory) {
+  function assertGovlocksBalanceLteTotalSupply(address account) external returns (address[] memory) {
     assertLe(govlocks.balanceOf(account), govlocks.totalSupply());
     return new address[](0);
   }
 
   function assertStakedLocksBalanceLteTotalSupply(address account) external returns (address[] memory) {
     assertLe(goldilocked.stakedLocks(account), goldiswap.totalSupply());
+    return new address[](0);
+  }
+
+  function assertGoldilendBalanceLteTotalSupply(address account) external returns (address[] memory) {
+    assertLe(goldilend.balanceOf(account), goldilend.totalSupply());
+    return new address[](0);
+  }
+
+  function assertLocksBalanceLteTotalSupply(address account) external returns (address[] memory) {
+    assertLe(goldiswap.balanceOf(account), goldiswap.totalSupply());
     return new address[](0);
   }
 

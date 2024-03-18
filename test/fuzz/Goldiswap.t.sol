@@ -19,17 +19,13 @@ contract FuzzGoldiswapTest is BaseFuzzTest {
     assertEq(withinVariance(honey.balanceOf(address(this)), (type(uint256).max / 2) - cost), true);
   }
 
-  //todo: make differential
   function testFuzzSell(uint256 sellAmount) public {
     vm.assume(sellAmount < 1_000_000e18 + 1);
     deal(address(goldiswap), address(this), sellAmount);
     deal(address(honey), address(goldiswap), type(uint256).max);
     goldiswap.sell(sellAmount, 0);
-    // uint256 amountRatio = FixedPointMathLib.divWad(sellAmount, txAmount);
-    // uint256 proceeds = FixedPointMathLib.mulWad(amountRatio, proceedsof10Locks);
 
     assertEq(goldiswap.balanceOf(address(this)), 0);
-    // assertEq(withinVarianceSell(honey.balanceOf(address(this)), proceeds), true);
   }
 
   function testFuzzRedeem(uint256 redeemAmount) public {

@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../lib/forge-std/src/Test.sol";
 import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
@@ -88,7 +87,6 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     assertEq(goldilend.claimablePrg(address(this)), 0);
   }
 
-  //todo: make differential
   function testFuzzSingleBorrow(uint256 durationAmount) public dealUserBeras {
     vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
     goldilend.borrow(1e18, durationAmount, address(bondbear), 1);
@@ -96,15 +94,12 @@ contract FuzzGoldilendTest is BaseFuzzTest {
 
     assertEq(userLoan.collateralNFTs[0], address(bondbear));
     assertEq(userLoan.collateralNFTIds[0], 1);
-    // assertEq(userLoan.borrowedAmount, 1e18 + singleBorrowInterest);
-    // assertEq(userLoan.interest, singleBorrowInterest);
     assertEq(userLoan.duration, durationAmount);
     assertEq(userLoan.endDate, block.timestamp + durationAmount);
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
   }
 
-  //todo: make differential
   function testFuzzMultipleBorrow(uint256 durationAmount) public dealUserBeras {
     vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
     (address[] memory nfts, uint256[] memory ids) = beras();
@@ -115,15 +110,12 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     assertEq(userLoan.collateralNFTIds[0], 1);
     assertEq(userLoan.collateralNFTs[1], address(bandbear));
     assertEq(userLoan.collateralNFTIds[1], 1);
-    // assertEq(userLoan.borrowedAmount, 1e18 + singleBorrowInterest);
-    // assertEq(userLoan.interest, singleBorrowInterest);
     assertEq(userLoan.duration, durationAmount);
     assertEq(userLoan.endDate, block.timestamp + durationAmount);
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
   }
 
-  //todo: make differential
   function testFuzzRepayiBGT(uint256 durationAmount) public dealUseriBGT dealUserBeras {
     vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
     goldilend.borrow(1e18, durationAmount, address(bondbear), 1);
@@ -145,7 +137,6 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     assertEq(goldilend.poolSize(), 1000e18 + (userLoanBefore.interest * 950 / 1000));
   }
 
-  //todo: make differential
   function testFuzzLiquidate(uint256 time, uint256 durationAmount) public dealUseriBGT dealUserBeras {
     vm.assume(time < type(uint256).max / 2);
     vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
@@ -156,11 +147,9 @@ contract FuzzGoldilendTest is BaseFuzzTest {
       goldilend.liquidate(address(this), 1);
       assertEq(userLoan.collateralNFTs[0], address(bondbear));
       assertEq(userLoan.collateralNFTIds[0], 1);
-      // assertEq(userLoan.borrowedAmount, 0);
       assertEq(userLoan.duration, durationAmount);
       assertEq(userLoan.endDate, durationAmount + 1);
       assertEq(userLoan.loanId, 1);
-      // assertEq(userLoan.liquidated, true);
       assertEq(IERC721(address(bondbear)).balanceOf(address(goldilend)), 0);
       assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 1);
     }
