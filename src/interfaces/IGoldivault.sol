@@ -76,13 +76,11 @@ interface IGoldivault {
 
   /// @notice Allows the multisig to initialize the protocol
   /// @dev Callable only by multisig
+  /// @param _earlyWithdrawalFee Fee charged for early withdrawal
+  /// @param _yieldFee Fee charged for yield
+  /// @param _delay Delay period after vault concludes before redemption is allowed
+  /// @param _duration Duration of vault
   function initializeProtocol(
-    address _depositToken,
-    address _depositVault,
-    address _ibgt,
-    address _ibgtVault,
-    address _ired,
-    address _iredVault,
     uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
     uint256 _delay,

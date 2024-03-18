@@ -32,12 +32,20 @@ contract InfraredBexLPGoldivault is Goldivault {
     address _ot,
     address _yt,
     address _multisig,
-    address _timelock
+    address _timelock,
+    address _depositToken,
+    address _depositVault,
+    address _ibgt,
+    address _ibgtVault
   ) Goldivault(
     _ot,
     _yt,
     _multisig,
-    _timelock
+    _timelock,
+    _depositToken,
+    _depositVault,
+    _ibgt,
+    _ibgtVault
   ) {}
 
   function _vaultDeposit(uint256 amount) internal override {

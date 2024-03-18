@@ -273,17 +273,15 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(ot),
       address(yt),
       address(this),
-      address(timelock)
+      address(timelock),
+        address(bexlp),
+      address(bexvault),
+      address(ibgt),
+      address(ibgtvault)
     );
 
     // initialization of goldivault
     goldivault.initializeProtocol(
-      address(bexlp),
-      address(bexvault),
-      address(ibgt),
-      address(ibgtvault),
-      address(ibgt),
-      address(ibgtvault),
       30,
       20,
       1 days,

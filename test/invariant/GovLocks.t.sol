@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
 
-contract InvariantGovLockstest is BaseInvariantTest {
+contract InvariantGovLocksTest is BaseInvariantTest {
 
   function invariant_conservationOfLocks() public {
     assertEq(

@@ -273,12 +273,6 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotMultisig.selector));
     goldivault.initializeProtocol(
-      address(bexlp),
-      address(bexvault),
-      address(ibgt),
-      address(ibgtvault),
-      address(ibgt),
-      address(ibgtvault),
       30,
       20,
       1 days,
@@ -291,12 +285,6 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
     address[] memory yieldTokens = new address[](1);
     yieldTokens[0] = address(honey);
     goldivault.initializeProtocol(
-      address(bexlp),
-      address(bexvault),
-      address(ibgt),
-      address(ibgtvault),
-      address(ibgt),
-      address(ibgtvault),
       30,
       20,
       1 days,
@@ -304,12 +292,6 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
       yieldTokens
     );
 
-    assertEq(goldivault.depositToken(), address(bexlp));
-    assertEq(goldivault.depositVault(), address(bexvault));
-    assertEq(goldivault.ibgt(), address(ibgt));
-    assertEq(goldivault.ibgtVault(), address(ibgtvault));
-    assertEq(goldivault.ired(), address(ibgt));
-    assertEq(goldivault.iredVault(), address(ibgtvault));
     assertEq(goldivault.earlyWithdrawalFee(), 30);
     assertEq(goldivault.yieldFee(), 20);
     assertEq(goldivault.delay(), 1 days);

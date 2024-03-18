@@ -78,12 +78,6 @@ abstract contract Goldivault is IGoldivault {
   /// @notice Address of iBGT vault
   address public ibgtVault;
 
-  /// @notice Address of iRED
-  address public ired;
-
-  /// @notice Address of iRED vault
-  address public iredVault;
-
   /// @notice Address of multisig
   address public multisig;
 
@@ -107,16 +101,30 @@ abstract contract Goldivault is IGoldivault {
   /// @param _yt Address of yield token
   /// @param _multisig Address of multisig
   /// @param _timelock Address of Timelock
+  /// @param _depositToken Address of deposit token
+  /// @param _depositVault Address of deposit token vault
+  /// @param _ibgt Address of ibgt
+  /// @param _ibgtVault Address of ibgt vault
   constructor(
     address _ot,
     address _yt,
     address _multisig,
-    address _timelock
+    address _timelock,
+    address _depositToken,
+    address _depositVault,
+    address _ibgt,
+    address _ibgtVault
   ) {
     ot = _ot;
     yt = _yt;
     multisig = _multisig;
     timelock = _timelock;
+    depositToken = _depositToken;
+    depositVault = _depositVault;
+    ibgt = _ibgt;
+    ibgtVault = _ibgtVault;
+    ERC20(_depositToken).approve(_depositVault, type(uint256).max);
+    ERC20(_ibgt).approve(_ibgtVault, type(uint256).max);
   }
 
 
@@ -236,12 +244,6 @@ abstract contract Goldivault is IGoldivault {
 
   /// @inheritdoc IGoldivault
   function initializeProtocol(
-    address _depositToken,
-    address _depositVault,
-    address _ibgt,
-    address _ibgtVault,
-    address _ired,
-    address _iredVault,
     uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
     uint256 _delay,
@@ -249,12 +251,6 @@ abstract contract Goldivault is IGoldivault {
     address[] memory _yieldTokens
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
-    depositToken = _depositToken;
-    depositVault = _depositVault;
-    ibgt = _ibgt;
-    ibgtVault = _ibgtVault;
-    ired = _ired;
-    iredVault = _iredVault;
     earlyWithdrawalFee = _earlyWithdrawalFee;
     yieldFee = _yieldFee;
     delay = _delay;
@@ -262,9 +258,6 @@ abstract contract Goldivault is IGoldivault {
     concluded = false;
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
-    ERC20(_depositToken).approve(_depositVault, type(uint256).max);
-    ERC20(_ibgt).approve(_ibgtVault, type(uint256).max);
-    ERC20(_ired).approve(_iredVault, type(uint256).max);
     for(uint8 i; i < _yieldTokens.length; ++i) {
       yieldTokens.push(_yieldTokens[i]);
     }
@@ -276,8 +269,6 @@ abstract contract Goldivault is IGoldivault {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  function directBGTEmissions() external virtual {}
-  function directIREDEmissions() external virtual {}
   function _vaultDeposit(uint256 amount) internal virtual {}
   function _concludeVaultRewards() internal virtual {}
   function _compoundVaultRewards() internal virtual {}
