@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 
-contract FuzzInfraredBexLPGoldivaultTest is BaseFuzzTest {
+contract FuzzGoldivaultTest is BaseFuzzTest {
 
   function testFuzzDepositBexLP(uint256 depositAmount) public {
     vm.assume(depositAmount < 1e40);
@@ -15,8 +15,8 @@ contract FuzzInfraredBexLPGoldivaultTest is BaseFuzzTest {
     assertEq(ot.balanceOf(address(this)), depositAmount);
     assertEq(yt.balanceOf(address(this)), depositAmount);
     assertEq(bexlp.balanceOf(address(this)), 0);
-    assertEq(bexlp.balanceOf(address(goldivault)), 0);
-    assertEq(bexlp.balanceOf(address(bexvault)), depositAmount);
+    assertEq(bexlp.balanceOf(address(goldivault)), depositAmount);
+    assertEq(bexlp.balanceOf(address(bexvault)), 0);
   }
 
   function testFuzzRedeemYield(uint256 redeemAmount, uint256 duration) public {

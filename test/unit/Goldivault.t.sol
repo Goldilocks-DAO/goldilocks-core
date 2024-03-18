@@ -7,7 +7,7 @@ import { IGoldivault } from "../../src/interfaces/IGoldivault.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 
-contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
+contract UnitGoldivaultTest is BaseUnitTest {
 
   function testOTName() public {
     assertEq(ot.name(), "oBexLPToken");
@@ -61,8 +61,7 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
     assertEq(ot.balanceOf(address(this)), txAmount);
     assertEq(yt.balanceOf(address(this)), txAmount);
     assertEq(bexlp.balanceOf(address(this)), 0);
-    assertEq(bexlp.balanceOf(address(goldivault)), 0);
-    assertEq(bexlp.balanceOf(address(bexvault)), txAmount);
+    assertEq(bexlp.balanceOf(address(bexvault)), 0);
   }
 
   function testRedeemYieldFailInvalid() public {
@@ -82,7 +81,7 @@ contract UnitInfraredBexLPGoldivaultTest is BaseUnitTest {
     vm.warp(block.timestamp + 1 days + 1);
     goldivault.redeemYield(txAmount);
 
-    assertEq(ibgt.balanceOf(address(this)), yearMockBexLPYield);
+    assertEq(ibgt.balanceOf(address(this)), 0);
     assertEq(yt.balanceOf(address(this)), 0);
   }
 

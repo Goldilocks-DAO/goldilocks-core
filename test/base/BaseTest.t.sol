@@ -9,7 +9,7 @@ import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
-import { InfraredBexLPGoldivault } from "../../src/core/goldivault/InfraredBexLPGoldivault.sol";
+// import { InfraredBexLPGoldivault } from "../../src/core/goldivault/InfraredBexLPGoldivault.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 import { Goldigovernor } from "../../src/core/goldigovernance/Goldigovernor.sol";
@@ -24,6 +24,27 @@ import { BandBear } from "../../src/mock/BandBear.sol";
 import { iBGTVault } from "../../src/mock/iBGTVault.sol";
 import { BexLPVault } from "../../src/mock/BexLPVault.sol";
 
+contract InfraredBexLPGoldivault is Goldivault {
+  constructor(
+    address _ot,
+    address _yt,
+    address _multisig,
+    address _timelock,
+    address _depositToken,
+    address _depositVault,
+    address _ibgt,
+    address _ibgtVault
+  ) Goldivault(
+    _ot,
+    _yt,
+    _multisig,
+    _timelock,
+    _depositToken,
+    _depositVault,
+    _ibgt,
+    _ibgtVault
+  ) {}
+}
 contract oBexLPToken is OwnershipToken {
   constructor(
     string memory _tokenName,

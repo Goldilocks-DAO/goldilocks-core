@@ -17,11 +17,11 @@ pragma solidity ^0.8.20;
 // ==============================================================================================
 
 
-import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
-import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
-import { Goldivault } from "../../core/goldivault/Goldivault.sol";
-import { iBGTVault } from "../../mock/iBGTVault.sol";
-import { BexLPVault } from "../../mock/BexLPVault.sol";
+import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
+import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
+import { Goldivault } from "../core/goldivault/Goldivault.sol";
+import { iBGTVault } from "./iBGTVault.sol";
+import { BexLPVault } from "./BexLPVault.sol";
 
 
 /// @title InfraredBexLPGoldivault
