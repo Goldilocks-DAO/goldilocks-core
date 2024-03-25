@@ -285,8 +285,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   function lock(uint256 amount) external {
     uint256 mintAmount = _GiBGTMintAmount(amount);
     poolSize += amount;
-    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
     _refreshiBGT(amount);
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
     _mint(msg.sender, mintAmount);
     emit iBGTLock(msg.sender, amount);
   }
