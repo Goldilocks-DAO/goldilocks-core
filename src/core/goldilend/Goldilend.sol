@@ -637,7 +637,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     else {
       address[] storage nfts = userBoost.partnerNFTs;
       uint256[] storage ids = userBoost.partnerNFTIds;
-      magnitude = userBoost.boostMagnitude;
+      for(uint256 i = 0; i < nfts.length; i++) {
+        magnitude += partnerNFTBoosts[nfts[i]];
+      }
       magnitude += partnerNFTBoosts[partnerNFT];
       nfts.push(partnerNFT);
       ids.push(partnerNFTId);
@@ -673,8 +675,10 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     else {
       address[] storage nfts = userBoost.partnerNFTs;
       uint256[] storage ids = userBoost.partnerNFTIds;
-      magnitude = userBoost.boostMagnitude;
-      for (uint256 i = 0; i < partnerNFTs.length; i++) {
+      for(uint256 i = 0; i < nfts.length; i++) {
+        magnitude += partnerNFTBoosts[nfts[i]];
+      }
+      for(uint256 i = 0; i < partnerNFTs.length; i++) {
         magnitude += partnerNFTBoosts[partnerNFTs[i]];
         nfts.push(partnerNFTs[i]);
         ids.push(partnerNFTIds[i]);
