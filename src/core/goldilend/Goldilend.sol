@@ -427,7 +427,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     outstandingDebt -= repayAmount - interest > outstandingDebt ? outstandingDebt : repayAmount - interest;
     loans[msg.sender][_userLoanId].borrowedAmount -= repayAmount;
     loans[msg.sender][_userLoanId].interest -= interest;
-    poolSize += userLoan.interest * (1000 - (multisigShare + apdaoShare)) / 1000;
+    poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       for(uint256 i; i < userLoan.collateralNFTs.length; i++){
