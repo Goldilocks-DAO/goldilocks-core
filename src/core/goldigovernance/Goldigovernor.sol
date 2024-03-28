@@ -100,7 +100,7 @@ contract Goldigovernor {
   uint32 public constant proposalMaxOperations = 10;
 
   /// @notice Amount of votes to reach quorum
-  uint256 public constant quorumVotes = 9_500_000e18; // 5% of LOCKS
+  uint256 public constant quorumVotes = 20_000_000e18;
 
   /// @notice Typehash of ERC721Domain
   bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
@@ -380,7 +380,7 @@ contract Goldigovernor {
     else if (block.number <= proposal.endBlock) return ProposalState.Active;
     else if (proposal.eta == 0) return ProposalState.Succeeded;
     else if (proposal.executed) return ProposalState.Executed;
-    else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < Goldiswap(goldiswap).totalSupply() / 20) {
+    else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < quorumVotes) {
       return ProposalState.Defeated;
     } 
     else if (block.timestamp >= proposal.eta + Timelock(timelock).GRACE_PERIOD()) {
