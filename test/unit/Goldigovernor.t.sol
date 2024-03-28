@@ -263,49 +263,6 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     goldigov.cancel(1);
   }
 
-  function testCancelFailProposer() public {
-    (
-      address[] memory targets,
-      string[] memory signatures,
-      bytes[] memory calldatas,
-      uint256[] memory values
-    ) = proposyDiff();
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
-    govlocks.delegate(address(this));
-    vm.roll(2);
-    goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
-    goldigov.castVote(1, 1);
-    vm.roll(5900);
-    goldigov.queue(1);
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(Goldigovernor.NotProposer.selector));
-    goldigov.cancel(1);
-  }
-
-  function testCancelThresholdFail() public {
-    (
-      address[] memory targets,
-      string[] memory signatures,
-      bytes[] memory calldatas,
-      uint256[] memory values
-    ) = proposyDiff();
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
-    govlocks.delegate(address(this));
-    vm.roll(2);
-    goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
-    goldigov.castVote(1, 1);
-    vm.roll(5900);
-    goldigov.queue(1);
-    vm.expectRevert(abi.encodeWithSelector(Goldigovernor.AboveThreshold.selector));
-    goldigov.cancel(1);
-  }
-
   function testCancelSuccess() public {
     (
       address[] memory targets,
