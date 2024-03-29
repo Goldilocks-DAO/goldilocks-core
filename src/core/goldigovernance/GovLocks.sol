@@ -49,9 +49,6 @@ contract GovLocks is ERC20 {
   /// @notice Address of Goldilocked
   address public immutable goldilocked;
 
-  /// @notice Maps user to amount of Locks deposited
-  mapping(address => uint256) public deposits;
-
   /// @notice Maps user to delegated address
   mapping(address => address) public delegates;
 
@@ -173,7 +170,6 @@ contract GovLocks is ERC20 {
   /// @notice Deposits Locks to mint GovLocks
   /// @param amount Amount of Locks to deposit
   function deposit(uint256 amount) external {
-    deposits[msg.sender] += amount;
     _moveDelegates(address(0), delegates[msg.sender], amount);
     SafeTransferLib.safeTransferFrom(locks, msg.sender, address(this), amount);
     _mint(msg.sender, amount);
@@ -182,7 +178,6 @@ contract GovLocks is ERC20 {
   /// @notice Withdraws Locks to burn Govlocks
   /// @param amount Amount of Locks to withdraw
   function withdraw(uint256 amount) external {
-    deposits[msg.sender] -= amount;
     _moveDelegates(delegates[msg.sender], address(0), amount);
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransfer(locks, msg.sender, amount);

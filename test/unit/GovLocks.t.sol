@@ -139,6 +139,15 @@ contract UnitGovLocksTest is BaseUnitTest {
     assertEq(govlocks.getVotes(address(this)), govLocksAmt);
   }
 
+  function testWithdrawFailBurn() public {
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
+    govlocks.delegate(address(this));
+    vm.expectRevert();
+    govlocks.withdraw(govLocksAmt+1);
+  }
+
   function testWithdrawSuccess() public {
     deal(address(goldiswap), address(this), govLocksAmt);
     goldiswap.approve(address(govlocks), govLocksAmt);
