@@ -445,7 +445,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(block.timestamp < userLoan.endDate || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
     loans[user][_userLoanId].liquidated = true;
     loans[user][_userLoanId].borrowedAmount = 0;
-    outstandingDebt -= userLoan.borrowedAmount - userLoan.interest;
+    outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;
     if(msg.sender != multisig || block.timestamp < userLoan.endDate + 5 days) {
       poolSize += userLoan.interest * (1000 - (multisigShare + apdaoShare)) / 1000;
       _updateInterestClaims(userLoan.interest);
