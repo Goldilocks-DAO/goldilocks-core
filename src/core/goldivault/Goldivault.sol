@@ -239,7 +239,6 @@ abstract contract Goldivault is IGoldivault {
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
-    endTime = block.timestamp + _duration;
   }
 
   /// @inheritdoc IGoldivault
