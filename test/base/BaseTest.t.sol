@@ -162,7 +162,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(govlocks),
       address(goldiswap),
       address(this),
-      5761,
+      17281,
       69,
       4e18
     );
