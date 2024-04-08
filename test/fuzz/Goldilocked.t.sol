@@ -75,7 +75,7 @@ contract FuzzGoldilockedTest is BaseFuzzTest {
     vm.assume(borrowHoneyAmount < locksMintAmount);
     vm.assume(borrowHoneyAmount > 1e5);
     uint256 fuzzedBorrowAmount = FixedPointMathLib.mulWad(borrowHoneyAmount, goldiswap.floorPrice());
-    uint256 lockedLocksAmount = FixedPointMathLib.divWad(fuzzedBorrowAmount, goldiswap.floorPrice());
+    uint256 lockedLocksAmount = FixedPointMathLib.divWadUp(fuzzedBorrowAmount, goldiswap.floorPrice());
     deal(address(goldiswap), address(this), borrowHoneyAmount);
     deal(address(honey), address(goldiswap), type(uint256).max / 2);
     goldiswap.approve(address(goldilocked), borrowHoneyAmount);

@@ -290,7 +290,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   /// @dev locked locks = borrowed honey / floor price
   /// @param user Address of user
   function _lockedLocks(address user) internal view returns (uint256) {
-    return FixedPointMathLib.divWad(borrowedHoney[user], IGoldiswap(goldiswap).floorPrice());
+    return FixedPointMathLib.divWadUp(borrowedHoney[user], IGoldiswap(goldiswap).floorPrice());
   }
 
   /// @notice Calculates amount of unvested Locks
