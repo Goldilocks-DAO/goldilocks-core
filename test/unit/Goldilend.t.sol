@@ -1191,7 +1191,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(executed, true);
     assertEq(ibgt.balanceOf(address(this)), 1000e18);
-    assertEq(ibgt.balanceOf(address(goldilend)), 0);
+    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
   }
 
 }

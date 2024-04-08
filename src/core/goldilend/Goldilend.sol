@@ -844,6 +844,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function sunsetProtocol() external {
     if(msg.sender != timelock) revert NotTimelock();
+    iBGTVault(ibgtVault).withdraw(poolSize - outstandingDebt);
     SafeTransferLib.safeTransfer(ibgt, multisig, poolSize - outstandingDebt);
   }
 
