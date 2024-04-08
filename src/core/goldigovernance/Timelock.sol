@@ -46,7 +46,7 @@ contract Timelock {
   /// @notice Maps transaction hash to boolean
   mapping(bytes32 => bool) public queuedTransactions;
 
-  /// @notice Delay for queueing a transaction
+  /// @notice Delay for queueing a transaction, in seconds
   uint256 public delay;
 
 
@@ -57,7 +57,7 @@ contract Timelock {
 
   /// @notice Constructor of this contract
   /// @param _goldigov Goldigovernor address
-  /// @param _delay Delay the timelock will use, in blocks
+  /// @param _delay Delay the timelock will use, in seconds
   constructor(address _goldigov, address _multisig, uint256 _delay) {
     if(_delay < MINIMUM_DELAY || delay > MAXIMUM_DELAY) revert InvalidDelay();
     goldigov = _goldigov;
@@ -100,7 +100,7 @@ contract Timelock {
 
   /// @notice Queues a transaction for exeuction
   /// @param target Address to send the transaction to
-  /// @param eta Duration of time until transaction can be executed, in blocks
+  /// @param eta Duration of time until transaction can be executed, in seconds
   /// @param value Amount of ETH to be sent with transaction
   /// @param data Calldata to be sent with transaction
   /// @param signature Sig of transaction
@@ -120,7 +120,7 @@ contract Timelock {
 
   /// @notice Executes a transaction if delay has passed
   /// @param target Address to send the transaction to
-  /// @param eta Duration of time until transaction can be executed, in blocks
+  /// @param eta Duration of time until transaction can be executed, in seconds
   /// @param value Amount of ETH to be sent with transaction
   /// @param data Calldata to be sent with transaction
   /// @param signature Sig of transaction
@@ -151,7 +151,7 @@ contract Timelock {
 
   /// @notice Cancels a transaction before execution
   /// @param target Address to send the transaction to
-  /// @param eta Duration of time until transaction can be executed, in blocks
+  /// @param eta Duration of time until transaction can be executed, in seconds
   /// @param value Amount of ETH to be sent with transaction
   /// @param data Calldata to be sent with transaction
   /// @param signature Sig of transaction
