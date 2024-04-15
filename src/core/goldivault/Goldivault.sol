@@ -19,6 +19,7 @@ pragma solidity ^0.8.20;
 
 import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
+import { ReentrancyGuard } from "../../../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 import { IGoldivault } from "../../interfaces/IGoldivault.sol";
 import { OwnershipToken } from "./OwnershipToken.sol";
@@ -28,7 +29,7 @@ import { YieldToken } from "./YieldToken.sol";
 /// @title Goldivaults
 /// @notice Splits deposited assets into ownership tokens representing
 /// deposited assets and yield tokens representing future yield of those assets
-abstract contract Goldivault is IGoldivault {
+abstract contract Goldivault is IGoldivault, ReentrancyGuard {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -169,7 +170,7 @@ abstract contract Goldivault is IGoldivault {
   }
 
   /// @inheritdoc IGoldivault
-  function redeemYield(uint256 amount) external {
+  function redeemYield(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
