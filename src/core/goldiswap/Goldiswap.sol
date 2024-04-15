@@ -146,8 +146,8 @@ contract Goldiswap is IGoldiswap, ERC20 {
     fsl = _fsl;
     psl = _psl;
     _floorIncrease();
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), price);
-    SafeTransferLib.safeTransferFrom(honey, msg.sender, multisig, tax);
+    SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), price + tax);
+    SafeTransferLib.safeTransfer(honey, multisig, tax);
     _mint(msg.sender, amount);
     emit Buy(msg.sender, amount);
   }
