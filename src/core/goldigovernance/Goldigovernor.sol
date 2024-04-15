@@ -184,15 +184,14 @@ contract Goldigovernor {
   error AlreadyProposing();
   error AlreadyQueued();
   error AlreadyVoted();
-  error AboveThreshold();
   error BelowThreshold();
   error InvalidVotingParameter();
   error InvalidProposalAction();
   error InvalidProposalState();
   error InvalidVoteType();
   error InvalidSignature();
+  error InvalidCancel();
   error NotMultisig();
-  error NotProposer();
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -329,8 +328,7 @@ contract Goldigovernor {
   function cancel(uint256 proposalId) external {
     if(_getProposalState(proposalId) == ProposalState.Executed) revert InvalidProposalState();
     Proposal storage proposal = proposals[proposalId];
-    if(msg.sender != proposal.proposer) revert NotProposer();
-    if(GovLocks(govlocks).getPriorVotes(proposal.proposer, block.number - 1) > proposalThreshold) revert AboveThreshold();
+    if(msg.sender != proposal.proposer && GovLocks(govlocks).getPriorVotes(proposal.proposer, block.number - 1) > proposalThreshold) revert InvalidCancel();
     proposal.cancelled = true;
     uint256 targetsLength = proposal.targets.length;
     for (uint256 i = 0; i < targetsLength; i++) {
