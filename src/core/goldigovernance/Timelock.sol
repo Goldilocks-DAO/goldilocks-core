@@ -135,7 +135,7 @@ contract Timelock {
     bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
     if(!queuedTransactions[txHash]) revert TxNotQueued();
     if(block.timestamp < eta) revert TxLocked();
-    if(block.timestamp > eta + GRACE_PERIOD) revert TxStale();
+    if(block.timestamp >= eta + GRACE_PERIOD) revert TxStale();
     queuedTransactions[txHash] = false;
     bytes memory callData;
     if (bytes(signature).length == 0) {
