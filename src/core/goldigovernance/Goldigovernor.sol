@@ -85,16 +85,16 @@ contract Goldigovernor {
   uint256 public constant MAX_PROPOSAL_THRESHOLD = 10_000_000e18;
 
   /// @notice Minimum voting period
-  uint32 public constant MIN_VOTING_PERIOD = 5760; // About 24 hours
+  uint32 public constant MIN_VOTING_PERIOD = 17280; // About 24 hours
 
   /// @notice Maximum voting period
-  uint32 public constant MAX_VOTING_PERIOD = 80640; // About 2 weeks
+  uint32 public constant MAX_VOTING_PERIOD = 241920; // About 2 weeks
 
   /// @notice Minimum voting delay
   uint32 public constant MIN_VOTING_DELAY = 1;
 
   /// @notice Maximum voting delay
-  uint32 public constant MAX_VOTING_DELAY = 40320; // About 1 week
+  uint32 public constant MAX_VOTING_DELAY = 120960; // About 1 week
 
   /// @notice Maximum transactions in one proposal
   uint32 public constant proposalMaxOperations = 10;

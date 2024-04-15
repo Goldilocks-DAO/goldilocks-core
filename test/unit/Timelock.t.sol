@@ -79,7 +79,7 @@ contract UnitTimelockTest is BaseUnitTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(5900);
+    vm.roll(18000);
     goldigov.queue(1);
     vm.warp(6 days);
     goldigov.execute(1);
@@ -101,7 +101,7 @@ contract UnitTimelockTest is BaseUnitTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(5900);
+    vm.roll(18000);
     goldigov.queue(1);
     vm.warp(6 days);
     deal(address(goldigov), 1 ether);
@@ -139,10 +139,10 @@ contract UnitTimelockTest is BaseUnitTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(5900);
+    vm.roll(18000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
-    vm.roll(5903);
+    vm.roll(18003);
     goldigov.cancel(1);
     (, , , , , , , , bool cancelled, ) = goldigov.proposals(1);
 

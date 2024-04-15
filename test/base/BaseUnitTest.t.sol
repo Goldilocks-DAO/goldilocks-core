@@ -159,7 +159,7 @@ abstract contract BaseUnitTest is BaseTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(5900);
+    vm.roll(18000);
     goldigov.queue(1);
 
     return (targets, signatures, calldatas, values);
