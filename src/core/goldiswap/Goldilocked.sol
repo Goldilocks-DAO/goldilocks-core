@@ -193,7 +193,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
 
   /// @inheritdoc IGoldilocked
   function stake(uint256 amount) external {
-    if(seedAllocations[msg.sender] > 0) revert Vesting();
+    if(seedAllocations[msg.sender] > 0 || teamAllocations[msg.sender] > 0) revert Vesting();
     _updateClaimablePrg(msg.sender);
     stakedLocks[msg.sender] += amount;
     GovLocks(govlocks).updateStakedBalance(address(0), msg.sender, amount);
