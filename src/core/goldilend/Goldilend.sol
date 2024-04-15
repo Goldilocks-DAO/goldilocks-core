@@ -493,7 +493,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     return claimablePrgPerGiBGTStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastPrgUpdateTime, 365 days), annualPrgEmissions);
   }
 
-  /// @notice Calculates claimable Porridge per GiBGT
+  /// @notice Calculates claimable reward token per GiBGT
   /// @param rewardToken Token to calculate claimable reward
   function _claimableRewardPerGiBGT(address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
     if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0 || outstandingRewards == 0 || totalStakedGiBGT == 0) {
@@ -605,7 +605,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   }
 
   /// @notice Stakes iBGT in Infrared vault
-  /// @dev Claims existing vault rewards and updates poolSize
   /// @param ibgtAmount Amount of iBGT to stake
   function _refreshiBGT(uint256 ibgtAmount) internal {
     ERC20(ibgt).approve(ibgtVault, ibgtAmount);
