@@ -771,6 +771,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(msg.sender != multisig) revert NotMultisig();
     uint256 interestClaim = multisigClaims;
     multisigClaims = 0;
+    iBGTVault(ibgtVault).withdraw(interestClaim);
     SafeTransferLib.safeTransfer(ibgt, multisig, interestClaim);
   }
 
@@ -779,6 +780,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(msg.sender != apdao) revert NotAPDAO();
     uint256 interestClaim = apdaoClaims;
     apdaoClaims = 0;
+    iBGTVault(ibgtVault).withdraw(interestClaim);
     SafeTransferLib.safeTransfer(ibgt, apdao, interestClaim);
   }
 

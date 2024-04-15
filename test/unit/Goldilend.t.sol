@@ -983,7 +983,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     
     assertEq(goldilend.multisigClaims(), 0);
     assertEq(ibgt.balanceOf(address(this)), multisigibgtBalanceBefore + 205770838806530);
-    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 205770838806530);
+    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore);
   }
 
   function testAPDAOInterestClaimFailapdao() public {
@@ -1003,7 +1003,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(goldilend.apdaoClaims(), 0);
     assertEq(ibgt.balanceOf(apdao), honeyibgtBalanceBefore + 22863426534058);
-    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore - 22863426534058);
+    assertEq(ibgt.balanceOf(address(goldilend)), goldilendibgtBalanceBefore);
   }
 
   function testInitializeParametersFailMultisig() public {
