@@ -120,6 +120,8 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
     goldilend.borrow(1e18, durationAmount, address(bondbear), 1);
     Goldilend.Loan memory userLoanBefore = goldilend.lookupLoan(address(this), 1);
+    uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoanBefore.interest, userLoanBefore.borrowedAmount);
+    uint256 interest = FixedPointMathLib.mulWadUp(1e18+userLoanBefore.interest, interestLoanRatio);
     goldilend.repay(1e18+userLoanBefore.interest, 1);
     Goldilend.Loan memory userLoan = goldilend.lookupLoan(address(this), 1);
 
@@ -134,7 +136,7 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
     assertEq(goldilend.outstandingDebt(), 0);
-    assertEq(goldilend.poolSize(), 1000e18 + (userLoanBefore.interest * 950 / 1000));
+    assertEq(goldilend.poolSize(), 1000e18 + (interest * 950 / 1000));
   }
 
   function testFuzzLiquidate(uint256 time, uint256 durationAmount) public dealUseriBGT dealUserBeras {
