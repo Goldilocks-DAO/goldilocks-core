@@ -157,9 +157,10 @@ abstract contract Goldivault is IGoldivault {
     depositTokenAmount -= amount;
     uint256 _fee = earlyWithdrawalFee;
     if(remainingTime > 0) {
-      SafeTransferLib.safeTransfer(depositToken, msg.sender, amount * (1000 - _fee) / 1000);
-      SafeTransferLib.safeTransfer(depositToken, multisig, amount * _fee / 1000);
-      emit OwnershipTokenRedemption(msg.sender, amount * (1000 - _fee) / 1000);
+      uint256 fee = amount * _fee / 1000;
+      SafeTransferLib.safeTransfer(depositToken, msg.sender, amount - fee);
+      SafeTransferLib.safeTransfer(depositToken, multisig, fee);
+      emit OwnershipTokenRedemption(msg.sender, amount - fee);
     }
     else {
       SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
