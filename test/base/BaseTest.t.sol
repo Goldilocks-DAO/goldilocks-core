@@ -160,7 +160,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
     goldigov = new Goldigovernor(
       address(timelock),
       address(govlocks),
-      address(goldiswap),
       address(this),
       17281,
       69,
