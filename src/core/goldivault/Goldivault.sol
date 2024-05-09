@@ -152,20 +152,27 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
-    OwnershipToken(ot).burnOT(msg.sender, amount);
-    YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
-    _unstakeDepositToken(amount);
-    depositTokenAmount -= amount;
-    uint256 _fee = earlyWithdrawalFee;
-    if(remainingTime > 0) {
-      uint256 fee = amount * _fee / 1000;
-      SafeTransferLib.safeTransfer(depositToken, msg.sender, amount - fee);
-      SafeTransferLib.safeTransfer(depositToken, multisig, fee);
-      emit OwnershipTokenRedemption(msg.sender, amount - fee);
+    uint256 claimable;
+    if(ERC20(depositToken).balanceOf(address(this)) >= depositTokenAmount) {
+      claimable = amount;
     }
     else {
-      SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
-      emit OwnershipTokenRedemption(msg.sender, amount);
+      claimable = FixedPointMathLib.mulWad(FixedPointMathLib.divWad(ERC20(depositToken).balanceOf(address(this)), depositTokenAmount), amount);
+    }
+    OwnershipToken(ot).burnOT(msg.sender, claimable);
+    YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(claimable, timeshare));
+    _unstakeDepositToken(claimable);
+    depositTokenAmount -= claimable;
+    uint256 _fee = earlyWithdrawalFee;
+    if(remainingTime > 0) {
+      uint256 fee = claimable * _fee / 1000;
+      SafeTransferLib.safeTransfer(depositToken, msg.sender, claimable - fee);
+      SafeTransferLib.safeTransfer(depositToken, multisig, fee);
+      emit OwnershipTokenRedemption(msg.sender, claimable - fee);
+    }
+    else {
+      SafeTransferLib.safeTransfer(depositToken, msg.sender, claimable);
+      emit OwnershipTokenRedemption(msg.sender, claimable);
     }
   }
 
@@ -179,7 +186,9 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     for(uint8 i; i < yieldTokensLength; ++i) {
       uint256 finalYield;
       if(yieldTokens[i] == depositToken) {
-        finalYield = ERC20(yieldTokens[i]).balanceOf(address(this)) - depositTokenAmount;
+        if(ERC20(yieldTokens[i]).balanceOf(address(this)) > depositTokenAmount) {
+          finalYield = ERC20(yieldTokens[i]).balanceOf(address(this)) - depositTokenAmount;
+        }
       }
       else {
         finalYield = ERC20(yieldTokens[i]).balanceOf(address(this));
