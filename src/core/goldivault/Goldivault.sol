@@ -159,8 +159,8 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     else {
       claimable = FixedPointMathLib.mulWad(FixedPointMathLib.divWad(ERC20(depositToken).balanceOf(address(this)), depositTokenAmount), amount);
     }
-    OwnershipToken(ot).burnOT(msg.sender, claimable);
-    YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(claimable, timeshare));
+    OwnershipToken(ot).burnOT(msg.sender, amount);
+    YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken(claimable);
     depositTokenAmount -= claimable;
     uint256 _fee = earlyWithdrawalFee;
@@ -168,11 +168,11 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
       uint256 fee = claimable * _fee / 1000;
       SafeTransferLib.safeTransfer(depositToken, msg.sender, claimable - fee);
       SafeTransferLib.safeTransfer(depositToken, multisig, fee);
-      emit OwnershipTokenRedemption(msg.sender, claimable - fee);
+      emit OwnershipTokenRedemption(msg.sender, amount, claimable - fee);
     }
     else {
       SafeTransferLib.safeTransfer(depositToken, msg.sender, claimable);
-      emit OwnershipTokenRedemption(msg.sender, claimable);
+      emit OwnershipTokenRedemption(msg.sender, amount, claimable);
     }
   }
 
