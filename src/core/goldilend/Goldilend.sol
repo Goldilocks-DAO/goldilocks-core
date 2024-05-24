@@ -441,7 +441,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
 
   /// @inheritdoc IGoldilend
   function liquidate(address user, uint256 _userLoanId) external {
-    Loan memory userLoan = loans[msg.sender][_userLoanId];
+    Loan memory userLoan = loans[user][_userLoanId];
     if(block.timestamp < userLoan.endDate || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
     loans[user][_userLoanId].liquidated = true;
     loans[user][_userLoanId].borrowedAmount = 0;
