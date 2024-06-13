@@ -9,7 +9,7 @@ interface IGoldivault {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   event Deposit(address indexed user, uint256 amount);
-  event OwnershipTokenRedemption(address indexed user, uint256 burnedAmount, uint256 claimedAmount);
+  event OwnershipTokenRedemption(address indexed user, uint256 amount);
   event YieldTokenRedemption(address indexed user, uint256 amount);
   event Conclude(uint256 timestamp);
 
