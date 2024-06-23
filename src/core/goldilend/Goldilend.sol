@@ -182,9 +182,12 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     ibgt = _ibgt;
     ibgtVault = _ibgtVault;
     deployTime = block.timestamp;
-    for(uint8 i; i < _rewardTokens.length; ++i) {
+    for(uint8 i; i < _rewardTokens.length;) {
       rewardTokens.push(_rewardTokens[i]);
       lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -252,13 +255,19 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     address[] calldata partnerNFTs, 
     uint256[] calldata partnerNFTIds
   ) external {
-    for(uint256 i; i < partnerNFTs.length; i++) {
+    for(uint256 i; i < partnerNFTs.length;) {
       if(partnerNFTBoosts[partnerNFTs[i]] == 0) revert InvalidBoostNFT();
+      unchecked {
+        ++i;
+      }
     }
     if(partnerNFTs.length != partnerNFTIds.length) revert ArrayMismatch();
     boosts[msg.sender] = _buildBoost(partnerNFTs, partnerNFTIds);
-    for(uint8 i; i < partnerNFTs.length; i++) {
+    for(uint8 i; i < partnerNFTs.length;) {
       IERC721(partnerNFTs[i]).safeTransferFrom(msg.sender, address(this), partnerNFTIds[i]);
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -276,8 +285,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       boostMagnitude: 0
     });
     boosts[msg.sender] = newUserBoost;
-    for(uint8 i; i < userBoost.partnerNFTs.length; i++) {
+    for(uint8 i; i < userBoost.partnerNFTs.length;) {
       IERC721(userBoost.partnerNFTs[i]).safeTransferFrom(address(this), msg.sender, userBoost.partnerNFTIds[i]);
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -379,8 +391,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256[] calldata collateralNFTIds
   ) external {
     if(!borrowingActive) revert NotActive();
-    for(uint256 i; i < collateralNFTs.length; i++) {
+    for(uint256 i; i < collateralNFTs.length;) {
       if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
+      unchecked {
+        ++i;
+      }
     }
     if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
     if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
@@ -409,8 +424,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       liquidated: false
     });
     loans[msg.sender][userLoanId] = loan;
-    for(uint256 i; i < collateralNFTs.length; i++) {
+    for(uint256 i; i < collateralNFTs.length;) {
       IERC721(collateralNFTs[i]).safeTransferFrom(msg.sender, address(this), collateralNFTIds[i]);
+      unchecked {
+        ++i;
+      }
     }
     iBGTVault(ibgtVault).withdraw(borrowAmount);
     SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
@@ -430,8 +448,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
-      for(uint256 i; i < userLoan.collateralNFTs.length; i++){
+      for(uint256 i; i < userLoan.collateralNFTs.length;){
         IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
+        unchecked {
+          ++i;
+        }
       }
     }
     SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), repayAmount);
@@ -455,8 +476,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     else {
       poolSize -= userLoan.borrowedAmount - userLoan.interest;
     }
-    for(uint256 i; i < userLoan.collateralNFTs.length; i++) {
+    for(uint256 i; i < userLoan.collateralNFTs.length;) {
       IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
+      unchecked {
+        ++i;
+      }
     }
     emit Liquidation(msg.sender, user, userLoan.borrowedAmount);
   }
@@ -506,8 +530,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param collateralNFTs NFT collections to find value of
   /// @return fairValue Fair value of NFTs
   function _calculateFairValue(address[] calldata collateralNFTs) internal view returns (uint256 fairValue) {
-    for(uint256 i; i < collateralNFTs.length; i++) {
+    for(uint256 i; i < collateralNFTs.length;) {
       fairValue += totalValuation * nftFairValues[collateralNFTs[i]] / 100;
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -563,11 +590,14 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param user Address to update claimable rewards for
   function _updateClaimableRewards(address user) internal {
     uint256 rewardTokensLength = rewardTokens.length;
-    for(uint8 i; i < rewardTokensLength; ++i) {
+    for(uint8 i; i < rewardTokensLength;) {
       outstandingRewardsPerReward[rewardTokens[i]] = ERC20(rewardTokens[i]).balanceOf(address(this));
+      unchecked {
+        ++i;
+      }
     }
     iBGTVault(ibgtVault).getReward();
-    for(uint8 i; i < rewardTokensLength; ++i) {
+    for(uint8 i; i < rewardTokensLength;) {
       address rewardToken = rewardTokens[i];
       uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewardsPerReward[rewardToken];
       claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken, outstandingRewards);
@@ -575,6 +605,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       if(user != address(0)) {
         claimableRewards[user][rewardToken] = _calculateClaimableRewards(user, rewardToken, outstandingRewards);
         rewardPerTokenDebt[user][rewardToken] = claimableRewardsPerGiBGTStored[rewardToken];
+      }
+      unchecked {
+        ++i;
       }
     }
   }
@@ -594,12 +627,15 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param claimer User that is claiming rewards
   function _claimRewards(address claimer) internal {
     uint256 rewardTokensLength = rewardTokens.length;
-    for(uint8 i; i < rewardTokensLength; ++i) {
+    for(uint8 i; i < rewardTokensLength;) {
       address rewardToken = rewardTokens[i];
       uint256 reward = claimableRewards[claimer][rewardToken];
       if(reward > 0) {
         claimableRewards[claimer][rewardToken] = 0;
         SafeTransferLib.safeTransfer(rewardToken, claimer, reward);
+      }
+      unchecked {
+        ++i;
       }
     }
   }
@@ -636,8 +672,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     else {
       address[] storage nfts = userBoost.partnerNFTs;
       uint256[] storage ids = userBoost.partnerNFTIds;
-      for(uint256 i = 0; i < nfts.length; i++) {
+      for(uint256 i = 0; i < nfts.length;) {
         magnitude += partnerNFTBoosts[nfts[i]];
+        unchecked {
+          ++i;
+        }
       }
       magnitude += partnerNFTBoosts[partnerNFT];
       nfts.push(partnerNFT);
@@ -661,8 +700,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 magnitude;
     Boost storage userBoost = boosts[msg.sender];
     if(userBoost.expiry == 0) {
-      for(uint8 i; i < partnerNFTs.length; i++) {
+      for(uint8 i; i < partnerNFTs.length;) {
         magnitude += partnerNFTBoosts[partnerNFTs[i]];
+        unchecked {
+          ++i;
+        }
       }
       newUserBoost = Boost({
         partnerNFTs: partnerNFTs,
@@ -674,13 +716,19 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     else {
       address[] storage nfts = userBoost.partnerNFTs;
       uint256[] storage ids = userBoost.partnerNFTIds;
-      for(uint256 i = 0; i < nfts.length; i++) {
+      for(uint256 i = 0; i < nfts.length;) {
         magnitude += partnerNFTBoosts[nfts[i]];
+        unchecked {
+          ++i;
+        }
       }
-      for(uint256 i = 0; i < partnerNFTs.length; i++) {
+      for(uint256 i = 0; i < partnerNFTs.length;) {
         magnitude += partnerNFTBoosts[partnerNFTs[i]];
         nfts.push(partnerNFTs[i]);
         ids.push(partnerNFTIds[i]);
+        unchecked {
+          ++i;
+        }
       }
       newUserBoost = Boost({
         partnerNFTs: nfts,
@@ -712,8 +760,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 _totalValuation
   ) external {
     if(msg.sender != timelock) revert NotTimelock();
-    for(uint256 i; i < _nftFairValues.length; i++) {
+    for(uint256 i; i < _nftFairValues.length;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
+      unchecked {
+        ++i;
+      }
     }
     totalValuation = _totalValuation;
   } 
@@ -754,9 +805,12 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function addRewardTokens(address[] calldata _rewardTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
-    for(uint8 i; i < _rewardTokens.length; ++i) {
+    for(uint8 i; i < _rewardTokens.length;) {
       rewardTokens.push(_rewardTokens[i]);
       lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -816,8 +870,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
     totalValuation = _totalValuation;
-    for(uint256 i; i < _nftFairValues.length; i++) {
+    for(uint256 i; i < _nftFairValues.length;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
+      unchecked {
+        ++i;
+      }
     }
     borrowingActive = true;
   }
@@ -828,8 +885,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint8[] memory _partnerNFTBoosts
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
-    for(uint8 i; i < _partnerNFTs.length; i++) {
+    for(uint8 i; i < _partnerNFTs.length;) {
       partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -840,8 +900,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 _boostLockDuration
   ) external {
     if(msg.sender != timelock) revert NotTimelock();
-    for(uint8 i; i < _partnerNFTs.length; i++) {
+    for(uint8 i; i < _partnerNFTs.length;) {
       partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
+      unchecked {
+        ++i;
+      }
     }
     boostLockDuration = _boostLockDuration;
   }

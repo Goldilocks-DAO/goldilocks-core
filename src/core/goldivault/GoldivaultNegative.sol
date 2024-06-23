@@ -171,7 +171,7 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
     YieldToken(yt).burnYT(msg.sender, amount);
     uint256 yieldTokensLength = yieldTokens.length;
-    for(uint8 i; i < yieldTokensLength; ++i) {
+    for(uint8 i; i < yieldTokensLength;) {
       uint256 finalYield;
       if(yieldTokens[i] == depositToken) {
         if(ERC20(yieldTokens[i]).balanceOf(address(this)) > depositTokenAmount) {
@@ -186,6 +186,9 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
       }
       uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
       SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
+      unchecked {
+        ++i;
+      }
     }
     emit YieldTokenRedemption(msg.sender, amount);
   }
@@ -224,8 +227,11 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
   /// @inheritdoc IGoldivault
   function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
-    for(uint8 i; i < _yieldTokens.length; ++i) {
+    for(uint8 i; i < _yieldTokens.length;) {
       yieldTokens.push(_yieldTokens[i]);
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -259,8 +265,11 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
     concluded = false;
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
-    for(uint8 i; i < _yieldTokens.length; ++i) {
+    for(uint8 i; i < _yieldTokens.length;) {
       yieldTokens.push(_yieldTokens[i]);
+      unchecked {
+        ++i;
+      }
     }
   }
 
