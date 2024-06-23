@@ -24,7 +24,7 @@ import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC
 import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
 import { IGoldilend } from "../../interfaces/IGoldilend.sol";
 import { IGoldilocked } from "../../interfaces/IGoldilocked.sol";
-import { iBGTVault } from "../../mock/iBGTVault.sol";
+import { IiBGTVault } from "../../interfaces/IiBGTVault.sol";
 
 
 /// @title Goldilend
@@ -378,7 +378,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     });
     loans[msg.sender][userLoanId] = loan;
     IERC721(collateralNFT).safeTransferFrom(msg.sender, address(this), collateralNFTId);
-    iBGTVault(ibgtVault).withdraw(borrowAmount);
+    IiBGTVault(ibgtVault).withdraw(borrowAmount);
     SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
     emit Borrow(msg.sender, borrowAmount);
   }
@@ -430,7 +430,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
         ++i;
       }
     }
-    iBGTVault(ibgtVault).withdraw(borrowAmount);
+    IiBGTVault(ibgtVault).withdraw(borrowAmount);
     SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
     emit Borrow(msg.sender, borrowAmount);
   }
@@ -596,7 +596,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
         ++i;
       }
     }
-    iBGTVault(ibgtVault).getReward();
+    IiBGTVault(ibgtVault).getReward();
     for(uint8 i; i < rewardTokensLength;) {
       address rewardToken = rewardTokens[i];
       uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewardsPerReward[rewardToken];
@@ -644,7 +644,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param ibgtAmount Amount of iBGT to stake
   function _refreshiBGT(uint256 ibgtAmount) internal {
     ERC20(ibgt).approve(ibgtVault, ibgtAmount);
-    iBGTVault(ibgtVault).stake(ibgtAmount);
+    IiBGTVault(ibgtVault).stake(ibgtAmount);
   }
 
   /// @notice Creates the struct containing the details of the boost
@@ -825,7 +825,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(msg.sender != multisig) revert NotMultisig();
     uint256 interestClaim = multisigClaims;
     multisigClaims = 0;
-    iBGTVault(ibgtVault).withdraw(interestClaim);
+    IiBGTVault(ibgtVault).withdraw(interestClaim);
     SafeTransferLib.safeTransfer(ibgt, multisig, interestClaim);
   }
 
@@ -834,7 +834,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(msg.sender != apdao) revert NotAPDAO();
     uint256 interestClaim = apdaoClaims;
     apdaoClaims = 0;
-    iBGTVault(ibgtVault).withdraw(interestClaim);
+    IiBGTVault(ibgtVault).withdraw(interestClaim);
     SafeTransferLib.safeTransfer(ibgt, apdao, interestClaim);
   }
 
@@ -912,7 +912,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function sunsetProtocol() external {
     if(msg.sender != timelock) revert NotTimelock();
-    iBGTVault(ibgtVault).withdraw(poolSize - outstandingDebt);
+    IiBGTVault(ibgtVault).withdraw(poolSize - outstandingDebt);
     SafeTransferLib.safeTransfer(ibgt, multisig, poolSize - outstandingDebt);
   }
 
