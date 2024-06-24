@@ -112,9 +112,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Maps user to loans
   mapping(address => Loan[]) public loans;
 
-  /// @notice Id of loan for a user
-  uint256 public userLoanId;
-
   /// @notice Maps user to amount staked GiBGT
   mapping(address => uint256) public stakedGiBGT;
 
@@ -207,8 +204,13 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
 
 
   /// @inheritdoc IGoldilend
-  function lookupLoan(address user, uint256 _userLoanId) external view returns (Loan memory) {
-    return loans[user][_userLoanId];
+  function lookupLoans(address user) external view returns (Loan[] memory userLoans) {
+    userLoans = loans[user];
+  }
+
+  /// @inheritdoc IGoldilend
+  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory loan) {
+    (loan, ) = _lookupLoan(user, userLoanId);
   }
 
   /// @inheritdoc IGoldilend
@@ -395,7 +397,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     collateralNFTs[0] = collateralNFT;
     uint256[] memory collateralNFTIds = new uint256[](1);
     collateralNFTIds[0] = collateralNFTId;
-    userLoanId++;
     Loan memory loan = Loan({
       collateralNFTs: collateralNFTs,
       collateralNFTIds: collateralNFTIds,
@@ -403,10 +404,10 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       interest: interest,
       duration: duration,
       endDate: block.timestamp + duration,
-      loanId: userLoanId,
+      loanId: loans[msg.sender].length + 1,
       liquidated: false
     });
-    loans[msg.sender][userLoanId] = loan;
+    loans[msg.sender].push(loan);
     IERC721(collateralNFT).safeTransferFrom(msg.sender, address(this), collateralNFTId);
     IiBGTVault(ibgtVault).withdraw(borrowAmount);
     SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
@@ -442,7 +443,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       interest = interest * discount / 1000;
     }
     outstandingDebt += borrowAmount;
-    userLoanId++;
     Loan memory loan = Loan({
       collateralNFTs: collateralNFTs,
       collateralNFTIds: collateralNFTIds,
@@ -450,10 +450,10 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       interest: interest,
       duration: duration,
       endDate: block.timestamp + duration,
-      loanId: userLoanId,
+      loanId: loans[msg.sender].length + 1,
       liquidated: false
     });
-    loans[msg.sender][userLoanId] = loan;
+    loans[msg.sender].push(loan);
     for(uint256 i; i < collateralNFTs.length;) {
       IERC721(collateralNFTs[i]).safeTransferFrom(msg.sender, address(this), collateralNFTIds[i]);
       unchecked {
@@ -466,15 +466,15 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
-  function repay(uint256 repayAmount, uint256 _userLoanId) external {
-    Loan memory userLoan = loans[msg.sender][_userLoanId];
+  function repay(uint256 repayAmount, uint256 userLoanId) external {
+    (Loan memory userLoan, uint256 index) = _lookupLoan(msg.sender, userLoanId);
     if(userLoan.borrowedAmount < repayAmount) revert ExcessiveRepay();
     if(block.timestamp > userLoan.endDate) revert LoanExpired();
     uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoan.interest, userLoan.borrowedAmount);
     uint256 interest = FixedPointMathLib.mulWadUp(repayAmount, interestLoanRatio);
     outstandingDebt -= repayAmount - interest > outstandingDebt ? outstandingDebt : repayAmount - interest;
-    loans[msg.sender][_userLoanId].borrowedAmount -= repayAmount;
-    loans[msg.sender][_userLoanId].interest -= interest;
+    loans[msg.sender][index].borrowedAmount -= repayAmount;
+    loans[msg.sender][index].interest -= interest;
     poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
@@ -491,11 +491,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
-  function liquidate(address user, uint256 _userLoanId) external {
-    Loan memory userLoan = loans[user][_userLoanId];
+  function liquidate(address user, uint256 userLoanId) external {
+    (Loan memory userLoan, uint256 index) = _lookupLoan(user, userLoanId);
     if(block.timestamp < userLoan.endDate || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
-    loans[user][_userLoanId].liquidated = true;
-    loans[user][_userLoanId].borrowedAmount = 0;
+    loans[user][index].liquidated = true;
+    loans[user][index].borrowedAmount = 0;
     outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;
     if(msg.sender != multisig || block.timestamp < userLoan.endDate + 5 days) {
       poolSize += userLoan.interest * (1000 - (multisigShare + apdaoShare)) / 1000;
@@ -582,6 +582,19 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, FixedPointMathLib.divWad(duration, 365 days)));
     uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), FixedPointMathLib.divWad(duration, 365 days));
     return interestAdjusted / 100;
+  }
+
+  /// @notice Finds the loan by userId
+  /// @param userLoanId Id of loan to be found
+  function _lookupLoan(
+    address user, 
+    uint256 userLoanId
+  ) internal view returns (Loan memory userLoan, uint256 index) {
+    uint256 loanLength = loans[user].length;
+    for(uint256 i; i < loanLength; i++) {
+      if(loans[user][i].loanId == userLoanId) return (loans[user][i], i);
+    }
+    revert LoanNotFound();
   }
 
   /// @notice Calculates the amount of GiBGT to mint

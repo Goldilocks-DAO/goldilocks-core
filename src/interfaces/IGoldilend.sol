@@ -44,6 +44,7 @@ interface IGoldilend {
   error InvalidCollateral();
   error BorrowLimitExceeded();
   error ExcessiveRepay();
+  error LoanNotFound();
   error LoanExpired();
   error Unliquidatable();
 
@@ -64,10 +65,14 @@ interface IGoldilend {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Returns details of all loans originated from user
+  /// @param user Address of user for query
+  function lookupLoans(address user) external view returns (Loan[] memory userLoans);
+
   /// @notice Returns details of a specific loan
   /// @param user Address of user for query
-  /// @param _userLoanId Id of loan
-  function lookupLoan(address user, uint256 _userLoanId) external view returns (Loan memory);
+  /// @param userLoanId Id of loan
+  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory);
   
   /// @notice Returns details of a boost
   /// @param user Address of user for query
@@ -96,7 +101,7 @@ interface IGoldilend {
     uint256 duration,
     address[] calldata collateralNFTs
   ) external view returns (uint256);
-  
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */
