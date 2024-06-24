@@ -21,7 +21,7 @@ import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathL
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ReentrancyGuard } from "../../../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
-import { IGoldivault } from "../../interfaces/IGoldivault.sol";
+import { IGoldivaultNegative } from "../../interfaces/IGoldivaultNegative.sol";
 import { OwnershipToken } from "./OwnershipToken.sol";
 import { YieldToken } from "./YieldToken.sol";
 
@@ -29,7 +29,7 @@ import { YieldToken } from "./YieldToken.sol";
 /// @title Goldivaults
 /// @notice Splits deposited assets into ownership tokens representing
 /// deposited assets and yield tokens representing future yield of those assets
-abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
+abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -45,9 +45,6 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
 
   /// @notice Timestamp of vault conclude time
   uint256 public concludeTime;
-
-  /// @notice Fee charged for early withdrawal
-  uint256 public earlyWithdrawalFee;
 
   /// @notice Fee charged for yield
   uint256 public yieldFee;
@@ -134,7 +131,7 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function deposit(uint256 amount) external {
     uint256 remainingTime = endTime - block.timestamp;
     if(remainingTime < 1 days) revert InsufficientTime();
@@ -147,7 +144,7 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
     emit Deposit(msg.sender, amount);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function redeemOwnership(uint256 amount) external {
     if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
     if(amount == 0) revert InvalidRedemption();
@@ -159,12 +156,12 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
       claimable = FixedPointMathLib.mulWad(FixedPointMathLib.divWad(ERC20(depositToken).balanceOf(address(this)), depositTokenAmount), amount);
     }
     OwnershipToken(ot).burnOT(msg.sender, amount);
-    depositTokenAmount -= claimable;
+    depositTokenAmount -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, claimable);
     emit OwnershipTokenRedemption(msg.sender, claimable);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function redeemYield(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
@@ -193,7 +190,7 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
     emit YieldTokenRedemption(msg.sender, amount);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function conclude() external {
     if(block.timestamp < endTime) revert NotExpired();
     if(concluded) revert AlreadyConcluded();
@@ -203,7 +200,7 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
     emit Conclude(block.timestamp);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function compound() external {
     _compoundVaultRewards();
   }
@@ -214,7 +211,7 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function renew() external {
     if(msg.sender != timelock) revert NotTimelock();
     if(!concluded) revert NotConcluded();
@@ -224,7 +221,7 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
     concluded = false;
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
     for(uint8 i; i < _yieldTokens.length;) {
@@ -235,30 +232,26 @@ abstract contract GoldivaultNegative is IGoldivault, ReentrancyGuard {
     }
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function changeProtocolParameters(
-    uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
     uint256 _delay,
     uint256 _duration
   ) external {
     if(msg.sender != timelock) revert NotTimelock();
-    earlyWithdrawalFee = _earlyWithdrawalFee;
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultNegative
   function initializeProtocol(
-    uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
     uint256 _delay,
     uint256 _duration,
     address[] memory _yieldTokens
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
-    earlyWithdrawalFee = _earlyWithdrawalFee;
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
