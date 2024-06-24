@@ -83,6 +83,21 @@ interface IGoldilend {
   /// @notice Returns fair value of NFTs available for loan origination
   function getFairValues(address[] calldata collateralNFTs) external view returns (uint256);
 
+  /// @notice Returns interest on single NFT loan
+  function calculateInterest(
+    uint256 borrowAmount,
+    uint256 duration,
+    address collateralNFT
+  ) external view returns (uint256);
+
+  /// @notice Returns interest on multiple NFT loan
+  function calculateInterest(
+    uint256 borrowAmount,
+    uint256 duration,
+    address[] calldata collateralNFTs
+  ) external view returns (uint256);
+  
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

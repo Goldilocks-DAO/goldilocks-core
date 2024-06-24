@@ -110,8 +110,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   mapping(address => Boost) public boosts;
 
   /// @notice Maps user to loans
-  // mapping(address => Loan[]) public loans;
-  mapping(address => mapping(uint256 => Loan)) public loans;
+  mapping(address => Loan[]) public loans;
 
   /// @notice Id of loan for a user
   uint256 public userLoanId;
@@ -232,6 +231,37 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function getFairValues(address[] calldata collateralNFTs) external view returns (uint256) {
     return _calculateFairValue(collateralNFTs);
+  }
+
+  /// @inheritdoc IGoldilend
+  function calculateInterest(
+    uint256 borrowAmount,
+    uint256 duration,
+    address collateralNFT
+  ) external view returns (uint256) {
+    if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
+    if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
+    if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
+    uint256 fairValue = nftFairValues[collateralNFT] * totalValuation / 100;
+    uint256 debt = outstandingDebt;
+    if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+    return _calculateInterest(borrowAmount, debt, duration);
+  }
+
+  /// @inheritdoc IGoldilend
+  function calculateInterest(
+    uint256 borrowAmount,
+    uint256 duration,
+    address[] calldata collateralNFTs
+  ) external view returns (uint256) {
+    for(uint256 i; i < collateralNFTs.length; i++) {
+      if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
+    }
+    if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
+    if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
+    uint256 debt = outstandingDebt;
+    if(borrowAmount > _calculateFairValue(collateralNFTs) || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+    return _calculateInterest(borrowAmount, debt, duration);
   }
 
 
