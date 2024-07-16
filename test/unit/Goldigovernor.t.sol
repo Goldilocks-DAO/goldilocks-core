@@ -407,14 +407,14 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposyDiff();
-    address admin = 0x50A7dd4778724FbED41aCe9B3d3056a7B36E874C;
-    deal(address(goldiswap), address(admin), 5e18);
-    vm.prank(admin);
+    address voter = 0x1e3C6BE5d1178E4BeFdE4Ff74cF19148F6416470;
+    deal(address(goldiswap), address(voter), 5e18);
+    vm.prank(voter);
     goldiswap.approve(address(govlocks), 5e18);
-    vm.prank(admin);
+    vm.prank(voter);
     govlocks.deposit(5e18);
-    vm.prank(admin);
-    govlocks.delegate(admin);
+    vm.prank(voter);
+    govlocks.delegate(voter);
     deal(address(goldiswap), address(this), quorumVotesNum);
     goldiswap.approve(address(govlocks), quorumVotesNum);
     govlocks.deposit(quorumVotesNum);
@@ -425,9 +425,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     uint8 v = 28;
     bytes32 r = 0x16b88e27f61da00072600b9b04049403f9f064b451d34a5b07aacd7dc48b1f9f;
     bytes32 s = 0x6613e63d75d423834a24b707d13a34304f3b66c6f2eaacb611b327550761215d;
-    vm.prank(admin);
+    vm.prank(voter);
     goldigov.castVoteBySig(1, 1, v, r, s);
-    Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(admin));
+    Goldigovernor.Receipt memory receipt = goldigov.receipt(1, voter);
 
     assertEq(receipt.support, 1);
     assertEq(receipt.votes, 5e18);

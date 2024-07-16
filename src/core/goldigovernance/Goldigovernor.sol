@@ -351,7 +351,7 @@ contract Goldigovernor {
     bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     address signatory = ecrecover(digest, v, r, s);
     if(signatory == address(0)) revert InvalidSignature();
-    emit VoteCast(signatory, proposalId, support, _castVoteInternal(msg.sender, proposalId, support), "");
+    emit VoteCast(signatory, proposalId, support, _castVoteInternal(signatory, proposalId, support), "");
   }
 
 
