@@ -887,7 +887,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 _apdaoShare,
     uint256 _minDuration,
     uint256 _maxDuration,
-    uint256 _startingPoolSize,
     uint256 _protocolInterestRate,
     uint256 _slope,
     uint256 _annualPrgEmissions,
@@ -898,7 +897,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     apdaoShare = _apdaoShare;
     minDuration = _minDuration;
     maxDuration = _maxDuration;
-    poolSize = _startingPoolSize;
     protocolInterestRate = _protocolInterestRate;
     slope = _slope;
     annualPrgEmissions = _annualPrgEmissions;

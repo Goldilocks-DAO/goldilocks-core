@@ -9,7 +9,6 @@ import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
-// import { InfraredBexLPGoldivault } from "../../src/core/goldivault/InfraredBexLPGoldivault.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 import { Goldigovernor } from "../../src/core/goldigovernance/Goldigovernor.sol";
@@ -273,7 +272,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
       5,
       7 days,
       365 days,
-      1000e18,
       10e18,
       10e18,
       5e17,
@@ -281,7 +279,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
     );
     goldilend.initializeBeras(100e18, nfts, values);
     goldilend.initializePartners(boostNfts, boosts);
-    deal(address(ibgt), address(goldilend), 1000e18);
+    deal(address(ibgt), address(this), 1000e18);
+    ibgt.approve(address(goldilend), 1000e18);
+    goldilend.lock(1000e18);
     deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
 
     // deploy goldivault

@@ -246,7 +246,6 @@ interface IGoldilend {
   /// @param _apdaoShare of interest payments to apdao
   /// @param _minDuration Minimum loan duration
   /// @param _maxDuration Maximum loan duration
-  /// @param _startingPoolSize Initial pool size
   /// @param _protocolInterestRate Initial interest rate of protocol
   /// @param _slope Initial rate at which interest rate increases
   /// @param _annualPrgEmissions Annual emissions rate of Porridge
@@ -256,7 +255,6 @@ interface IGoldilend {
     uint256 _apdaoShare,
     uint256 _minDuration,
     uint256 _maxDuration,
-    uint256 _startingPoolSize,
     uint256 _protocolInterestRate,
     uint256 _slope,
     uint256 _annualPrgEmissions,

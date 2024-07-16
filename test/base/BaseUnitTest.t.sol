@@ -33,8 +33,6 @@ abstract contract BaseUnitTest is BaseTest {
   uint256 singleBorrowInterestBoosted = 4545249194970913;
   uint256 singleBorrowInterestMaxBoost = 4339478356164383;
   uint256 interestCalculation1 = 8849690373428410538;
-  uint256 initialGiBGTRatio = 9900990099009900;
-  uint256 lockLockGiBGTRatio = 99009900990099000;
 
   uint256 yearMockBexLPYield = 11574074074074000;  
   uint256 govLocksAmt = 5e18;

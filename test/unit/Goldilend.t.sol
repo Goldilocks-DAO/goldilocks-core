@@ -6,6 +6,7 @@ import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721
 import { INFT } from "../../src/mock/INFT.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
 import { IGoldilend } from "../../src/interfaces/IGoldilend.sol";
+import "../../lib/forge-std/src/console.sol";
 
 contract UnitGoldilendTest is BaseUnitTest {
 
@@ -53,7 +54,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     ibgt.approve(address(goldilend), txAmount);
     goldilend.lock(txAmount);
 
-    assertEq(goldilend.getGiBGTRatio(), initialGiBGTRatio);
+    assertEq(goldilend.getGiBGTRatio(), 1e18);
   }
 
   function testGetFairValues() public {
@@ -198,9 +199,9 @@ contract UnitGoldilendTest is BaseUnitTest {
     ibgt.approve(address(goldilend), txAmount);
     goldilend.lock(txAmount);
 
-    assertEq(goldilend.balanceOf(address(this)), txAmount);
+    assertEq(goldilend.balanceOf(address(this)), 1000e18 + txAmount);
     assertEq(ibgt.balanceOf(address(this)), 0);
-    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(goldilend)), 0);
     assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount);
     assertEq(goldilend.poolSize(), 1000e18 + txAmount);
   }
@@ -215,10 +216,10 @@ contract UnitGoldilendTest is BaseUnitTest {
     vm.prank(address(0xabc));
     goldilend.lock(txAmount);
 
-    assertEq(goldilend.balanceOf(address(this)), txAmount);
-    assertEq(goldilend.balanceOf(address(0xabc)), lockLockGiBGTRatio);
+    assertEq(goldilend.balanceOf(address(this)), 1000e18 + txAmount);
+    assertEq(goldilend.balanceOf(address(0xabc)), txAmount);
     assertEq(ibgt.balanceOf(address(this)), 0);
-    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(goldilend)), 0);
     assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount+txAmount);
     assertEq(goldilend.poolSize(), 1000e18 + txAmount+txAmount);
   }
@@ -230,9 +231,9 @@ contract UnitGoldilendTest is BaseUnitTest {
     ibgt.approve(address(goldilend), txAmount);
     goldilend.lock(txAmount);
 
-    assertEq(goldilend.balanceOf(address(this)), txAmount / 2);
+    assertEq(goldilend.balanceOf(address(this)), 1000e18 + (txAmount / 2));
     assertEq(ibgt.balanceOf(address(this)), 0);
-    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(goldilend)), 0);
     assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount);
     assertEq(goldilend.poolSize(), 100e18 + txAmount);
   }
@@ -244,9 +245,9 @@ contract UnitGoldilendTest is BaseUnitTest {
     ibgt.approve(address(goldilend), txAmount);
     goldilend.lock(txAmount);
 
-    assertEq(goldilend.balanceOf(address(this)), txAmount * 2);
+    assertEq(goldilend.balanceOf(address(this)), 1000e18 + (txAmount * 2));
     assertEq(ibgt.balanceOf(address(this)), 0);
-    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(goldilend)), 0);
     assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount);
     assertEq(goldilend.poolSize(), 50e18 + txAmount);
   }
@@ -1014,7 +1015,6 @@ contract UnitGoldilendTest is BaseUnitTest {
       5,
       7 days, 
       21 days,
-      1000e18,
       1e17,
       10,
       1e17,
@@ -1034,7 +1034,6 @@ contract UnitGoldilendTest is BaseUnitTest {
       5,
       7 days, 
       21 days,
-      1000e18,
       1e17,
       10,
       5e17,
@@ -1191,7 +1190,29 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(executed, true);
     assertEq(ibgt.balanceOf(address(this)), 1000e18);
-    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(goldilend)), 0);
+  }
+
+  function testNoFirstLockAdvantage() public {
+    address alice = address(0xabcabc);
+    address bob = address(0xabcabcabc);
+    address carol = address(0xcbacba);
+    vm.startPrank(alice);
+    deal(address(ibgt), alice, txAmount);
+    ibgt.approve(address(goldilend), txAmount);
+    goldilend.lock(txAmount);
+    vm.startPrank(bob);
+    deal(address(ibgt), bob, txAmount);
+    ibgt.approve(address(goldilend), txAmount);
+    goldilend.lock(txAmount);
+    vm.startPrank(carol);
+    deal(address(ibgt), carol, txAmount);
+    ibgt.approve(address(goldilend), txAmount);
+    goldilend.lock(txAmount);
+
+    assertEq(goldilend.balanceOf(alice), txAmount);
+    assertEq(goldilend.balanceOf(bob), txAmount);
+    assertEq(goldilend.balanceOf(carol), txAmount);
   }
 
 }
