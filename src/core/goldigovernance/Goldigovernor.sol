@@ -319,7 +319,7 @@ contract Goldigovernor {
   function cancel(uint256 proposalId) external {
     if(_getProposalState(proposalId) == ProposalState.Executed) revert InvalidProposalState();
     Proposal storage proposal = proposals[proposalId];
-    if(msg.sender != proposal.proposer && GovLocks(govlocks).getPriorVotes(proposal.proposer, block.number - 1) > proposalThreshold) revert InvalidCancel();
+    if(msg.sender != proposal.proposer && GovLocks(govlocks).getPriorVotes(proposal.proposer, block.number - 1) >= proposalThreshold) revert InvalidCancel();
     proposal.cancelled = true;
     uint256 targetsLength = proposal.targets.length;
     for (uint256 i = 0; i < targetsLength; i++) {
