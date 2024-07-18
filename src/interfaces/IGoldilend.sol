@@ -295,4 +295,9 @@ interface IGoldilend {
   /// @dev Callable only by Timelock
   function sunsetProtocol() external;
 
+  /// @notice Allows multisig to send iBGT to compensate lenders for unliquidated loans
+  /// @dev Callable only by multisig
+  /// @param amount Amount of iBGT to donate
+  function donateiBGT(uint256 amount) external;
+
 }

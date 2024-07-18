@@ -959,6 +959,14 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     SafeTransferLib.safeTransfer(ibgt, multisig, poolSize - outstandingDebt);
   }
 
+  /// @inheritdoc IGoldilend
+  function donateiBGT(uint256 amount) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    poolSize += amount;
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
+    _refreshiBGT(amount);
+  }
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                   IMPLEMENTATION FUNCTION                  */
