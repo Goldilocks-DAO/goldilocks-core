@@ -309,15 +309,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     Boost memory userBoost = boosts[msg.sender];
     if(userBoost.expiry == 0) revert InvalidBoost();
     if(userBoost.expiry > block.timestamp) revert BoostNotExpired();
-    address[] memory nfts;
-    uint256[] memory ids;
-    Boost memory newUserBoost = Boost({
-      partnerNFTs: nfts,
-      partnerNFTIds: ids,
-      expiry: 0,
-      boostMagnitude: 0
-    });
-    boosts[msg.sender] = newUserBoost;
+    delete boosts[msg.sender];
     for(uint8 i; i < userBoost.partnerNFTs.length;) {
       IERC721(userBoost.partnerNFTs[i]).safeTransferFrom(address(this), msg.sender, userBoost.partnerNFTIds[i]);
       unchecked {

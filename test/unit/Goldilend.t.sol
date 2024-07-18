@@ -140,9 +140,17 @@ contract UnitGoldilendTest is BaseUnitTest {
     goldilend.boost(nfts, ids);
     vm.warp(69e18);
     goldilend.withdrawBoost();
+    Goldilend.Boost memory userBoost = goldilend.lookupBoost(address(this));
+
+    assertEq(IERC721(honeycomb).balanceOf(address(this)), 1);
+    assertEq(IERC721(beradrome).balanceOf(address(this)), 1);
+    assertEq(IERC721(honeycomb).balanceOf(address(goldilend)), 0);
+    assertEq(IERC721(beradrome).balanceOf(address(goldilend)), 0);
+    assertEq(userBoost.expiry, 0);
+    assertEq(userBoost.boostMagnitude, 0);
   }
 
-    function testBoostBoostWaitWithdrawBoost() public dealUserPartnerNFTs {
+  function testBoostBoostWaitWithdrawBoost() public dealUserPartnerNFTs {
     INFT(address(honeycomb)).mint(address(this));
     INFT(address(beradrome)).mint(address(this));
     (address[] memory nfts, uint256[] memory ids) = boosty();
