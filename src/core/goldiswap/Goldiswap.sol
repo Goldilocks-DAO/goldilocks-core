@@ -354,8 +354,11 @@ contract Goldiswap is IGoldiswap, ERC20 {
   /// @inheritdoc IGoldiswap
   function porridgeMint(address to, uint256 amount, uint256 cost) external {
     if(msg.sender != goldilocked) revert NotGoldilocked();
+    uint256 marketPriceBefore = _marketPrice(fsl, psl, totalSupply());
     fsl += cost;
     _mint(to, amount);
+    uint256 marketPriceAfter = _marketPrice(fsl, psl, totalSupply());
+    if(marketPriceAfter < marketPriceBefore * 95 / 100) revert ExcessiveSlippage();
   }
 
   /// @inheritdoc IGoldiswap

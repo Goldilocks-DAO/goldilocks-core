@@ -1,9 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "../../lib/forge-std/src/console.sol";
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { IGoldilocked } from "../../src/interfaces/IGoldilocked.sol";
+import { IGoldiswap } from "../../src/interfaces/IGoldiswap.sol";
 
 contract UnitGoldilockedTest is BaseUnitTest {
 
@@ -637,6 +639,26 @@ contract UnitGoldilockedTest is BaseUnitTest {
     vm.warp(block.timestamp + 15768000);
 
     assertEq(goldilocked.userVestingCheck(address(0x69420)), 3_500_000e18);
+  }
+
+  function testNoStirSandwich() public dealStakeLocks {
+    address attacker = makeAddr("attacker");
+    address user = makeAddr("user");
+    uint256 amount = 1_000_000 ether;
+    deal(address(honey), user, type(uint256).max);
+    deal(address(goldilocked), user, type(uint256).max);
+    deal(address(goldiswap), attacker, amount);
+    vm.startPrank(attacker);
+    honey.approve(address(goldiswap), type(uint256).max);
+    goldiswap.approve(address(goldiswap), type(uint256).max);
+    vm.startPrank(user);
+    honey.approve(address(goldilocked), type(uint256).max);
+    goldiswap.approve(address(goldiswap), type(uint256).max);
+    vm.startPrank(attacker);
+    goldiswap.sell(amount, 0);
+    vm.startPrank(user);
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.ExcessiveSlippage.selector));
+    goldilocked.stir(amount * 6);
   }
 
 }
