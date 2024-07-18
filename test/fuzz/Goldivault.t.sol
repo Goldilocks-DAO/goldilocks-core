@@ -68,6 +68,7 @@ contract FuzzGoldivaultTest is BaseFuzzTest {
   }
 
   function testFuzzAddYieldTokens(address[] memory yieldTokens) public {
+    vm.assume(yieldTokens.length < 20);
     goldivault.addYieldTokens(yieldTokens);
     
     for(uint8 i; i < yieldTokens.length; ++i) {

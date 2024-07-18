@@ -58,17 +58,33 @@ contract FuzzGoldiswapTest is BaseFuzzTest {
     vm.assume(liquidity < 1e40);
     uint256 _fsl = goldiswap.fsl();
     uint256 _psl = goldiswap.psl();
-    uint256 fslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _fsl), (_fsl + _psl));
-    uint256 pslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _psl), (_fsl + _psl));
+    uint256 additionalPslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _psl), (_fsl + _psl));
     deal(address(honey), address(timelock), liquidity);
     vm.prank(goldiswap.timelock());
     honey.approve(address(goldiswap), liquidity);
     vm.prank(goldiswap.timelock());
     goldiswap.injectLiquidity(liquidity);
 
-    assertEq(goldiswap.fsl(), initialFSL + fslLiq);
-    assertEq(goldiswap.psl(), initialPSL + pslLiq);
+    assertEq(goldiswap.fsl(), initialFSL + liquidity - additionalPslLiq);
+    assertEq(goldiswap.psl(), initialPSL + additionalPslLiq);
     assertEq(honey.balanceOf(address(goldiswap)), liquidity + initialPSL);
+    assertEq(honey.balanceOf(address(this)), 0);
+  }
+
+  function testFuzzInjectLiquidityRoundingErrors(uint256 liquidity) public {
+    vm.assume(liquidity < 1e40);
+    uint256 _fsl = goldiswap.fsl();
+    uint256 _psl = goldiswap.psl();
+    uint256 pslAndFslBefore = _fsl + _psl;
+    deal(address(honey), address(timelock), liquidity);
+    vm.prank(goldiswap.timelock());
+    honey.approve(address(goldiswap), liquidity);
+    vm.prank(goldiswap.timelock());
+    goldiswap.injectLiquidity(liquidity);
+    uint256 pslAndFslAfter = goldiswap.fsl() + goldiswap.psl();
+
+    assertEq(pslAndFslBefore + liquidity, pslAndFslAfter, "!pslAndFsl");
+    assertEq(honey.balanceOf(address(goldiswap)), liquidity + initialPSL, "!honey");
     assertEq(honey.balanceOf(address(this)), 0);
   }
 

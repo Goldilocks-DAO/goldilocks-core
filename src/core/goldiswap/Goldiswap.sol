@@ -162,8 +162,9 @@ contract Goldiswap is IGoldiswap, ERC20 {
     ) = _sellLoop(fsl, psl, totalSupply(), amount);
     uint256 tax = proceeds * 5 / 100;    
     if(proceeds - tax < minAmount) revert ExcessiveSlippage();
-    fsl = _fsl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _fsl), (_fsl + _psl));
-    psl = _psl + FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _psl), (_fsl + _psl));
+    uint256 additionalPsl = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _psl), (_fsl + _psl));
+    psl = _psl + additionalPsl;
+    fsl = _fsl + tax - additionalPsl;
     _floorDecrease();
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransfer(honey, msg.sender, proceeds - tax);
@@ -184,8 +185,9 @@ contract Goldiswap is IGoldiswap, ERC20 {
   function injectLiquidity(uint256 liquidity) external {
     uint256 _fsl = fsl;
     uint256 _psl = psl;
-    fsl += FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _fsl), (_fsl + _psl));
-    psl += FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _psl), (_fsl + _psl));
+    uint256 additionalPsl = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(liquidity, _psl), (_fsl + _psl));
+    psl = _psl + additionalPsl;
+    fsl = _fsl + liquidity - additionalPsl;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), liquidity);
   }
 

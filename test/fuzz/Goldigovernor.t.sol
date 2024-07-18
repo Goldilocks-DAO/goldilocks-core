@@ -316,7 +316,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     uint256[] memory values = new uint256[](2);
     values[0] = value;
     values[1] = _value;
-    address admin = 0x50A7dd4778724FbED41aCe9B3d3056a7B36E874C;
+    address admin = 0x1e3C6BE5d1178E4BeFdE4Ff74cF19148F6416470;
     deal(address(goldiswap), address(admin), adminVotes);
     vm.prank(admin);
     goldiswap.approve(address(govlocks), adminVotes);

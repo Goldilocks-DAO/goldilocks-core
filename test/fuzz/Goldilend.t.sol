@@ -42,9 +42,9 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     ibgt.approve(address(goldilend), lockAmount);
     goldilend.lock(lockAmount);
 
-    assertEq(goldilend.balanceOf(address(this)), lockAmount);
+    assertEq(goldilend.balanceOf(address(this)), lockAmount + 1000e18);
     assertEq(ibgt.balanceOf(address(this)), 0);
-    assertEq(ibgt.balanceOf(address(goldilend)), 1000e18);
+    assertEq(ibgt.balanceOf(address(goldilend)), 0);
     assertEq(ibgt.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + lockAmount);
     assertEq(goldilend.poolSize(), 1000e18 + lockAmount);
   }

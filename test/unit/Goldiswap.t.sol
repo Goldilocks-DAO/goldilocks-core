@@ -196,14 +196,13 @@ contract UnitGoldiswapTest is BaseUnitTest {
   function testInjectLiquiditySuccess() public {
     uint256 fsl = goldiswap.fsl();
     uint256 psl = goldiswap.psl();
-    uint256 fslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(69e18, fsl), (fsl + psl));
-    uint256 pslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(69e18, psl), (fsl + psl));
+    uint256 additionalPslLiq = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(69e18, psl), (fsl + psl));
     deal(address(honey), address(this), 69e18);
     honey.approve(address(goldiswap), 69e18);
     goldiswap.injectLiquidity(69e18);
 
-    assertEq(goldiswap.fsl(), initialFSL + fslLiq);
-    assertEq(goldiswap.psl(), initialPSL + pslLiq);
+    assertEq(goldiswap.fsl(), initialFSL + 69e18 - additionalPslLiq);
+    assertEq(goldiswap.psl(), initialPSL + additionalPslLiq);
     assertEq(honey.balanceOf(address(goldiswap)), 69e18 + initialPSL);
     assertEq(honey.balanceOf(address(timelock)), 0);
   }
