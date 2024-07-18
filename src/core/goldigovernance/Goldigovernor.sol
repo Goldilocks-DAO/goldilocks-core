@@ -214,7 +214,6 @@ contract Goldigovernor {
   event VotingDelaySet(uint256 oldVotingDelay, uint256 newVotingDelay);
   event VotingPeriodSet(uint256 oldVotingPeriod, uint256 newVotingPeriod);
   event ProposalThresholdSet(uint256 oldProposalThreshold, uint256 newProposalThreshold);
-  event NewAdmin(address oldAdmin, address newAdmin);
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
