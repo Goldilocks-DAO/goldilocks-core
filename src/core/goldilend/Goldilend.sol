@@ -178,6 +178,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     ibgt = _ibgt;
     ibgtVault = _ibgtVault;
     deployTime = block.timestamp;
+    if(_rewardTokens.length > 20) revert TooManyTokens();
     for(uint8 i; i < _rewardTokens.length;) {
       rewardTokens.push(_rewardTokens[i]);
       lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
@@ -848,6 +849,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function addRewardTokens(address[] calldata _rewardTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
+    if(_rewardTokens.length > 20) revert TooManyTokens();
     for(uint8 i; i < _rewardTokens.length;) {
       rewardTokens.push(_rewardTokens[i]);
       lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;

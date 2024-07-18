@@ -47,6 +47,7 @@ interface IGoldilend {
   error LoanNotFound();
   error LoanExpired();
   error Unliquidatable();
+  error TooManyTokens();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
@@ -63,7 +64,6 @@ interface IGoldilend {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
 
   /// @notice Returns details of all loans originated from user
   /// @param user Address of user for query
@@ -101,7 +101,6 @@ interface IGoldilend {
     uint256 duration,
     address[] calldata collateralNFTs
   ) external view returns (uint256);
-
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */

@@ -25,6 +25,7 @@ interface IGoldivault {
   error NotTimelock();
   error AlreadyConcluded();
   error ExcessiveRedeem();
+  error TooManyTokens();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */

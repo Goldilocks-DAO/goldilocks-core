@@ -185,7 +185,9 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
         finalYield = ERC20(yieldTokens[i]).balanceOf(address(this));
       }
       uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
-      SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
+      if(claimable != 0) {
+        SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
+      }
       unchecked {
         ++i;
       }
@@ -227,6 +229,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   /// @inheritdoc IGoldivault
   function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
+    if(_yieldTokens.length > 20) revert TooManyTokens();
     for(uint8 i; i < _yieldTokens.length;) {
       yieldTokens.push(_yieldTokens[i]);
       unchecked {
@@ -265,6 +268,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     concluded = false;
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
+    if(_yieldTokens.length > 20) revert TooManyTokens();
     for(uint8 i; i < _yieldTokens.length;) {
       yieldTokens.push(_yieldTokens[i]);
       unchecked {
