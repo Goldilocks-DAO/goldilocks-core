@@ -280,7 +280,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   ) external {    
     if(partnerNFTBoosts[partnerNFT] == 0) revert InvalidBoostNFT();
     boosts[msg.sender] = _buildBoost(partnerNFT, partnerNFTId);
-    IERC721(partnerNFT).safeTransferFrom(msg.sender, address(this), partnerNFTId);
+    IERC721(partnerNFT).transferFrom(msg.sender, address(this), partnerNFTId);
   }
 
   /// @inheritdoc IGoldilend
@@ -297,7 +297,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(partnerNFTs.length != partnerNFTIds.length) revert ArrayMismatch();
     boosts[msg.sender] = _buildBoost(partnerNFTs, partnerNFTIds);
     for(uint8 i; i < partnerNFTs.length;) {
-      IERC721(partnerNFTs[i]).safeTransferFrom(msg.sender, address(this), partnerNFTIds[i]);
+      IERC721(partnerNFTs[i]).transferFrom(msg.sender, address(this), partnerNFTIds[i]);
       unchecked {
         ++i;
       }
@@ -311,7 +311,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(userBoost.expiry > block.timestamp) revert BoostNotExpired();
     delete boosts[msg.sender];
     for(uint8 i; i < userBoost.partnerNFTs.length;) {
-      IERC721(userBoost.partnerNFTs[i]).safeTransferFrom(address(this), msg.sender, userBoost.partnerNFTIds[i]);
+      IERC721(userBoost.partnerNFTs[i]).transferFrom(address(this), msg.sender, userBoost.partnerNFTIds[i]);
       unchecked {
         ++i;
       }
@@ -401,7 +401,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       liquidated: false
     });
     loans[msg.sender].push(loan);
-    IERC721(collateralNFT).safeTransferFrom(msg.sender, address(this), collateralNFTId);
+    IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
     IiBGTVault(ibgtVault).withdraw(borrowAmount);
     SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
     emit Borrow(msg.sender, borrowAmount);
@@ -448,7 +448,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     });
     loans[msg.sender].push(loan);
     for(uint256 i; i < collateralNFTs.length;) {
-      IERC721(collateralNFTs[i]).safeTransferFrom(msg.sender, address(this), collateralNFTIds[i]);
+      IERC721(collateralNFTs[i]).transferFrom(msg.sender, address(this), collateralNFTIds[i]);
       unchecked {
         ++i;
       }
@@ -472,7 +472,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     _updateInterestClaims(interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       for(uint256 i; i < userLoan.collateralNFTs.length;){
-        IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
+        IERC721(userLoan.collateralNFTs[i]).transferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
         unchecked {
           ++i;
         }
