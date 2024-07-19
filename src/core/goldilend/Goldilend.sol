@@ -571,9 +571,10 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 duration
   ) internal view returns (uint256) {
     uint256 rate = protocolInterestRate;
+    uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
     uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + 5e17;
-    uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, FixedPointMathLib.divWad(duration, 365 days)));
-    uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), FixedPointMathLib.divWad(duration, 365 days));
+    uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
+    uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     return interestAdjusted / 100;
   }
 
