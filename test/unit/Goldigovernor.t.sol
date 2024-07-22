@@ -565,4 +565,26 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     assertEq(goldigov.proposalThreshold(), 1000001e18);
   }
 
+  function testDefeatedProposalFailQueueAndReturnDefeated() public {
+    (
+      address[] memory targets,
+      string[] memory signatures,
+      bytes[] memory calldatas,
+      uint256[] memory values
+    ) = proposyDiff();
+    deal(address(goldiswap), address(this), 399e18);
+    goldiswap.approve(address(govlocks), 399e18);
+    govlocks.deposit(399e18);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+    vm.roll(72);
+    goldigov.castVote(1, 1);
+    vm.roll(18000);
+    Goldigovernor.ProposalState state = goldigov.state(1);
+    assertEq(uint256(state), 3);
+    vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalState.selector));
+    goldigov.queue(1);
+  }
+
 }
