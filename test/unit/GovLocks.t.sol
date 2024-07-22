@@ -410,4 +410,13 @@ contract UnitGovLocksTest is BaseUnitTest {
     assertEq(govlocks.getVotes(address(0x696969696969)), 7_000_000e18);
   }
 
+  function testBurnedVotingPower() public {
+    deal(address(goldiswap), address(this), govLocksAmt);
+    goldiswap.approve(address(govlocks), govLocksAmt);
+    govlocks.deposit(govLocksAmt);
+    govlocks.delegate(address(this));
+    vm.expectRevert(abi.encodeWithSelector(GovLocks.TransferToZeroAddress.selector));
+    govlocks.transfer(address(0), govLocksAmt);
+  }
+
 }

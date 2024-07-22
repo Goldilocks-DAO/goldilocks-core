@@ -98,6 +98,7 @@ contract GovLocks is ERC20 {
 
   error NoSuchBlock();
   error NotGoldilocked();
+  error TransferToZeroAddress();
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -261,6 +262,18 @@ contract GovLocks is ERC20 {
     if(from != address(0) && to != address(0)) {
       _moveDelegates(delegates[from], delegates[to], amt);
     }
+  }
+
+  /// @notice Prevents tokens from being sent to zero address
+  function transferFrom(address from, address to, uint256 amt) public override returns (bool) {
+    if (to == address(0)) revert TransferToZeroAddress();
+    return super.transferFrom(from, to, amt);
+  }
+
+  /// @notice Prevents tokens from being sent to zero address
+  function transfer(address to, uint256 amt) public override returns (bool) {
+    if (to == address(0)) revert TransferToZeroAddress();
+    return super.transfer(to, amt);
   }
 
 }
