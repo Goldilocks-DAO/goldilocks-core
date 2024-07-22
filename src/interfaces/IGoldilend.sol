@@ -43,7 +43,6 @@ interface IGoldilend {
   error InvalidLoanAmount();
   error InvalidCollateral();
   error BorrowLimitExceeded();
-  error ExcessiveRepay();
   error LoanNotFound();
   error LoanExpired();
   error Unliquidatable();

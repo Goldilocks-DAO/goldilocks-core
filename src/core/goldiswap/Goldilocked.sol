@@ -251,7 +251,8 @@ contract Goldilocked is IGoldilocked, ERC20 {
 
   /// @inheritdoc IGoldilocked
   function repay(uint256 amount) external {
-    if(borrowedHoney[msg.sender] < amount) revert ExcessiveRepay();
+    uint256 borrowed = borrowedHoney[msg.sender];
+    if(amount > borrowed) amount = borrowed;
     borrowedHoney[msg.sender] -= amount;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, goldiswap, amount);
     emit Repay(msg.sender, amount);

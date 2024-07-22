@@ -272,12 +272,6 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(honey.balanceOf(address(goldiswap)), (type(uint256).max / 2) - borrowAmount);
   }
 
-  function testRepayHoneyFailExcessive() public dealStakeLocks dealGoldiswapMaxHoney {
-    goldilocked.borrow(borrowAmount);
-    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.ExcessiveRepay.selector));
-    goldilocked.repay(borrowAmount + 1);
-  }
-
   function testRepayHoneySuccess() public dealStakeLocks dealGoldiswapMaxHoney {
     goldilocked.borrow(borrowAmount);
     honey.approve(address(goldilocked), borrowAmount);

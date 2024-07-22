@@ -598,12 +598,6 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(userLoan.liquidated, false);
   }
 
-  function testRepayFailExcessive() public dealUserBeras {
-    goldilend.borrow(1e18, goldilendDuration, address(bondbear), 1);
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.ExcessiveRepay.selector));
-    goldilend.repay(2e18, 1);
-  }
-
   function testRepayFailExpired() public dealUserBeras {
     goldilend.borrow(1e18, goldilendDuration, address(bondbear), 1);
     vm.warp(69e18);

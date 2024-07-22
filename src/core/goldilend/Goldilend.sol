@@ -475,7 +475,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function repay(uint256 repayAmount, uint256 userLoanId) external {
     (Loan memory userLoan, uint256 index) = _lookupLoan(msg.sender, userLoanId);
-    if(userLoan.borrowedAmount < repayAmount) revert ExcessiveRepay();
+    if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
     if(block.timestamp > userLoan.endDate) revert LoanExpired();
     uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoan.interest, userLoan.borrowedAmount);
     uint256 interest = FixedPointMathLib.mulWadUp(repayAmount, interestLoanRatio);
