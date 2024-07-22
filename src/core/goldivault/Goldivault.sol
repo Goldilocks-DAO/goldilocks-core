@@ -136,7 +136,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
 
   /// @inheritdoc IGoldivault
   function deposit(uint256 amount) external {
-    uint256 remainingTime = endTime - block.timestamp;
+    uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime < 1 days) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
