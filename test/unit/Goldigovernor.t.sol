@@ -212,7 +212,24 @@ contract UnitGoldigovernorTest is BaseUnitTest {
   }
 
   function testQueueFailAlready() public {
-    proposySamePropose();
+    address[] memory targets = new address[](2);
+    targets[0] = address(0x69);
+    targets[1] = address(0x69);
+    string[] memory signatures = new string[](2);
+    signatures[0] = "hello";
+    signatures[1] = "hello";
+    bytes[] memory calldatas = new bytes[](2);
+    calldatas[0] = hex"8eed55d1";
+    calldatas[1] = hex"8eed55d1";
+    uint256[] memory values = new uint256[](2);
+    values[0] = 69;
+    values[1] = 69;
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
     vm.roll(18000);
@@ -270,9 +287,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposyDiff();
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
@@ -297,9 +314,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposyDiff();
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
@@ -443,9 +460,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     ) = proposyDiff();
     values[0] = 69;
     values[1] = 69;
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
@@ -465,16 +482,25 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposyDiff();
-    deal(address(goldiswap), address(this), 399e18);
-    goldiswap.approve(address(govlocks), 399e18);
-    govlocks.deposit(399e18);
+    address againstVoter = address(0xabccbaabccba);
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
     govlocks.delegate(address(this));
+    deal(address(goldiswap), againstVoter, quorumVotesNum + quorumVotesNum);
+    vm.prank(againstVoter);
+    goldiswap.approve(address(govlocks), quorumVotesNum + quorumVotesNum);
+    vm.prank(againstVoter);
+    govlocks.deposit(quorumVotesNum + quorumVotesNum);
+    vm.prank(againstVoter);
+    govlocks.delegate(againstVoter);
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
+    vm.prank(againstVoter);
+    goldigov.castVote(1, 0);
     vm.roll(18000);
-    goldigov.queue(1);
     Goldigovernor.ProposalState state = goldigov.state(1);
 
     assertEq(uint256(state), 3);
