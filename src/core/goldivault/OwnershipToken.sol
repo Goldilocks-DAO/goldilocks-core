@@ -72,11 +72,11 @@ abstract contract OwnershipToken is ERC20 {
 
   /// @notice Burns ownership tokens
   /// @dev Callable only by Goldivault
-  /// @param to Address to burn from
+  /// @param from Address to burn from
   /// @param amount Amount of ownership tokens to burn
-  function burnOT(address to, uint256 amount) external {
+  function burnOT(address from, uint256 amount) external {
     if(msg.sender != vault) revert NotVault();
-    _burn(to, amount);
+    _burn(from, amount);
   }
 
 }
