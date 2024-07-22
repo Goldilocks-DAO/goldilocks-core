@@ -240,7 +240,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
   /// @param _psl Temporary variable for psl
   /// @param _supply Temporary variable for supply
   /// @param leftover Temporary variable for amount of Locks tokens
-  /// @return (FSL, PSL, supply and price)
+  /// @return (FSL, PSL, and price)
   function _buyLoop(uint256 _fsl, uint256 _psl, uint256 _supply, uint256 leftover) internal pure returns (uint256, uint256, uint256) {
     uint256 market;
     uint256 floor;
@@ -281,7 +281,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
   /// @param _psl Temporary variable for psl
   /// @param _supply Temporary variable for supply
   /// @param leftover Temporary variable for amount of Locks tokens to sell
-  /// @return (FSL, PSL, supply and proceeds)
+  /// @return (FSL, PSL, and proceeds)
   function _sellLoop(uint256 _fsl, uint256 _psl, uint256 _supply, uint256 leftover) internal pure returns (uint256, uint256, uint256) {
     uint256 market;
     uint256 floor;

@@ -78,7 +78,7 @@ interface IGoldilocked {
 
   /// @notice Lends out Honey using staked Locks as collateral
   /// @dev borrow limit is Locks floor price * staked Locks - locked locks
-  /// @param amount Amount of Honey to borrow
+  /// @param amount Amount of Honey to borrow before removing 3% fee
   function borrow(uint256 amount) external;
 
   /// @notice Repays Honey loans

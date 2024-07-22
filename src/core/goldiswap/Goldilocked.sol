@@ -34,6 +34,11 @@ contract Goldilocked is IGoldilocked, ERC20 {
   /*                      STATE VARIABLES                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+  /// @notice Fee of 5% on borrows
+  uint256 public constant BORROW_FEE = 3;
+
+  /// @notice Precision to calculate borrow fee
+  uint256 public constant FEE_PRECISION = 100;
 
   /// @notice Timestamp of contract deployment
   uint256 public immutable deployTime;
@@ -239,7 +244,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     uint256 floorPrice = IGoldiswap(goldiswap).floorPrice();
     if(!_borrowLimitCheck(amount, floorPrice)) revert InsufficientBorrowLimit();
     borrowedHoney[msg.sender] += amount;
-    uint256 fee = amount * 3 / 100;
+    uint256 fee = amount * BORROW_FEE / FEE_PRECISION;
     IGoldiswap(goldiswap).borrowTransfer(msg.sender, amount, fee);
     emit Borrow(msg.sender, amount);
   }
