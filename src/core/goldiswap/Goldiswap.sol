@@ -34,10 +34,31 @@ contract Goldiswap is IGoldiswap, ERC20 {
 
   
   /// @notice Maximum percentage decrease in target ratio
-  uint256 public immutable MAX_FLOOR_REDUCE = 5e18;
+  uint256 public constant MAX_FLOOR_REDUCE = 5e18;
 
   /// @notice Maximum ratio between PSL and FSL
-  uint256 public immutable MAX_RATIO = 45e16;
+  uint256 public constant MAX_RATIO = 45e16;
+
+  /// @notice Tax of 0.3% on buys
+  uint256 public constant BUY_TAX = 3; 
+
+  /// @notice Precision to calculate buy tax
+  uint256 public constant PRECISION = 1000;
+
+  /// @notice Tax of 5% on sells
+  uint256 public constant SELL_TAX = 5;
+
+  /// @notice Precision to calculate sell tax
+  uint256 public constant SELL_PRECISION = 100;
+
+  /// @notice Size of the step during price calculation
+  uint256 public constant LOOP_STEP_SIZE = 100_000e18;
+
+  /// @notice Full ratio for evaluating FSL/PSL ratio in buy loop
+  uint256 public constant FULL_RATIO = 100;
+  
+  /// @notice Half ratio for evaluating FSL/PSL ratio in buy loop
+  uint256 public constant HALF_RATIO = 50;
 
   /// @notice Address of Goldilocked
   address public immutable goldilocked;
@@ -141,7 +162,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
       uint256 _psl, 
       uint256 price
     ) = _buyLoop(fsl, psl, totalSupply(), amount);
-    uint256 tax = price * 3 / 1000;
+    uint256 tax = price * BUY_TAX / PRECISION;
     if(price + tax > maxAmount) revert ExcessiveSlippage();
     fsl = _fsl;
     psl = _psl;
@@ -160,7 +181,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
       uint256 _psl,
       uint256 proceeds
     ) = _sellLoop(fsl, psl, totalSupply(), amount);
-    uint256 tax = proceeds * 5 / 100;    
+    uint256 tax = proceeds * SELL_TAX / SELL_PRECISION;    
     if(proceeds - tax < minAmount) revert ExcessiveSlippage();
     uint256 additionalPsl = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _psl), (_fsl + _psl));
     psl = _psl + additionalPsl;
@@ -224,13 +245,13 @@ contract Goldiswap is IGoldiswap, ERC20 {
     uint256 market;
     uint256 floor;
     uint256 _buyPrice;
-    uint256 increment = FixedPointMathLib.divWad(_supply, 100_000e18);
+    uint256 increment = FixedPointMathLib.divWad(_supply, LOOP_STEP_SIZE);
     while(leftover >= increment) {
       market = _marketPrice(_fsl, _psl, _supply);
       floor = _floorPrice(_fsl, _supply);
       _buyPrice += FixedPointMathLib.mulWad(market, increment);
       _supply += increment;
-      if (_psl * 100 >= _fsl * 50) {
+      if (_psl * FULL_RATIO >= _fsl * HALF_RATIO) {
         _fsl += FixedPointMathLib.mulWad(market, increment);
       }
       else {
@@ -244,7 +265,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
       floor = _floorPrice(_fsl, _supply);
       _buyPrice += FixedPointMathLib.mulWad(market, leftover);
       _supply += leftover;
-      if (_psl * 100 >= _fsl * 50) {
+      if (_psl * FULL_RATIO >= _fsl * HALF_RATIO) {
         _fsl += FixedPointMathLib.mulWad(market, leftover);
       }
       else {
@@ -265,7 +286,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
     uint256 market;
     uint256 floor;
     uint256 proceeds;
-    uint256 increment = FixedPointMathLib.divWad(_supply, 100_000e18);
+    uint256 increment = FixedPointMathLib.divWad(_supply, LOOP_STEP_SIZE);
     while(leftover >= increment) {
       market = _marketPrice(_fsl, _psl, _supply);
       floor = _floorPrice(_fsl, _supply);

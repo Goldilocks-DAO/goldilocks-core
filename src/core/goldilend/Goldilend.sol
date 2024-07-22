@@ -37,6 +37,12 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     
 
+  /// @notice Maximum discount from boosting
+  uint256 public constant MAX_DISCOUNT = 1000;
+
+  /// @notice Value for calculating interest payment on loans
+  uint256 public constant INTEREST_PAYMENT_PERCENTAGE = 5e17;
+
   /// @notice Address of Goldilocked
   address public immutable goldilocked;
 
@@ -388,7 +394,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(userBoost.expiry > block.timestamp + duration) {
       uint256 discount = 500;
       if(userBoost.boostMagnitude < discount) {
-        discount = 1000 - userBoost.boostMagnitude;
+        discount = MAX_DISCOUNT - userBoost.boostMagnitude;
       }
       interest = interest * discount / 1000;
     }
@@ -439,7 +445,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(userBoost.expiry > block.timestamp + duration) {
       uint256 discount = 500;
       if(userBoost.boostMagnitude < discount) {
-        discount = 1000 - userBoost.boostMagnitude;
+        discount = MAX_DISCOUNT - userBoost.boostMagnitude;
       }
       interest = interest * discount / 1000;
     }
@@ -583,7 +589,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   ) internal view returns (uint256) {
     uint256 rate = protocolInterestRate;
     uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
-    uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + 5e17;
+    uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + INTEREST_PAYMENT_PERCENTAGE;
     uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
     uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     return interestAdjusted / 100;
