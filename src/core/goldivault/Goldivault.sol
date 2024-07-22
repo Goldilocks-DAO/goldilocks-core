@@ -176,7 +176,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
     YieldToken(yt).burnYT(msg.sender, amount);
     uint256 yieldTokensLength = yieldTokens.length;
-    for(uint8 i; i < yieldTokensLength;) {
+    for(uint256 i; i < yieldTokensLength;) {
       uint256 finalYield;
       if(yieldTokens[i] == depositToken) {
         finalYield = ERC20(yieldTokens[i]).balanceOf(address(this)) - depositTokenAmount;
@@ -229,8 +229,9 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   /// @inheritdoc IGoldivault
   function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
-    if(_yieldTokens.length > 20) revert TooManyTokens();
-    for(uint8 i; i < _yieldTokens.length;) {
+    uint256 yieldTokensLength = _yieldTokens.length;
+    if(yieldTokensLength > 20) revert TooManyTokens();
+    for(uint256 i; i < yieldTokensLength;) {
       yieldTokens.push(_yieldTokens[i]);
       unchecked {
         ++i;
@@ -268,8 +269,9 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     concluded = false;
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
-    if(_yieldTokens.length > 20) revert TooManyTokens();
-    for(uint8 i; i < _yieldTokens.length;) {
+    uint256 yieldTokensLength = _yieldTokens.length;
+    if(yieldTokensLength > 20) revert TooManyTokens();
+    for(uint256 i; i < yieldTokensLength;) {
       yieldTokens.push(_yieldTokens[i]);
       unchecked {
         ++i;

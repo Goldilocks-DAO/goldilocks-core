@@ -178,8 +178,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     ibgt = _ibgt;
     ibgtVault = _ibgtVault;
     deployTime = block.timestamp;
-    if(_rewardTokens.length > 20) revert TooManyTokens();
-    for(uint8 i; i < _rewardTokens.length;) {
+    uint256 rewardTokensLength = _rewardTokens.length;
+    if(rewardTokensLength > 20) revert TooManyTokens();
+    for(uint256 i; i < rewardTokensLength;) {
       rewardTokens.push(_rewardTokens[i]);
       lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
       unchecked {
@@ -257,8 +258,12 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 duration,
     address[] calldata collateralNFTs
   ) external view returns (uint256) {
-    for(uint256 i; i < collateralNFTs.length; i++) {
+    uint256 collateralNFTsLength = collateralNFTs.length;
+    for(uint256 i; i < collateralNFTsLength;) {
       if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
+      unchecked {
+        ++i;
+      }
     }
     if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
     if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
@@ -288,15 +293,16 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     address[] calldata partnerNFTs, 
     uint256[] calldata partnerNFTIds
   ) external {
-    for(uint256 i; i < partnerNFTs.length;) {
+    uint256 partnerNFTsLength = partnerNFTs.length;
+    for(uint256 i; i < partnerNFTsLength;) {
       if(partnerNFTBoosts[partnerNFTs[i]] == 0) revert InvalidBoostNFT();
       unchecked {
         ++i;
       }
     }
-    if(partnerNFTs.length != partnerNFTIds.length) revert ArrayMismatch();
+    if(partnerNFTsLength != partnerNFTIds.length) revert ArrayMismatch();
     boosts[msg.sender] = _buildBoost(partnerNFTs, partnerNFTIds);
-    for(uint8 i; i < partnerNFTs.length;) {
+    for(uint256 i; i < partnerNFTsLength;) {
       IERC721(partnerNFTs[i]).transferFrom(msg.sender, address(this), partnerNFTIds[i]);
       unchecked {
         ++i;
@@ -309,8 +315,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     Boost memory userBoost = boosts[msg.sender];
     if(userBoost.expiry == 0) revert InvalidBoost();
     if(userBoost.expiry > block.timestamp) revert BoostNotExpired();
+    uint256 userBoostNFTsLength = userBoost.partnerNFTs.length; 
     delete boosts[msg.sender];
-    for(uint8 i; i < userBoost.partnerNFTs.length;) {
+    for(uint256 i; i < userBoostNFTsLength;) {
       IERC721(userBoost.partnerNFTs[i]).transferFrom(address(this), msg.sender, userBoost.partnerNFTIds[i]);
       unchecked {
         ++i;
@@ -415,7 +422,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256[] calldata collateralNFTIds
   ) external {
     if(!borrowingActive) revert NotActive();
-    for(uint256 i; i < collateralNFTs.length;) {
+    uint256 collateralNFTsLength = collateralNFTs.length;
+    for(uint256 i; i < collateralNFTsLength;) {
       if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
       unchecked {
         ++i;
@@ -423,7 +431,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     }
     if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
     if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
-    if(collateralNFTs.length != collateralNFTIds.length) revert ArrayMismatch();
+    if(collateralNFTsLength != collateralNFTIds.length) revert ArrayMismatch();
     uint256 debt = outstandingDebt;
     if(borrowAmount > _calculateFairValue(collateralNFTs) || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     uint256 interest = _calculateInterest(borrowAmount, debt, duration);
@@ -447,7 +455,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       liquidated: false
     });
     loans[msg.sender].push(loan);
-    for(uint256 i; i < collateralNFTs.length;) {
+    for(uint256 i; i < collateralNFTsLength;) {
       IERC721(collateralNFTs[i]).transferFrom(msg.sender, address(this), collateralNFTIds[i]);
       unchecked {
         ++i;
@@ -471,7 +479,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
-      for(uint256 i; i < userLoan.collateralNFTs.length;){
+      uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
+      for(uint256 i; i < userLoanCollateralLength;){
         IERC721(userLoan.collateralNFTs[i]).transferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
         unchecked {
           ++i;
@@ -499,7 +508,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     else {
       poolSize -= userLoan.borrowedAmount - userLoan.interest;
     }
-    for(uint256 i; i < userLoan.collateralNFTs.length;) {
+    uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
+    for(uint256 i; i < userLoanCollateralLength;) {
       IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
       unchecked {
         ++i;
@@ -553,7 +563,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param collateralNFTs NFT collections to find value of
   /// @return fairValue Fair value of NFTs
   function _calculateFairValue(address[] calldata collateralNFTs) internal view returns (uint256 fairValue) {
-    for(uint256 i; i < collateralNFTs.length;) {
+    uint256 collateralNFTsLength = collateralNFTs.length;
+    for(uint256 i; i < collateralNFTsLength;) {
       fairValue += totalValuation * nftFairValues[collateralNFTs[i]] / 100;
       unchecked {
         ++i;
@@ -585,8 +596,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 userLoanId
   ) internal view returns (Loan memory userLoan, uint256 index) {
     uint256 loanLength = loans[user].length;
-    for(uint256 i; i < loanLength; i++) {
+    for(uint256 i; i < loanLength;) {
       if(loans[user][i].loanId == userLoanId) return (loans[user][i], i);
+      unchecked {
+        ++i;
+      }
     }
     revert LoanNotFound();
   }
@@ -627,14 +641,14 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param user Address to update claimable rewards for
   function _updateClaimableRewards(address user) internal {
     uint256 rewardTokensLength = rewardTokens.length;
-    for(uint8 i; i < rewardTokensLength;) {
+    for(uint256 i; i < rewardTokensLength;) {
       outstandingRewardsPerReward[rewardTokens[i]] = ERC20(rewardTokens[i]).balanceOf(address(this));
       unchecked {
         ++i;
       }
     }
     IiBGTVault(ibgtVault).getReward();
-    for(uint8 i; i < rewardTokensLength;) {
+    for(uint256 i; i < rewardTokensLength;) {
       address rewardToken = rewardTokens[i];
       uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewardsPerReward[rewardToken];
       claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken, outstandingRewards);
@@ -664,7 +678,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param claimer User that is claiming rewards
   function _claimRewards(address claimer) internal {
     uint256 rewardTokensLength = rewardTokens.length;
-    for(uint8 i; i < rewardTokensLength;) {
+    for(uint256 i; i < rewardTokensLength;) {
       address rewardToken = rewardTokens[i];
       uint256 reward = claimableRewards[claimer][rewardToken];
       if(reward > 0) {
@@ -709,7 +723,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     else {
       address[] storage nfts = userBoost.partnerNFTs;
       uint256[] storage ids = userBoost.partnerNFTIds;
-      for(uint256 i = 0; i < nfts.length;) {
+      uint256 nftsLength = nfts.length;
+      for(uint256 i; i < nftsLength;) {
         magnitude += partnerNFTBoosts[nfts[i]];
         unchecked {
           ++i;
@@ -736,8 +751,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   ) internal returns (Boost memory newUserBoost) {
     uint256 magnitude;
     Boost storage userBoost = boosts[msg.sender];
+    uint256 partnerNFTsLength = partnerNFTs.length;
     if(userBoost.expiry == 0) {
-      for(uint8 i; i < partnerNFTs.length;) {
+      for(uint256 i; i < partnerNFTsLength;) {
         magnitude += partnerNFTBoosts[partnerNFTs[i]];
         unchecked {
           ++i;
@@ -753,13 +769,14 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     else {
       address[] storage nfts = userBoost.partnerNFTs;
       uint256[] storage ids = userBoost.partnerNFTIds;
-      for(uint256 i = 0; i < nfts.length;) {
+      uint256 nftsLength = nfts.length;
+      for(uint256 i; i < nftsLength;) {
         magnitude += partnerNFTBoosts[nfts[i]];
         unchecked {
           ++i;
         }
       }
-      for(uint256 i = 0; i < partnerNFTs.length;) {
+      for(uint256 i; i < partnerNFTsLength;) {
         magnitude += partnerNFTBoosts[partnerNFTs[i]];
         nfts.push(partnerNFTs[i]);
         ids.push(partnerNFTIds[i]);
@@ -797,7 +814,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 _totalValuation
   ) external {
     if(msg.sender != timelock) revert NotTimelock();
-    for(uint256 i; i < _nftFairValues.length;) {
+    uint256 nftFairValuesLength = _nftFairValues.length;
+    for(uint256 i; i < nftFairValuesLength;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
       unchecked {
         ++i;
@@ -842,8 +860,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function addRewardTokens(address[] calldata _rewardTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
-    if(_rewardTokens.length > 20) revert TooManyTokens();
-    for(uint8 i; i < _rewardTokens.length;) {
+    uint256 rewardTokensLength = _rewardTokens.length;
+    if(rewardTokensLength > 20) revert TooManyTokens();
+    for(uint256 i; i < rewardTokensLength;) {
       rewardTokens.push(_rewardTokens[i]);
       lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
       unchecked {
@@ -906,7 +925,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
     totalValuation = _totalValuation;
-    for(uint256 i; i < _nftFairValues.length;) {
+    uint256 nftFairValuesLength = _nftFairValues.length;
+    for(uint256 i; i < nftFairValuesLength;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
       unchecked {
         ++i;
@@ -921,7 +941,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint8[] memory _partnerNFTBoosts
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
-    for(uint8 i; i < _partnerNFTs.length;) {
+    uint256 partnerNFTsLength = _partnerNFTs.length;
+    for(uint256 i; i < partnerNFTsLength;) {
       partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
       unchecked {
         ++i;
@@ -936,7 +957,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 _boostLockDuration
   ) external {
     if(msg.sender != timelock) revert NotTimelock();
-    for(uint8 i; i < _partnerNFTs.length;) {
+    uint256 partnerNFTsLength = _partnerNFTs.length;
+    for(uint256 i; i < partnerNFTsLength;) {
       partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];
       unchecked {
         ++i;

@@ -293,8 +293,11 @@ contract Goldigovernor {
     Proposal storage proposal = proposals[proposalId];
     uint256 eta = block.timestamp + Timelock(timelock).delay();
     uint256 targetsLength = proposal.targets.length;
-    for (uint256 i = 0; i < targetsLength; i++) {
+    for(uint256 i; i < targetsLength;) {
       _queueOrRevertInternal(proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], eta);
+      unchecked {
+        ++i;
+      }
     }
     proposal.eta = eta;
     emit ProposalQueued(proposalId, eta);
@@ -307,8 +310,11 @@ contract Goldigovernor {
     Proposal storage proposal = proposals[proposalId];
     proposal.executed = true;
     uint256 targetsLength = proposal.targets.length;
-    for (uint256 i = 0; i < targetsLength; i++) {
+    for(uint256 i; i < targetsLength;) {
       Timelock(timelock).executeTransaction{ value: proposal.values[i] }(proposal.targets[i], proposal.eta, proposal.values[i], proposal.calldatas[i], proposal.signatures[i]);
+      unchecked {
+        ++i;
+      }
     }
     emit ProposalExecuted(proposalId);
   }
@@ -321,8 +327,11 @@ contract Goldigovernor {
     if(msg.sender != proposal.proposer && GovLocks(govlocks).getPriorVotes(proposal.proposer, block.number - 1) >= proposalThreshold) revert InvalidCancel();
     proposal.cancelled = true;
     uint256 targetsLength = proposal.targets.length;
-    for (uint256 i = 0; i < targetsLength; i++) {
+    for(uint256 i; i < targetsLength;) {
       Timelock(timelock).cancelTransaction(proposal.targets[i], proposal.eta, proposal.values[i], proposal.calldatas[i], proposal.signatures[i]);
+      unchecked {
+        ++i;
+      }
     }
     emit ProposalCanceled(proposalId);
   }

@@ -129,7 +129,8 @@ contract Goldilocked is IGoldilocked, ERC20 {
     vestingEnd = block.timestamp + 90 days + 365 days;
     annualPrgEmissions = _annualPrgEmissions;
     uint256 floor = IGoldiswap(goldiswap).floorPrice();
-    for(uint8 i; i < allocationsAddress.length;) {
+    uint256 allocationsAddressLength = allocationsAddress.length;
+    for(uint256 i; i < allocationsAddressLength;) {
       stakedLocks[allocationsAddress[i]] = allocationsAmt[i];
       borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
       i < 3 ? teamAllocations[allocationsAddress[i]] = allocationsAmt[i] : seedAllocations[allocationsAddress[i]] = allocationsAmt[i];
