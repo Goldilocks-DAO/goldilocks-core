@@ -138,22 +138,6 @@ contract Goldiswap is IGoldiswap, ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       VIEW FUNCTIONS                       */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @inheritdoc IGoldiswap
-  function floorPrice() external view returns (uint256) {
-    return _floorPrice(fsl, totalSupply());
-  }
-
-  /// @inheritdoc IGoldiswap
-  function marketPrice() external view returns (uint256) {
-    return _marketPrice(fsl, psl, totalSupply());
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -214,6 +198,61 @@ contract Goldiswap is IGoldiswap, ERC20 {
     psl = _psl + additionalPsl;
     fsl = _fsl + liquidity - additionalPsl;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), liquidity);
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                  EXTERNAL VIEW FUNCTIONS                   */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @inheritdoc IGoldiswap
+  function floorPrice() external view returns (uint256) {
+    return _floorPrice(fsl, totalSupply());
+  }
+
+  /// @inheritdoc IGoldiswap
+  function marketPrice() external view returns (uint256) {
+    return _marketPrice(fsl, psl, totalSupply());
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      INTERNAL FUNCTIONS                    */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice If target ratio is exceeded, increase fsl and target ratio and decrease psl
+  /// @dev increaseAmount = (psl / fsl) * (psl / 32)
+  /// @dev targetRatio increases by targetRatio / 50
+  function _floorIncrease() internal {
+    uint256 currentRatio = FixedPointMathLib.divWad(psl, fsl);
+    if(currentRatio > targetRatio) {
+      uint256 increaseAmount = FixedPointMathLib.mulWad(currentRatio, psl / 32);
+      psl -= increaseAmount;
+      fsl += increaseAmount;
+      lastFloorIncrease = block.timestamp;
+      if(currentRatio < MAX_RATIO) {
+        targetRatio += targetRatio / 50;
+      }
+    }
+  }
+
+  /// @notice If day has elapsed since last floor increase and decrease, decrease the target ratio
+  /// @dev decreaseFactor is days since last floor increase
+  function _floorDecrease() internal {
+    uint256 elapsedIncrease = block.timestamp - lastFloorIncrease;
+    uint256 elapsedDecrease = block.timestamp - lastFloorDecrease;
+    if (elapsedIncrease >= 1 days && elapsedDecrease >= 1 days) {
+      uint256 decreaseFactor = FixedPointMathLib.divWad(elapsedIncrease, 1 days);
+      if(decreaseFactor > MAX_FLOOR_REDUCE) {
+        targetRatio = FixedPointMathLib.mulWad(targetRatio / 100, 100e18 - MAX_FLOOR_REDUCE);
+      }
+      else {
+        targetRatio = FixedPointMathLib.mulWad(targetRatio / 100, 100e18 - decreaseFactor);
+      }
+      lastFloorDecrease = block.timestamp;
+    }
   }
 
 
@@ -323,45 +362,6 @@ contract Goldiswap is IGoldiswap, ERC20 {
       if (y & 1 > 0) {
         result = FixedPointMathLib.mulWad(result, x);
       }
-    }
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                      INTERNAL FUNCTIONS                    */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @notice If target ratio is exceeded, increase fsl and target ratio and decrease psl
-  /// @dev increaseAmount = (psl / fsl) * (psl / 32)
-  /// @dev targetRatio increases by targetRatio / 50
-  function _floorIncrease() internal {
-    uint256 currentRatio = FixedPointMathLib.divWad(psl, fsl);
-    if(currentRatio > targetRatio) {
-      uint256 increaseAmount = FixedPointMathLib.mulWad(currentRatio, psl / 32);
-      psl -= increaseAmount;
-      fsl += increaseAmount;
-      lastFloorIncrease = block.timestamp;
-      if(currentRatio < MAX_RATIO) {
-        targetRatio += targetRatio / 50;
-      }
-    }
-  }
-
-  /// @notice If day has elapsed since last floor increase and decrease, decrease the target ratio
-  /// @dev decreaseFactor is days since last floor increase
-  function _floorDecrease() internal {
-    uint256 elapsedIncrease = block.timestamp - lastFloorIncrease;
-    uint256 elapsedDecrease = block.timestamp - lastFloorDecrease;
-    if (elapsedIncrease >= 1 days && elapsedDecrease >= 1 days) {
-      uint256 decreaseFactor = FixedPointMathLib.divWad(elapsedIncrease, 1 days);
-      if(decreaseFactor > MAX_FLOOR_REDUCE) {
-        targetRatio = FixedPointMathLib.mulWad(targetRatio / 100, 100e18 - MAX_FLOOR_REDUCE);
-      }
-      else {
-        targetRatio = FixedPointMathLib.mulWad(targetRatio / 100, 100e18 - decreaseFactor);
-      }
-      lastFloorDecrease = block.timestamp;
     }
   }
 

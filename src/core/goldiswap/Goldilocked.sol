@@ -34,6 +34,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   /*                      STATE VARIABLES                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+
   /// @notice Fee of 5% on borrows
   uint256 public constant BORROW_FEE = 3;
 
@@ -159,43 +160,6 @@ contract Goldilocked is IGoldilocked, ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       VIEW FUNCTIONS                       */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @inheritdoc IGoldilocked
-  function userStakedLocks(address user) external view returns (uint256) {
-    return stakedLocks[user];
-  }
-
-  /// @inheritdoc IGoldilocked
-  function userClaimablePrg(address user) external view returns (uint256) {
-    return _calculateClaimablePrg(user);
-  }
-
-  /// @inheritdoc IGoldilocked
-  function userLockedLocks(address user) external view returns (uint256) {
-    return _lockedLocks(user);
-  }
-
-  /// @inheritdoc IGoldilocked
-  function userBorrowedHoney(address user) external view returns (uint256) {
-    return borrowedHoney[user];
-  }
-
-  /// @inheritdoc IGoldilocked
-  function userBorrowLimit(address user) external view returns (uint256) {
-    uint256 floorPrice = IGoldiswap(goldiswap).floorPrice();
-    return _borrowLimit(user, floorPrice);
-  }
-
-  /// @inheritdoc IGoldilocked
-  function userVestingCheck(address user) external view returns (uint256) {
-    return _vestingCheck(user, type(uint256).max);
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -260,6 +224,71 @@ contract Goldilocked is IGoldilocked, ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                  EXTERNAL VIEW FUNCTIONS                   */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @inheritdoc IGoldilocked
+  function userStakedLocks(address user) external view returns (uint256) {
+    return stakedLocks[user];
+  }
+
+  /// @inheritdoc IGoldilocked
+  function userClaimablePrg(address user) external view returns (uint256) {
+    return _calculateClaimablePrg(user);
+  }
+
+  /// @inheritdoc IGoldilocked
+  function userLockedLocks(address user) external view returns (uint256) {
+    return _lockedLocks(user);
+  }
+
+  /// @inheritdoc IGoldilocked
+  function userBorrowedHoney(address user) external view returns (uint256) {
+    return borrowedHoney[user];
+  }
+
+  /// @inheritdoc IGoldilocked
+  function userBorrowLimit(address user) external view returns (uint256) {
+    uint256 floorPrice = IGoldiswap(goldiswap).floorPrice();
+    return _borrowLimit(user, floorPrice);
+  }
+
+  /// @inheritdoc IGoldilocked
+  function userVestingCheck(address user) external view returns (uint256) {
+    return _vestingCheck(user, type(uint256).max);
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      INTERNAL FUNCTIONS                    */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice Updates claimable Porridge
+  /// @param user Address of user
+  function _updateClaimablePrg(address user) internal {
+    claimablePrgPerLocksStored = _claimablePrgPerLocks();
+    lastUpdateTime = block.timestamp;
+    if(user != address(0)) {
+      claimablePrg[user] = _calculateClaimablePrg(user);
+      prgPerTokenDebt[user] = claimablePrgPerLocksStored;
+    }
+  }
+
+  /// @notice Mints claimable Porridge
+  /// @param claimer User that is claiming Porridge
+  /// @param claimable Amount of Porridge to be claimed
+  function _claim(address claimer, uint256 claimable) internal {
+    if(claimable > 0) {
+      claimablePrg[claimer] = 0;
+      _mint(claimer, claimable);
+      emit Claim(claimer, claimable);
+    }
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                   INTERNAL VIEW FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -316,34 +345,6 @@ contract Goldilocked is IGoldilocked, ERC20 {
     }
     else {
       return amount;
-    }
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                      INTERNAL FUNCTIONS                    */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @notice Updates claimable Porridge
-  /// @param user Address of user
-  function _updateClaimablePrg(address user) internal {
-    claimablePrgPerLocksStored = _claimablePrgPerLocks();
-    lastUpdateTime = block.timestamp;
-    if(user != address(0)) {
-      claimablePrg[user] = _calculateClaimablePrg(user);
-      prgPerTokenDebt[user] = claimablePrgPerLocksStored;
-    }
-  }
-
-  /// @notice Mints claimable Porridge
-  /// @param claimer User that is claiming Porridge
-  /// @param claimable Amount of Porridge to be claimed
-  function _claim(address claimer, uint256 claimable) internal {
-    if(claimable > 0) {
-      claimablePrg[claimer] = 0;
-      _mint(claimer, claimable);
-      emit Claim(claimer, claimable);
     }
   }
 

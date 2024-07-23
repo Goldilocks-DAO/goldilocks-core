@@ -145,7 +145,7 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     goldilend.borrow(1e18, durationAmount, address(bondbear), 1);
     vm.warp(time);
     Goldilend.Loan memory userLoan = goldilend.lookupLoan(address(this), 1);    
-    if(time > userLoan.endDate) {
+    if(time > userLoan.endDate + 86401) {
       goldilend.liquidate(address(this), 1);
       assertEq(userLoan.collateralNFTs[0], address(bondbear));
       assertEq(userLoan.collateralNFTIds[0], 1);

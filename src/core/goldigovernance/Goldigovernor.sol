@@ -189,7 +189,7 @@ contract Goldigovernor {
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  
+
   event ProposalCreated(
     uint256 id,
     address proposer,
@@ -214,25 +214,6 @@ contract Goldigovernor {
   event VotingDelaySet(uint256 oldVotingDelay, uint256 newVotingDelay);
   event VotingPeriodSet(uint256 oldVotingPeriod, uint256 newVotingPeriod);
   event ProposalThresholdSet(uint256 oldProposalThreshold, uint256 newProposalThreshold);
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       VIEW FUNCTIONS                       */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @notice Return the state of a proposal
-  /// @param proposalId Id of the proposal
-  function state(uint256 proposalId) external view returns (ProposalState) {
-    return _getProposalState(proposalId);
-  }
-
-  /// @notice Returns the receipt for a voter on a given proposal
-  /// @param voter Address of voter
-  /// @param proposalId Id of proposal
-  function receipt(uint256 proposalId, address voter) external view returns (Receipt memory) {
-    return proposals[proposalId].receipts[voter];
-  }
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -364,29 +345,28 @@ contract Goldigovernor {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                      INTERNAL FUNCTIONS                    */
+  /*                 EXTERNAL VIEW FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Returns the state of a proposal
+  /// @notice Return the state of a proposal
   /// @param proposalId Id of the proposal
-  function _getProposalState(uint256 proposalId) internal view returns (ProposalState) {
-    Proposal storage proposal = proposals[proposalId];
-    if (proposal.cancelled) return ProposalState.Canceled;
-    else if (block.number <= proposal.startBlock) return ProposalState.Pending; 
-    else if (block.number <= proposal.endBlock) return ProposalState.Active;
-    else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < quorumVotes) {
-      return ProposalState.Defeated;
-    } 
-    else if (proposal.eta == 0) return ProposalState.Succeeded;
-    else if (proposal.executed) return ProposalState.Executed;
-    else if (block.timestamp >= proposal.eta + Timelock(timelock).GRACE_PERIOD()) {
-      return ProposalState.Expired;
-    } 
-    else {
-      return ProposalState.Queued;
-    }
+  function state(uint256 proposalId) external view returns (ProposalState) {
+    return _getProposalState(proposalId);
   }
+
+  /// @notice Returns the receipt for a voter on a given proposal
+  /// @param voter Address of voter
+  /// @param proposalId Id of proposal
+  function receipt(uint256 proposalId, address voter) external view returns (Receipt memory) {
+    return proposals[proposalId].receipts[voter];
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      INTERNAL FUNCTIONS                    */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
 
   /// @notice Queues transaction if not already queued
   function _queueOrRevertInternal(address target, uint256 value, string memory signature, bytes memory data, uint256 eta) internal {
@@ -416,6 +396,32 @@ contract Goldigovernor {
     voterReceipt.support = support;
     voterReceipt.votes = votes;
     return votes;
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                   INTERNAL VIEW FUNCTIONS                  */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice Returns the state of a proposal
+  /// @param proposalId Id of the proposal
+  function _getProposalState(uint256 proposalId) internal view returns (ProposalState) {
+    Proposal storage proposal = proposals[proposalId];
+    if (proposal.cancelled) return ProposalState.Canceled;
+    else if (block.number <= proposal.startBlock) return ProposalState.Pending; 
+    else if (block.number <= proposal.endBlock) return ProposalState.Active;
+    else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < quorumVotes) {
+      return ProposalState.Defeated;
+    } 
+    else if (proposal.eta == 0) return ProposalState.Succeeded;
+    else if (proposal.executed) return ProposalState.Executed;
+    else if (block.timestamp >= proposal.eta + Timelock(timelock).GRACE_PERIOD()) {
+      return ProposalState.Expired;
+    } 
+    else {
+      return ProposalState.Queued;
+    }
   }
 
   /// @notice Returns the chain Id

@@ -119,7 +119,35 @@ contract GovLocks is ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       VIEW FUNCTIONS                       */
+  /*                    EXTERNAL FUNCTIONS                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice Deposits Locks to mint GovLocks
+  /// @param amount Amount of Locks to deposit
+  function deposit(uint256 amount) external {
+    _moveDelegates(address(0), delegates[msg.sender], amount);
+    SafeTransferLib.safeTransferFrom(locks, msg.sender, address(this), amount);
+    _mint(msg.sender, amount);
+  }
+
+  /// @notice Withdraws Locks to burn Govlocks
+  /// @param amount Amount of Locks to withdraw
+  function withdraw(uint256 amount) external {
+    _moveDelegates(delegates[msg.sender], address(0), amount);
+    _burn(msg.sender, amount);
+    SafeTransferLib.safeTransfer(locks, msg.sender, amount);
+  }
+
+  /// @notice Delegates votes from msg.sender to delegatee
+  /// @param delegatee Address to delegate votes to
+  function delegate(address delegatee) external {
+    _delegate(msg.sender, delegatee);
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                  EXTERNAL VIEW FUNCTIONS                   */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
@@ -160,34 +188,6 @@ contract GovLocks is ERC20 {
       }
     }
     return checkpoints[user][lower].votes;
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                    EXTERNAL FUNCTIONS                      */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @notice Deposits Locks to mint GovLocks
-  /// @param amount Amount of Locks to deposit
-  function deposit(uint256 amount) external {
-    _moveDelegates(address(0), delegates[msg.sender], amount);
-    SafeTransferLib.safeTransferFrom(locks, msg.sender, address(this), amount);
-    _mint(msg.sender, amount);
-  }
-
-  /// @notice Withdraws Locks to burn Govlocks
-  /// @param amount Amount of Locks to withdraw
-  function withdraw(uint256 amount) external {
-    _moveDelegates(delegates[msg.sender], address(0), amount);
-    _burn(msg.sender, amount);
-    SafeTransferLib.safeTransfer(locks, msg.sender, amount);
-  }
-
-  /// @notice Delegates votes from msg.sender to delegatee
-  /// @param delegatee Address to delegate votes to
-  function delegate(address delegatee) external {
-    _delegate(msg.sender, delegatee);
   }
 
 
@@ -253,7 +253,7 @@ contract GovLocks is ERC20 {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                   IMPLEMENTATION FUNCTION                  */
+  /*                  IMPLEMENTATION FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 

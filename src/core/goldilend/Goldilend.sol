@@ -219,79 +219,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       VIEW FUNCTIONS                       */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @inheritdoc IGoldilend
-  function lookupLoans(address user) external view returns (Loan[] memory userLoans) {
-    userLoans = loans[user];
-  }
-
-  /// @inheritdoc IGoldilend
-  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory loan) {
-    (loan, ) = _lookupLoan(user, userLoanId);
-  }
-
-  /// @inheritdoc IGoldilend
-  function lookupBoost(address user) external view returns (Boost memory) {
-    return boosts[user];
-  }
-
-  /// @inheritdoc IGoldilend
-  function userClaimablePrg(address user) external view returns (uint256) {
-    return _calculateClaimablePrg(user);
-  }
-
-  /// @inheritdoc IGoldilend
-  function getGiBGTRatio() external view returns (uint256) {
-    uint256 supply = totalSupply();
-    uint256 _poolSize = poolSize;
-    return _GiBGTRatio(supply, _poolSize);
-  }
-
-  /// @inheritdoc IGoldilend
-  function getFairValues(address[] calldata collateralNFTs) external view returns (uint256) {
-    return _calculateFairValue(collateralNFTs);
-  }
-
-  /// @inheritdoc IGoldilend
-  function calculateInterest(
-    uint256 borrowAmount,
-    uint256 duration,
-    address collateralNFT
-  ) external view returns (uint256) {
-    if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-    if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
-    if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
-    uint256 fairValue = nftFairValues[collateralNFT] * totalValuation / 100;
-    uint256 debt = outstandingDebt;
-    if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
-    return _calculateInterest(borrowAmount, debt, duration);
-  }
-
-  /// @inheritdoc IGoldilend
-  function calculateInterest(
-    uint256 borrowAmount,
-    uint256 duration,
-    address[] calldata collateralNFTs
-  ) external view returns (uint256) {
-    uint256 collateralNFTsLength = collateralNFTs.length;
-    for(uint256 i; i < collateralNFTsLength;) {
-      if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
-      unchecked {
-        ++i;
-      }
-    }
-    if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-    if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
-    uint256 debt = outstandingDebt;
-    if(borrowAmount > _calculateFairValue(collateralNFTs) || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
-    return _calculateInterest(borrowAmount, debt, duration);
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -538,104 +465,75 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                   INTERNAL VIEW FUNCTIONS                  */
+  /*                  EXTERNAL VIEW FUNCTIONS                   */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Calculates claimable Porridge
-  /// @param user Address to calculate claimable Porridge for
-  function _calculateClaimablePrg(address user) internal view returns (uint256) {
-    uint256 claimable = FixedPointMathLib.mulWad(stakedGiBGT[user], _claimablePrgPerGiBGT() - prgPerTokenDebt[user]) + claimablePrg[user];
-    Boost memory userBoost = boosts[user];
-    if(userBoost.expiry > block.timestamp) {
-      uint256 prgBoost = userBoost.boostMagnitude < 500 ? userBoost.boostMagnitude : 500;
-      return claimable * (1000 + prgBoost) / 1000;
-    }
-    return claimable;
+  /// @inheritdoc IGoldilend
+  function lookupLoans(address user) external view returns (Loan[] memory userLoans) {
+    userLoans = loans[user];
   }
 
-  /// @notice Calculates claimable rewards
-  /// @param user Address to calculate claimable rewards for
-  function _calculateClaimableRewards(address user, address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
-    return FixedPointMathLib.mulWad(stakedGiBGT[user], _claimableRewardPerGiBGT(rewardToken, outstandingRewards) - rewardPerTokenDebt[user][rewardToken]) + claimableRewards[user][rewardToken];
+  /// @inheritdoc IGoldilend
+  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory loan) {
+    (loan, ) = _lookupLoan(user, userLoanId);
   }
 
-  /// @notice Calculates claimable Porridge per GiBGT
-  function _claimablePrgPerGiBGT() internal view returns (uint256) {
-    if(block.timestamp - lastPrgUpdateTime == 0) {
-      return claimablePrgPerGiBGTStored;
-    }
-    return claimablePrgPerGiBGTStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastPrgUpdateTime, 365 days), annualPrgEmissions);
+  /// @inheritdoc IGoldilend
+  function lookupBoost(address user) external view returns (Boost memory) {
+    return boosts[user];
   }
 
-  /// @notice Calculates claimable reward token per GiBGT
-  /// @param rewardToken Token to calculate claimable reward
-  function _claimableRewardPerGiBGT(address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
-    if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0 || outstandingRewards == 0 || totalStakedGiBGT == 0) {
-      return claimableRewardsPerGiBGTStored[rewardToken];
-    }
-    return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards, totalStakedGiBGT);
+  /// @inheritdoc IGoldilend
+  function userClaimablePrg(address user) external view returns (uint256) {
+    return _calculateClaimablePrg(user);
   }
 
-  /// @notice Calculates the fair value of NFTs being borrowed against
-  /// @param collateralNFTs NFT collections to find value of
-  /// @return fairValue Fair value of NFTs
-  function _calculateFairValue(address[] calldata collateralNFTs) internal view returns (uint256 fairValue) {
-    uint256 collateralNFTsLength = collateralNFTs.length;
-    for(uint256 i; i < collateralNFTsLength;) {
-      fairValue += totalValuation * nftFairValues[collateralNFTs[i]] / 100;
-      unchecked {
-        ++i;
-      }
-    }
-  }
-
-  /// @notice Caluclates the total interest due at repayment
-  /// @param borrowAmount Amount to be borrowed
-  /// @param debt Current amount of outstanding debt
-  /// @return interest Total interest due at repayment
-  function _calculateInterest(
-    uint256 borrowAmount, 
-    uint256 debt,
-    uint256 duration
-  ) internal view returns (uint256) {
-    uint256 rate = protocolInterestRate;
-    uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
-    uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + INTEREST_PAYMENT_PERCENTAGE;
-    uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
-    uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
-    return interestAdjusted / 100;
-  }
-
-  /// @notice Finds the loan by userId
-  /// @param userLoanId Id of loan to be found
-  function _lookupLoan(
-    address user, 
-    uint256 userLoanId
-  ) internal view returns (Loan memory userLoan, uint256 index) {
-    uint256 loanLength = loans[user].length;
-    for(uint256 i; i < loanLength;) {
-      if(loans[user][i].loanId == userLoanId) return (loans[user][i], i);
-      unchecked {
-        ++i;
-      }
-    }
-    revert LoanNotFound();
-  }
-
-  /// @notice Calculates the amount of GiBGT to mint
-  /// @param lockAmount Amount of iBGT to lock
-  /// @return mintAmount Total supply of GiBGT divided by the lending pool size multiplied by lockAmount
-  function _GiBGTMintAmount(uint256 lockAmount) internal view returns (uint256) {
+  /// @inheritdoc IGoldilend
+  function getGiBGTRatio() external view returns (uint256) {
     uint256 supply = totalSupply();
     uint256 _poolSize = poolSize;
-    return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _GiBGTRatio(supply, _poolSize)) : lockAmount;
+    return _GiBGTRatio(supply, _poolSize);
   }
 
-  /// @notice Calculates the current $GiBGT ratio
-  /// @return gibgtRatio Total supply of $GiBGT divided by the lending pool size
-  function _GiBGTRatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
-    return FixedPointMathLib.divWad(supply, _poolSize);
+  /// @inheritdoc IGoldilend
+  function getFairValues(address[] calldata collateralNFTs) external view returns (uint256) {
+    return _calculateFairValue(collateralNFTs);
+  }
+
+  /// @inheritdoc IGoldilend
+  function calculateInterest(
+    uint256 borrowAmount,
+    uint256 duration,
+    address collateralNFT
+  ) external view returns (uint256) {
+    if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
+    if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
+    if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
+    uint256 fairValue = nftFairValues[collateralNFT] * totalValuation / 100;
+    uint256 debt = outstandingDebt;
+    if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+    return _calculateInterest(borrowAmount, debt, duration);
+  }
+
+  /// @inheritdoc IGoldilend
+  function calculateInterest(
+    uint256 borrowAmount,
+    uint256 duration,
+    address[] calldata collateralNFTs
+  ) external view returns (uint256) {
+    uint256 collateralNFTsLength = collateralNFTs.length;
+    for(uint256 i; i < collateralNFTsLength;) {
+      if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
+      unchecked {
+        ++i;
+      }
+    }
+    if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
+    if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
+    uint256 debt = outstandingDebt;
+    if(borrowAmount > _calculateFairValue(collateralNFTs) || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+    return _calculateInterest(borrowAmount, debt, duration);
   }
 
 
@@ -817,6 +715,108 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   function _updateInterestClaims(uint256 interest) internal {
     multisigClaims += interest * multisigShare / 1000;
     apdaoClaims += interest * apdaoShare / 1000;
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                   INTERNAL VIEW FUNCTIONS                  */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice Calculates claimable Porridge
+  /// @param user Address to calculate claimable Porridge for
+  function _calculateClaimablePrg(address user) internal view returns (uint256) {
+    uint256 claimable = FixedPointMathLib.mulWad(stakedGiBGT[user], _claimablePrgPerGiBGT() - prgPerTokenDebt[user]) + claimablePrg[user];
+    Boost memory userBoost = boosts[user];
+    if(userBoost.expiry > block.timestamp) {
+      uint256 prgBoost = userBoost.boostMagnitude < 500 ? userBoost.boostMagnitude : 500;
+      return claimable * (1000 + prgBoost) / 1000;
+    }
+    return claimable;
+  }
+
+  /// @notice Calculates claimable rewards
+  /// @param user Address to calculate claimable rewards for
+  function _calculateClaimableRewards(address user, address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
+    return FixedPointMathLib.mulWad(stakedGiBGT[user], _claimableRewardPerGiBGT(rewardToken, outstandingRewards) - rewardPerTokenDebt[user][rewardToken]) + claimableRewards[user][rewardToken];
+  }
+
+  /// @notice Calculates claimable Porridge per GiBGT
+  function _claimablePrgPerGiBGT() internal view returns (uint256) {
+    if(block.timestamp - lastPrgUpdateTime == 0) {
+      return claimablePrgPerGiBGTStored;
+    }
+    return claimablePrgPerGiBGTStored + FixedPointMathLib.mulWad(FixedPointMathLib.divWad(block.timestamp - lastPrgUpdateTime, 365 days), annualPrgEmissions);
+  }
+
+  /// @notice Calculates claimable reward token per GiBGT
+  /// @param rewardToken Token to calculate claimable reward
+  function _claimableRewardPerGiBGT(address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
+    if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0 || outstandingRewards == 0 || totalStakedGiBGT == 0) {
+      return claimableRewardsPerGiBGTStored[rewardToken];
+    }
+    return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards, totalStakedGiBGT);
+  }
+
+  /// @notice Calculates the fair value of NFTs being borrowed against
+  /// @param collateralNFTs NFT collections to find value of
+  /// @return fairValue Fair value of NFTs
+  function _calculateFairValue(address[] calldata collateralNFTs) internal view returns (uint256 fairValue) {
+    uint256 collateralNFTsLength = collateralNFTs.length;
+    for(uint256 i; i < collateralNFTsLength;) {
+      fairValue += totalValuation * nftFairValues[collateralNFTs[i]] / 100;
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  /// @notice Caluclates the total interest due at repayment
+  /// @param borrowAmount Amount to be borrowed
+  /// @param debt Current amount of outstanding debt
+  /// @return interest Total interest due at repayment
+  function _calculateInterest(
+    uint256 borrowAmount, 
+    uint256 debt,
+    uint256 duration
+  ) internal view returns (uint256) {
+    uint256 rate = protocolInterestRate;
+    uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
+    uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + INTEREST_PAYMENT_PERCENTAGE;
+    uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
+    uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
+    return interestAdjusted / 100;
+  }
+
+  /// @notice Finds the loan by userId
+  /// @param userLoanId Id of loan to be found
+  function _lookupLoan(
+    address user, 
+    uint256 userLoanId
+  ) internal view returns (Loan memory userLoan, uint256 index) {
+    uint256 loanLength = loans[user].length;
+    for(uint256 i; i < loanLength;) {
+      if(loans[user][i].loanId == userLoanId) return (loans[user][i], i);
+      unchecked {
+        ++i;
+      }
+    }
+    revert LoanNotFound();
+  }
+
+  /// @notice Calculates the amount of GiBGT to mint
+  /// @param lockAmount Amount of iBGT to lock
+  /// @return mintAmount Total supply of GiBGT divided by the lending pool size multiplied by lockAmount
+  function _GiBGTMintAmount(uint256 lockAmount) internal view returns (uint256) {
+    uint256 supply = totalSupply();
+    uint256 _poolSize = poolSize;
+    return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _GiBGTRatio(supply, _poolSize)) : lockAmount;
+  }
+
+  /// @notice Calculates the current $GiBGT ratio
+  /// @return gibgtRatio Total supply of $GiBGT divided by the lending pool size
+  function _GiBGTRatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
+    return FixedPointMathLib.divWad(supply, _poolSize);
   }
 
 
