@@ -32,7 +32,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
   /*                      STATE VARIABLES                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  
+
   /// @notice Maximum percentage decrease in target ratio
   uint256 public constant MAX_FLOOR_REDUCE = 5e18;
 
@@ -89,6 +89,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
 
   /// @notice Indicates if trading is active
   bool public tradingActive;
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          CONSTRUCTOR                       */
