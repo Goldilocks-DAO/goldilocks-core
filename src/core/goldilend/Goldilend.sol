@@ -43,6 +43,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Value for calculating interest payment on loans
   uint256 public constant INTEREST_PAYMENT_PERCENTAGE = 5e17;
 
+  /// @notice Buffer period where borrowers are protected from liquidation
+  uint256 public constant LOAN_GRACE_PERIOD = 1 days;
+
   /// @notice Address of Goldilocked
   address public immutable goldilocked;
 
@@ -485,7 +488,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   function repay(uint256 repayAmount, uint256 userLoanId) external {
     (Loan memory userLoan, uint256 index) = _lookupLoan(msg.sender, userLoanId);
     if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
-    if(block.timestamp > userLoan.endDate) revert LoanExpired();
+    if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
     uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoan.interest, userLoan.borrowedAmount);
     uint256 interest = FixedPointMathLib.mulWadUp(repayAmount, interestLoanRatio);
     outstandingDebt -= repayAmount - interest > outstandingDebt ? outstandingDebt : repayAmount - interest;
@@ -510,7 +513,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @inheritdoc IGoldilend
   function liquidate(address user, uint256 userLoanId) external {
     (Loan memory userLoan, uint256 index) = _lookupLoan(user, userLoanId);
-    if(block.timestamp < userLoan.endDate || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
+    if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
     loans[user][index].liquidated = true;
     loans[user][index].borrowedAmount = 0;
     outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;

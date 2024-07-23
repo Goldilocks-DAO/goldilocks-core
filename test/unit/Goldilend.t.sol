@@ -688,7 +688,7 @@ contract UnitGoldilendTest is BaseUnitTest {
   
   function testLiquidateSuccess() public dealUseriBGT dealUserBeras {
     goldilend.borrow(1e18, goldilendDuration, address(bondbear), 1);
-    vm.warp(1209602);
+    vm.warp(1209602 + 86401);
     goldilend.liquidate(address(this), 1);
     Goldilend.Loan memory userLoan = goldilend.lookupLoan(address(this), 1);    
 
