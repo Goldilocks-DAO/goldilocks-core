@@ -62,47 +62,6 @@ interface IGoldilend {
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       VIEW FUNCTIONS                       */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-  /// @notice Returns details of all loans originated from user
-  /// @param user Address of user for query
-  function lookupLoans(address user) external view returns (Loan[] memory userLoans);
-
-  /// @notice Returns details of a specific loan
-  /// @param user Address of user for query
-  /// @param userLoanId Id of loan
-  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory);
-  
-  /// @notice Returns details of a boost
-  /// @param user Address of user for query
-  function lookupBoost(address user) external view returns (Boost memory);
-
-  /// @notice Returns claimable Porridge of GiBGT staker
-  /// @param user Address of user for query
-  function userClaimablePrg(address user) external view returns (uint256);
-
-  /// @notice Returns current GiBGT ratio
-  function getGiBGTRatio() external view returns (uint256);
-
-  /// @notice Returns fair value of NFTs available for loan origination
-  function getFairValues(address[] calldata collateralNFTs) external view returns (uint256);
-
-  /// @notice Returns interest on single NFT loan
-  function calculateInterest(
-    uint256 borrowAmount,
-    uint256 duration,
-    address collateralNFT
-  ) external view returns (uint256);
-
-  /// @notice Returns interest on multiple NFT loan
-  function calculateInterest(
-    uint256 borrowAmount,
-    uint256 duration,
-    address[] calldata collateralNFTs
-  ) external view returns (uint256);
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -176,6 +135,47 @@ interface IGoldilend {
   /// @param user Owner of loan to be liquidated
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external;
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       VIEW FUNCTIONS                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @notice Returns details of all loans originated from user
+  /// @param user Address of user for query
+  function lookupLoans(address user) external view returns (Loan[] memory userLoans);
+
+  /// @notice Returns details of a specific loan
+  /// @param user Address of user for query
+  /// @param userLoanId Id of loan
+  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory);
+  
+  /// @notice Returns details of a boost
+  /// @param user Address of user for query
+  function lookupBoost(address user) external view returns (Boost memory);
+
+  /// @notice Returns claimable Porridge of GiBGT staker
+  /// @param user Address of user for query
+  function userClaimablePrg(address user) external view returns (uint256);
+
+  /// @notice Returns current GiBGT ratio
+  function getGiBGTRatio() external view returns (uint256);
+
+  /// @notice Returns fair value of NFTs available for loan origination
+  function getFairValues(address[] calldata collateralNFTs) external view returns (uint256);
+
+  /// @notice Returns interest on single NFT loan
+  function calculateInterest(
+    uint256 borrowAmount,
+    uint256 duration,
+    address collateralNFT
+  ) external view returns (uint256);
+
+  /// @notice Returns interest on multiple NFT loan
+  function calculateInterest(
+    uint256 borrowAmount,
+    uint256 duration,
+    address[] calldata collateralNFTs
+  ) external view returns (uint256);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */

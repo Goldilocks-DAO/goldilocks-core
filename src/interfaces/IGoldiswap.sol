@@ -24,16 +24,6 @@ interface IGoldiswap {
   error AlreadyInitialized();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       VIEW FUNCTIONS                       */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-  /// @notice Returns Locks floor price
-  function floorPrice() external view returns (uint256);
-
-  /// @notice Returns Locks market price
-  function marketPrice() external view returns (uint256);
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -54,6 +44,22 @@ interface IGoldiswap {
   /// @notice Inject liquidity into Goldiswap
   /// @param liquidity Liquidity added to Goldiswap
   function injectLiquidity(uint256 liquidity) external;
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       VIEW FUNCTIONS                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @notice Returns Locks floor price
+  function floorPrice() external view returns (uint256);
+
+  /// @notice Returns Locks market price
+  function marketPrice() external view returns (uint256);
+
+  /// @notice Returns price of locks buy
+  function previewBuy(uint256 amount) external view returns (uint256 price);
+
+  /// @notice Returns proceeds of locks sell
+  function previewSell(uint256 amount) external view returns (uint256 proceeds);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                   PERMISSIONED FUNCTIONS                   */

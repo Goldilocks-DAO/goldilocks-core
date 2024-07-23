@@ -29,34 +29,6 @@ interface IGoldilocked {
   error InsufficientBorrowLimit();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       VIEW FUNCTIONS                       */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-  /// @notice Returns amount of staked Locks
-  /// @param user Address of user for query
-  function userStakedLocks(address user) external view returns (uint256);
-
-  /// @notice Returns amount of claimable Porridge
-  /// @param user Address of user for query
-  function userClaimablePrg(address user) external view returns (uint256);
-
-  /// @notice Returns amount of locked Locks
-  /// @param user Address of user for query
-  function userLockedLocks(address user) external view returns (uint256);
-
-  /// @notice Returns amount of borrowed Honey
-  /// @param user Address of user for query
-  function userBorrowedHoney(address user) external view returns (uint256);
-
-  /// @notice Returns limit of borrowable Honey
-  /// @param user Address of user for query
-  function userBorrowLimit(address user) external view returns (uint256);
-
-  /// @notice Returns amount of unvested Locks
-  /// @param user Address of user for query
-  function userVestingCheck(address user) external view returns (uint256);
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -83,6 +55,34 @@ interface IGoldilocked {
   /// @notice Repays Honey loans
   /// @param amount Amount of Honey to repay
   function repay(uint256 amount) external;
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       VIEW FUNCTIONS                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @notice Returns amount of staked Locks
+  /// @param user Address of user for query
+  function userStakedLocks(address user) external view returns (uint256);
+
+  /// @notice Returns amount of claimable Porridge
+  /// @param user Address of user for query
+  function userClaimablePrg(address user) external view returns (uint256);
+
+  /// @notice Returns amount of locked Locks
+  /// @param user Address of user for query
+  function userLockedLocks(address user) external view returns (uint256);
+
+  /// @notice Returns amount of borrowed Honey
+  /// @param user Address of user for query
+  function userBorrowedHoney(address user) external view returns (uint256);
+
+  /// @notice Returns limit of borrowable Honey
+  /// @param user Address of user for query
+  function userBorrowLimit(address user) external view returns (uint256);
+
+  /// @notice Returns amount of unvested Locks
+  /// @param user Address of user for query
+  function userVestingCheck(address user) external view returns (uint256);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */

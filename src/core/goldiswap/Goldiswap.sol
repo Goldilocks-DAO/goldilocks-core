@@ -216,6 +216,16 @@ contract Goldiswap is IGoldiswap, ERC20 {
     return _marketPrice(fsl, psl, totalSupply());
   }
 
+  /// @inheritdoc IGoldiswap
+  function previewBuy(uint256 amount) external view returns (uint256 price) {
+    (, , price) = _buyLoop(fsl, psl, totalSupply(), amount);
+  }
+
+  /// @inheritdoc IGoldiswap
+  function previewSell(uint256 amount) external view returns (uint256 proceeds) {
+    (, , proceeds) = _sellLoop(fsl, psl, totalSupply(), amount);
+  }
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      INTERNAL FUNCTIONS                    */
