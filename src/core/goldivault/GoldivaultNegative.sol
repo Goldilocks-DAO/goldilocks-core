@@ -37,6 +37,30 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @notice Address of ownership token
+  address public immutable ot;
+
+  /// @notice Address of yield token
+  address public immutable yt;
+
+  /// @notice Address of deposit token
+  address public immutable depositToken;
+
+  /// @notice Address of deposit vault
+  address public immutable depositVault;
+
+  /// @notice Address of iBGT
+  address public immutable ibgt;
+
+  /// @notice Address of iBGT vault
+  address public immutable ibgtVault;
+
+  /// @notice Address of multisig
+  address public immutable multisig;
+
+  /// @notice Address of Timelock
+  address public immutable timelock;
+
   /// @notice Timestamp of vault start time
   uint256 public startTime;
 
@@ -45,6 +69,9 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
 
   /// @notice Timestamp of vault conclude time
   uint256 public concludeTime;
+
+  /// @notice Fee charged for early withdrawal
+  uint256 public earlyWithdrawalFee;
 
   /// @notice Fee charged for yield
   uint256 public yieldFee;
@@ -55,32 +82,8 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @notice Duration of vault
   uint256 public duration;
 
-  /// @notice Address of ownership token
-  address public ot;
-
-  /// @notice Address of yield token
-  address public yt;
-
   /// @notice Amount of deposit token in vault
   uint256 public depositTokenAmount;
-
-  /// @notice Address of deposit token
-  address public depositToken;
-
-  /// @notice Address of deposit vault
-  address public depositVault;
-
-  /// @notice Address of iBGT
-  address public ibgt;
-
-  /// @notice Address of iBGT vault
-  address public ibgtVault;
-
-  /// @notice Address of multisig
-  address public multisig;
-
-  /// @notice Address of Timelock
-  address public timelock;
 
   /// @notice Addresses of yield tokens
   address[] public yieldTokens;
