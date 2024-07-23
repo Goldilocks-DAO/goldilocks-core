@@ -151,9 +151,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Maps reward token to last update of claimable reward
   mapping(address => uint256) public lastRewardUpdateTime;
 
-  /// @notice Maps reward token to amount of outstanding rewards
-  mapping(address => uint256) public outstandingRewardsPerReward;
-
   /// @notice Maps user to reward token to amount of claimable rewards
   mapping(address => mapping(address => uint256)) public claimableRewards;
 
@@ -557,8 +554,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @param user Address to update claimable rewards for
   function _updateClaimableRewards(address user) internal {
     uint256 rewardTokensLength = rewardTokens.length;
+    uint256[] memory outstandingRewardsPerReward = new uint256[](rewardTokensLength);
     for(uint256 i; i < rewardTokensLength;) {
-      outstandingRewardsPerReward[rewardTokens[i]] = ERC20(rewardTokens[i]).balanceOf(address(this));
+      outstandingRewardsPerReward[i] = ERC20(rewardTokens[i]).balanceOf(address(this));
       unchecked {
         ++i;
       }
@@ -566,7 +564,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     IiBGTVault(ibgtVault).getReward();
     for(uint256 i; i < rewardTokensLength;) {
       address rewardToken = rewardTokens[i];
-      uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewardsPerReward[rewardToken];
+      uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewardsPerReward[i];
       claimableRewardsPerGiBGTStored[rewardToken] = _claimableRewardPerGiBGT(rewardToken, outstandingRewards);
       lastRewardUpdateTime[rewardToken] = block.timestamp;
       if(user != address(0)) {
