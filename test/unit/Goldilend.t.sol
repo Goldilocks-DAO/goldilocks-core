@@ -1024,13 +1024,8 @@ contract UnitGoldilendTest is BaseUnitTest {
     );
   }
 
-  function testInitializeParametersSuccess() public {
-    address[] memory nfts = new address[](2);
-    nfts[0] = address(bondbear);
-    nfts[1] = address(bandbear);
-    uint256[] memory values = new uint256[](2);
-    values[0] = 50;
-    values[1] = 50;
+  function testInitalizeParametersFailAlready() public {
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.AlreadyInitialized.selector)); 
     goldilend.initializeParameters(
       45,
       5,
@@ -1038,17 +1033,19 @@ contract UnitGoldilendTest is BaseUnitTest {
       21 days,
       1e17,
       10,
-      5e17,
+      1e17,
       30 days
     );
-    
+  }
+
+  function testInitializeParametersSuccess() public {
     assertEq(goldilend.multisigShare(), 45);
     assertEq(goldilend.apdaoShare(), 5);
     assertEq(goldilend.minDuration(), 7 days);
-    assertEq(goldilend.maxDuration(), 21 days);
+    assertEq(goldilend.maxDuration(), 365 days);
     assertEq(goldilend.poolSize(), 1000e18);
-    assertEq(goldilend.protocolInterestRate(), 1e17);
-    assertEq(goldilend.slope(), 10);
+    assertEq(goldilend.protocolInterestRate(), 10e18);
+    assertEq(goldilend.slope(), 10e18);
     assertEq(goldilend.annualPrgEmissions(), 5e17);
     assertEq(goldilend.boostLockDuration(), 30 days);
   }
@@ -1069,19 +1066,22 @@ contract UnitGoldilendTest is BaseUnitTest {
     );
   }
 
-  function testInitializeBerasSuccess() public {
+  function testInitializeBerasFailAlready() public {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.AlreadyInitialized.selector)); 
     goldilend.initializeBeras(
       100e18,
       nfts,
       values
     );
+  }
 
+  function testInitializeBerasSuccess() public {
     assertEq(goldilend.totalValuation(), 100e18);
     assertEq(goldilend.nftFairValues(address(bondbear)), 50);
     assertEq(goldilend.nftFairValues(address(bandbear)), 50);
@@ -1099,15 +1099,18 @@ contract UnitGoldilendTest is BaseUnitTest {
     goldilend.initializePartners(boostNfts, boosts);
   }
 
-  function testInitializePartnersSuccess() public {
+  function testInitializePartnersFailAlready() public {
     address[] memory boostNfts = new address[](2);
     boostNfts[0] = address(honeycomb);
     boostNfts[1] = address(beradrome);
     uint8[] memory boosts = new uint8[](2);
     boosts[0] = 6;
     boosts[1] = 9;
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.AlreadyInitialized.selector));
     goldilend.initializePartners(boostNfts, boosts);
+  }
 
+  function testInitializePartnersSuccess() public {
     assertEq(goldilend.partnerNFTBoosts(address(honeycomb)), 6);
     assertEq(goldilend.partnerNFTBoosts(address(beradrome)), 9);
   }

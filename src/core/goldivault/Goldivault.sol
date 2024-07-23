@@ -91,6 +91,9 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   /// @notice Boolean value if vault is concluded
   bool public concluded;
 
+  /// @notice Indicates if contract is initialized
+  bool public initialized;
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          CONSTRUCTOR                       */
@@ -262,6 +265,8 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     address[] memory _yieldTokens
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
+    if(initialized) revert AlreadyInitialized();
+    initialized = true;
     earlyWithdrawalFee = _earlyWithdrawalFee;
     yieldFee = _yieldFee;
     delay = _delay;

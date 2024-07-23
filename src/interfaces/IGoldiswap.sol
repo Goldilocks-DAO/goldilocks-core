@@ -21,6 +21,7 @@ interface IGoldiswap {
   error NotTimelock();
   error NotActive();
   error ExcessiveSlippage();
+  error AlreadyInitialized();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */

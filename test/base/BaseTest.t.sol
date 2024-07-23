@@ -294,7 +294,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(yt),
       address(this),
       address(timelock),
-        address(bexlp),
+      address(bexlp),
       address(bexvault),
       address(ibgt),
       address(ibgtvault)

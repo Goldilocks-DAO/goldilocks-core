@@ -280,9 +280,9 @@ contract UnitGoldivaultTest is BaseUnitTest {
     );
   }
 
-  function testInitializeProtocolSuccess() public {
-    address[] memory yieldTokens = new address[](1);
-    yieldTokens[0] = address(honey);
+  function testInitializeProtocolFailAlready() public {
+    address[] memory yieldTokens = new address[](0);
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.AlreadyInitialized.selector));
     goldivault.initializeProtocol(
       30,
       20,
@@ -290,12 +290,14 @@ contract UnitGoldivaultTest is BaseUnitTest {
       365 days,
       yieldTokens
     );
+  }
 
+  function testInitializeProtocolSuccess() public {
     assertEq(goldivault.earlyWithdrawalFee(), 30);
     assertEq(goldivault.yieldFee(), 20);
     assertEq(goldivault.delay(), 1 days);
     assertEq(goldivault.duration(), 365 days);
-    assertEq(goldivault.yieldTokens(1), address(honey));
+    assertEq(goldivault.yieldTokens(0), address(ibgt));
   }
 
 }

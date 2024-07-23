@@ -112,6 +112,15 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Boolean value if borrowing is active
   bool public borrowingActive;
 
+  /// @notice Indicates if contract parameters are initialized
+  bool public parametersInitialized;
+
+  /// @notice Indicates if contract beras are initialized
+  bool public berasInitialized;
+
+  /// @notice Indicates if contract partners are initialized
+  bool public partnersInitialized;
+
   /// @notice Maps user to boost
   mapping(address => Boost) public boosts;
 
@@ -913,6 +922,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 _boostLockDuration
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
+    if(parametersInitialized) revert AlreadyInitialized();
+    parametersInitialized = true;
     multisigShare = _multisigShare;
     apdaoShare = _apdaoShare;
     minDuration = _minDuration;
@@ -930,6 +941,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256[] calldata _nftFairValues
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
+    if(berasInitialized) revert AlreadyInitialized();
+    berasInitialized = true;
     totalValuation = _totalValuation;
     uint256 nftFairValuesLength = _nftFairValues.length;
     for(uint256 i; i < nftFairValuesLength;) {
@@ -947,6 +960,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint8[] memory _partnerNFTBoosts
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
+    if(partnersInitialized) revert AlreadyInitialized();
+    partnersInitialized = true;
     uint256 partnerNFTsLength = _partnerNFTs.length;
     for(uint256 i; i < partnerNFTsLength;) {
       partnerNFTBoosts[_partnerNFTs[i]] = _partnerNFTBoosts[i];

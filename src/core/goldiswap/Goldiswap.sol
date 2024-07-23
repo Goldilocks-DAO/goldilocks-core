@@ -90,6 +90,9 @@ contract Goldiswap is IGoldiswap, ERC20 {
   /// @notice Indicates if trading is active
   bool public tradingActive;
 
+  /// @notice Indicates if contract is initialized
+  bool public initialized;
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          CONSTRUCTOR                       */
@@ -388,6 +391,8 @@ contract Goldiswap is IGoldiswap, ERC20 {
   /// @inheritdoc IGoldiswap
   function initializeProtocol(uint256 amount) external {
     if(msg.sender != multisig) revert NotMultisig();
+    if(initialized) revert AlreadyInitialized();
+    initialized = true;
     tradingActive = true;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), amount);
   }

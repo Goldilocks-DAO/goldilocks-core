@@ -88,6 +88,9 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @notice Boolean value if vault is concluded
   bool public concluded;
 
+  /// @notice Indicates if contract is initialized
+  bool public initialized;
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          CONSTRUCTOR                       */
@@ -254,6 +257,8 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
     address[] memory _yieldTokens
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
+    if(initialized) revert AlreadyInitialized();
+    initialized = true;
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;

@@ -184,13 +184,15 @@ contract UnitGoldiswapTest is BaseUnitTest {
     goldiswap.initializeProtocol(69);
   }
 
-  function testInitializeProtocolSuccess() public {
-    deal(address(honey), address(this), 69);
-    honey.approve(address(goldiswap), 69);
+  function testInitializeProtocolFailAlready() public {
+    vm.expectRevert(abi.encodeWithSelector(IGoldiswap.AlreadyInitialized.selector));
     goldiswap.initializeProtocol(69);
+  }
 
+  function testInitializeProtocolSuccess() public {
     assertEq(goldiswap.tradingActive(), true);
-    assertEq(honey.balanceOf(address(goldiswap)), initialPSL + 69);
+    assertEq(goldiswap.initialized(), true);
+    assertEq(honey.balanceOf(address(goldiswap)), initialPSL);
   }
 
   function testInjectLiquiditySuccess() public {
