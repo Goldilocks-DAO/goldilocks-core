@@ -50,8 +50,6 @@ contract FuzzGoldivaultTest is BaseFuzzTest {
     vm.assume(duration > 365 days + 1 && duration < 1e40);
     vm.warp(duration);
     goldivault.conclude();
-
-    assertEq(goldivault.concluded(), true);
     assertEq(goldivault.concludeTime(), block.timestamp);
   }
 
@@ -62,7 +60,6 @@ contract FuzzGoldivaultTest is BaseFuzzTest {
     vm.prank(address(timelock));
     goldivault.renew();
 
-    assertEq(goldivault.concluded(), false);
     assertEq(goldivault.startTime(), block.timestamp);
     assertEq(goldivault.endTime(), block.timestamp + goldivault.duration());
   }

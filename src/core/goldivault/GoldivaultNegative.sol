@@ -85,9 +85,6 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @notice Addresses of yield tokens
   address[] public yieldTokens;
 
-  /// @notice Boolean value if vault is concluded
-  bool public concluded;
-
   /// @notice Indicates if contract is initialized
   bool public initialized;
 
@@ -149,7 +146,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
 
   /// @inheritdoc IGoldivaultNegative
   function redeemOwnership(uint256 amount) external {
-    if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
+    if(block.timestamp < concludeTime + delay || concludeTime == 0) revert NotConcluded();
     if(amount == 0) revert InvalidRedemption();
     uint256 claimable;
     if(ERC20(depositToken).balanceOf(address(this)) >= depositTokenAmount) {
@@ -167,7 +164,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @inheritdoc IGoldivaultNegative
   function redeemYield(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
-    if(block.timestamp < concludeTime + delay || !concluded) revert NotConcluded();
+    if(block.timestamp < concludeTime + delay || concludeTime == 0) revert NotConcluded();
     uint256 yieldShare = FixedPointMathLib.divWad(amount, ERC20(yt).totalSupply());
     YieldToken(yt).burnYT(msg.sender, amount);
     uint256 yieldTokensLength = yieldTokens.length;
@@ -196,8 +193,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @inheritdoc IGoldivaultNegative
   function conclude() external {
     if(block.timestamp < endTime) revert NotExpired();
-    if(concluded) revert AlreadyConcluded();
-    concluded = true;
+    if(concludeTime != 0) revert AlreadyConcluded();
     concludeTime = block.timestamp;
     _concludeVaultRewards();
     emit Conclude(block.timestamp);
@@ -217,11 +213,10 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @inheritdoc IGoldivaultNegative
   function renew() external {
     if(msg.sender != timelock) revert NotTimelock();
-    if(!concluded) revert NotConcluded();
+    if(concludeTime == 0) revert NotConcluded();
     startTime = block.timestamp;
     endTime = block.timestamp + duration;
     concludeTime = 0;
-    concluded = false;
   }
 
   /// @inheritdoc IGoldivaultNegative
@@ -262,7 +257,6 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
-    concluded = false;
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
     uint256 yieldTokensLength = _yieldTokens.length;

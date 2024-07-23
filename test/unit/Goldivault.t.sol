@@ -162,7 +162,6 @@ contract UnitGoldivaultTest is BaseUnitTest {
     vm.warp(366 days);
     goldivault.conclude();
 
-    assertEq(goldivault.concluded(), true);
     assertEq(goldivault.concludeTime(), block.timestamp);
   }
 
@@ -209,7 +208,6 @@ contract UnitGoldivaultTest is BaseUnitTest {
     (, , , , , , , , , bool executed) = goldigov.proposals(1);
 
     assertEq(executed, true);
-    assertEq(goldivault.concluded(), false);
     assertEq(goldivault.concludeTime(), 0);
     assertEq(goldivault.startTime(), block.timestamp);
     assertEq(goldivault.endTime(), block.timestamp + 365 days);
