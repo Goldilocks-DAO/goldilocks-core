@@ -493,6 +493,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     loans[msg.sender][index].interest -= interest;
     poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
+    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), repayAmount);
+    _refreshiBGT(repayAmount);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
       for(uint256 i; i < userLoanCollateralLength;){
@@ -502,8 +504,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
         }
       }
     }
-    SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), repayAmount);
-    _refreshiBGT(repayAmount);
     emit Repay(msg.sender, repayAmount);
   }
 
