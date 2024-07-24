@@ -324,7 +324,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
     uint256 fairValue = nftFairValues[collateralNFT] * totalValuation / 100;
     uint256 debt = outstandingDebt;
-    if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     uint256 interest = _calculateInterest(borrowAmount, debt, duration);
     Boost memory userBoost = boosts[msg.sender];
     if(userBoost.expiry > block.timestamp + duration) {
@@ -334,6 +333,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       }
       interest = interest * discount / 1000;
     }
+    if(borrowAmount + interest > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     outstandingDebt += borrowAmount;
     address[] memory collateralNFTs = new address[](1);
     collateralNFTs[0] = collateralNFT;

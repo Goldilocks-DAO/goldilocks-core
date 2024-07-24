@@ -1220,4 +1220,13 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(goldilend.balanceOf(carol), txAmount);
   }
 
+  function testBorrowAboveFairValue() public dealUseriBGT dealUserBeras {
+    address[] memory nfts = new address[](1);
+    nfts[0] = address(bondbear);
+    uint256 fairValue = goldilend.getFairValues(nfts);
+    uint256 maxDuration = goldilend.maxDuration();
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.BorrowLimitExceeded.selector));
+    goldilend.borrow(fairValue, maxDuration, address(bondbear), 1);
+  }
+
 }
