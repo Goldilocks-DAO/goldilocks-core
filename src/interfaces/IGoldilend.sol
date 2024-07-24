@@ -114,18 +114,6 @@ interface IGoldilend {
     uint256 collateralNFTId
   ) external;
 
-  /// @notice Borrows iBGT against value of NFTs
-  /// @param borrowAmount Amount of $iBGT to borrow
-  /// @param duration Duration of loan
-  /// @param collateralNFTs NFT collections to use as collateral
-  /// @param collateralNFTIds Token IDs of NFTs to use as collateral
-  function borrow(
-    uint256 borrowAmount, 
-    uint256 duration, 
-    address[] calldata collateralNFTs, 
-    uint256[] calldata collateralNFTIds
-  ) external;
-
   /// @notice Repays loan of iBGT
   /// @param repayAmount Amount of iBGT to repay
   /// @param userLoanId ID of loan to repay
@@ -160,21 +148,11 @@ interface IGoldilend {
   /// @notice Returns current GiBGT ratio
   function getGiBGTRatio() external view returns (uint256);
 
-  /// @notice Returns fair value of NFTs available for loan origination
-  function getFairValues(address[] calldata collateralNFTs) external view returns (uint256);
-
   /// @notice Returns interest on single NFT loan
   function calculateInterest(
     uint256 borrowAmount,
     uint256 duration,
     address collateralNFT
-  ) external view returns (uint256);
-
-  /// @notice Returns interest on multiple NFT loan
-  function calculateInterest(
-    uint256 borrowAmount,
-    uint256 duration,
-    address[] calldata collateralNFTs
   ) external view returns (uint256);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

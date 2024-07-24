@@ -100,22 +100,6 @@ contract FuzzGoldilendTest is BaseFuzzTest {
     assertEq(userLoan.liquidated, false);
   }
 
-  function testFuzzMultipleBorrow(uint256 durationAmount) public dealUserBeras {
-    vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
-    (address[] memory nfts, uint256[] memory ids) = beras();
-    goldilend.borrow(1e18, durationAmount, nfts, ids);
-    Goldilend.Loan memory userLoan = goldilend.lookupLoan(address(this), 1);
-
-    assertEq(userLoan.collateralNFTs[0], address(bondbear));
-    assertEq(userLoan.collateralNFTIds[0], 1);
-    assertEq(userLoan.collateralNFTs[1], address(bandbear));
-    assertEq(userLoan.collateralNFTIds[1], 1);
-    assertEq(userLoan.duration, durationAmount);
-    assertEq(userLoan.endDate, block.timestamp + durationAmount);
-    assertEq(userLoan.loanId, 1);
-    assertEq(userLoan.liquidated, false);
-  }
-
   function testFuzzRepayiBGT(uint256 durationAmount) public dealUseriBGT dealUserBeras {
     vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
     goldilend.borrow(1e18, durationAmount, address(bondbear), 1);

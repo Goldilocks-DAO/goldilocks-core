@@ -357,58 +357,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
-  function borrow(
-    uint256 borrowAmount, 
-    uint256 duration, 
-    address[] calldata collateralNFTs, 
-    uint256[] calldata collateralNFTIds
-  ) external {
-    if(!borrowingActive) revert NotActive();
-    uint256 collateralNFTsLength = collateralNFTs.length;
-    for(uint256 i; i < collateralNFTsLength;) {
-      if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
-      unchecked {
-        ++i;
-      }
-    }
-    if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-    if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
-    if(collateralNFTsLength != collateralNFTIds.length) revert ArrayMismatch();
-    uint256 debt = outstandingDebt;
-    if(borrowAmount > _calculateFairValue(collateralNFTs) || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
-    uint256 interest = _calculateInterest(borrowAmount, debt, duration);
-    Boost memory userBoost = boosts[msg.sender];
-    if(userBoost.expiry > block.timestamp + duration) {
-      uint256 discount = 500;
-      if(userBoost.boostMagnitude < discount) {
-        discount = MAX_DISCOUNT - userBoost.boostMagnitude;
-      }
-      interest = interest * discount / 1000;
-    }
-    outstandingDebt += borrowAmount;
-    Loan memory loan = Loan({
-      collateralNFTs: collateralNFTs,
-      collateralNFTIds: collateralNFTIds,
-      borrowedAmount: borrowAmount + interest,
-      interest: interest,
-      duration: duration,
-      endDate: block.timestamp + duration,
-      loanId: loans[msg.sender].length + 1,
-      liquidated: false
-    });
-    loans[msg.sender].push(loan);
-    for(uint256 i; i < collateralNFTsLength;) {
-      IERC721(collateralNFTs[i]).transferFrom(msg.sender, address(this), collateralNFTIds[i]);
-      unchecked {
-        ++i;
-      }
-    }
-    IiBGTVault(ibgtVault).withdraw(borrowAmount);
-    SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
-    emit Borrow(msg.sender, borrowAmount);
-  }
-
-  /// @inheritdoc IGoldilend
   function repay(uint256 repayAmount, uint256 userLoanId) external {
     (Loan memory userLoan, uint256 index) = _lookupLoan(msg.sender, userLoanId);
     if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
@@ -494,11 +442,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
-  function getFairValues(address[] calldata collateralNFTs) external view returns (uint256) {
-    return _calculateFairValue(collateralNFTs);
-  }
-
-  /// @inheritdoc IGoldilend
   function calculateInterest(
     uint256 borrowAmount,
     uint256 duration,
@@ -510,26 +453,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 fairValue = nftFairValues[collateralNFT] * totalValuation / 100;
     uint256 debt = outstandingDebt;
     if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
-    return _calculateInterest(borrowAmount, debt, duration);
-  }
-
-  /// @inheritdoc IGoldilend
-  function calculateInterest(
-    uint256 borrowAmount,
-    uint256 duration,
-    address[] calldata collateralNFTs
-  ) external view returns (uint256) {
-    uint256 collateralNFTsLength = collateralNFTs.length;
-    for(uint256 i; i < collateralNFTsLength;) {
-      if(nftFairValues[collateralNFTs[i]] == 0) revert InvalidCollateral();
-      unchecked {
-        ++i;
-      }
-    }
-    if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-    if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
-    uint256 debt = outstandingDebt;
-    if(borrowAmount > _calculateFairValue(collateralNFTs) || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     return _calculateInterest(borrowAmount, debt, duration);
   }
 
@@ -754,19 +677,6 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       return claimableRewardsPerGiBGTStored[rewardToken];
     }
     return claimableRewardsPerGiBGTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards, totalStakedGiBGT);
-  }
-
-  /// @notice Calculates the fair value of NFTs being borrowed against
-  /// @param collateralNFTs NFT collections to find value of
-  /// @return fairValue Fair value of NFTs
-  function _calculateFairValue(address[] calldata collateralNFTs) internal view returns (uint256 fairValue) {
-    uint256 collateralNFTsLength = collateralNFTs.length;
-    for(uint256 i; i < collateralNFTsLength;) {
-      fairValue += totalValuation * nftFairValues[collateralNFTs[i]] / 100;
-      unchecked {
-        ++i;
-      }
-    }
   }
 
   /// @notice Caluclates the total interest due at repayment
