@@ -220,6 +220,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
     startTime = block.timestamp;
     endTime = block.timestamp + duration;
     concludeTime = 0;
+    emit Renew(block.timestamp, block.timestamp + duration);
   }
 
   /// @inheritdoc IGoldivaultNegative
@@ -233,6 +234,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
         ++i;
       }
     }
+    emit NewYieldTokens(_yieldTokens);
   }
 
   /// @inheritdoc IGoldivaultNegative
@@ -245,6 +247,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
+    emit NewNegativeProtocolParameters(_yieldFee, _delay, _duration);
   }
 
   /// @inheritdoc IGoldivaultNegative

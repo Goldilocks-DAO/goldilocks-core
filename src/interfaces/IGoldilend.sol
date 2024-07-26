@@ -60,6 +60,19 @@ interface IGoldilend {
   event Borrow(address indexed user, uint256 amount);
   event Repay(address indexed user, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount);
+  event NewTotalValuation(uint256 newTotalValuation);
+  event NewProtocolInterestRate(uint256 newProtocolInterestRate);
+  event NewShareRates(uint256 newMultisigShare, uint256 newApdaoShare);
+  event NewSlope(uint256 newSlope);
+  event NewDurations(uint256 newMinDuration, uint256 newMaxDuration);
+  event NewPrgEmissions(uint256 newPrgEmissions);
+  event NewRewardTokens(address[] newRewardTokens);
+  event NewBorrowingActive(bool newBorrowingActive);
+  event MultisigInterestClaim(uint256 interestClaim);
+  event ApdaoInterestClaim(uint256 interestClaim);
+  event NewBoosts(address[] newPartnerNFTs, uint8[] newPartnerNFTsBoosts, uint256 newBoostLockDuration);
+  event SunsetProtocol(uint256 sunsetAmount);
+  event DonateiBGT(uint256 donatedAmount);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */

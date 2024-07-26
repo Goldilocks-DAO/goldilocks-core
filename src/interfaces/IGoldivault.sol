@@ -12,6 +12,9 @@ interface IGoldivault {
   event OwnershipTokenRedemption(address indexed user, uint256 amount);
   event YieldTokenRedemption(address indexed user, uint256 amount);
   event Conclude(uint256 timestamp);
+  event Renew(uint256 newStartTime, uint256 newEndTime);
+  event NewYieldTokens(address[] newYieldTokens);
+  event NewProtocolParameters(uint256 newEarlyWithdrawalFee, uint256 newYieldFee, uint256 newDelay, uint256 newDuration);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           ERRORS                           */
@@ -26,7 +29,7 @@ interface IGoldivault {
   error AlreadyConcluded();
   error ExcessiveRedeem();
   error TooManyTokens();
-  error AlreadyInitialized();
+  error AlreadyInitialized();  
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */

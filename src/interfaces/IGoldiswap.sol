@@ -11,6 +11,7 @@ interface IGoldiswap {
   event Buy(address indexed user, uint256 amount);
   event Sale(address indexed user, uint256 amount);
   event Redeem(address indexed user, uint256 amount);
+  event NewTargetRatio(uint256 newTargetRatio);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           ERRORS                           */

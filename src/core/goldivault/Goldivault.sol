@@ -222,6 +222,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     startTime = block.timestamp;
     endTime = block.timestamp + duration;
     concludeTime = 0;
+    emit Renew(block.timestamp, block.timestamp + duration);
   }
 
   /// @inheritdoc IGoldivault
@@ -235,6 +236,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
         ++i;
       }
     }
+    emit NewYieldTokens(_yieldTokens);
   }
 
   /// @inheritdoc IGoldivault
@@ -249,6 +251,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
+    emit NewProtocolParameters(_earlyWithdrawalFee, _yieldFee, _delay, _duration);
   }
 
   /// @inheritdoc IGoldivault

@@ -748,12 +748,14 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       }
     }
     totalValuation = _totalValuation;
+    emit NewTotalValuation(_totalValuation);
   } 
 
   /// @inheritdoc IGoldilend
   function changeProtocolInterestRate(uint256 _protocolInterestRate) external {
     if(msg.sender != timelock) revert NotTimelock();
     protocolInterestRate = _protocolInterestRate;
+    emit NewProtocolInterestRate(_protocolInterestRate);
   }
 
   /// @inheritdoc IGoldilend
@@ -761,12 +763,14 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(msg.sender != timelock) revert NotTimelock();
     multisigShare = _multisigShare;
     apdaoShare = _apdaoShare;
+    emit NewShareRates(_multisigShare, _apdaoShare);
   }
 
   /// @inheritdoc IGoldilend
   function changeSlope(uint256 _slope) external {
     if(msg.sender != timelock) revert NotTimelock();
     slope = _slope;
+    emit NewSlope(_slope);
   }
 
   /// @inheritdoc IGoldilend
@@ -774,6 +778,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(msg.sender != timelock) revert NotTimelock();
     minDuration = _minDuration;
     maxDuration = _maxDuration;
+    emit NewDurations(_minDuration, _maxDuration);
   }
 
   /// @inheritdoc IGoldilend
@@ -781,6 +786,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(msg.sender != timelock) revert NotTimelock();
     _updateClaimablePrg(address(0));
     annualPrgEmissions = newPrgEmissions;
+    emit NewPrgEmissions(newPrgEmissions);
   }
 
   /// @inheritdoc IGoldilend
@@ -795,12 +801,14 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
         ++i;
       }
     }
+    emit NewRewardTokens(_rewardTokens);
   }
 
   /// @inheritdoc IGoldilend
   function changeBorrowingActive(bool _borrowingActive) external {
     if(msg.sender != multisig) revert NotMultisig();
     borrowingActive = _borrowingActive;
+    emit NewBorrowingActive(_borrowingActive);
   }
 
   /// @inheritdoc IGoldilend
@@ -810,6 +818,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     multisigClaims = 0;
     IiBGTVault(ibgtVault).withdraw(interestClaim);
     SafeTransferLib.safeTransfer(ibgt, multisig, interestClaim);
+    emit MultisigInterestClaim(interestClaim);
   }
 
   /// @inheritdoc IGoldilend
@@ -819,6 +828,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     apdaoClaims = 0;
     IiBGTVault(ibgtVault).withdraw(interestClaim);
     SafeTransferLib.safeTransfer(ibgt, apdao, interestClaim);
+    emit ApdaoInterestClaim(interestClaim);
   }
 
   /// @inheritdoc IGoldilend
@@ -897,6 +907,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       }
     }
     boostLockDuration = _boostLockDuration;
+    emit NewBoosts(_partnerNFTs, _partnerNFTBoosts, _boostLockDuration);
   }
 
   /// @inheritdoc IGoldilend
@@ -904,6 +915,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(msg.sender != timelock) revert NotTimelock();
     IiBGTVault(ibgtVault).withdraw(poolSize - outstandingDebt);
     SafeTransferLib.safeTransfer(ibgt, multisig, poolSize - outstandingDebt);
+    emit SunsetProtocol(poolSize - outstandingDebt);
   }
 
   /// @inheritdoc IGoldilend
@@ -912,6 +924,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     poolSize += amount;
     SafeTransferLib.safeTransferFrom(ibgt, msg.sender, address(this), amount);
     _refreshiBGT(amount);
+    emit DonateiBGT(amount);
   }
 
 

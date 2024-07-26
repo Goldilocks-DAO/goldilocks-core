@@ -14,6 +14,10 @@ interface IGoldilocked {
   event Claim(address indexed user, uint256 amount);
   event Borrow(address indexed user, uint256 amount);
   event Repay(address indexed user, uint256 amount);
+  event GoldilendPrgMint(address indexed user, uint256 amount);
+  event NewPrgEmissions(uint256 newPrgEmissions);
+  event MintedPorridge(uint256 newPorridge);
+  event NewGoldilendAddress(address newGoldilendAddress);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           ERRORS                           */

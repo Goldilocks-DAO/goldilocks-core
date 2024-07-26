@@ -358,6 +358,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
   function goldilendMint(address to, uint256 amount) external {
     if(msg.sender != goldilend) revert NotGoldilend();
     _mint(to, amount);
+    emit GoldilendPrgMint(to, amount);
   }
 
   /// @inheritdoc IGoldilocked
@@ -365,18 +366,21 @@ contract Goldilocked is IGoldilocked, ERC20 {
     if(msg.sender != timelock) revert NotTimelock();
     _updateClaimablePrg(address(0));
     annualPrgEmissions = newPrgEmissions;
+    emit NewPrgEmissions(newPrgEmissions);
   }
 
   /// @inheritdoc IGoldilocked
   function mintPorridge(uint256 newPorridge) external {
     if(msg.sender != timelock) revert NotTimelock();
     _mint(multisig, newPorridge);
+    emit MintedPorridge(newPorridge);
   }
 
   /// @inheritdoc IGoldilocked
   function setGoldilendAddress(address _goldilend) external {
     if(msg.sender != multisig) revert NotMultisig();
     goldilend = _goldilend;
+    emit NewGoldilendAddress(_goldilend);
   }
 
 }

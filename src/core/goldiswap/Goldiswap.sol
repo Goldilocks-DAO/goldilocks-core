@@ -262,6 +262,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
         targetRatio = FixedPointMathLib.mulWad(targetRatio / 100, 100e18 - decreaseFactor);
       }
       lastFloorDecrease = block.timestamp;
+      emit NewTargetRatio(targetRatio);
     }
   }
 
