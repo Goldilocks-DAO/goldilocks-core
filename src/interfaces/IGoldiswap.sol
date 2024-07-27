@@ -23,6 +23,7 @@ interface IGoldiswap {
   error NotActive();
   error ExcessiveSlippage();
   error AlreadyInitialized();
+  error MissingHoney();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */

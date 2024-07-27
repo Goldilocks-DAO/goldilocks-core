@@ -406,6 +406,9 @@ contract Goldiswap is IGoldiswap, ERC20 {
     initialized = true;
     tradingActive = true;
     SafeTransferLib.safeTransferFrom(honey, msg.sender, address(this), amount);
+    uint256 initialSupply = totalSupply();
+    uint256 borrowedHoney = FixedPointMathLib.mulWad(initialSupply, _floorPrice(fsl, initialSupply));
+    if(ERC20(honey).balanceOf(address(this)) < (fsl + psl - borrowedHoney)) revert MissingHoney();
   }
 
 }
