@@ -2,8 +2,26 @@
 pragma solidity ^0.8.20;
 
 import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
+import { GoldilockedHandler } from "../invariant/handlers/GoldilockedHandler.t.sol";
 
 contract InvariantGoldilockedTest is BaseInvariantTest {
+
+  function setUp() public override {
+    deployProtocol();
+
+    goldilockedHandler = new GoldilockedHandler(goldilocked, goldiswap);
+    bytes4[] memory goldilockedSelectors = new bytes4[](5);
+    goldilockedSelectors[0] = goldilockedHandler.stake.selector;
+    goldilockedSelectors[1] = goldilockedHandler.unstake.selector;
+    goldilockedSelectors[2] = govlocksHandler.approve.selector;
+    goldilockedSelectors[3] = govlocksHandler.transfer.selector;
+    goldilockedSelectors[4] = govlocksHandler.transferFrom.selector;
+    targetSelector(FuzzSelector({
+      addr: address(goldilockedHandler),
+      selectors: goldilockedSelectors
+    }));
+    targetContract(address(goldilockedHandler));
+  }
 
   function invariant_conservationOfLocks() public {
     uint256 sumOfStaked = goldilockedHandler.reduceActors(

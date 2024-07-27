@@ -2,8 +2,27 @@
 pragma solidity ^0.8.20;
 
 import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
+import { GovLocksHandler } from "../invariant/handlers/GovLocksHandler.t.sol";
 
 contract InvariantGovLocksTest is BaseInvariantTest {
+  
+  function setUp() public override {
+    deployProtocol();
+
+    govlocksHandler = new GovLocksHandler(govlocks, goldilocked, goldiswap);
+    bytes4[] memory govLocksSelectors = new bytes4[](6);
+    govLocksSelectors[0] = govlocksHandler.deposit.selector;
+    govLocksSelectors[1] = govlocksHandler.withdraw.selector;
+    govLocksSelectors[2] = govlocksHandler.delegate.selector;
+    govLocksSelectors[3] = govlocksHandler.approve.selector;
+    govLocksSelectors[4] = govlocksHandler.transfer.selector;
+    govLocksSelectors[5] = govlocksHandler.transferFrom.selector;
+    targetSelector(FuzzSelector({
+      addr: address(govlocksHandler),
+      selectors: govLocksSelectors
+    }));
+    targetContract(address(govlocksHandler));
+  }
 
   function invariant_conservationOfLocks() public {
     assertEq(

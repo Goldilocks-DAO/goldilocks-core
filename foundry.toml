@@ -4,3 +4,10 @@ out = 'out'
 libs = ['lib']
 evm_version = 'shanghai'
 solc='0.8.20'
+
+[fuzz]
+runs=200
+
+[invariant]
+runs=200
+depth=400
