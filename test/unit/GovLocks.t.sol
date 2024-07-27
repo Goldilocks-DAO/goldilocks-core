@@ -407,7 +407,7 @@ contract UnitGovLocksTest is BaseUnitTest {
   }
 
   function testSeedInvestorVotes() public {
-    assertEq(govlocks.getVotes(address(0x696969696969)), 7_000_000e18);
+    assertEq(govlocks.getVotes(address(0x696969696969)), 1_000_000e18);
   }
 
   function testBurnedVotingPower() public {

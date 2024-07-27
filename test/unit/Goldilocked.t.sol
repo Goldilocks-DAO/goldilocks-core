@@ -310,7 +310,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testSeedRoundFullVest() public {
     vm.warp(90 days + 365 days + 1);
-    assertEq(goldilocked.userVestingCheck(address(0x69420)), 7000_000e18);
+    assertEq(goldilocked.userVestingCheck(address(0x69420)), 7_000_000e18);
   }
 
   function testGoldilendMintFailGoldilend() public {

@@ -31,6 +31,7 @@ interface IGoldilocked {
   error InvalidUnstake();
   error LocksBorrowedAgainst();
   error InsufficientBorrowLimit();
+  error MissingLocks();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
