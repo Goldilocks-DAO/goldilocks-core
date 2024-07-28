@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
 import { GoldilendHandler } from "../invariant/handlers/GoldilendHandler.t.sol";
+import { iBGTVault } from "../../src/mock/iBGTVault.sol";
 
 contract InvariantGoldilendTest is BaseInvariantTest {
 
@@ -23,6 +24,14 @@ contract InvariantGoldilendTest is BaseInvariantTest {
 
   function invariant_depositorBalances() public {
     goldilendHandler.forEachActor(this.assertGoldilendBalanceLteTotalSupply);
+  }
+
+  function invariant_poolSize() public {
+    uint256 poolSize = goldilend.poolSize();
+    uint256 outstandingDebt = goldilend.outstandingDebt();
+    uint256 vaultDeposit = iBGTVault(goldilend.ibgtVault()).deposits(address(goldilend));
+    uint256 ibgtBalance = ibgt.balanceOf(address(goldilend));
+    assertEq(poolSize, outstandingDebt + vaultDeposit + ibgtBalance);
   }
 
 }
