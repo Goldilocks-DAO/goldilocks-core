@@ -47,6 +47,7 @@ interface IGoldilend {
   error LoanExpired();
   error Unliquidatable();
   error TooManyTokens();
+  error TooManyLoans();
   error AlreadyInitialized();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

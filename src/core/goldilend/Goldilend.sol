@@ -46,6 +46,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Buffer period where borrowers are protected from liquidation
   uint256 public constant LOAN_GRACE_PERIOD = 1 days;
 
+  /// @notice Max number of loans an address can originate
+  uint256 public constant MAX_LOANS = 25;
+
   /// @notice Address of Goldilocked
   address public immutable goldilocked;
 
@@ -325,6 +328,8 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
     if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
     if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
+    uint256 userLoansLength = loans[msg.sender].length;
+    if(userLoansLength == MAX_LOANS) revert TooManyLoans();
     uint256 fairValue = nftFairValues[collateralNFT] * totalValuation / 100;
     uint256 debt = outstandingDebt;
     uint256 interest = _calculateInterest(borrowAmount, debt, duration);
@@ -349,7 +354,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
       interest: interest,
       duration: duration,
       endDate: block.timestamp + duration,
-      loanId: loans[msg.sender].length + 1,
+      loanId: userLoansLength + 1,
       liquidated: false
     });
     loans[msg.sender].push(loan);
@@ -729,11 +734,11 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256 userLoanId
   ) internal view returns (Loan memory userLoan, uint256 index) {
     uint256 loanLength = loans[user].length;
-    for(uint256 i; i < loanLength;) {
-      if(loans[user][i].loanId == userLoanId) return (loans[user][i], i);
+    for(uint256 i = loanLength; i > 0;) {
       unchecked {
-        ++i;
+        --i;
       }
+      if(loans[user][i].loanId == userLoanId) return (loans[user][i], i);
     }
     revert LoanNotFound();
   }
