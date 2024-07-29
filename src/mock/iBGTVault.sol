@@ -3,10 +3,11 @@ pragma solidity ^0.8.20;
 
 import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "./../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { Pausable } from "../../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 import { iBGT } from "./iBGT.sol";
 import { Honey } from "./Honey.sol";
 
-contract iBGTVault {
+contract iBGTVault is Pausable {
 
   mapping(address => uint256) public deposits;
   mapping(address => uint256) public startTime;
@@ -30,7 +31,7 @@ contract iBGTVault {
     deployTime = block.timestamp;
   }
 
-  function stake(uint256 amount) external {
+  function stake(uint256 amount) external whenNotPaused {
     deposits[msg.sender] += amount;
     startTime[msg.sender] = block.timestamp;
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);

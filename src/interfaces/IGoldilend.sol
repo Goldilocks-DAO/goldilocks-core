@@ -137,6 +137,10 @@ interface IGoldilend {
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external;
 
+  /// @notice Stakes any unstaked iBGT into the iBGTVault
+  /// @dev Unstaked iBGT accumulates when the iBGTVault is paused
+  function stakeUnstakediBGT() external;
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

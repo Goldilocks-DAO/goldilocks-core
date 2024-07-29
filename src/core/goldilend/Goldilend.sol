@@ -109,6 +109,9 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Total staked GiBGT
   uint256 public totalStakedGiBGT;
 
+  /// @notice Total unstaked iBGT while iBGTVault is paused
+  uint256 public unstakediBGT;
+
   /// @notice Addresses of reward tokens from iBGT staking
   address[] public rewardTokens;
 
@@ -408,6 +411,16 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     emit Liquidation(msg.sender, user, userLoan.borrowedAmount);
   }
 
+  /// @inheritdoc IGoldilend
+  function stakeUnstakediBGT() external {
+    uint256 _unstakediBGT = unstakediBGT;
+    if(_unstakediBGT != 0) {
+      ERC20(ibgt).approve(ibgtVault, _unstakediBGT);
+      IiBGTVault(ibgtVault).stake(_unstakediBGT);
+      unstakediBGT = 0;
+    }
+  }
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                  EXTERNAL VIEW FUNCTIONS                   */
@@ -531,8 +544,21 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   /// @notice Stakes iBGT in Infrared vault
   /// @param ibgtAmount Amount of iBGT to stake
   function _refreshiBGT(uint256 ibgtAmount) internal {
-    ERC20(ibgt).approve(ibgtVault, ibgtAmount);
-    IiBGTVault(ibgtVault).stake(ibgtAmount);
+    uint256 _unstakediBGT = unstakediBGT;
+    if(IiBGTVault(ibgtVault).paused()) {
+      unstakediBGT = _unstakediBGT + ibgtAmount;
+    }
+    else {
+      if(_unstakediBGT == 0) {
+        ERC20(ibgt).approve(ibgtVault, ibgtAmount);
+        IiBGTVault(ibgtVault).stake(ibgtAmount);
+      }
+      else {
+        ERC20(ibgt).approve(ibgtVault, ibgtAmount + _unstakediBGT);
+        IiBGTVault(ibgtVault).stake(ibgtAmount + _unstakediBGT);
+        unstakediBGT = 0;
+      }
+    }
   }
 
   /// @notice Creates the struct containing the details of the boost
