@@ -9,7 +9,7 @@ contract InvariantGovLocksTest is BaseInvariantTest {
   function setUp() public override {
     deployProtocol();
 
-    govlocksHandler = new GovLocksHandler(govlocks, goldilocked, goldiswap);
+    govlocksHandler = new GovLocksHandler(govlocks, goldiswap);
     bytes4[] memory govLocksSelectors = new bytes4[](6);
     govLocksSelectors[0] = govlocksHandler.deposit.selector;
     govLocksSelectors[1] = govlocksHandler.withdraw.selector;
@@ -67,9 +67,5 @@ contract InvariantGovLocksTest is BaseInvariantTest {
   function invariant_depositorBalances() public {
     govlocksHandler.forEachActor(this.assertGovlocksBalanceLteTotalSupply);
   }
-
-  // function invariant_callSummary() public view {
-  //   govlocksHandler.callSummary();
-  // }
 
 }

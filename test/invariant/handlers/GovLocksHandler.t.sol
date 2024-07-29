@@ -1,16 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../../lib/forge-std/src/Test.sol";
 import { BaseHandler } from "../../base/BaseHandler.t.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
-import { Goldilocked } from "../../../src/core/goldiswap/Goldilocked.sol";
 import { Goldiswap } from "../../../src/core/goldiswap/Goldiswap.sol";
 import { GovLocks } from "../../../src/core/goldigovernance/GovLocks.sol";
 
 contract GovLocksHandler is BaseHandler {
 
-  Goldilocked public goldilocked;
   Goldiswap public goldiswap;
   GovLocks public govlocks;
 
@@ -18,8 +15,7 @@ contract GovLocksHandler is BaseHandler {
   uint256 public ghost_withdrawSum;
   uint256 public ghost_zeroWithdrawals;
 
-  constructor(GovLocks _govlocks, Goldilocked _goldilocked, Goldiswap _goldiswap) {
-    goldilocked = _goldilocked;
+  constructor(GovLocks _govlocks, Goldiswap _goldiswap) {
     goldiswap = _goldiswap;
     govlocks =_govlocks;
     deal(address(goldiswap), address(this), locksMintAmount);
@@ -119,15 +115,5 @@ contract GovLocksHandler is BaseHandler {
   function sendLocks(address actor, uint256 amount) internal {
     SafeTransferLib.safeTransfer(address(goldiswap), actor, amount);
   }
-
-  // function callSummary() external view {
-  //   console.log("call summary:");
-  //   console.log("-------------------");
-  //   console.log("deposit", calls["deposit"]);
-  //   console.log("withdraw", calls["withdraw"]);
-  //   console.log("delegate", calls["delegate"]);
-  //   console.log("-------------------");
-
-  //   console.log("Zero withdrawals:", ghost_zeroWithdrawals);
-  // }
+  
 }

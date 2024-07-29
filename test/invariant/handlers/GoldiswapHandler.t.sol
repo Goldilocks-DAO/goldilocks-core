@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { BaseHandler } from "../../base/BaseHandler.t.sol";
-import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { Goldiswap } from "../../../src/core/goldiswap/Goldiswap.sol";
 import { Honey } from "../../../src/mock/Honey.sol";

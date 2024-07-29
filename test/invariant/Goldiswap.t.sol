@@ -16,10 +16,13 @@ contract InvariantGoldiswapTest is BaseInvariantTest {
     initialBorrowing = FixedPointMathLib.mulWad(initialSupply, FixedPointMathLib.divWad(goldiswap.fsl(), initialSupply));
 
     goldiswapHandler = new GoldiswapHandler(goldiswap, honey);
-    bytes4[] memory goldiswapSelectors = new bytes4[](3);
-    goldiswapSelectors[0] = goldiswapHandler.approve.selector;
-    goldiswapSelectors[1] = goldiswapHandler.transfer.selector;
-    goldiswapSelectors[2] = goldiswapHandler.transferFrom.selector;
+    bytes4[] memory goldiswapSelectors = new bytes4[](6);
+    goldiswapSelectors[0] = goldiswapHandler.buy.selector;
+    goldiswapSelectors[1] = goldiswapHandler.sell.selector;
+    goldiswapSelectors[2] = goldiswapHandler.redeem.selector;
+    goldiswapSelectors[3] = goldiswapHandler.approve.selector;
+    goldiswapSelectors[4] = goldiswapHandler.transfer.selector;
+    goldiswapSelectors[5] = goldiswapHandler.transferFrom.selector;
     targetSelector(FuzzSelector({
       addr: address(goldiswapHandler),
       selectors: goldiswapSelectors

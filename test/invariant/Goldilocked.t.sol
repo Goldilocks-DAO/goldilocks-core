@@ -13,9 +13,9 @@ contract InvariantGoldilockedTest is BaseInvariantTest {
     bytes4[] memory goldilockedSelectors = new bytes4[](5);
     goldilockedSelectors[0] = goldilockedHandler.stake.selector;
     goldilockedSelectors[1] = goldilockedHandler.unstake.selector;
-    goldilockedSelectors[2] = govlocksHandler.approve.selector;
-    goldilockedSelectors[3] = govlocksHandler.transfer.selector;
-    goldilockedSelectors[4] = govlocksHandler.transferFrom.selector;
+    goldilockedSelectors[2] = goldilockedHandler.approve.selector;
+    goldilockedSelectors[3] = goldilockedHandler.transfer.selector;
+    goldilockedSelectors[4] = goldilockedHandler.transferFrom.selector;
     targetSelector(FuzzSelector({
       addr: address(goldilockedHandler),
       selectors: goldilockedSelectors
@@ -40,17 +40,13 @@ contract InvariantGoldilockedTest is BaseInvariantTest {
       this.accumulateStakedLocks
     );
     assertEq(
-    sumOfStaked,
-    goldilockedHandler.ghost_stakeSum() - goldilockedHandler.ghost_unstakeSum()
+      sumOfStaked,
+      goldilockedHandler.ghost_stakeSum() - goldilockedHandler.ghost_unstakeSum()
     );
   }
 
   function invariant_depositorBalances() public {
     goldilockedHandler.forEachActor(this.assertStakedLocksBalanceLteTotalSupply);
   }
-
-  // function invariant_callSummary() public view {
-  //   goldilockedHandler.callSummary();
-  // }
 
 }
