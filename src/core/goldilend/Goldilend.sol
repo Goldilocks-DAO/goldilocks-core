@@ -770,7 +770,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     uint256[] calldata _nftFairValues,
     uint256 _totalValuation
   ) external {
-    if(msg.sender != timelock) revert NotTimelock();
+    if(msg.sender != multisig) revert NotMultisig();
     uint256 nftFairValuesLength = _nftFairValues.length;
     for(uint256 i; i < nftFairValuesLength;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];

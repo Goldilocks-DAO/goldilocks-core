@@ -39,9 +39,6 @@ contract Goldiswap is IGoldiswap, ERC20 {
   /// @notice Maximum ratio between PSL and FSL
   uint256 public constant MAX_RATIO = 45e16;
 
-  /// @notice Tax of 0.3% on buys
-  uint256 public constant BUY_TAX = 3; 
-
   /// @notice Precision to calculate buy tax
   uint256 public constant PRECISION = 1000;
 
@@ -80,6 +77,9 @@ contract Goldiswap is IGoldiswap, ERC20 {
 
   /// @notice Target ratio between PSL and FSL
   uint256 public targetRatio = 38e16;
+
+  /// @notice Tax of 0.3% on buys
+  uint256 public buyTax = 3;
 
   /// @notice Timestamp of last floor increase
   uint256 public lastFloorIncrease;
@@ -150,7 +150,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
       uint256 _psl, 
       uint256 price
     ) = _buyLoop(fsl, psl, totalSupply(), amount);
-    uint256 tax = price * BUY_TAX / PRECISION;
+    uint256 tax = price * buyTax / PRECISION;
     if(price + tax > maxAmount) revert ExcessiveSlippage();
     fsl = _fsl;
     psl = _psl;
@@ -409,6 +409,13 @@ contract Goldiswap is IGoldiswap, ERC20 {
     uint256 initialSupply = totalSupply();
     uint256 borrowedHoney = FixedPointMathLib.mulWad(initialSupply, _floorPrice(fsl, initialSupply));
     if(ERC20(honey).balanceOf(address(this)) < (fsl + psl - borrowedHoney)) revert MissingHoney();
+  }
+
+  /// @inheritdoc IGoldiswap
+  function changeBuyTax(uint256 newBuyTax) external {
+    if(msg.sender != timelock) revert NotTimelock();
+    buyTax = newBuyTax;
+    emit NewBuyTax(newBuyTax);
   }
 
 }

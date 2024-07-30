@@ -12,6 +12,7 @@ interface IGoldiswap {
   event Sale(address indexed user, uint256 amount);
   event Redeem(address indexed user, uint256 amount);
   event NewTargetRatio(uint256 newTargetRatio);
+  event NewBuyTax(uint256 newBuyTax);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           ERRORS                           */
@@ -84,5 +85,10 @@ interface IGoldiswap {
   /// @dev Callable only by multisig
   /// @param amount Amount of Honey
   function initializeProtocol(uint256 amount) external;
+
+  /// @notice Allows the DAO to change the buy tax
+  /// @dev Callable only by Timelock
+  /// @param newBuyTax New buy tax
+  function changeBuyTax(uint256 newBuyTax) external;
 
 }

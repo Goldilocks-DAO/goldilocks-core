@@ -177,8 +177,8 @@ interface IGoldilend {
   /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @notice Allows the DAO to adjust the valuation of the NFTs to borrow against
-  /// @dev Callable only by Timelock
+  /// @notice Allows multisig to adjust the valuation of the NFTs to borrow against
+  /// @dev Callable only by multisig
   /// @param _totalValuation Total valuation of all NFTs able to be borrowed against
   /// @param _nfts NFTs that are able to be borrowed against
   /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation

@@ -41,7 +41,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
   }
 
   function testBuyFailActive() public {
-    vm.store(address(goldiswap), bytes32(uint256(5)), bytes32(uint256(0)));
+    vm.store(address(goldiswap), bytes32(uint256(6)), bytes32(uint256(0)));
     vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotActive.selector));
     goldiswap.buy(txAmount, 0);
   }
@@ -70,7 +70,7 @@ contract UnitGoldiswapTest is BaseUnitTest {
   }
 
   function testSellFailActive() public {
-    vm.store(address(goldiswap), bytes32(uint256(5)), bytes32(uint256(0)));
+    vm.store(address(goldiswap), bytes32(uint256(6)), bytes32(uint256(0)));
     vm.expectRevert(abi.encodeWithSelector(IGoldiswap.NotActive.selector));
     goldiswap.sell(txAmount, type(uint256).max);
   }

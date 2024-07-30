@@ -560,7 +560,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 1);
   }
 
-  function testChangeValueFailTimelock() public {
+  function testChangeValueFailMultisig() public {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
@@ -568,7 +568,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     values[0] = 50;
     values[1] = 50;
     vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotTimelock.selector));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector));
     goldilend.changeValue(nfts, values, 69);
   }
 
@@ -579,30 +579,9 @@ contract UnitGoldilendTest is BaseUnitTest {
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
-    bytes memory _calldata = abi.encodeWithSignature("changeValue(address[],uint256[],uint256)", nfts, values, 69);
-    address[] memory targets = new address[](1);
-    targets[0] = address(goldilend);
-    string[] memory signatures = new string[](1);
-    signatures[0] = "";
-    bytes[] memory calldatas = new bytes[](1);
-    calldatas[0] = _calldata;
-    uint256[] memory valuess = new uint256[](1);
-    valuess[0] = 0;
-    deal(address(goldiswap), address(this), quorumVotesNum);
-    goldiswap.approve(address(govlocks), quorumVotesNum);
-    govlocks.deposit(quorumVotesNum);
-    govlocks.delegate(address(this));
-    vm.roll(2);
-    goldigov.propose(targets, valuess, signatures, calldatas, "");
-    vm.roll(72);
-    goldigov.castVote(1, 1);
-    vm.roll(18000);
-    goldigov.queue(1);
-    vm.warp(6 days);
-    goldigov.execute(1);
-    (, , , , , , , , , bool executed) = goldigov.proposals(1);
+    uint256 totalValuation = 69;
+    goldilend.changeValue(nfts, values, totalValuation);    
 
-    assertEq(executed, true);
     assertEq(goldilend.totalValuation(), 69);
     assertEq(goldilend.nftFairValues(address(bondbear)), 50);
     assertEq(goldilend.nftFairValues(address(bandbear)), 50);
