@@ -147,7 +147,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
         ++i;
       }
     }
-    if(ERC20(_goldiswap).balanceOf(address(this)) != distributedLocks) revert MissingLocks();
+    if(ERC20(_goldiswap).balanceOf(address(this)) < distributedLocks) revert MissingLocks();
     _mint(msg.sender, initialSupply);
   }
 
