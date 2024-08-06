@@ -766,6 +766,35 @@ contract UnitGoldilendTest is BaseUnitTest {
     goldilend.addRewardTokens(rewardTokens);
   }
 
+  function testAddRewardTokensFailTooMany() public {
+    address[] memory rewardTokens = new address[](10);
+    rewardTokens[0] = address(0x69);
+    rewardTokens[1] = address(0x69);
+    rewardTokens[2] = address(0x69);
+    rewardTokens[3] = address(0x69);
+    rewardTokens[4] = address(0x69);
+    rewardTokens[5] = address(0x69);
+    rewardTokens[6] = address(0x69);
+    rewardTokens[7] = address(0x69);
+    rewardTokens[8] = address(0x69);
+    rewardTokens[9] = address(0x69);
+    goldilend.addRewardTokens(rewardTokens);
+    address[] memory rewardTokensAgain = new address[](11);
+    rewardTokensAgain[0] = address(0x69);
+    rewardTokensAgain[1] = address(0x69);
+    rewardTokensAgain[2] = address(0x69);
+    rewardTokensAgain[3] = address(0x69);
+    rewardTokensAgain[4] = address(0x69);
+    rewardTokensAgain[5] = address(0x69);
+    rewardTokensAgain[6] = address(0x69);
+    rewardTokensAgain[7] = address(0x69);
+    rewardTokensAgain[8] = address(0x69);
+    rewardTokensAgain[9] = address(0x69);
+    rewardTokensAgain[10] = address(0x69);
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.TooManyTokens.selector));
+    goldilend.addRewardTokens(rewardTokens);
+  }
+
   function testAddRewardTokensSuccess() public {
     address[] memory rewardTokens = new address[](2);
     rewardTokens[0] = address(0x69);

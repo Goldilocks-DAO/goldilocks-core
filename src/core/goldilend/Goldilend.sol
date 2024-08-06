@@ -203,7 +203,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     if(rewardTokensLength > 20) revert TooManyTokens();
     for(uint256 i; i < rewardTokensLength;) {
       rewardTokens.push(_rewardTokens[i]);
-      lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
+      lastRewardUpdateTime[_rewardTokens[i]] = block.timestamp;
       unchecked {
         ++i;
       }
@@ -824,14 +824,14 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   function addRewardTokens(address[] calldata _rewardTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
     uint256 rewardTokensLength = _rewardTokens.length;
-    if(rewardTokensLength > 20) revert TooManyTokens();
     for(uint256 i; i < rewardTokensLength;) {
       rewardTokens.push(_rewardTokens[i]);
-      lastRewardUpdateTime[rewardTokens[i]] = block.timestamp;
+      lastRewardUpdateTime[_rewardTokens[i]] = block.timestamp;
       unchecked {
         ++i;
       }
     }
+    if(rewardTokens.length > 20) revert TooManyTokens();
     emit NewRewardTokens(_rewardTokens);
   }
 
