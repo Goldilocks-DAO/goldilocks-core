@@ -361,7 +361,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
     IiBGTVault(ibgtVault).withdraw(borrowAmount);
     SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
-    emit Borrow(msg.sender, borrowAmount);
+    emit Borrow(msg.sender, borrowAmount, interest, collateralNFT, collateralNFTId);
   }
 
   /// @inheritdoc IGoldilend
