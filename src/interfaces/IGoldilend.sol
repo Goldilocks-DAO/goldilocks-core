@@ -163,6 +163,11 @@ interface IGoldilend {
   /// @param user Address of user for query
   function userClaimablePrg(address user) external view returns (uint256);
 
+  /// @notice Returns claimable reward tokens of GiBGT staker
+  /// @dev Return variable is in same sequential order as rewardTokens storage variable
+  /// @param user Address of user for query
+  function userClaimableRewards(address user) external view returns (uint256[] memory rewards);
+
   /// @notice Returns current GiBGT ratio
   function getGiBGTRatio() external view returns (uint256);
 

@@ -453,6 +453,20 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
+  function userClaimableRewards(address user) external view returns (uint256[] memory rewards) {
+    uint256 rewardTokensLength = rewardTokens.length;
+    rewards = new uint256[](rewardTokensLength);
+    for(uint256 i; i < rewardTokensLength;) {
+      address rewardToken = rewardTokens[i];
+      uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this));
+      rewards[i] = _calculateClaimableRewards(user, rewardToken, outstandingRewards);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  /// @inheritdoc IGoldilend
   function getGiBGTRatio() external view returns (uint256) {
     uint256 supply = totalSupply();
     uint256 _poolSize = poolSize;
