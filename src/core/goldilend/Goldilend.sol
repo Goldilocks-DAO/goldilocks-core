@@ -361,7 +361,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
     IiBGTVault(ibgtVault).withdraw(borrowAmount);
     SafeTransferLib.safeTransfer(ibgt, msg.sender, borrowAmount);
-    emit Borrow(msg.sender, borrowAmount, interest, collateralNFT, collateralNFTId);
+    emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
   }
 
   /// @inheritdoc IGoldilend
@@ -458,7 +458,7 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     rewards = new uint256[](rewardTokensLength);
     for(uint256 i; i < rewardTokensLength;) {
       address rewardToken = rewardTokens[i];
-      uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this));
+      uint256 outstandingRewards = IiBGTVault(ibgtVault).earned(address(this), rewardToken);
       rewards[i] = _calculateClaimableRewards(user, rewardToken, outstandingRewards);
       unchecked {
         ++i;
