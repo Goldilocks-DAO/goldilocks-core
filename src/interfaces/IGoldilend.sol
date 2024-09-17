@@ -72,6 +72,7 @@ interface IGoldilend {
   event MultisigInterestClaim(uint256 interestClaim);
   event ApdaoInterestClaim(uint256 interestClaim);
   event NewBoosts(address[] newPartnerNFTs, uint8[] newPartnerNFTsBoosts, uint256 newBoostLockDuration);
+  event NewBoostLockDuration(uint256 newBoostLockDuration);
   event SunsetProtocol(uint256 sunsetAmount);
   event DonateiBGT(uint256 donatedAmount);
 

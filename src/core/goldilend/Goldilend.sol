@@ -898,6 +898,12 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     slope = _slope;
     annualPrgEmissions = _annualPrgEmissions;
     boostLockDuration = _boostLockDuration;
+    emit NewShareRates(_multisigShare, _apdaoShare);
+    emit NewDurations(_minDuration, _maxDuration);
+    emit NewProtocolInterestRate(_protocolInterestRate);
+    emit NewSlope(_slope);
+    emit NewPrgEmissions(_annualPrgEmissions);
+    emit NewBoostLockDuration(_boostLockDuration);
   }
 
   /// @inheritdoc IGoldilend
