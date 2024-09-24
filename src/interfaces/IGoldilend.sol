@@ -49,6 +49,7 @@ interface IGoldilend {
   error TooManyTokens();
   error TooManyLoans();
   error AlreadyInitialized();
+  error IncorrectFairValues();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */

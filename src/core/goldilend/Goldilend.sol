@@ -786,12 +786,15 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
     uint256 nftFairValuesLength = _nftFairValues.length;
+    uint256 totalNftFairValue;
     for(uint256 i; i < nftFairValuesLength;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
+      totalNftFairValue += _nftFairValues[i];
       unchecked {
         ++i;
       }
     }
+    if(totalNftFairValue != 100) revert IncorrectFairValues();
     totalValuation = _totalValuation;
     emit NewTotalValuation(_totalValuation);
   } 
@@ -917,12 +920,15 @@ contract Goldilend is IGoldilend, ERC20, IERC721Receiver {
     berasInitialized = true;
     totalValuation = _totalValuation;
     uint256 nftFairValuesLength = _nftFairValues.length;
+    uint256 totalNftFairValue;
     for(uint256 i; i < nftFairValuesLength;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
+      totalNftFairValue += _nftFairValues[i];
       unchecked {
         ++i;
       }
     }
+    if(totalNftFairValue != 100) revert IncorrectFairValues();
     borrowingActive = true;
   }
 

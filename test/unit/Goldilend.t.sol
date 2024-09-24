@@ -572,6 +572,21 @@ contract UnitGoldilendTest is BaseUnitTest {
     goldilend.changeValue(nfts, values, 69);
   }
 
+  function testChangeValueFailValues() public {
+    address[] memory nfts = new address[](4);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    nfts[2] = address(bandbear);
+    nfts[3] = address(bandbear);
+    uint256[] memory values = new uint256[](4);
+    values[0] = 25;
+    values[1] = 25;
+    values[2] = 25;
+    values[3] = 26;
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.IncorrectFairValues.selector));
+    goldilend.changeValue(nfts, values, 69);
+  }
+
   function testChangeValueSuccess() public {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
@@ -926,6 +941,49 @@ contract UnitGoldilendTest is BaseUnitTest {
       nfts,
       values
     );
+  }
+
+  function testInitializeBerasFailValues() public {
+    Goldilend tempGoldilend;
+    address[] memory rewardTokens = new address[](1);
+    rewardTokens[0] = address(honey);
+    tempGoldilend = new Goldilend(
+      address(goldilocked),
+      address(timelock),
+      address(this),
+      apdao,
+      address(ibgt),
+      address(ibgtvault),
+      rewardTokens
+    );
+    address[] memory nfts = new address[](4);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    nfts[2] = address(bandbear);
+    nfts[3] = address(bandbear);
+    uint256[] memory values = new uint256[](4);
+    values[0] = 25;
+    values[1] = 25;
+    values[2] = 25;
+    values[3] = 26;
+    address[] memory boostNfts = new address[](2);
+    boostNfts[0] = address(honeycomb);
+    boostNfts[1] = address(beradrome);
+    uint8[] memory boosts = new uint8[](2);
+    boosts[0] = 6;
+    boosts[1] = 9;
+    tempGoldilend.initializeParameters(
+      45,
+      5,
+      7 days,
+      365 days,
+      10e18,
+      10e18,
+      5e17,
+      30 days
+    );
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.IncorrectFairValues.selector)); 
+    tempGoldilend.initializeBeras(100e18, nfts, values);
   }
 
   function testInitializeBerasSuccess() public {
