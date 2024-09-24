@@ -90,6 +90,7 @@ interface IGoldilend {
   ) external;
 
   /// @notice Locks partner NFTs to receive boost on staking yield and discounted borrowing rates
+  /// @dev Re-boosting a previous boost will lock the previously locked NFTs until the new boost expiration
   /// @param partnerNFTs Array of NFT addresses to transfer to this contract
   /// @param partnerNFTIds Array of token IDs for NFTs to be transferred
   function boost(
