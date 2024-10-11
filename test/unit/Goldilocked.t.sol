@@ -655,4 +655,34 @@ contract UnitGoldilockedTest is BaseUnitTest {
     goldilocked.stir(amount * 6);
   }
 
+  function testClaimingCheckFailVesting() public {
+    address seedor = address(0x696969696969);
+    vm.prank(seedor);
+    vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
+    goldilocked.claim();
+  }
+
+  function testClaimingCheckSuccess() public {
+    address seedor = address(0x696969696969);
+    vm.warp(block.timestamp + 90 days + 1);    
+    vm.prank(seedor);
+    goldilocked.claim();
+
+    assert(goldilocked.balanceOf(seedor) > 0);
+  }
+
+  function testClaimingCheckSuccessNonSeedor() public {
+    address nonseedor = address(0xabcabcabcabcabccbacba);
+    deal(address(goldiswap), nonseedor, 69e18);
+    vm.startPrank(nonseedor);
+    goldiswap.approve(address(goldilocked), 69e18);
+    goldilocked.stake(69e18);
+    vm.stopPrank();
+    vm.warp(block.timestamp + 1 days);
+    vm.prank(nonseedor);
+    goldilocked.claim();
+
+    assert(goldilocked.balanceOf(nonseedor) > 0);
+  }
+
 }

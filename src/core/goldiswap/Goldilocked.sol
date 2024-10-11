@@ -202,6 +202,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
 
   /// @inheritdoc IGoldilocked
   function claim() external {
+    if(_claimingCheck(msg.sender)) revert NotVested();
     _updateClaimablePrg(msg.sender);
     _claim(msg.sender, claimablePrg[msg.sender]);    
   }
@@ -348,6 +349,18 @@ contract Goldilocked is IGoldilocked, ERC20 {
     }
     else {
       return amount;
+    }
+  }
+
+  /// @notice Calculates if user is able to claim Porridge
+  /// @param user Address of claimer
+  function _claimingCheck(address user) internal view returns (bool) {
+    if(teamAllocations[user] == 0 && seedAllocations[user] == 0) return false;
+    if(block.timestamp > vestingStart) {
+      return false;
+    }
+    else {
+      return true;
     }
   }
 
