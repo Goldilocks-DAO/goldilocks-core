@@ -159,4 +159,25 @@ contract IntegrationBHoneyGoldivaultTest is Test {
     bhoneygoldivault.redeemOwnership(20e18);
   }
 
+  function testImmediateBeginEmissions() public {
+    bhoneygoldivault.beginEmissions(ibhoneyvault);
+  }
+
+  function testEmptyBeginEmissionsAndCompound() public {
+    deal(address(honey), user1, 80e18);
+    vm.startPrank(user1);
+    ERC20(address(honey)).approve(address(bhoneygoldivault), 80e18);
+    bhoneygoldivault.deposit(80e18);
+    vm.stopPrank();
+
+    deal(address(honey), user2, 20e18);
+    vm.startPrank(user2);
+    ERC20(address(honey)).approve(address(bhoneygoldivault), 20e18);
+    bhoneygoldivault.deposit(20e18);
+    vm.stopPrank();
+
+    bhoneygoldivault.beginEmissions(ibhoneyvault);
+    bhoneygoldivault.compound();
+  }
+
 }

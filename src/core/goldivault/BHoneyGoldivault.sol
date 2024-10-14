@@ -60,7 +60,10 @@ contract BHoneyGoldivault is GoldivaultNegative {
     emissions = true;
     ibhoneyVault = _ibhoneyVault;
     ERC20(bhoney).approve(_ibhoneyVault, type(uint256).max);
-    IBHoneyVault(_ibhoneyVault).stake(ERC20(bhoney).balanceOf(address(this)));
+    uint256 stakeAmount = ERC20(bhoney).balanceOf(address(this));
+    if(stakeAmount > 0) {
+      IBHoneyVault(_ibhoneyVault).stake(stakeAmount);
+    }
   }
 
   function finalExit(uint256 withdrawAmout) external {
@@ -96,7 +99,10 @@ contract BHoneyGoldivault is GoldivaultNegative {
     for(uint8 i; i < yieldTokensLength; ++i) {
       SafeTransferLib.safeTransfer(yieldTokens[i], multisig, ERC20(yieldTokens[i]).balanceOf(address(this)) * yieldFee / 1000);
     }
-    IiBGTVault(ibgtVault).stake(ibgtrewards * (1000 - yieldFee) / 1000);
+    uint256 stakeAmount = ibgtrewards * (1000 - yieldFee) / 1000;
+    if(stakeAmount > 0) {
+      IiBGTVault(ibgtVault).stake(stakeAmount);
+    }
   }
 
 }
