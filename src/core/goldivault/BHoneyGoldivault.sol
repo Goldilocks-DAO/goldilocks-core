@@ -81,7 +81,9 @@ contract BHoneyGoldivault is GoldivaultNegative {
   }
 
   function _concludeVaultRewards() internal override {
-    IBHoneyVault(ibhoneyVault).exit();
+    if(emissions) {
+      IBHoneyVault(ibhoneyVault).exit();
+    }
     BHoneyVault(depositVault).makeWithdrawRequest(ERC20(bhoney).balanceOf(address(this)));
   }
 

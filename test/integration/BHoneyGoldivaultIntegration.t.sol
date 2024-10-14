@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
+import { BHoneyVault } from "../../src/interfaces/BHoneyVault.sol";
 import { BHoneyGoldivault } from "../../src/core/goldivault/BHoneyGoldivault.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
@@ -97,31 +98,53 @@ contract IntegrationBHoneyGoldivaultTest is Test {
     bhoneygoldivault.conclude();
 
     vm.warp(block.timestamp + 9 hours);
-    bhoney.call(
-      abi.encodeWithSignature(
-        "forceNewEpoch()"
-      )
-    );
+    BHoneyVault(bhoney).forceNewEpoch();
     vm.warp(block.timestamp + 13 hours);
-    bhoney.call(
-      abi.encodeWithSignature(
-        "forceNewEpoch()"
-      )
-    );
+    BHoneyVault(bhoney).forceNewEpoch();
     vm.warp(block.timestamp + 13 hours);
-    bhoney.call(
-      abi.encodeWithSignature(
-        "forceNewEpoch()"
-      )
-    );
-    (bool success, bytes memory data) = bhoney.call(
-      abi.encodeWithSignature(
-        "maxWithdraw(address)",
-        bhoneygoldivault
-      )
-    );
+    BHoneyVault(bhoney).forceNewEpoch();
 
-    bhoneygoldivault.finalExit(uint256(bytes32(data)));
+    uint256 maxWithdraw = BHoneyVault(bhoney).maxWithdraw(address(bhoneygoldivault));
+    bhoneygoldivault.finalExit(maxWithdraw);
+
+    vm.warp(block.timestamp + 3 hours);
+
+    vm.prank(user1);
+    bhoneygoldivault.redeemYield(80e18);
+    vm.prank(user1);
+    bhoneygoldivault.redeemOwnership(80e18);
+
+    vm.prank(user2);
+    bhoneygoldivault.redeemYield(20e18);
+    vm.prank(user2);
+    bhoneygoldivault.redeemOwnership(20e18);
+  }
+
+  function testNoEmissionsConclude() public {
+    deal(address(honey), user1, 80e18);
+    vm.startPrank(user1);
+    ERC20(address(honey)).approve(address(bhoneygoldivault), 80e18);
+    bhoneygoldivault.deposit(80e18);
+    vm.stopPrank();
+
+    deal(address(honey), user2, 20e18);
+    vm.startPrank(user2);
+    ERC20(address(honey)).approve(address(bhoneygoldivault), 20e18);
+    bhoneygoldivault.deposit(20e18);
+    vm.stopPrank();
+
+    vm.warp(block.timestamp + 604800);
+    bhoneygoldivault.conclude();
+
+    vm.warp(block.timestamp + 9 hours);
+    BHoneyVault(bhoney).forceNewEpoch();
+    vm.warp(block.timestamp + 13 hours);
+    BHoneyVault(bhoney).forceNewEpoch();
+    vm.warp(block.timestamp + 13 hours);
+    BHoneyVault(bhoney).forceNewEpoch();
+
+    uint256 maxWithdraw = BHoneyVault(bhoney).maxWithdraw(address(bhoneygoldivault));
+    bhoneygoldivault.finalExit(maxWithdraw);
 
     vm.warp(block.timestamp + 3 hours);
 
