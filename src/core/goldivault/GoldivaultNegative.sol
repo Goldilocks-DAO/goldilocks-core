@@ -85,6 +85,9 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @notice Amount of deposit token in vault
   uint256 public depositTokenAmount;
 
+  /// @notice Amount of time before deposits are closed
+  uint256 public depositWindow;
+
   /// @notice Addresses of yield tokens
   address[] public yieldTokens;
 
@@ -134,7 +137,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @inheritdoc IGoldivaultNegative
   function deposit(uint256 amount) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    if(remainingTime < 1 days) revert InsufficientTime();
+    if(remainingTime < depositWindow) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
     _vaultDeposit(amount);
@@ -213,7 +216,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @inheritdoc IGoldivaultNegative
   function calculateDeposit(uint256 amount) external view returns (uint256) {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    if(remainingTime < 1 days) revert InsufficientTime();
+    if(remainingTime < depositWindow) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     return FixedPointMathLib.mulWad(amount, timeshare);
   }
@@ -266,6 +269,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
     uint256 _yieldFee,
     uint256 _delay,
     uint256 _duration,
+    uint256 _depositWindow,
     address[] memory _yieldTokens
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
@@ -273,6 +277,7 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
+    depositWindow = _depositWindow;
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
     uint256 yieldTokensLength = _yieldTokens.length;

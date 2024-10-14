@@ -93,11 +93,14 @@ interface IGoldivault {
   /// @param _yieldFee Fee charged for yield
   /// @param _delay Delay period after vault concludes before redemption is allowed
   /// @param _duration Duration of vault
+  /// @param _depositWindow Amount of time before deposits are closed
+  /// @param _yieldTokens Addresses of yield tokens
   function initializeProtocol(
     uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
     uint256 _delay,
     uint256 _duration,
+    uint256 _depositWindow,
     address[] memory _yieldTokens
   ) external;
 

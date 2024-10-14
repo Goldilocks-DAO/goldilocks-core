@@ -73,6 +73,7 @@ contract IntegrationBHoneyGoldivaultTest is Test {
       20,
       36 hours,
       7 days,
+      1 days,
       yieldTokens
     );
   }

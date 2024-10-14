@@ -274,6 +274,7 @@ contract UnitGoldivaultTest is BaseUnitTest {
       20,
       1 days,
       365 days,
+      1 days,
       yieldTokens
     );
   }
@@ -286,6 +287,7 @@ contract UnitGoldivaultTest is BaseUnitTest {
       20,
       1 days,
       365 days,
+      1 days,
       yieldTokens
     );
   }

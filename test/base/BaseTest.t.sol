@@ -306,6 +306,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
       20,
       1 days,
       365 days,
+      1 days,
       yieldTokens
     );
   }
