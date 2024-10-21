@@ -142,11 +142,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
       locksMintAmount
     );
 
-    // initialization of goldiswap
-    deal(address(honey), address(this), initialPSL);
-    honey.approve(address(goldiswap), initialPSL);
-    goldiswap.initializeProtocol(initialPSL);
-
     // deploy govlocks
     govlocks = new GovLocks(
       address(goldiswap),
@@ -240,6 +235,11 @@ abstract contract BaseTest is Test, IERC721Receiver {
       allocationsAddress,
       allocationsAmt
     );
+
+    // initialization of goldiswap
+    deal(address(honey), address(this), initialPSL);
+    honey.approve(address(goldiswap), initialPSL);
+    goldiswap.initializeProtocol(initialPSL);
 
     // deploy goldilend
     address[] memory rewardTokens = new address[](1);
