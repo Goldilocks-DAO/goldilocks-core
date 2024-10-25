@@ -18,6 +18,7 @@ pragma solidity ^0.8.20;
 
 
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
+import { IV3SwapRouter } from "../../interfaces/IV3SwapRouter.sol";
 import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { Goldivault } from "./Goldivault.sol";
@@ -27,6 +28,10 @@ import { YieldToken } from "./YieldToken.sol";
 
 contract WeethGoldivault is Goldivault {
 
+  address router;
+  error SpentTooMuch();
+  error ReceivedTooLitte();
+
   constructor(
     address _ot,
     address _yt,
@@ -35,7 +40,8 @@ contract WeethGoldivault is Goldivault {
     address _depositToken,
     address _depositVault,
     address _ibgt,
-    address _ibgtVault
+    address _ibgtVault,
+    address _router
   ) Goldivault(
     _ot,
     _yt,
@@ -45,9 +51,9 @@ contract WeethGoldivault is Goldivault {
     _depositVault,
     _ibgt,
     _ibgtVault
-  ) {}
-
-  error SpentTooMuch();
+  ) {
+    router = _router;
+  }
 
   function _vaultDeposit(uint256 amount) internal override {}
   function _unstakeDepositToken(uint256 amount) internal override {}
@@ -58,7 +64,6 @@ contract WeethGoldivault is Goldivault {
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
   function buyYT (uint256 ytAmount, uint256 dtAmountMax) external {
-    // require(startingBalance >= _depositAmount);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
@@ -71,7 +76,7 @@ contract WeethGoldivault is Goldivault {
         //sell the OT's acquired  
         //exact amount in = dtAmountMax - spentDt, minimum amount out = 0.1 -- doesn't matter if there's too much slippage here because will rever on line 18 later
         // kodiakOTPool.sell(ot, dtAmountMax - spentDt);
-        remainingYt -= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio);
+        // remainingYt -= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio);
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
       }
       else {
@@ -92,19 +97,28 @@ contract WeethGoldivault is Goldivault {
   /// @param ytAmount Amount of YT for user to sell
   /// @param dtAmountMin Minimum amount of deposit token that user wishes to receive
   function sellYT (uint256 ytAmount, uint256 dtAmountMin) external {
-    // require(ERC20(depositToken).balanceOf(msg.sender) > ytAmount);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).mintOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
     _redeemOwnership(FixedPointMathLib.divWad(ytAmount, ratio)); 
-    //Buy back the amount of minted OT's from the LP (specify that ytAmount/ratio is the exact amount of OT to be bought, it can't be less)
-    //exact amount out = ytAmount/ratio, max amount in = ytAmount/ratio (because OT should always trade at a discount to deposit token)
-    // kodiakOTPool.buy(ot, ytAmount/ratio);
-    OwnershipToken(ot).burnOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
     uint256 dtAmount = ERC20(depositToken).balanceOf(msg.sender) - startingBalance;
+    IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
+      tokenIn: depositToken,
+      tokenOut: ot,
+      // i believe we set this fee when we deploy the pool
+      fee: 3000,
+      recipient: msg.sender,
+      amountOut: FixedPointMathLib.divWad(ytAmount, ratio),
+      amountInMaximum: dtAmount - dtAmountMin - FixedPointMathLib.mulWad(dtAmount, earlyWithdrawalFee),
+      // this set a limit for the price the swap will push the pool to. dont think we need to worry about that?
+      sqrtPriceLimitX96: 0
+    });
+    IV3SwapRouter(router).exactOutputSingle(params);
+    OwnershipToken(ot).burnOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
+    dtAmount = ERC20(depositToken).balanceOf(msg.sender) - startingBalance;
     uint256 fee = earlyWithdrawalFee * dtAmount / 1000;
-    if(ERC20(depositToken).balanceOf(msg.sender) - startingBalance - fee < dtAmountMin) revert SpentTooMuch();
+    if(ERC20(depositToken).balanceOf(msg.sender) - startingBalance - fee < dtAmountMin) revert ReceivedTooLitte();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
   }
 
