@@ -29,6 +29,7 @@ import { YieldToken } from "./YieldToken.sol";
 contract WeethGoldivault is Goldivault {
 
   address router;
+  uint256 tradeFee;
   error SpentTooMuch();
   error ReceivedTooLitte();
 
@@ -41,7 +42,8 @@ contract WeethGoldivault is Goldivault {
     address _depositVault,
     address _ibgt,
     address _ibgtVault,
-    address _router
+    address _router,
+    uint256 _tradeFee
   ) Goldivault(
     _ot,
     _yt,
@@ -53,6 +55,7 @@ contract WeethGoldivault is Goldivault {
     _ibgtVault
   ) {
     router = _router;
+    tradeFee = _tradeFee;
   }
 
   function _vaultDeposit(uint256 amount) internal override {}
@@ -73,20 +76,23 @@ contract WeethGoldivault is Goldivault {
       if(spentDt > dtAmountMax) revert SpentTooMuch();
       if (remainingYt >= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio)) {
         _vaultDeposit(dtAmountMax - spentDt); 
+        uint256 OTMinted = dtAmountMax - spentDt;
+        spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
+        remainingYt -= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio);
         //sell the OT's acquired  
-        //exact amount in = dtAmountMax - spentDt, minimum amount out = 0.1 -- doesn't matter if there's too much slippage here because will rever on line 18 later
-        // kodiakOTPool.sell(ot, dtAmountMax - spentDt);
-        // remainingYt -= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio);
+        //exact amount in = OTMinted, minimum amount out = dtAmountMax - ((YTAmount - remainder)*dtAmountMax/YTAmount) - dtSpent*tradeFee
+        // kodiakOTPool.sell(ot, OTMinted, dtSpent - ((YTAmount - remainder)*dtAmountMax/YTAmount) - dtSpent*tradeFee);
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
       }
       else {
         _vaultDeposit(remainingYt/ratio);
+        spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         //sell the OT's acquired
-        //exact amount in = dtAmountMax - spentDt, minimum amount out = 0.1 -- doesn't matter if there's too much slippage here because will rever on line 18 later
-        // kodiakOTPool.sell(ot, remainingYt/ratio);
+        //exact amount in = remainingYt/ratio,  minimum amount out = spentDt + spent*tradeFee - dtAmountMax
+        // kodiakOTPool.sell(ot, remainingYt/ratio, spentDt + spentDt*tradeFee - dtAmountMax);
         remainingYt = 0;
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
-        uint256 fee = spentDt * earlyWithdrawalFee / 1000;
+        uint256 fee = spentDt * tradeFee / 1000;
         if(spentDt + fee > dtAmountMax) revert SpentTooMuch();
         SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
       }
@@ -110,14 +116,14 @@ contract WeethGoldivault is Goldivault {
       fee: 3000,
       recipient: msg.sender,
       amountOut: FixedPointMathLib.divWad(ytAmount, ratio),
-      amountInMaximum: dtAmount - dtAmountMin - FixedPointMathLib.mulWad(dtAmount, earlyWithdrawalFee),
+      amountInMaximum: dtAmount - dtAmountMin - FixedPointMathLib.mulWad(dtAmount, tradeFee),
       // this set a limit for the price the swap will push the pool to. dont think we need to worry about that?
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactOutputSingle(params);
     OwnershipToken(ot).burnOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
     dtAmount = ERC20(depositToken).balanceOf(msg.sender) - startingBalance;
-    uint256 fee = earlyWithdrawalFee * dtAmount / 1000;
+    uint256 fee = tradeFee * dtAmount / 1000;
     if(ERC20(depositToken).balanceOf(msg.sender) - startingBalance - fee < dtAmountMin) revert ReceivedTooLitte();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
   }
@@ -130,7 +136,7 @@ contract WeethGoldivault is Goldivault {
     YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken(amount);
     depositTokenAmount -= amount;
-    uint256 _fee = earlyWithdrawalFee;
+    uint256 _fee = tradeFee;
     if(remainingTime > 0) {
       uint256 fee = amount * _fee / 1000;
       SafeTransferLib.safeTransfer(depositToken, msg.sender, amount - fee);
@@ -142,4 +148,5 @@ contract WeethGoldivault is Goldivault {
       emit OwnershipTokenRedemption(msg.sender, amount);
     }
   }
+
 }
