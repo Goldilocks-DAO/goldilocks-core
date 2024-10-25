@@ -149,6 +149,7 @@ contract WeethGoldivault is Goldivault {
     _unstakeDepositToken(amount);
     depositTokenAmount -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
+    emit OwnershipTokenRedemption(msg.sender, amount);
   }
 
 }
