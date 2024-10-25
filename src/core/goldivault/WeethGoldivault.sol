@@ -76,20 +76,34 @@ contract WeethGoldivault is Goldivault {
       if(spentDt > dtAmountMax) revert SpentTooMuch();
       if (remainingYt >= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio)) {
         _vaultDeposit(dtAmountMax - spentDt); 
-        uint256 OTMinted = dtAmountMax - spentDt;
+        uint256 otMinted = dtAmountMax - spentDt;
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         remainingYt -= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio);
-        //sell the OT's acquired  
-        //exact amount in = OTMinted, minimum amount out = dtAmountMax - ((YTAmount - remainder)*dtAmountMax/YTAmount) - dtSpent*tradeFee
-        // kodiakOTPool.sell(ot, OTMinted, dtSpent - ((YTAmount - remainder)*dtAmountMax/YTAmount) - dtSpent*tradeFee);
+        IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
+          tokenIn: ot,
+          tokenOut: depositToken,
+          fee: 3000,
+          recipient: msg.sender,
+          amountIn: otMinted,
+          amountOutMinimum: dtAmountMax - FixedPointMathLib.mulWad(ytAmount - remainingYt, FixedPointMathLib.divWad(dtAmountMax, ytAmount)) - (tradeFee * spentDt / 1000),
+          sqrtPriceLimitX96: 0
+        });
+        IV3SwapRouter(router).exactInputSingle(params);
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
       }
       else {
         _vaultDeposit(remainingYt/ratio);
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
-        //sell the OT's acquired
-        //exact amount in = remainingYt/ratio,  minimum amount out = spentDt + spent*tradeFee - dtAmountMax
-        // kodiakOTPool.sell(ot, remainingYt/ratio, spentDt + spentDt*tradeFee - dtAmountMax);
+        IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
+          tokenIn: ot,
+          tokenOut: depositToken,
+          fee: 3000,
+          recipient: msg.sender,
+          amountIn: FixedPointMathLib.divWad(remainingYt, ratio),
+          amountOutMinimum: spentDt + (tradeFee * spentDt / 1000) - dtAmountMax,
+          sqrtPriceLimitX96: 0
+        });
+        IV3SwapRouter(router).exactInputSingle(params);
         remainingYt = 0;
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         uint256 fee = spentDt * tradeFee / 1000;
@@ -112,12 +126,10 @@ contract WeethGoldivault is Goldivault {
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
       tokenIn: depositToken,
       tokenOut: ot,
-      // i believe we set this fee when we deploy the pool
       fee: 3000,
       recipient: msg.sender,
       amountOut: FixedPointMathLib.divWad(ytAmount, ratio),
       amountInMaximum: dtAmount - dtAmountMin - FixedPointMathLib.mulWad(dtAmount, tradeFee),
-      // this set a limit for the price the swap will push the pool to. dont think we need to worry about that?
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactOutputSingle(params);
