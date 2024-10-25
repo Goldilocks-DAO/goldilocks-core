@@ -136,7 +136,7 @@ contract WeethGoldivault is Goldivault {
     OwnershipToken(ot).burnOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
     dtAmount = ERC20(depositToken).balanceOf(msg.sender) - startingBalance;
     uint256 fee = tradeFee * dtAmount / 1000;
-    if(ERC20(depositToken).balanceOf(msg.sender) - startingBalance - fee < dtAmountMin) revert ReceivedTooLitte();
+    if(dtAmount - fee < dtAmountMin) revert ReceivedTooLitte();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
   }
 
@@ -148,17 +148,7 @@ contract WeethGoldivault is Goldivault {
     YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken(amount);
     depositTokenAmount -= amount;
-    uint256 _fee = tradeFee;
-    if(remainingTime > 0) {
-      uint256 fee = amount * _fee / 1000;
-      SafeTransferLib.safeTransfer(depositToken, msg.sender, amount - fee);
-      SafeTransferLib.safeTransfer(depositToken, multisig, fee);
-      emit OwnershipTokenRedemption(msg.sender, amount - fee);
-    }
-    else {
-      SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
-      emit OwnershipTokenRedemption(msg.sender, amount);
-    }
+    SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
   }
 
 }
