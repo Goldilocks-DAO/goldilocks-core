@@ -82,9 +82,10 @@ contract WeethGoldivault is Goldivault {
       }
       else {
         _vaultDeposit(remainingYt/ratio);
+        spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         //sell the OT's acquired
-        //exact amount in = dtAmountMax - spentDt, minimum amount out = 0.1 -- doesn't matter if there's too much slippage here because will rever on line 18 later
-        // kodiakOTPool.sell(ot, remainingYt/ratio);
+        //exact amount in = remainingYt/ratio,  minimum amount out = spentDt + spent*tradeFee - dtAmountMax
+        // kodiakOTPool.sell(ot, remainingYt/ratio, spentDt + spentDt*tradeFee - dtAmountMax);
         remainingYt = 0;
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         uint256 fee = spentDt * earlyWithdrawalFee / 1000;
