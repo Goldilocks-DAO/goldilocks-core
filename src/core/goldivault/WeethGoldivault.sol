@@ -76,7 +76,7 @@ contract WeethGoldivault is Goldivault {
           fee: 3000,
           recipient: msg.sender,
           amountIn: dtAmountMax + DTNeeded,
-          amountOutMinimum: DTNeeded + FixedPointMathLib.divWad(minOTPrice, dtAmountMax),
+          amountOutMinimum: FixedPointMathLib.mulWad(minOTPrice, DTNeeded + dtAmountMax),
           sqrtPriceLimitX96: 0
         });
         IV3SwapRouter(router).exactInputSingle(params);
