@@ -58,11 +58,6 @@ contract WeethGoldivault is Goldivault {
     tradeFee = _tradeFee;
   }
 
-  function _vaultDeposit(uint256 amount) internal override {}
-  function _unstakeDepositToken(uint256 amount) internal override {}
-  function _concludeVaultRewards() internal override {}
-  function _compoundVaultRewards() internal override {}
-
   /// @notice Buys YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
@@ -92,7 +87,7 @@ contract WeethGoldivault is Goldivault {
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
       }
       else {
-        _vaultDeposit(remainingYt/ratio);
+        _vaultDeposit(FixedPointMathLib.divWad(remainingYt, ratio));
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
           tokenIn: ot,
