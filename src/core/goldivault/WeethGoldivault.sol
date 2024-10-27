@@ -87,19 +87,19 @@ contract WeethGoldivault is Goldivault {
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
       }
       else {
-        _vaultDeposit(FixedPointMathLib.divWad(remainingYt, ratio));
+        _vaultDeposit(FixedPointMathLib.divWad(ytAmount - boughtYT, ratio));
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
           tokenIn: ot,
           tokenOut: depositToken,
           fee: 3000,
           recipient: msg.sender,
-          amountIn: FixedPointMathLib.divWad(remainingYt, ratio),
+          amountIn: FixedPointMathLib.divWad(ytAmount - boughtYT, ratio),
           amountOutMinimum: spentDt + (tradeFee * spentDt / 1000) - dtAmountMax,
           sqrtPriceLimitX96: 0
         });
         IV3SwapRouter(router).exactInputSingle(params);
-        remainingYt = 0;
+        boughtYT += ytAmount - boughtYT;
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         uint256 fee = spentDt * tradeFee / 1000;
         if(spentDt + fee > dtAmountMax) revert SpentTooMuch();
