@@ -65,22 +65,22 @@ contract WeethGoldivault is Goldivault {
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
-    uint256 remainingYt = ytAmount;
+    uint256 boughtYT = 0;
     uint256 spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
-    while (remainingYt > 0) {
+    while (boughtYT < ytAmount) {
       if(spentDt > dtAmountMax) revert SpentTooMuch();
-      if (remainingYt >= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio)) {
+      if (ytAmount - boughtYT >= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio)) {
         _vaultDeposit(dtAmountMax - spentDt); 
         uint256 otMinted = dtAmountMax - spentDt;
         spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
-        remainingYt -= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio);
+        boughtYT += FixedPointMathLib.mulWad(otMinted, ratio);
         IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
           tokenIn: ot,
           tokenOut: depositToken,
           fee: 3000,
           recipient: msg.sender,
           amountIn: otMinted,
-          amountOutMinimum: spentDt - FixedPointMathLib.mulWad(ytAmount - remainingYt, FixedPointMathLib.divWad(dtAmountMax, ytAmount)) - (tradeFee * spentDt / 1000),
+          amountOutMinimum: spentDt - FixedPointMathLib.mulWad(boughtYT, FixedPointMathLib.divWad(dtAmountMax, ytAmount)) - (tradeFee * spentDt / 1000),
           sqrtPriceLimitX96: 0
         });
         IV3SwapRouter(router).exactInputSingle(params);
