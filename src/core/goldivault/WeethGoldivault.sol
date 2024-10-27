@@ -62,51 +62,28 @@ contract WeethGoldivault is Goldivault {
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
   function buyYT (uint256 ytAmount, uint256 dtAmountMax) external {
-    uint256 maxYTPrice = dtAmountMax/ytAmount;
-    uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
-    uint256 boughtYT = 0;
-    uint256 spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
-    while (boughtYT < ytAmount) {
-      if(spentDt > dtAmountMax) revert SpentTooMuch();
-      if (ytAmount - boughtYT >= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio)) {
-        _vaultDeposit(dtAmountMax - spentDt); 
-        uint256 otMinted = dtAmountMax - spentDt;
-        boughtYT += FixedPointMathLib.mulWad(otMinted, ratio);
-        IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
+    uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
+    uint256 DTNeeded = FixedPointMathLib.mulWad(ytAmount - dtAmountMax, ratio);
+    require(ERC20(depositToken).balanceOf(address(this))) >= DTNeeded;
+    SafeTransferLib.safeTransferFrom(depositToken, address(this), msg.sender, DTNeeded);
+    _vaultDeposit(dtAmountMax + DTNeeded); 
+    IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
           tokenIn: ot,
           tokenOut: depositToken,
           fee: 3000,
           recipient: msg.sender,
-          amountIn: otMinted,
-          amountOutMinimum: (otMinted) - FixedPointMathLib.mulWad(FixedPointMathLib.mulWad((otMinted), ratio), maxYTPrice),
+          amountIn: dtAmountMax + DTNeeded,
+          amountOutMinimum: DTNeeded,
           sqrtPriceLimitX96: 0
         });
         IV3SwapRouter(router).exactInputSingle(params);
-        spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
-      }
-      else {
-        _vaultDeposit(FixedPointMathLib.divWad(ytAmount - boughtYT, ratio));
-         uint256 otMinted = FixedPointMathLib.divWad(ytAmount - boughtYT, ratio);
-        IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
-          tokenIn: ot,
-          tokenOut: depositToken,
-          fee: 3000,
-          recipient: msg.sender,
-          amountIn: otMinted,
-          amountOutMinimum: (otMinted) - FixedPointMathLib.mulWad(FixedPointMathLib.mulWad((otMinted), ratio), maxYTPrice),
-          sqrtPriceLimitX96: 0
-        });
-        IV3SwapRouter(router).exactInputSingle(params);
-        boughtYT += ytAmount - boughtYT;
-        spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
-        uint256 fee = spentDt * tradeFee / 1000;
-        if(spentDt + fee > dtAmountMax) revert SpentTooMuch();
-        SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
-      }
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), DTNeeded);
+    if(startingBalance - ERC20(depositToken).balanceOf(msg.sender) > dtAmountMax) {
+      revert;
     }
-  }
+    }
 
   /// @notice Sells YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to sell
