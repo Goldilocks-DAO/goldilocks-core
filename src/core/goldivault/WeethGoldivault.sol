@@ -62,6 +62,7 @@ contract WeethGoldivault is Goldivault {
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
   function buyYT (uint256 ytAmount, uint256 dtAmountMax) external {
+    uint256 maxYTPrice = dtAmountMax/ytAmount;
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
@@ -72,7 +73,6 @@ contract WeethGoldivault is Goldivault {
       if (ytAmount - boughtYT >= FixedPointMathLib.mulWad((dtAmountMax - spentDt), ratio)) {
         _vaultDeposit(dtAmountMax - spentDt); 
         uint256 otMinted = dtAmountMax - spentDt;
-        spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
         boughtYT += FixedPointMathLib.mulWad(otMinted, ratio);
         IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
           tokenIn: ot,
@@ -80,7 +80,7 @@ contract WeethGoldivault is Goldivault {
           fee: 3000,
           recipient: msg.sender,
           amountIn: otMinted,
-          amountOutMinimum: spentDt - FixedPointMathLib.mulWad(boughtYT, FixedPointMathLib.divWad(dtAmountMax, ytAmount)) - (tradeFee * spentDt / 1000),
+          amountOutMinimum: (otMinted) - FixedPointMathLib.mulWad(FixedPointMathLib.mulWad((otMinted), ratio), maxYTPrice),
           sqrtPriceLimitX96: 0
         });
         IV3SwapRouter(router).exactInputSingle(params);
@@ -88,14 +88,14 @@ contract WeethGoldivault is Goldivault {
       }
       else {
         _vaultDeposit(FixedPointMathLib.divWad(ytAmount - boughtYT, ratio));
-        spentDt = startingBalance - ERC20(depositToken).balanceOf(msg.sender);
+         uint256 otMinted = FixedPointMathLib.divWad(ytAmount - boughtYT, ratio);
         IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
           tokenIn: ot,
           tokenOut: depositToken,
           fee: 3000,
           recipient: msg.sender,
-          amountIn: FixedPointMathLib.divWad(ytAmount - boughtYT, ratio),
-          amountOutMinimum: spentDt + (tradeFee * spentDt / 1000) - dtAmountMax,
+          amountIn: otMinted,
+          amountOutMinimum: (otMinted) - FixedPointMathLib.mulWad(FixedPointMathLib.mulWad((otMinted), ratio), maxYTPrice),
           sqrtPriceLimitX96: 0
         });
         IV3SwapRouter(router).exactInputSingle(params);
