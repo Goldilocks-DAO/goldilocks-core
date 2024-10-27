@@ -58,14 +58,14 @@ contract WeethGoldivault is Goldivault {
     tradeFee = _tradeFee;
   }
 
-  /// @notice Buys YT using the vault and kodiak pool
+   /// @notice Buys YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
   function buyYT (uint256 ytAmount, uint256 dtAmountMax) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    uint256 DTNeeded = FixedPointMathLib.mulWad(ytAmount - dtAmountMax, ratio);
+    uint256 DTNeeded = FixedPointMathLib.divWad(ytAmount, ratio) -  dtAmountMax;
     require(ERC20(depositToken).balanceOf(address(this))) >= DTNeeded;
     SafeTransferLib.safeTransferFrom(depositToken, address(this), msg.sender, DTNeeded);
     _vaultDeposit(dtAmountMax + DTNeeded); 
