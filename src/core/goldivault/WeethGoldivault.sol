@@ -61,7 +61,8 @@ contract WeethGoldivault is Goldivault {
    /// @notice Buys YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
-  function buyYT (uint256 ytAmount, uint256 dtAmountMax) external {
+  //@param minOTPrice Minimum price received per OT in pool interaction
+  function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 minOTPrice) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
@@ -75,7 +76,7 @@ contract WeethGoldivault is Goldivault {
           fee: 3000,
           recipient: msg.sender,
           amountIn: dtAmountMax + DTNeeded,
-          amountOutMinimum: DTNeeded,
+          amountOutMinimum: DTNeeded + FixedPointMathLib.divWad(minOTPrice, dtAmountMax),
           sqrtPriceLimitX96: 0
         });
         IV3SwapRouter(router).exactInputSingle(params);
