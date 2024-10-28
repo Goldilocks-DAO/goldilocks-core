@@ -32,6 +32,7 @@ contract WeethGoldivault is Goldivault {
   uint256 tradeFee;
   error SpentTooMuch();
   error ReceivedTooLitte();
+  error FlashLoanFailed();
 
   constructor(
     address _ot,
@@ -56,35 +57,36 @@ contract WeethGoldivault is Goldivault {
   ) {
     router = _router;
     tradeFee = _tradeFee;
+    ERC20(_ot).approve(router, type(uint256).max);
+    ERC20(_depositToken).approve(router, type(uint256).max);
   }
 
-   /// @notice Buys YT using the vault and kodiak pool
+  /// @notice Buys YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
-  //@param minOTPrice Minimum price received per OT in pool interaction
-  function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 minOTPrice) external {
+  /// @param otPriceMin Minimum price received per OT
+  function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 otPriceMin) external {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    uint256 DTNeeded = FixedPointMathLib.divWad(ytAmount, ratio) -  dtAmountMax;
-    require(ERC20(depositToken).balanceOf(address(this))) >= DTNeeded;
-    SafeTransferLib.safeTransferFrom(depositToken, address(this), msg.sender, DTNeeded);
-    _vaultDeposit(dtAmountMax + DTNeeded); 
+    uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, ratio) ? 0 : FixedPointMathLib.divWad(ytAmount, ratio) -  dtAmountMax;
+    if(ERC20(depositToken).balanceOf(address(this)) < dtNeeded) revert FlashLoanFailed();
+    SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
+    _deposit(dtAmountMax + dtNeeded);
+    SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), dtAmountMax + dtNeeded);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
-          tokenIn: ot,
-          tokenOut: depositToken,
-          fee: 3000,
-          recipient: msg.sender,
-          amountIn: dtAmountMax + DTNeeded,
-          amountOutMinimum: FixedPointMathLib.mulWad(minOTPrice, DTNeeded + dtAmountMax),
-          sqrtPriceLimitX96: 0
-        });
-        IV3SwapRouter(router).exactInputSingle(params);
-    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), DTNeeded);
-    if(startingBalance - ERC20(depositToken).balanceOf(msg.sender) > dtAmountMax) {
-      revert;
-    }
-    }
+      tokenIn: ot,
+      tokenOut: depositToken,
+      fee: 3000,
+      recipient: msg.sender,
+      amountIn: dtAmountMax + dtNeeded,
+      amountOutMinimum: FixedPointMathLib.mulWad(otPriceMin, dtNeeded + dtAmountMax),
+      sqrtPriceLimitX96: 0
+    });
+    IV3SwapRouter(router).exactInputSingle(params);
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
+    if(startingBalance - ERC20(depositToken).balanceOf(msg.sender) > dtAmountMax) revert SpentTooMuch();
+  }
 
   /// @notice Sells YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to sell
@@ -113,6 +115,20 @@ contract WeethGoldivault is Goldivault {
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
   }
 
+  /// @notice Internal deposit function for buy and sell functions
+  function _deposit(uint256 amount) internal {
+    uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
+    if(remainingTime < depositWindow) revert InsufficientTime();
+    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
+    _vaultDeposit(amount);
+    depositTokenAmount += amount;
+    OwnershipToken(ot).mintOT(msg.sender, amount);
+    YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    emit Deposit(msg.sender, amount);
+  }
+
+  /// @notice Internal redeem function for buy and sell functions
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
