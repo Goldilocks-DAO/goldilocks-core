@@ -70,6 +70,9 @@ contract WeethGoldivault is Goldivault {
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, ratio) ? 0 : FixedPointMathLib.divWad(ytAmount, ratio) -  dtAmountMax;
+    if (dtNeeded == 0){
+      dtAmountMax = FixedPointMathLib.divWad(ytAmount, ratio);
+    }
     if(ERC20(depositToken).balanceOf(address(this)) < dtNeeded) revert FlashLoanFailed();
     SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
     _deposit(dtAmountMax + dtNeeded);
