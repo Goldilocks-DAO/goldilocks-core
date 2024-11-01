@@ -185,7 +185,9 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
         finalYield = ERC20(yieldTokens[i]).balanceOf(address(this));
       }
       uint256 claimable = FixedPointMathLib.mulWad(finalYield, yieldShare);
-      SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
+      if(claimable != 0) {
+        SafeTransferLib.safeTransfer(yieldTokens[i], msg.sender, claimable);
+      }
       unchecked {
         ++i;
       }
