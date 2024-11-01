@@ -27,8 +27,8 @@ import { IiBGTVault } from "../../interfaces/IiBGTVault.sol";
 
 contract BHoneyGoldivault is GoldivaultNegative {
 
+  address public immutable bhoney;
   bool public emissions;
-  address public bhoney;
   address public ibhoneyVault;
   error EmissionsNotLive();
 
