@@ -20,8 +20,8 @@ pragma solidity ^0.8.20;
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { GoldivaultNegative } from "./GoldivaultNegative.sol";
+import { IInfraredBHoneyVault } from "../../interfaces/IInfraredBHoneyVault.sol";
 import { IBHoneyVault } from "../../interfaces/IBHoneyVault.sol";
-import { BHoneyVault } from "../../interfaces/BHoneyVault.sol";
 import { IiBGTVault } from "../../interfaces/IiBGTVault.sol";
 
 
@@ -62,37 +62,37 @@ contract BHoneyGoldivault is GoldivaultNegative {
     ERC20(bhoney).approve(_ibhoneyVault, type(uint256).max);
     uint256 stakeAmount = ERC20(bhoney).balanceOf(address(this));
     if(stakeAmount > 0) {
-      IBHoneyVault(_ibhoneyVault).stake(stakeAmount);
+      IInfraredBHoneyVault(_ibhoneyVault).stake(stakeAmount);
     }
   }
 
   function finalExit(uint256 withdrawAmout) external {
     if(msg.sender != multisig) revert NotMultisig();
-    BHoneyVault(depositVault).withdraw(withdrawAmout, address(this), address(this));
+    IBHoneyVault(depositVault).withdraw(withdrawAmout, address(this), address(this));
   }
 
   function redoWithdrawalRequest() external {
     if(msg.sender != multisig) revert NotMultisig();
-    BHoneyVault(depositVault).makeWithdrawRequest(ERC20(bhoney).balanceOf(address(this)));
+    IBHoneyVault(depositVault).makeWithdrawRequest(ERC20(bhoney).balanceOf(address(this)));
   }
 
   function _vaultDeposit(uint256 amount) internal override {
-    BHoneyVault(depositVault).deposit(amount, address(this));
+    IBHoneyVault(depositVault).deposit(amount, address(this));
     if(emissions) {
-      IBHoneyVault(ibhoneyVault).stake(ERC20(bhoney).balanceOf(address(this)));
+      IInfraredBHoneyVault(ibhoneyVault).stake(ERC20(bhoney).balanceOf(address(this)));
     }
   }
 
   function _concludeVaultRewards() internal override {
     if(emissions) {
-      IBHoneyVault(ibhoneyVault).exit();
+      IInfraredBHoneyVault(ibhoneyVault).exit();
     }
-    BHoneyVault(depositVault).makeWithdrawRequest(ERC20(bhoney).balanceOf(address(this)));
+    IBHoneyVault(depositVault).makeWithdrawRequest(ERC20(bhoney).balanceOf(address(this)));
   }
 
   function _compoundVaultRewards() internal override {
     if(!emissions) revert EmissionsNotLive();
-    IBHoneyVault(ibhoneyVault).getReward();
+    IInfraredBHoneyVault(ibhoneyVault).getReward();
     IiBGTVault(ibgtVault).getReward();
     uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
     uint256 yieldTokensLength = yieldTokens.length;

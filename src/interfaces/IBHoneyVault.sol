@@ -4,11 +4,10 @@ pragma solidity ^0.8.20;
 /// @title IBHoneyVault
 interface IBHoneyVault {
 
-  function stake(uint256 amount) external;
-  function withdraw(uint256 amount) external;
-  function getReward() external;
-  function exit() external;
-  function paused() external view returns (bool);   
-  function earned(address account, address _rewardsToken) external view returns (uint256);
+  function forceNewEpoch() external;
+  function maxWithdraw(address owner) external view returns (uint256);
+  function deposit(uint256 assets, address receiver) external returns (uint256);
+  function makeWithdrawRequest(uint256 shares) external;
+  function withdraw(uint256 assets, address receiver, address owner) external returns (uint256);
 
 }

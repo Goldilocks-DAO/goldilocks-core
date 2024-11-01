@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
-import { BHoneyVault } from "../../src/interfaces/BHoneyVault.sol";
+import { IBHoneyVault } from "../../src/interfaces/IBHoneyVault.sol";
 import { BHoneyGoldivault } from "../../src/core/goldivault/BHoneyGoldivault.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
@@ -98,13 +98,13 @@ contract IntegrationBHoneyGoldivaultTest is Test {
     bhoneygoldivault.conclude();
 
     vm.warp(block.timestamp + 9 hours);
-    BHoneyVault(bhoney).forceNewEpoch();
+    IBHoneyVault(bhoney).forceNewEpoch();
     vm.warp(block.timestamp + 13 hours);
-    BHoneyVault(bhoney).forceNewEpoch();
+    IBHoneyVault(bhoney).forceNewEpoch();
     vm.warp(block.timestamp + 13 hours);
-    BHoneyVault(bhoney).forceNewEpoch();
+    IBHoneyVault(bhoney).forceNewEpoch();
 
-    uint256 maxWithdraw = BHoneyVault(bhoney).maxWithdraw(address(bhoneygoldivault));
+    uint256 maxWithdraw = IBHoneyVault(bhoney).maxWithdraw(address(bhoneygoldivault));
     bhoneygoldivault.finalExit(maxWithdraw);
 
     vm.warp(block.timestamp + 3 hours);
@@ -137,13 +137,13 @@ contract IntegrationBHoneyGoldivaultTest is Test {
     bhoneygoldivault.conclude();
 
     vm.warp(block.timestamp + 9 hours);
-    BHoneyVault(bhoney).forceNewEpoch();
+    IBHoneyVault(bhoney).forceNewEpoch();
     vm.warp(block.timestamp + 13 hours);
-    BHoneyVault(bhoney).forceNewEpoch();
+    IBHoneyVault(bhoney).forceNewEpoch();
     vm.warp(block.timestamp + 13 hours);
-    BHoneyVault(bhoney).forceNewEpoch();
+    IBHoneyVault(bhoney).forceNewEpoch();
 
-    uint256 maxWithdraw = BHoneyVault(bhoney).maxWithdraw(address(bhoneygoldivault));
+    uint256 maxWithdraw = IBHoneyVault(bhoney).maxWithdraw(address(bhoneygoldivault));
     bhoneygoldivault.finalExit(maxWithdraw);
 
     vm.warp(block.timestamp + 3 hours);
