@@ -258,13 +258,15 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
     uint256 _delay,
-    uint256 _duration
+    uint256 _duration,
+    uint256 _depositWindow
   ) external {
     if(msg.sender != timelock) revert NotTimelock();
     earlyWithdrawalFee = _earlyWithdrawalFee;
     yieldFee = _yieldFee;
     delay = _delay;
     duration = _duration;
+    depositWindow = _depositWindow;
     emit NewProtocolParameters(_earlyWithdrawalFee, _yieldFee, _delay, _duration);
   }
 

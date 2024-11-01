@@ -80,11 +80,13 @@ interface IGoldivault {
   /// @param _yieldFee New vault fee
   /// @param _delay New vault delay
   /// @param _duration New vault duration
+  /// @param _depositWindow New deposit window
   function changeProtocolParameters(
     uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
     uint256 _delay,
-    uint256 _duration
+    uint256 _duration,
+    uint256 _depositWindow
   ) external;
 
   /// @notice Allows the multisig to initialize the protocol
