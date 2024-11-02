@@ -180,7 +180,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     assertEq(id, 1);
     assertEq(eta, 0);
     assertEq(startBlock, 71);
-    assertEq(endBlock, 17352);
+    assertEq(endBlock, 78911);
     assertEq(forVotes, 0);
     assertEq(againstVotes, 0);
     assertEq(abstainVotes, 0);
@@ -201,7 +201,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     goldiswap.approve(address(govlocks), 5e18);
     govlocks.deposit(5e18);
     govlocks.delegate(address(this));
-    vm.roll(18000);
+    vm.roll(80000);
     goldigov.propose(targets, values, signatures, calldatas, "");
   }
 
@@ -232,7 +232,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(18000);
+    vm.roll(80000);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.AlreadyQueued.selector));
     goldigov.queue(1);
   }
@@ -295,7 +295,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(18000);
+    vm.roll(80000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
     vm.roll(18003);
@@ -322,7 +322,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(18000);
+    vm.roll(80000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
     vm.roll(18003);
@@ -468,7 +468,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(18000);
+    vm.roll(80000);
     goldigov.queue(1);
     (, , uint256 eta, , , , , , ,) = goldigov.proposals(1);
     
@@ -500,7 +500,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     goldigov.castVote(1, 1);
     vm.prank(againstVoter);
     goldigov.castVote(1, 0);
-    vm.roll(18000);
+    vm.roll(80000);
     Goldigovernor.ProposalState state = goldigov.state(1);
 
     assertEq(uint256(state), 3);
@@ -543,9 +543,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
   }
 
   function testSetVotingPeriodSuccess() public {
-    goldigov.setVotingPeriod(18000);
+    goldigov.setVotingPeriod(80000);
 
-    assertEq(18000, goldigov.votingPeriod());
+    assertEq(80000, goldigov.votingPeriod());
   }
 
   function testSetProposalThresholdFailMultisig() public {
@@ -580,7 +580,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(18000);
+    vm.roll(80000);
     Goldigovernor.ProposalState state = goldigov.state(1);
     assertEq(uint256(state), 3);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalState.selector));

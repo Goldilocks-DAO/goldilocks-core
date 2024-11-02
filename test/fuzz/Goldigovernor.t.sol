@@ -45,7 +45,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     assertEq(id, 1);
     assertEq(eta, 0);
     assertEq(startBlock, 71);
-    assertEq(endBlock, 17352);
+    assertEq(endBlock, 78911);
     assertEq(forVotes, 0);
     assertEq(againstVotes, 0);
     assertEq(abstainVotes, 0);
@@ -77,7 +77,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(18000);
+    vm.roll(80000);
     goldigov.queue(1);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
     (, , uint256 eta, , , , , , ,) = goldigov.proposals(1);
@@ -111,7 +111,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(18000);
+    vm.roll(80000);
     goldigov.queue(1);
     vm.warp(6 days);
     goldigov.execute(1);
@@ -152,7 +152,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     goldigov.propose(targets, values, signatures, calldatas, "");
     vm.roll(72);
     goldigov.castVote(1, 1);
-    vm.roll(18000);
+    vm.roll(80000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
     vm.roll(18003);

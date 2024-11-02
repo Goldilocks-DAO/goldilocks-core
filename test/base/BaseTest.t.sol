@@ -155,7 +155,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(timelock),
       address(govlocks),
       address(this),
-      17281,
+      78840,
       69,
       4e18
     );
