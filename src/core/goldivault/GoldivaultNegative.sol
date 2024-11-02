@@ -242,8 +242,15 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
   /// @inheritdoc IGoldivaultNegative
   function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
+    uint256 existingYieldTokensLength = yieldTokens.length;
     uint256 yieldTokensLength = _yieldTokens.length;
     for(uint256 i; i < yieldTokensLength;) {
+      for(uint256 j; j < existingYieldTokensLength;) {
+        if(yieldTokens[j] == _yieldTokens[i]) revert SameYieldToken();
+        unchecked {
+          ++j;
+        }
+      }
       yieldTokens.push(_yieldTokens[i]);
       unchecked {
         ++i;

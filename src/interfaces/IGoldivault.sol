@@ -29,6 +29,7 @@ interface IGoldivault {
   error AlreadyConcluded();
   error ExcessiveRedeem();
   error TooManyTokens();
+  error SameYieldToken();
   error AlreadyInitialized();  
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -300,4 +300,12 @@ contract UnitGoldivaultTest is BaseUnitTest {
     assertEq(goldivault.yieldTokens(0), address(ibgt));
   }
 
+  function testAddYieldTokensFailSame() public {
+    address[] memory yieldTokens = new address[](1);
+    yieldTokens[0] = address(0x69);
+    goldivault.addYieldTokens(yieldTokens);
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.SameYieldToken.selector));
+    goldivault.addYieldTokens(yieldTokens);
+  }
+
 }
