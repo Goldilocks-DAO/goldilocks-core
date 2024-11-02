@@ -247,7 +247,7 @@ contract UnitGoldivaultTest is BaseUnitTest {
     assertEq(goldivault.earlyWithdrawalFee(), 69);
     assertEq(goldivault.yieldFee(), 69);
     assertEq(goldivault.delay(), 69);
-    assertEq(goldivault.duration(), 69);
+    assertEq(goldivault.duration(), 365 days);
   }
 
   function testAddYieldTokensFailMultisig() public {

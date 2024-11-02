@@ -265,8 +265,10 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     earlyWithdrawalFee = _earlyWithdrawalFee;
     yieldFee = _yieldFee;
     delay = _delay;
-    duration = _duration;
     depositWindow = _depositWindow;
+    if(startTime == 0) {
+      duration = _duration;
+    }
     emit NewProtocolParameters(_earlyWithdrawalFee, _yieldFee, _delay, _duration);
   }
 

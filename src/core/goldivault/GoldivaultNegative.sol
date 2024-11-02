@@ -263,8 +263,10 @@ abstract contract GoldivaultNegative is IGoldivaultNegative, ReentrancyGuard {
     if(msg.sender != timelock) revert NotTimelock();
     yieldFee = _yieldFee;
     delay = _delay;
-    duration = _duration;
     depositWindow = _depositWindow;
+    if(startTime == 0) {
+      duration = _duration;
+    }
     emit NewNegativeProtocolParameters(_yieldFee, _delay, _duration);
   }
 
