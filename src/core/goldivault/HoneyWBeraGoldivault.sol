@@ -61,7 +61,6 @@ contract HoneyWBeraGoldivault is Goldivault {
   function _compoundVaultRewards() internal override {
     IiBGTVault(depositVault).getReward();
     IiBGTVault(ibgtVault).getReward();
-    uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
     uint256 yieldTokensLength = yieldTokens.length;
     for(uint8 i; i < yieldTokensLength; ++i) {
       uint256 fee = ERC20(yieldTokens[i]).balanceOf(address(this)) * yieldFee / 1000;
@@ -69,7 +68,10 @@ contract HoneyWBeraGoldivault is Goldivault {
         SafeTransferLib.safeTransfer(yieldTokens[i], multisig, fee);
       }
     }
-    IiBGTVault(ibgtVault).stake(ibgtrewards * (1000 - yieldFee) / 1000);
+    uint256 stakeAmount = ERC20(ibgt).balanceOf(address(this));
+    if(stakeAmount > 0) {
+      IiBGTVault(ibgtVault).stake(stakeAmount);
+    }
   }
 
 }

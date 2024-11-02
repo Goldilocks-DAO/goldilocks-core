@@ -94,7 +94,6 @@ contract BHoneyGoldivault is GoldivaultNegative {
     if(!emissions) revert EmissionsNotLive();
     IInfraredBHoneyVault(ibhoneyVault).getReward();
     IiBGTVault(ibgtVault).getReward();
-    uint256 ibgtrewards = ERC20(ibgt).balanceOf(address(this));
     uint256 yieldTokensLength = yieldTokens.length;
     for(uint8 i; i < yieldTokensLength; ++i) {
       uint256 fee = ERC20(yieldTokens[i]).balanceOf(address(this)) * yieldFee / 1000;
@@ -102,7 +101,7 @@ contract BHoneyGoldivault is GoldivaultNegative {
         SafeTransferLib.safeTransfer(yieldTokens[i], multisig, fee);
       }
     }
-    uint256 stakeAmount = ibgtrewards * (1000 - yieldFee) / 1000;
+    uint256 stakeAmount = ERC20(ibgt).balanceOf(address(this));
     if(stakeAmount > 0) {
       IiBGTVault(ibgtVault).stake(stakeAmount);
     }
