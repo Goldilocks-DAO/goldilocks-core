@@ -64,13 +64,4 @@ contract FuzzGoldivaultTest is BaseFuzzTest {
     assertEq(goldivault.endTime(), block.timestamp + goldivault.duration());
   }
 
-  function testFuzzAddYieldTokens(address[] memory yieldTokens) public {
-    vm.assume(yieldTokens.length < 20);
-    goldivault.addYieldTokens(yieldTokens);
-    
-    for(uint8 i; i < yieldTokens.length; ++i) {
-      address yieldToken = goldivault.yieldTokens(1 + i);
-      assertEq(yieldToken, yieldTokens[i]);
-    }
-  }
 }

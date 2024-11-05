@@ -216,11 +216,11 @@ contract UnitGoldivaultTest is BaseUnitTest {
   function testChangeProtocolParametersFailTimelock() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(IGoldivault.NotTimelock.selector));
-    goldivault.changeProtocolParameters(69, 69, 69, 69, 69);
+    goldivault.changeProtocolParameters(69, 69, 69, 69);
   }
 
   function testChangeProtocolParametersSuccess() public {
-    bytes memory _calldata = abi.encodeWithSignature("changeProtocolParameters(uint256,uint256,uint256,uint256,uint256)", 69, 69, 69, 69, 69);
+    bytes memory _calldata = abi.encodeWithSignature("changeProtocolParameters(uint256,uint256,uint256,uint256)", 69, 69, 69, 69);
     address[] memory targets = new address[](1);
     targets[0] = address(goldivault);
     string[] memory signatures = new string[](1);

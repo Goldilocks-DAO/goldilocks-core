@@ -14,7 +14,7 @@ interface IGoldivaultNegative {
   event Conclude(uint256 timestamp);
   event Renew(uint256 newStartTime, uint256 newEndTime);
   event NewYieldTokens(address[] newYieldTokens);
-  event NewNegativeProtocolParameters(uint256 newYieldFee, uint256 newDelay, uint256 newDuration);
+  event NewNegativeProtocolParameters(uint256 newYieldFee, uint256 newDelay, uint256 newDepositWindow);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           ERRORS                           */
@@ -79,12 +79,10 @@ interface IGoldivaultNegative {
   /// @dev Callable only by Timelock
   /// @param _yieldFee New vault fee
   /// @param _delay New vault delay
-  /// @param _duration New vault duration
   /// @param _depositWindow New deposit window
   function changeProtocolParameters(
     uint256 _yieldFee,
     uint256 _delay,
-    uint256 _duration,
     uint256 _depositWindow
   ) external;
 
