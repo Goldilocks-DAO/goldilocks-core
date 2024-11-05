@@ -92,20 +92,20 @@ contract WeethGoldivault is Goldivault {
   /// @notice Sells YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to sell
   /// @param dtAmountMin Minimum amount of deposit token that user wishes to receive
-  function sellYT (uint256 ytAmount, uint256 dtAmountMin) external {
+  /// @otPriceMax max price user willing to pay per OT
+  function sellYT (uint256 ytAmount, uint256 dtAmountMin, uint256 otPriceMax) external {
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).mintOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
     _redeemOwnership(FixedPointMathLib.divWad(ytAmount, ratio)); 
-    uint256 dtAmount = ERC20(depositToken).balanceOf(msg.sender) - startingBalance;
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
       tokenIn: depositToken,
       tokenOut: ot,
       fee: 3000,
       recipient: msg.sender,
       amountOut: FixedPointMathLib.divWad(ytAmount, ratio),
-      amountInMaximum: dtAmount - dtAmountMin - FixedPointMathLib.mulWad(dtAmount, tradeFee),
+      amountInMaximum: FixedPointMathLib.mulWad(FixedPointMathLib.divWad(ytAmount, ratio), otPriceMax),
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactOutputSingle(params);
