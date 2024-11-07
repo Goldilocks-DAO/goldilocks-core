@@ -85,7 +85,7 @@ contract WeethGoldivault is Goldivault {
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactInputSingle(params);
-    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
+    if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
     if(startingBalance - ERC20(depositToken).balanceOf(msg.sender) > dtAmountMax) revert SpentTooMuch();
   }
 
