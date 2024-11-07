@@ -61,11 +61,11 @@ contract WeethGoldivault is Goldivault {
     ERC20(_depositToken).approve(router, type(uint256).max);
   }
 
-  /// @notice Buys YT using the vault and kodiak pool
+/// @notice Buys YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
   /// @param otPriceMin Minimum price received per OT
-  function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 otPriceMin) external {
+  function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 otPriceMin) external returns (uint256){
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
@@ -86,19 +86,24 @@ contract WeethGoldivault is Goldivault {
     });
     IV3SwapRouter(router).exactInputSingle(params);
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
-    if(startingBalance - ERC20(depositToken).balanceOf(msg.sender) > dtAmountMax) revert SpentTooMuch();
+    uint256 fee = tradeFee * (startingBalance - ERC20(depositToken).balanceOf(msg.sender)) / 1000;
+    if(startingBalance - ERC20(depositToken).balanceOf(msg.sender) - fee > dtAmountMax) revert SpentTooMuch();
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
+    return(startingBalance - ERC20(depositToken).balanceOf(msg.sender) - fee);
+    //add event
   }
-
-  /// @notice Sells YT using the vault and kodiak pool
+  
+/// @notice Sells YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to sell
   /// @param dtAmountMin Minimum amount of deposit token that user wishes to receive
   /// @param otPriceMax Maximum price user wishes to pay per OT
-  function sellYT (uint256 ytAmount, uint256 dtAmountMin, uint256 otPriceMax) external {
-    uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
+  function sellYT (uint256 ytAmount, uint256 dtAmountMin, uint256 otPriceMax) external returns(uint256) {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
+    uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
+    uint256 startingVaultBalance = ERC20(depositToken).balanceOf(address(this));
     OwnershipToken(ot).mintOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
-    _redeemOwnership(FixedPointMathLib.divWad(ytAmount, ratio)); 
+    _redeemOwnership(FixedPointMathLib.divWad(ytAmount, ratio));
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
       tokenIn: depositToken,
       tokenOut: ot,
@@ -110,10 +115,14 @@ contract WeethGoldivault is Goldivault {
     });
     IV3SwapRouter(router).exactOutputSingle(params);
     OwnershipToken(ot).burnOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
+    uint256 vaultSpend = ERC20(depositToken).balanceOf(address(this)) - startingVaultBalance;
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), vaultSpend);
     uint256 dtAmount = ERC20(depositToken).balanceOf(msg.sender) - startingBalance;
     uint256 fee = tradeFee * dtAmount / 1000;
     if(dtAmount - fee < dtAmountMin) revert ReceivedTooLitte();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
+    return(dtAmount - fee);
+    //add event
   }
 
   /// @notice Internal deposit function for buy and sell functions
