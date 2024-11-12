@@ -88,7 +88,6 @@ contract WeethGoldivault is Goldivault {
     });
     IV3SwapRouter(router).exactInputSingle(params);
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
-    if (ERC20(depositToken).balanceOf(address(this)) != ERC20(depositToken).totalSupply()) revert;
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 fee = tradeFee * (startingBalance - endingBalance) / 1000;
     uint256 spentDt = startingBalance - endingBalance - fee;
@@ -121,7 +120,6 @@ contract WeethGoldivault is Goldivault {
     OwnershipToken(ot).burnOT(address(this), FixedPointMathLib.divWad(ytAmount, ratio));
     uint256 vaultSpend = startingVaultBalance - ERC20(depositToken).balanceOf(address(this));
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), vaultSpend);
-    if (ERC20(depositToken).balanceOf(address(this)) != ERC20(depositToken).totalSupply()) revert;
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if (endingBalance < startingBalance) revert ReceivedTooLitte(); 
     uint256 receivedDt = endingBalance - startingBalance;
