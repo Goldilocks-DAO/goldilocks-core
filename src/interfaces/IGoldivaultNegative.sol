@@ -22,6 +22,7 @@ interface IGoldivaultNegative {
 
   error InsufficientTime();
   error InvalidRedemption();
+  error InvalidDeposit();
   error NotExpired();
   error NotConcluded();
   error NotMultisig();

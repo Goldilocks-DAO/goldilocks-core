@@ -33,6 +33,7 @@ contract WeethGoldivault is Goldivault {
   error SpentTooMuch();
   error ReceivedTooLitte();
   error FlashLoanFailed();
+  error InvalidTrade();
   event YTBuy(address indexed user, uint256 boughtYt, uint256 spentDt);
   event YTSell(address indexed user, uint256 soldYt, uint256 receivedDt);
 
@@ -59,8 +60,6 @@ contract WeethGoldivault is Goldivault {
   ) {
     router = _router;
     tradeFee = _tradeFee;
-    // ERC20(_ot).approve(router, type(uint256).max);
-    // ERC20(_depositToken).approve(router, type(uint256).max);
   }
 
   /// @notice Buys YT using the vault and kodiak pool
@@ -68,6 +67,7 @@ contract WeethGoldivault is Goldivault {
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
   /// @param otPriceMin Minimum price received per OT
   function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 otPriceMin) external nonReentrant {
+    if(ytAmount == 0 || dtAmountMax == 0 || otPriceMin == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
@@ -102,6 +102,7 @@ contract WeethGoldivault is Goldivault {
   /// @param dtAmountMin Minimum amount of deposit token that user wishes to receive
   /// @param otPriceMax Maximum price user wishes to pay per OT
   function sellYT (uint256 ytAmount, uint256 dtAmountMin, uint256 otPriceMax) external nonReentrant {
+    if(ytAmount == 0 || dtAmountMin == 0 || otPriceMax == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
