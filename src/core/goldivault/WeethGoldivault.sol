@@ -70,6 +70,7 @@ contract WeethGoldivault is Goldivault {
   function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 otPriceMin) external nonReentrant {
     if(ytAmount == 0 || dtAmountMax == 0 || otPriceMin == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
+    if(remainingTime == 0) revert AlreadyConcluded();
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, ratio) ? 0 : FixedPointMathLib.divWad(ytAmount, ratio) -  dtAmountMax;
@@ -106,6 +107,7 @@ contract WeethGoldivault is Goldivault {
   function sellYT (uint256 ytAmount, uint256 dtAmountMin, uint256 otPriceMax) external nonReentrant {
     if(ytAmount == 0 || dtAmountMin == 0 || otPriceMax == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
+    if(remainingTime == 0) revert AlreadyConcluded();
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     OwnershipToken(ot).mintOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
