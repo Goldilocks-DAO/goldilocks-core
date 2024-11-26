@@ -31,6 +31,7 @@ contract WeethGoldivault is Goldivault {
   address router;
   uint256 tradeFee;
   error SpentTooMuch();
+  error ReceivedTooMuch();
   error ReceivedTooLitte();
   error FlashLoanFailed();
   error InvalidTrade();
@@ -90,6 +91,7 @@ contract WeethGoldivault is Goldivault {
     IV3SwapRouter(router).exactInputSingle(params);
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
+    if(endingBalance > startingBalance) revert ReceivedTooMuch();
     uint256 fee = tradeFee * (startingBalance - endingBalance) / 1000;
     uint256 spentDt = startingBalance - endingBalance - fee;
     if(spentDt > dtAmountMax) revert SpentTooMuch();
@@ -125,7 +127,7 @@ contract WeethGoldivault is Goldivault {
     uint256 vaultSpend = startingVaultBalance - ERC20(depositToken).balanceOf(address(this));
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), vaultSpend);
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    if (endingBalance < startingBalance) revert ReceivedTooLitte(); 
+    if(endingBalance < startingBalance) revert ReceivedTooLitte(); 
     uint256 receivedDt = endingBalance - startingBalance;
     uint256 fee = tradeFee * receivedDt / 1000;
     if(receivedDt - fee < dtAmountMin) revert ReceivedTooLitte();

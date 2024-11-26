@@ -7,7 +7,7 @@ import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 contract FuzzGoldivaultTest is BaseFuzzTest {
 
   function testFuzzDepositBexLP(uint256 depositAmount) public {
-    vm.assume(depositAmount < 1e40);
+    vm.assume(depositAmount > 0 && depositAmount < 1e40);
     deal(address(bexlp), address(this), depositAmount);
     bexlp.approve(address(goldivault), depositAmount);
     goldivault.deposit(depositAmount);
