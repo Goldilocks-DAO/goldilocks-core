@@ -231,6 +231,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   function renew() external {
     if(msg.sender != timelock) revert NotTimelock();
     if(concludeTime == 0) revert NotConcluded();
+    if(ERC20(ot).totalSupply() != 0 || ERC20(yt).totalSupply() != 0) revert UnclearRenewState();
     startTime = block.timestamp;
     endTime = block.timestamp + duration;
     concludeTime = 0;

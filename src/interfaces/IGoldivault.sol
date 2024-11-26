@@ -30,7 +30,8 @@ interface IGoldivault {
   error ExcessiveRedeem();
   error TooManyTokens();
   error SameYieldToken();
-  error AlreadyInitialized();  
+  error AlreadyInitialized();
+  error UnclearRenewState();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */

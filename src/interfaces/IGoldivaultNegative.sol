@@ -31,6 +31,7 @@ interface IGoldivaultNegative {
   error TooManyTokens();
   error SameYieldToken();
   error AlreadyInitialized();
+  error UnclearRenewState();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
