@@ -135,7 +135,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
 
 
   /// @inheritdoc IGoldivault
-  function deposit(uint256 amount) external {
+  function deposit(uint256 amount) external nonReentrant {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime < depositWindow) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
@@ -148,7 +148,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   }
 
   /// @inheritdoc IGoldivault
-  function redeemOwnership(uint256 amount) external {
+  function redeemOwnership(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
