@@ -46,6 +46,7 @@ contract HoneyWBeraGoldivault is Goldivault {
   ) {}
 
   function _vaultDeposit(uint256 amount) internal override {
+    ERC20(depositToken).approve(depositVault, amount);
     IiBGTVault(depositVault).stake(amount);
   }
 
@@ -70,6 +71,7 @@ contract HoneyWBeraGoldivault is Goldivault {
     }
     uint256 stakeAmount = ERC20(ibgt).balanceOf(address(this));
     if(stakeAmount > 0) {
+      ERC20(ibgt).approve(ibgtVault, stakeAmount);
       IiBGTVault(ibgtVault).stake(stakeAmount);
     }
   }

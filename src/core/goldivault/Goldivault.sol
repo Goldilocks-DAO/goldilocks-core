@@ -124,8 +124,6 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     depositVault = _depositVault;
     ibgt = _ibgt;
     ibgtVault = _ibgtVault;
-    ERC20(_depositToken).approve(_depositVault, type(uint256).max);
-    ERC20(_ibgt).approve(_ibgtVault, type(uint256).max);
   }
 
 

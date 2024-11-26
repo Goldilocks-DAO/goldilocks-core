@@ -59,9 +59,9 @@ contract BHoneyGoldivault is GoldivaultNegative {
     if(msg.sender != multisig) revert NotMultisig();
     emissions = true;
     ibhoneyVault = _ibhoneyVault;
-    ERC20(bhoney).approve(_ibhoneyVault, type(uint256).max);
     uint256 stakeAmount = ERC20(bhoney).balanceOf(address(this));
     if(stakeAmount > 0) {
+      ERC20(bhoney).approve(_ibhoneyVault, stakeAmount);
       IInfraredBHoneyVault(_ibhoneyVault).stake(stakeAmount);
     }
   }
@@ -77,9 +77,14 @@ contract BHoneyGoldivault is GoldivaultNegative {
   }
 
   function _vaultDeposit(uint256 amount) internal override {
+    ERC20(depositToken).approve(depositVault, amount);
     IBHoneyVault(depositVault).deposit(amount, address(this));
     if(emissions) {
-      IInfraredBHoneyVault(ibhoneyVault).stake(ERC20(bhoney).balanceOf(address(this)));
+      uint256 stakeAmount = ERC20(bhoney).balanceOf(address(this));
+      if(stakeAmount > 0) {
+        ERC20(bhoney).approve(ibhoneyVault, stakeAmount);
+        IInfraredBHoneyVault(ibhoneyVault).stake(stakeAmount);
+      }
     }
   }
 
@@ -104,6 +109,7 @@ contract BHoneyGoldivault is GoldivaultNegative {
     }
     uint256 stakeAmount = ERC20(ibgt).balanceOf(address(this));
     if(stakeAmount > 0) {
+      ERC20(ibgt).approve(ibgtVault, stakeAmount);
       IiBGTVault(ibgtVault).stake(stakeAmount);
     }
   }

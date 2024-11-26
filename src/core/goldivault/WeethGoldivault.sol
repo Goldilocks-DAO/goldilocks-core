@@ -59,8 +59,8 @@ contract WeethGoldivault is Goldivault {
   ) {
     router = _router;
     tradeFee = _tradeFee;
-    ERC20(_ot).approve(router, type(uint256).max);
-    ERC20(_depositToken).approve(router, type(uint256).max);
+    // ERC20(_ot).approve(router, type(uint256).max);
+    // ERC20(_depositToken).approve(router, type(uint256).max);
   }
 
   /// @notice Buys YT using the vault and kodiak pool
@@ -77,6 +77,7 @@ contract WeethGoldivault is Goldivault {
     if(dtNeeded > 0) SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
     _deposit(dtAmountMax + dtNeeded);
     SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), dtAmountMax + dtNeeded);
+    ERC20(ot).approve(router, dtAmountMax + dtNeeded);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
       tokenIn: ot,
       tokenOut: depositToken,
@@ -107,13 +108,15 @@ contract WeethGoldivault is Goldivault {
     OwnershipToken(ot).mintOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
     _redeemOwnership(FixedPointMathLib.divWad(ytAmount, ratio));
     uint256 startingVaultBalance = ERC20(depositToken).balanceOf(address(this));
+    uint256 amountInMax = FixedPointMathLib.mulWad(FixedPointMathLib.divWad(ytAmount, ratio), otPriceMax);
+    ERC20(depositToken).approve(router, amountInMax);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
       tokenIn: depositToken,
       tokenOut: ot,
       fee: 3000,
       recipient: address(this),
       amountOut: FixedPointMathLib.divWad(ytAmount, ratio),
-      amountInMaximum: FixedPointMathLib.mulWad(FixedPointMathLib.divWad(ytAmount, ratio), otPriceMax),
+      amountInMaximum: amountInMax,
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactOutputSingle(params);
