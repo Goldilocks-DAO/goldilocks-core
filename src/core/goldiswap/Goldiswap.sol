@@ -171,9 +171,8 @@ contract Goldiswap is IGoldiswap, ERC20 {
     ) = _sellLoop(fsl, psl, totalSupply(), amount);
     uint256 tax = proceeds * SELL_TAX / SELL_PRECISION;    
     if(proceeds - tax < minAmount) revert ExcessiveSlippage();
-    uint256 additionalPsl = FixedPointMathLib.divWad(FixedPointMathLib.mulWad(tax, _psl), (_fsl + _psl));
-    psl = _psl + additionalPsl;
-    fsl = _fsl + tax - additionalPsl;
+    psl = _psl + tax;
+    fsl = _fsl;
     _floorDecrease();
     _burn(msg.sender, amount);
     SafeTransferLib.safeTransfer(honey, msg.sender, proceeds - tax);
