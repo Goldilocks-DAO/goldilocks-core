@@ -66,36 +66,37 @@ contract PointsGoldivault is Goldivault {
   /// @notice Buys YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
-  /// @param otPriceMin Minimum price received per OT
-  function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 otPriceMin) external nonReentrant {
-    if(ytAmount == 0 || dtAmountMax == 0 || otPriceMin == 0) revert InvalidTrade();
+  /// @param amountOutMin Minimum amount of tokens to receive out from the kodiak pool swap
+  function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 amountOutMin) external nonReentrant {
+    if(ytAmount == 0 || dtAmountMax == 0 || amountOutMin == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, ratio) ? 0 : FixedPointMathLib.divWad(ytAmount, ratio) -  dtAmountMax;
+    uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, ratio) ? 0 : FixedPointMathLib.divWad(ytAmount, ratio) - dtAmountMax;
     if(dtNeeded == 0) dtAmountMax = FixedPointMathLib.divWad(ytAmount, ratio);
     if(ERC20(depositToken).balanceOf(address(this)) < dtNeeded) revert FlashLoanFailed();
     if(dtNeeded > 0) SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
     _deposit(dtAmountMax + dtNeeded);
     SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), dtAmountMax + dtNeeded);
-    ERC20(ot).approve(router, dtAmountMax + dtNeeded);
+    ERC20(ot).approve(router, type(uint256).max);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
       tokenIn: ot,
       tokenOut: depositToken,
       fee: 3000,
       recipient: msg.sender,
       amountIn: dtAmountMax + dtNeeded,
-      amountOutMinimum: FixedPointMathLib.mulWad(otPriceMin, dtNeeded + dtAmountMax),
+      amountOutMinimum: amountOutMin,
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactInputSingle(params);
+    ERC20(ot).approve(router, 0);
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
     uint256 fee = tradeFee * (startingBalance - endingBalance) / 1000;
-    uint256 spentDt = startingBalance - endingBalance - fee;
-    if(spentDt > dtAmountMax) revert SpentTooMuch();
+    uint256 spentDt = startingBalance - endingBalance;
+    if(spentDt + fee > dtAmountMax) revert SpentTooMuch();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
     emit YTBuy(msg.sender, ytAmount, spentDt);
   }
@@ -103,9 +104,9 @@ contract PointsGoldivault is Goldivault {
   /// @notice Sells YT using the vault and kodiak pool
   /// @param ytAmount Amount of YT for user to sell
   /// @param dtAmountMin Minimum amount of deposit token that user wishes to receive
-  /// @param otPriceMax Maximum price user wishes to pay per OT
-  function sellYT (uint256 ytAmount, uint256 dtAmountMin, uint256 otPriceMax) external nonReentrant {
-    if(ytAmount == 0 || dtAmountMin == 0 || otPriceMax == 0) revert InvalidTrade();
+  /// @param amountInMax Maximum amount of tokens to spend from the kodiak pool swap
+  function sellYT (uint256 ytAmount, uint256 dtAmountMin, uint256 amountInMax) external nonReentrant {
+    if(ytAmount == 0 || dtAmountMin == 0 || amountInMax == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
@@ -113,8 +114,7 @@ contract PointsGoldivault is Goldivault {
     OwnershipToken(ot).mintOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
     _redeemOwnership(FixedPointMathLib.divWad(ytAmount, ratio));
     uint256 startingVaultBalance = ERC20(depositToken).balanceOf(address(this));
-    uint256 amountInMax = FixedPointMathLib.mulWad(FixedPointMathLib.divWad(ytAmount, ratio), otPriceMax);
-    ERC20(depositToken).approve(router, amountInMax);
+    ERC20(depositToken).approve(router, type(uint256).max);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
       tokenIn: depositToken,
       tokenOut: ot,
@@ -125,6 +125,7 @@ contract PointsGoldivault is Goldivault {
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactOutputSingle(params);
+    ERC20(depositToken).approve(router, 0);
     OwnershipToken(ot).burnOT(address(this), FixedPointMathLib.divWad(ytAmount, ratio));
     uint256 vaultSpend = startingVaultBalance - ERC20(depositToken).balanceOf(address(this));
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), vaultSpend);
