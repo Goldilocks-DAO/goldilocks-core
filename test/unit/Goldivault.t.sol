@@ -199,9 +199,9 @@ contract UnitGoldivaultTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, valuess, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     vm.warp(block.timestamp + 6 days);
     goldigov.execute(1);
@@ -235,9 +235,9 @@ contract UnitGoldivaultTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, valuess, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     vm.warp(block.timestamp + 6 days);
     goldigov.execute(1);

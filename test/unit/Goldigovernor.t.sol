@@ -8,7 +8,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
 
   function testStateSuccess() public {
     proposySamePropose();
-    vm.roll(72);
+    vm.roll(52600);
     Goldigovernor.ProposalState state = goldigov.state(1);
 
     assertEq(uint256(state), 1);
@@ -16,12 +16,12 @@ contract UnitGoldigovernorTest is BaseUnitTest {
 
   function testReceiptSuccess() public {
     proposySamePropose();
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
     assertEq(receipt.support, 1);
-    assertEq(receipt.votes, 5e18);
+    assertEq(receipt.votes, 5_000_001e18);
     assertEq(receipt.hasVoted, true);
   }
 
@@ -51,9 +51,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     calldatas[0] = hex"8eed55d1";
     uint256[] memory values = new uint256[](1);
     values[0] = 69;
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.ArrayMismatch.selector));
@@ -65,9 +65,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     string[] memory signatures = new string[](0);
     bytes[] memory calldatas = new bytes[](0);
     uint256[] memory values = new uint256[](0);
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalAction.selector));
@@ -123,9 +123,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     values[8] = 69;
     values[9] = 69;
     values[10] = 69;
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalAction.selector));
@@ -139,9 +139,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposyDiff();
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
@@ -179,8 +179,8 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     assertEq(proposer, address(this));
     assertEq(id, 1);
     assertEq(eta, 0);
-    assertEq(startBlock, 71);
-    assertEq(endBlock, 78911);
+    assertEq(startBlock, 52562);
+    assertEq(endBlock, 196562);
     assertEq(forVotes, 0);
     assertEq(againstVotes, 0);
     assertEq(abstainVotes, 0);
@@ -197,11 +197,11 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     ) = proposyDiffQueue();
     vm.warp(6 days);
     goldigov.execute(1);
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.propose(targets, values, signatures, calldatas, "");
   }
 
@@ -230,9 +230,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.AlreadyQueued.selector));
     goldigov.queue(1);
   }
@@ -241,7 +241,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     proposyDiffQueue();
     (, , uint256 eta, , , , , , ,) = goldigov.proposals(1);
 
-    assertEq(eta, 432001);
+    assertEq(eta, 172801);
   }
 
   function testExecuteFailState() public {
@@ -251,13 +251,13 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposyDiff();
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalState.selector));
     goldigov.execute(1);
@@ -275,7 +275,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
   function testCancelFailState() public {
     proposyDiffQueue();
     vm.warp(6 days);
-    goldigov.execute(1);    
+    goldigov.execute(1);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalState.selector));
     goldigov.cancel(1);
   }
@@ -293,9 +293,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
     vm.roll(18003);
@@ -320,9 +320,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
     vm.roll(18003);
@@ -338,13 +338,13 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposySame();
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidVoteType.selector));
     goldigov.castVote(1, 3);
   }
@@ -356,13 +356,13 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposySame();
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.AlreadyVoted.selector));
     goldigov.castVote(1, 1);
@@ -370,45 +370,45 @@ contract UnitGoldigovernorTest is BaseUnitTest {
 
   function testCastVoteForSuccess() public {
     proposySamePropose();
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
     assertEq(receipt.support, 1);
-    assertEq(receipt.votes, 5e18);
+    assertEq(receipt.votes, 5_000_001e18);
     assertEq(receipt.hasVoted, true);
   }
 
   function testCastVoteAgainstSuccess() public {
     proposySamePropose();
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 0);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
     assertEq(receipt.support, 0);
-    assertEq(receipt.votes, 5e18);
+    assertEq(receipt.votes, 5_000_001e18);
     assertEq(receipt.hasVoted, true);
   }
 
   function testCastVoteAbstainSuccess() public {
     proposySamePropose();
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 2);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
     assertEq(receipt.support, 2);
-    assertEq(receipt.votes, 5e18);
+    assertEq(receipt.votes, 5_000_001e18);
     assertEq(receipt.hasVoted, true);
   }
 
   function testCastVoteWithReasonSuccess() public {
     proposySamePropose();
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVoteWithReason(1, 1, "reason");
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
     assertEq(receipt.support, 1);
-    assertEq(receipt.votes, 5e18);
+    assertEq(receipt.votes, 5_000_001e18);
     assertEq(receipt.hasVoted, true);
   }
 
@@ -425,11 +425,11 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       uint256[] memory values
     ) = proposyDiff();
     address voter = 0x1e3C6BE5d1178E4BeFdE4Ff74cF19148F6416470;
-    deal(address(goldiswap), address(voter), 5e18);
+    deal(address(goldiswap), address(voter), 5_000_001e18);
     vm.prank(voter);
-    goldiswap.approve(address(govlocks), 5e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
     vm.prank(voter);
-    govlocks.deposit(5e18);
+    govlocks.deposit(5_000_001e18);
     vm.prank(voter);
     govlocks.delegate(voter);
     deal(address(goldiswap), address(this), quorumVotesNum);
@@ -438,7 +438,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     uint8 v = 28;
     bytes32 r = 0x16b88e27f61da00072600b9b04049403f9f064b451d34a5b07aacd7dc48b1f9f;
     bytes32 s = 0x6613e63d75d423834a24b707d13a34304f3b66c6f2eaacb611b327550761215d;
@@ -447,7 +447,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, voter);
 
     assertEq(receipt.support, 1);
-    assertEq(receipt.votes, 5e18);
+    assertEq(receipt.votes, 5_000_001e18);
     assertEq(receipt.hasVoted, true);
   }
 
@@ -466,13 +466,13 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     (, , uint256 eta, , , , , , ,) = goldigov.proposals(1);
     
-    assertEq(432001, eta);
+    assertEq(172801, eta);
   }
 
   function testDefeatedProposal() public {
@@ -496,11 +496,11 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     govlocks.delegate(againstVoter);
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
     vm.prank(againstVoter);
     goldigov.castVote(1, 0);
-    vm.roll(80000);
+    vm.roll(200000);
     Goldigovernor.ProposalState state = goldigov.state(1);
 
     assertEq(uint256(state), 3);
@@ -543,9 +543,9 @@ contract UnitGoldigovernorTest is BaseUnitTest {
   }
 
   function testSetVotingPeriodSuccess() public {
-    goldigov.setVotingPeriod(80000);
+    goldigov.setVotingPeriod(200000);
 
-    assertEq(80000, goldigov.votingPeriod());
+    assertEq(200000, goldigov.votingPeriod());
   }
 
   function testSetProposalThresholdFailMultisig() public {
@@ -572,15 +572,15 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposyDiff();
-    deal(address(goldiswap), address(this), 399e18);
-    goldiswap.approve(address(govlocks), 399e18);
-    govlocks.deposit(399e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     Goldigovernor.ProposalState state = goldigov.state(1);
     assertEq(uint256(state), 3);
     vm.expectRevert(abi.encodeWithSelector(Goldigovernor.InvalidProposalState.selector));

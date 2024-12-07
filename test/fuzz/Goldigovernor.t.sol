@@ -13,7 +13,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     uint256 value,
     uint256 votes
   ) public {
-    vm.assume(votes > 5e18);
+    vm.assume(votes > 5_000_001e18);
     address[] memory targets = new address[](1);
     targets[0] = target;
     string[] memory signatures = new string[](1);
@@ -44,8 +44,8 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     assertEq(proposer, address(this));
     assertEq(id, 1);
     assertEq(eta, 0);
-    assertEq(startBlock, 71);
-    assertEq(endBlock, 78911);
+    assertEq(startBlock, 52562);
+    assertEq(endBlock, 196562);
     assertEq(forVotes, 0);
     assertEq(againstVotes, 0);
     assertEq(abstainVotes, 0);
@@ -75,14 +75,14 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
     (, , uint256 eta, , , , , , ,) = goldigov.proposals(1);
 
-    assertEq(eta, 432001);
+    assertEq(eta, 172801);
     assertEq(receipt.votes, votes);
   }
 
@@ -109,9 +109,9 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     vm.warp(6 days);
     goldigov.execute(1);
@@ -150,9 +150,9 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
     vm.roll(18003);
@@ -186,7 +186,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
@@ -217,7 +217,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 0);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
@@ -248,7 +248,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 2);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
@@ -280,7 +280,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVoteWithReason(1, 1, reason);
     Goldigovernor.Receipt memory receipt = goldigov.receipt(1, address(this));
 
@@ -330,7 +330,7 @@ contract FuzzGoldigovernorTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     uint8 v = 28;
     bytes32 r = 0x16b88e27f61da00072600b9b04049403f9f064b451d34a5b07aacd7dc48b1f9f;
     bytes32 s = 0x6613e63d75d423834a24b707d13a34304f3b66c6f2eaacb611b327550761215d;

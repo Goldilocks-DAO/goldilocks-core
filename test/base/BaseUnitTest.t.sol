@@ -35,7 +35,7 @@ abstract contract BaseUnitTest is BaseTest {
   uint256 interestCalculation1 = 8849690373428410538;
 
   uint256 yearMockBexLPYield = 11574074074074000;  
-  uint256 govLocksAmt = 5e18;
+  uint256 govLocksAmt = 5_000_001e18;
 
   function setUp() public override {
     deployProtocol();
@@ -126,9 +126,9 @@ abstract contract BaseUnitTest is BaseTest {
     uint256[] memory values = new uint256[](2);
     values[0] = 69;
     values[1] = 69;
-    deal(address(goldiswap), address(this), 5e18);
-    goldiswap.approve(address(govlocks), 5e18);
-    govlocks.deposit(5e18);
+    deal(address(goldiswap), address(this), 5_000_001e18);
+    goldiswap.approve(address(govlocks), 5_000_001e18);
+    govlocks.deposit(5_000_001e18);
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
@@ -155,9 +155,9 @@ abstract contract BaseUnitTest is BaseTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
 
     return (targets, signatures, calldatas, values);

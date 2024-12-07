@@ -29,12 +29,12 @@ contract FuzzTimelockTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
 
-    assertEq(timelock.queuedTransactions(keccak256(abi.encode(target, value, sig, _calldata, 432001))), true);
+    assertEq(timelock.queuedTransactions(keccak256(abi.encode(target, value, sig, _calldata, 172801))), true);
   }
 
   function testFuzzExecuteTransaction(
@@ -59,9 +59,9 @@ contract FuzzTimelockTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     vm.warp(6 days);
     goldigov.execute(1);
@@ -100,9 +100,9 @@ contract FuzzTimelockTest is BaseFuzzTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
     vm.roll(18003);

@@ -25,7 +25,7 @@ contract UnitTimelockTest is BaseUnitTest {
       uint256[] memory values
     ) = proposyDiffQueue();
     
-    assertEq(timelock.queuedTransactions(keccak256(abi.encode(targets[0], values[0], signatures[0], calldatas[0], 432001))), true);
+    assertEq(timelock.queuedTransactions(keccak256(abi.encode(targets[0], values[0], signatures[0], calldatas[0], 172801))), true);
   }
 
   function testExecuteTransactionFailGoldigov() public {
@@ -55,7 +55,7 @@ contract UnitTimelockTest is BaseUnitTest {
     vm.warp(690 days);
     vm.prank(address(goldigov));
     vm.expectRevert(abi.encodeWithSelector(Timelock.TxStale.selector));
-    timelock.executeTransaction(targets[0], 432001, values[0], calldatas[0], signatures[0]);
+    timelock.executeTransaction(targets[0], 172801, values[0], calldatas[0], signatures[0]);
   }
 
   function testExecuteTransactionEmptySignature() public {
@@ -77,9 +77,9 @@ contract UnitTimelockTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     vm.warp(6 days);
     goldigov.execute(1);
@@ -99,15 +99,15 @@ contract UnitTimelockTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     vm.warp(6 days);
     deal(address(goldigov), 1 ether);
     vm.prank(address(goldigov));
     vm.expectRevert(abi.encodeWithSelector(Timelock.TxReverted.selector));
-    timelock.executeTransaction(targets[0], 432001, 69, calldatas[0], signatures[0]);  
+    timelock.executeTransaction(targets[0], 172801, 69, calldatas[0], signatures[0]);  
   }
 
   function testExecuteTransactionSuccess() public {
@@ -137,9 +137,9 @@ contract UnitTimelockTest is BaseUnitTest {
     govlocks.delegate(address(this));
     vm.roll(2);
     goldigov.propose(targets, values, signatures, calldatas, "");
-    vm.roll(72);
+    vm.roll(52600);
     goldigov.castVote(1, 1);
-    vm.roll(80000);
+    vm.roll(200000);
     goldigov.queue(1);
     govlocks.withdraw(2e18);
     vm.roll(18003);

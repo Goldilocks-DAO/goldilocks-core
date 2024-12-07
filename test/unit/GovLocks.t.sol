@@ -236,7 +236,7 @@ contract UnitGovLocksTest is BaseUnitTest {
     vm.roll(20);
     vm.prank(user);
     SafeTransferLib.safeTransfer(address(govlocks), address(0x80085), govLocksAmt);
-    vm.roll(73);
+    vm.roll(52600);
 
     vm.prank(user);
     goldigov.castVote(1, 1);

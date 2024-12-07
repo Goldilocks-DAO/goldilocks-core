@@ -101,7 +101,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 initialFSL = 1_140_000e18;
   uint256 initialPSL = 400_000e18;
   uint256 locksMintAmount = 190_000_000e18;
-  uint256 quorumVotesNum = 20_000_001e18;
+  uint256 quorumVotesNum = 50_000_001e18;
   uint256 prgMintAmount = 200_000_000e18;
   uint256 txAmount = 10e18;
   uint256 locksAmount = 100_000e18;
@@ -129,7 +129,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bexvault = new BexLPVault(address(bexlp), address(ibgt));
 
     // deploy timelock
-    timelock = new Timelock(address(goldigovComputed), address(this), 5 days);
+    timelock = new Timelock(address(goldigovComputed), address(this), 2 days);
 
     // deploy goldiswap
     goldiswap = new Goldiswap(
@@ -155,9 +155,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(timelock),
       address(govlocks),
       address(this),
-      78840,
-      69,
-      4e18
+      144_000,
+      52_560,
+      5_000_000e18
     );
 
     // deploy golidlocked
