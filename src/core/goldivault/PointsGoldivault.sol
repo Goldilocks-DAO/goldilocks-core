@@ -74,18 +74,19 @@ contract PointsGoldivault is Goldivault {
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, ratio) ? 0 : FixedPointMathLib.divWad(ytAmount, ratio) - dtAmountMax;
+    uint256 depositAmount = dtAmountMax + dtNeeded;
     if(dtNeeded == 0) dtAmountMax = FixedPointMathLib.divWad(ytAmount, ratio);
     if(ERC20(depositToken).balanceOf(address(this)) < dtNeeded) revert FlashLoanFailed();
     if(dtNeeded > 0) SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
-    _deposit(dtAmountMax + dtNeeded);
-    SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), dtAmountMax + dtNeeded);
+    _deposit(depositAmount);
+    SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), depositAmount);
     ERC20(ot).approve(router, type(uint256).max);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
       tokenIn: ot,
       tokenOut: depositToken,
       fee: 3000,
       recipient: msg.sender,
-      amountIn: dtAmountMax + dtNeeded,
+      amountIn: depositAmount,
       amountOutMinimum: amountOutMin,
       sqrtPriceLimitX96: 0
     });
