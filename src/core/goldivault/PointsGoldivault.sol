@@ -111,8 +111,9 @@ contract PointsGoldivault is Goldivault {
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    OwnershipToken(ot).mintOT(msg.sender, FixedPointMathLib.divWad(ytAmount, ratio));
-    _redeemOwnership(FixedPointMathLib.divWad(ytAmount, ratio));
+    uint256 otAmount = FixedPointMathLib.divWad(ytAmount, ratio);
+    OwnershipToken(ot).mintOT(msg.sender, otAmount);
+    _redeemOwnership(otAmount);
     uint256 startingVaultBalance = ERC20(depositToken).balanceOf(address(this));
     ERC20(depositToken).approve(router, type(uint256).max);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
@@ -120,13 +121,13 @@ contract PointsGoldivault is Goldivault {
       tokenOut: ot,
       fee: 3000,
       recipient: address(this),
-      amountOut: FixedPointMathLib.divWad(ytAmount, ratio),
+      amountOut: otAmount,
       amountInMaximum: amountInMax,
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactOutputSingle(params);
     ERC20(depositToken).approve(router, 0);
-    OwnershipToken(ot).burnOT(address(this), FixedPointMathLib.divWad(ytAmount, ratio));
+    OwnershipToken(ot).burnOT(address(this), otAmount);
     uint256 vaultSpend = startingVaultBalance - ERC20(depositToken).balanceOf(address(this));
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), vaultSpend);
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
