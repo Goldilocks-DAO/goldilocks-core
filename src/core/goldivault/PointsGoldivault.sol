@@ -94,8 +94,8 @@ contract PointsGoldivault is Goldivault {
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
-    uint256 fee = tradeFee * (startingBalance - endingBalance) / 1000;
     uint256 spentDt = startingBalance - endingBalance;
+    uint256 fee = tradeFee * spentDt / 1000;
     if(spentDt + fee > dtAmountMax) revert SpentTooMuch();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, multisig, fee);
     emit YTBuy(msg.sender, ytAmount, spentDt);
