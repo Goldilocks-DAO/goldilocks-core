@@ -142,7 +142,7 @@ contract PointsGoldivault is Goldivault {
 
   /// @notice Internal deposit function for buy and sell functions
   function _deposit(uint256 amount) internal {
-    uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
+    uint256 remainingTime = endTime - block.timestamp;
     if(remainingTime < depositWindow) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
@@ -156,7 +156,7 @@ contract PointsGoldivault is Goldivault {
   /// @notice Internal redeem function for buy and sell functions
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
-    uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
+    uint256 remainingTime = endTime - block.timestamp;
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).burnOT(msg.sender, amount);
     YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
