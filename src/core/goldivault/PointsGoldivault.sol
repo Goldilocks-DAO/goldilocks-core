@@ -71,11 +71,11 @@ contract PointsGoldivault is Goldivault {
     if(ytAmount == 0 || dtAmountMax == 0 || amountOutMin == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
-    uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
+    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, ratio) ? 0 : FixedPointMathLib.divWad(ytAmount, ratio) - dtAmountMax;
+    uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, timeshare) ? 0 : FixedPointMathLib.divWad(ytAmount, timeshare) - dtAmountMax;
     uint256 depositAmount = dtAmountMax + dtNeeded;
-    if(dtNeeded == 0) dtAmountMax = FixedPointMathLib.divWad(ytAmount, ratio);
+    if(dtNeeded == 0) dtAmountMax = FixedPointMathLib.divWad(ytAmount, timeshare);
     if(ERC20(depositToken).balanceOf(address(this)) < dtNeeded) revert FlashLoanFailed();
     if(dtNeeded > 0) SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
     _deposit(depositAmount);
@@ -110,9 +110,9 @@ contract PointsGoldivault is Goldivault {
     if(ytAmount == 0 || dtAmountMin == 0 || amountInMax == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
-    uint256 ratio = FixedPointMathLib.divWad(remainingTime, duration);
+    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    uint256 otAmount = FixedPointMathLib.divWad(ytAmount, ratio);
+    uint256 otAmount = FixedPointMathLib.divWad(ytAmount, timeshare);
     OwnershipToken(ot).mintOT(msg.sender, otAmount);
     _redeemOwnership(otAmount);
     uint256 startingVaultBalance = ERC20(depositToken).balanceOf(address(this));
