@@ -113,7 +113,7 @@ contract PointsGoldivault is Goldivault {
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 otAmount = FixedPointMathLib.divWad(ytAmount, timeshare);
-    _redeemOwnership(otAmount);
+    _redeemOwnership(otAmount, ytAmount);
     uint256 startingVaultBalance = ERC20(depositToken).balanceOf(address(this));
     ERC20(depositToken).approve(router, type(uint256).max);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
@@ -153,11 +153,9 @@ contract PointsGoldivault is Goldivault {
   }
 
   /// @notice Internal redeem function for buy and sell functions
-  function _redeemOwnership(uint256 amount) internal {
+  function _redeemOwnership(uint256 amount, uint256 burnAmount) internal {
     if(amount == 0) revert InvalidRedemption();
-    uint256 remainingTime = endTime - block.timestamp;
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
-    YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    YieldToken(yt).burnYT(msg.sender, burnAmount);
     _unstakeDepositToken(amount);
     depositTokenAmount -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
