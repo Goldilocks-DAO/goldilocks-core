@@ -64,6 +64,7 @@ contract PointsGoldivault is Goldivault {
   }
 
   /// @notice Buys YT using the vault and kodiak pool
+  /// @dev These parameters cannot be 0
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
   /// @param amountOutMin Minimum amount of tokens to receive out from the kodiak pool swap
@@ -103,6 +104,7 @@ contract PointsGoldivault is Goldivault {
   }
   
   /// @notice Sells YT using the vault and kodiak pool
+  /// @dev These parameters cannot be 0
   /// @param ytAmount Amount of YT for user to sell
   /// @param dtAmountMin Minimum amount of deposit token that user wishes to receive
   /// @param amountInMax Maximum amount of tokens to spend from the kodiak pool swap
