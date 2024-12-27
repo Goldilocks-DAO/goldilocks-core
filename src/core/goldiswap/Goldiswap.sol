@@ -354,8 +354,7 @@ contract Goldiswap is IGoldiswap, ERC20 {
       floor = _floorPrice(_fsl, _supply);
       proceeds += FixedPointMathLib.mulWad(market, leftover);
       _psl -= FixedPointMathLib.mulWad((market - floor), leftover);
-      _fsl -= FixedPointMathLib.mulWad(floor, leftover); 
-      _supply -= leftover;
+      _fsl -= FixedPointMathLib.mulWad(floor, leftover);
     }
     return (_fsl, _psl, proceeds);
   }
