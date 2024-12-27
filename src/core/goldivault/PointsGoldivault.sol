@@ -146,7 +146,6 @@ contract PointsGoldivault is Goldivault {
     if(remainingTime < depositWindow) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
-    _vaultDeposit(amount);
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
@@ -157,10 +156,15 @@ contract PointsGoldivault is Goldivault {
   function _redeemOwnership(uint256 amount, uint256 burnAmount) internal {
     if(amount == 0) revert InvalidRedemption();
     YieldToken(yt).burnYT(msg.sender, burnAmount);
-    _unstakeDepositToken(amount);
     depositTokenAmount -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
+
+  /// @dev Disallows staking operations
+  function _vaultDeposit(uint256 amount) internal override {}
+  function _concludeVaultRewards() internal override {}
+  function _compoundVaultRewards() internal override {}
+  function _unstakeDepositToken(uint256 amount) internal override {}
 
 }
