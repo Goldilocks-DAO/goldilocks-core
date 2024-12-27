@@ -78,7 +78,7 @@ contract PointsGoldivault is Goldivault {
     if(dtNeeded == 0) dtAmountMax = FixedPointMathLib.divWad(ytAmount, timeshare);
     if(ERC20(depositToken).balanceOf(address(this)) < dtNeeded) revert FlashLoanFailed();
     if(dtNeeded > 0) SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
-    _deposit(depositAmount);
+    _deposit(depositAmount, remainingTime);
     SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), depositAmount);
     ERC20(ot).approve(router, type(uint256).max);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
@@ -140,8 +140,7 @@ contract PointsGoldivault is Goldivault {
   }
 
   /// @notice Internal deposit function for buy and sell functions
-  function _deposit(uint256 amount) internal {
-    uint256 remainingTime = endTime - block.timestamp;
+  function _deposit(uint256 amount, uint256 remainingTime) internal {
     if(remainingTime < depositWindow) revert InsufficientTime();
     uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
