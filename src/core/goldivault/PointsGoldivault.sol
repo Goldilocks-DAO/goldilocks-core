@@ -84,7 +84,7 @@ contract PointsGoldivault is Goldivault {
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
       tokenIn: ot,
       tokenOut: depositToken,
-      fee: 3000,
+      fee: 500,
       recipient: msg.sender,
       amountIn: depositAmount,
       amountOutMinimum: amountOutMin,
@@ -119,7 +119,7 @@ contract PointsGoldivault is Goldivault {
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
       tokenIn: depositToken,
       tokenOut: ot,
-      fee: 3000,
+      fee: 500,
       recipient: address(this),
       amountOut: otAmount,
       amountInMaximum: amountInMax,
