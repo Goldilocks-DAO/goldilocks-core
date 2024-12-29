@@ -10,7 +10,7 @@ abstract contract BaseFuzzTest is BaseTest {
   uint256 costOf10Locks = 262883805905681940;
   
   uint256 oneDayPrg = 136986301369863000000;
-  uint256 dayOfPrgDebt = 1369878868594621;
+  uint256 dayOfPrgDebt = 1369863013698630;
 
   function setUp() public override {
     deployProtocol();

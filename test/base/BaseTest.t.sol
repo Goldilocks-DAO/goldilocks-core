@@ -187,7 +187,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAddress[22] = address(0x6969696969);
     allocationsAddress[23] = address(0x6969696969);
     allocationsAddress[24] = address(0x6969696969);
-    allocationsAddress[25] = address(0x6969696969);
+    allocationsAddress[25] = address(0x42069420694206942069);
     allocationsAddress[26] = address(0x6969696969);
     allocationsAddress[27] = address(0x6969696969);
     allocationsAddress[28] = address(0x6969696969);
@@ -197,7 +197,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAmt[1] = 12_000_000e18;
     allocationsAmt[2] = 10_000_000e18;
     allocationsAmt[3] = 7_000_000e18;
-    allocationsAmt[4] = 124_000_000e18;
+    allocationsAmt[4] = 113_000_000e18;
     allocationsAmt[5] = 1_000_000e18;
     allocationsAmt[6] = 1_000_000e18;
     allocationsAmt[7] = 1_000_000e18;
@@ -218,7 +218,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAmt[22] = 1_000_000e18;
     allocationsAmt[23] = 1_000_000e18;
     allocationsAmt[24] = 1_000_000e18;
-    allocationsAmt[25] = 1_000_000e18;
+    allocationsAmt[25] = 12_000_000e18;
     allocationsAmt[26] = 1_000_000e18;
     allocationsAmt[27] = 1_000_000e18;
     allocationsAmt[28] = 1_000_000e18;

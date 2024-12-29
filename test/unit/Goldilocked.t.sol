@@ -27,6 +27,10 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.userClaimablePrg(address(this)), oneDayPrg);
   }
 
+  function testUserClaimablePrgInitialZero() public {
+    assertEq(goldilocked.userClaimablePrg(address(0x42069420694206942069)), 0);
+  }
+
   function testUserLockedLocksView() public dealStakeLocks dealGoldiswapMaxHoney {
     goldilocked.borrow(borrowAmount);
 
@@ -58,7 +62,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     assertEq(goldilocked.userStakedLocks(address(this)), locksAmount);
     assertEq(goldiswap.balanceOf(address(goldilocked)), locksAmount + locksMintAmount);
     assertEq(goldiswap.balanceOf(address(this)), 0);
-    assertEq(goldilocked.prgPerTokenDebt(address(this)), initialPrgDebt);
+    assertEq(goldilocked.prgPerTokenDebt(address(this)), 0);
     assertEq(govlocks.getVotes(address(this)), locksAmount);
   }
 

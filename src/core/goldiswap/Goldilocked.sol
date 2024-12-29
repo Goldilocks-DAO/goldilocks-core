@@ -131,6 +131,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     timelock = _timelock;
     multisig = _multisig;
     deployTime = block.timestamp;
+    lastUpdateTime = block.timestamp;
     vestingStart = block.timestamp + 90 days;
     vestingEnd = block.timestamp + 90 days + 365 days;
     annualPrgEmissions = _annualPrgEmissions;

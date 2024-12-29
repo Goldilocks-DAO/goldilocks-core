@@ -23,7 +23,7 @@ abstract contract BaseUnitTest is BaseTest {
   uint256 oneDayHalfPrg = 205479452054794500000;
   uint256 twoDaysPrg = 273972602739726000000;
   uint256 initialPrgDebt = 15854895991;
-  uint256 dayOfPrgDebt = 1369878868594621;
+  uint256 dayOfPrgDebt = 1369863013698630;
   uint256 oneDayPrgBoosted = 137808219178082178000;
   uint256 oneDayPrgMaxBoosted = 143972602739726013000;
   uint256 govTimeYield = twoDaysPrg + twoDaysPrg + twoDaysPrg;
