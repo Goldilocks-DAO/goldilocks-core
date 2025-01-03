@@ -135,14 +135,11 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   /// @inheritdoc IGoldivault
   function deposit(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidDeposit();
-    uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    if(remainingTime < depositWindow) revert InsufficientTime();
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
     _vaultDeposit(amount);
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
-    YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    YieldToken(yt).mintYT(msg.sender, amount);
     emit Deposit(msg.sender, amount);
   }
 
@@ -150,13 +147,12 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   function redeemOwnership(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).burnOT(msg.sender, amount);
-    YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken(amount);
     depositTokenAmount -= amount;
     uint256 _fee = earlyWithdrawalFee;
     if(remainingTime > 0) {
+      YieldToken(yt).burnYT(msg.sender, amount);
       uint256 fee = amount * _fee / 1000;
       SafeTransferLib.safeTransfer(depositToken, msg.sender, amount - fee);
       SafeTransferLib.safeTransfer(depositToken, multisig, fee);
