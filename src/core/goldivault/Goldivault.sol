@@ -208,20 +208,6 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                   EXTERNAL VIEW FUNCTIONS                  */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @inheritdoc IGoldivault
-  function calculateDeposit(uint256 amount) external view returns (uint256) {
-    uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    if(remainingTime < depositWindow) revert InsufficientTime();
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
-    return FixedPointMathLib.mulWad(amount, timeshare);
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 

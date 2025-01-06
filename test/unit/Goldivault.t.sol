@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "../../lib/forge-std/src/console.sol";
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 import { IGoldivault } from "../../src/interfaces/IGoldivault.sol";
@@ -55,6 +56,11 @@ contract UnitGoldivaultTest is BaseUnitTest {
     goldivault.deposit(69);
   }
 
+  function testDepositFailZero() public {
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault.InvalidDeposit.selector));
+    goldivault.deposit(0);
+  }
+
   function testDepositSuccess() public {
     depositBexLP();
 
@@ -106,6 +112,7 @@ contract UnitGoldivaultTest is BaseUnitTest {
     goldivault.redeemOwnership(txAmount);
 
     assertEq(ot.balanceOf(address(this)), 0);
+    assertEq(yt.totalSupply(), 0);
     assertEq(bexlp.balanceOf(address(this)), txAmount);
   }
 
@@ -133,6 +140,15 @@ contract UnitGoldivaultTest is BaseUnitTest {
     assertEq(yt.balanceOf(address(this)), txAmount);
     assertEq(bexlp.balanceOf(address(this)), txAmount);
     assertEq(bexlp.balanceOf(address(bexvault)), 0);
+  }
+
+  function testRedeemOwnershipZeroFee() public {
+    vm.store(address(goldivault), bytes32(uint256(4)), bytes32(uint256(0)));
+    uint256 testAmt = 69e18;
+    deal(address(bexlp), address(this), testAmt);
+    bexlp.approve(address(goldivault), testAmt);
+    goldivault.deposit(testAmt);
+    goldivault.redeemOwnership(testAmt);
   }
 
   function testRedeemOwnershipSuccessHalf() public {
