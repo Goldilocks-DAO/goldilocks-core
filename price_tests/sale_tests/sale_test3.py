@@ -11,7 +11,7 @@ market_price = floor_price + ((psl/supply)*((psl+fsl)/fsl)**6)
 target = get_initital_target_ratio()
 
 sold = 0
-while(sold < 975):
+while(sold < 925):
   fsl, psl, supply, floor_price, market_price = sell(25, fsl, psl, supply, floor_price, market_price)
   sold += 25
 

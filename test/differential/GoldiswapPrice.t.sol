@@ -279,7 +279,7 @@ contract DifferentialGoldiswapPriceTest is BaseUnitTest {
     vm.store(address(goldiswap), bytes32(uint256(1)), bytes32(uint256(200000e18)));
     vm.store(address(goldiswap), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(1000e18)));
     uint256 sold;
-    while(sold < 975e18) {
+    while(sold < 925e18) {
       goldiswap.sell(25e18, 0);
       sold += 25e18;
     }
