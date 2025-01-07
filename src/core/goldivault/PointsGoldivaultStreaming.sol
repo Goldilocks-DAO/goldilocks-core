@@ -13,20 +13,19 @@ pragma solidity ^0.8.20;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ==================================== PointsGoldivault ========================================
+// =============================== PointsGoldivaultStreaming ====================================
 // ==============================================================================================
 
 
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 import { IV3SwapRouter } from "../../interfaces/IV3SwapRouter.sol";
-import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
-import { Goldivault } from "./Goldivault.sol";
+import { GoldivaultStreaming } from "./GoldivaultStreaming.sol";
 import { OwnershipToken } from "./OwnershipToken.sol";
 import { YieldToken } from "./YieldToken.sol";
 
 
-contract PointsGoldivault is Goldivault {
+contract PointsGoldivaultStreaming is GoldivaultStreaming {
 
   address router;
   uint256 tradeFee;
@@ -49,7 +48,7 @@ contract PointsGoldivault is Goldivault {
     address _ibgtVault,
     address _router,
     uint256 _tradeFee
-  ) Goldivault(
+  ) GoldivaultStreaming(
     _ot,
     _yt,
     _multisig,
@@ -72,14 +71,13 @@ contract PointsGoldivault is Goldivault {
     if(ytAmount == 0 || dtAmountMax == 0 || amountOutMin == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    uint256 dtNeeded = dtAmountMax > FixedPointMathLib.divWad(ytAmount, timeshare) ? 0 : FixedPointMathLib.divWad(ytAmount, timeshare) - dtAmountMax;
+    uint256 dtNeeded = dtAmountMax > ytAmount ? 0 : ytAmount - dtAmountMax;
     uint256 depositAmount = dtAmountMax + dtNeeded;
-    if(dtNeeded == 0) dtAmountMax = FixedPointMathLib.divWad(ytAmount, timeshare);
+    if(dtNeeded == 0) dtAmountMax = ytAmount;
     if(ERC20(depositToken).balanceOf(address(this)) < dtNeeded) revert FlashLoanFailed();
     if(dtNeeded > 0) SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
-    _deposit(depositAmount, remainingTime);
+    _deposit(depositAmount);
     SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), depositAmount);
     ERC20(ot).approve(router, type(uint256).max);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
@@ -112,10 +110,8 @@ contract PointsGoldivault is Goldivault {
     if(ytAmount == 0 || dtAmountMin == 0 || amountInMax == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    uint256 otAmount = FixedPointMathLib.divWad(ytAmount, timeshare);
-    _redeemOwnership(otAmount, ytAmount);
+    _redeemOwnership(ytAmount);
     uint256 startingVaultBalance = ERC20(depositToken).balanceOf(address(this));
     ERC20(depositToken).approve(router, type(uint256).max);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
@@ -123,13 +119,13 @@ contract PointsGoldivault is Goldivault {
       tokenOut: ot,
       fee: 500,
       recipient: address(this),
-      amountOut: otAmount,
+      amountOut: ytAmount,
       amountInMaximum: amountInMax,
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactOutputSingle(params);
     ERC20(depositToken).approve(router, 0);
-    OwnershipToken(ot).burnOT(address(this), otAmount);
+    OwnershipToken(ot).burnOT(address(this), ytAmount);
     uint256 vaultSpend = startingVaultBalance - ERC20(depositToken).balanceOf(address(this));
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), vaultSpend);
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
@@ -141,21 +137,25 @@ contract PointsGoldivault is Goldivault {
     emit YTSell(msg.sender, ytAmount, receivedDt - fee);
   }
 
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                    INTERNAL FUNCTIONS                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
   /// @notice Internal deposit function for buy and sell functions
-  function _deposit(uint256 amount, uint256 remainingTime) internal {
-    if(remainingTime < depositWindow) revert InsufficientTime();
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
+  function _deposit(uint256 amount) internal {
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
-    YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    YieldToken(yt).mintYT(msg.sender, amount);
     emit Deposit(msg.sender, amount);
   }
 
   /// @notice Internal redeem function for buy and sell functions
-  function _redeemOwnership(uint256 amount, uint256 burnAmount) internal {
+  function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
-    YieldToken(yt).burnYT(msg.sender, burnAmount);
+    YieldToken(yt).burnYT(msg.sender, amount);
     depositTokenAmount -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
     emit OwnershipTokenRedemption(msg.sender, amount);

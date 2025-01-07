@@ -13,7 +13,7 @@ pragma solidity ^0.8.20;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ======================================== Goldivault ==========================================
+// ================================== GoldivaultStreaming =======================================
 // ==============================================================================================
 
 
@@ -21,7 +21,7 @@ import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathL
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { ReentrancyGuard } from "../../../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
-import { IGoldivault } from "../../interfaces/IGoldivault.sol";
+import { IGoldivaultStreaming } from "../../interfaces/IGoldivaultStreaming.sol";
 import { OwnershipToken } from "./OwnershipToken.sol";
 import { YieldToken } from "./YieldToken.sol";
 
@@ -29,7 +29,7 @@ import { YieldToken } from "./YieldToken.sol";
 /// @title Goldivaults
 /// @notice Splits deposited assets into ownership tokens representing
 /// deposited assets and yield tokens representing future yield of those assets
-abstract contract Goldivault is IGoldivault, ReentrancyGuard {
+abstract contract GoldivaultStreaming is IGoldivaultStreaming, ReentrancyGuard {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -132,31 +132,29 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function deposit(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidDeposit();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime < depositWindow) revert InsufficientTime();
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
     _vaultDeposit(amount);
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
-    YieldToken(yt).mintYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
+    YieldToken(yt).mintYT(msg.sender, amount);
     emit Deposit(msg.sender, amount);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function redeemOwnership(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
     OwnershipToken(ot).burnOT(msg.sender, amount);
-    YieldToken(yt).burnYT(msg.sender, FixedPointMathLib.mulWad(amount, timeshare));
     _unstakeDepositToken(amount);
     depositTokenAmount -= amount;
     uint256 _fee = earlyWithdrawalFee;
     if(remainingTime > 0) {
+      YieldToken(yt).burnYT(msg.sender, amount);
       uint256 fee = amount * _fee / 1000;
       SafeTransferLib.safeTransfer(depositToken, msg.sender, amount - fee);
       SafeTransferLib.safeTransfer(depositToken, multisig, fee);
@@ -168,7 +166,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     }
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function redeemYield(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     if(block.timestamp < concludeTime + delay || concludeTime == 0) revert NotConcluded();
@@ -194,7 +192,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     emit YieldTokenRedemption(msg.sender, amount);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function conclude() external {
     if(block.timestamp < endTime) revert NotExpired();
     if(concludeTime != 0) revert AlreadyConcluded();
@@ -203,23 +201,9 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     emit Conclude(block.timestamp);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function compound() external {
     _compoundVaultRewards();
-  }
-
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                   EXTERNAL VIEW FUNCTIONS                  */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-  /// @inheritdoc IGoldivault
-  function calculateDeposit(uint256 amount) external view returns (uint256) {
-    uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    if(remainingTime < depositWindow) revert InsufficientTime();
-    uint256 timeshare = FixedPointMathLib.divWad(remainingTime, duration);
-    return FixedPointMathLib.mulWad(amount, timeshare);
   }
 
 
@@ -228,7 +212,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function renew() external {
     if(msg.sender != timelock) revert NotTimelock();
     if(concludeTime == 0) revert NotConcluded();
@@ -239,7 +223,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     emit Renew(block.timestamp, block.timestamp + duration);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function addYieldTokens(address[] calldata _yieldTokens) external {
     if(msg.sender != multisig) revert NotMultisig();
     uint256 existingYieldTokensLength = yieldTokens.length;
@@ -260,7 +244,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     emit NewYieldTokens(_yieldTokens);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function changeProtocolParameters(
     uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
@@ -275,7 +259,7 @@ abstract contract Goldivault is IGoldivault, ReentrancyGuard {
     emit NewProtocolParameters(_earlyWithdrawalFee, _yieldFee, _delay, _depositWindow);
   }
 
-  /// @inheritdoc IGoldivault
+  /// @inheritdoc IGoldivaultStreaming
   function initializeProtocol(
     uint256 _earlyWithdrawalFee,
     uint256 _yieldFee,
