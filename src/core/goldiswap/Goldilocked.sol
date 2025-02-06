@@ -141,7 +141,7 @@ contract Goldilocked is IGoldilocked, ERC20 {
     for(uint256 i; i < allocationsAddressLength;) {
       stakedLocks[allocationsAddress[i]] = allocationsAmt[i];
       borrowedHoney[allocationsAddress[i]] = FixedPointMathLib.mulWad(floor, allocationsAmt[i]);
-      i < 3 ? teamAllocations[allocationsAddress[i]] = allocationsAmt[i] : seedAllocations[allocationsAddress[i]] = allocationsAmt[i];
+      i < 9 ? teamAllocations[allocationsAddress[i]] = allocationsAmt[i] : seedAllocations[allocationsAddress[i]] = allocationsAmt[i];
       GovLocks(govlocks).updateStakedBalance(address(0), allocationsAddress[i], allocationsAmt[i]);
       distributedLocks += allocationsAmt[i];
       unchecked {
