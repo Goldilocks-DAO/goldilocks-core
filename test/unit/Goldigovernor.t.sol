@@ -272,6 +272,32 @@ contract UnitGoldigovernorTest is BaseUnitTest {
     assertEq(executed, true);
   }
 
+  function testEmptyExecuteSuccess() public {
+    address[] memory targets = new address[](1);
+    targets[0] = 0x0000000000000000000000000000000000000000;
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = hex"00";
+    uint256[] memory values = new uint256[](1);
+    values[0] = 0;
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, values, signatures, calldatas, "");
+    vm.roll(52600);
+    goldigov.castVote(1, 1);
+    vm.roll(200000);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
+
+    assertEq(executed, true);
+  }
+
   function testCancelFailState() public {
     proposyDiffQueue();
     vm.warp(6 days);
