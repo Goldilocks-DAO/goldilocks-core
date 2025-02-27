@@ -16,6 +16,7 @@ interface IGoldivault4626 {
   event YTSell(address indexed user, uint256 soldYt, uint256 receivedDt);
   event YTStake(address indexed user, uint256 amount);
   event YTUnstake(address indexed user, uint256 amount);
+  event Claim(address indexed user, uint256 amount);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           ERRORS                           */

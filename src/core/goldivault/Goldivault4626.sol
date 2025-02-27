@@ -42,30 +42,51 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
 
   /// @notice Address of ownership token
   address public immutable ot;
+
   /// @notice Address of yield token
   address public immutable yt;
+
   /// @notice Address of deposit token
   address public immutable depositToken;
+  
   /// @notice Address of erc4626 deposit vault
   address public immutable depositVault;
+
   /// @notice Address of multisig
   address public immutable multisig;
+
   /// @notice Address of Kodiak SwapRouter02
   address router;
+
   /// @notice YT trade fee
   uint256 tradeFee;
+
   /// @notice Timestamp of vault start time
   uint256 public startTime;
+
   /// @notice Timestamp of vault end time
   uint256 public endTime;
+
   /// @notice Amount of deposit token in vault
   uint256 public depositTokenAmount;
+
   /// @notice Decimals of underlying asset
-  uint256 tokenDecimals;
+  uint256 public tokenDecimals;
+
+  /// @notice Claimable underlying per staked YT
+  uint256 public claimableUnderlyingPerYTStored;
+
+  /// @notice Assets/shares ratio at last claim update
+  uint256 public lastRatio;
+
   /// @notice Amount of YT staked per user
   mapping(address => uint256) public ytStaked;
-  /// @notice Assets/shares ratio at user last claim
-  mapping(address => uint256) public lastRatio;
+
+  /// @notice Maps user to amount of claimable Underlying
+  mapping(address => uint256) public claimableUnderlying;
+
+  /// @notice Maps user to amount of Underlying reward debt
+  mapping(address => uint256) public underlyingPerTokenDebt;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -96,6 +117,7 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
     depositToken = _depositToken;
     depositVault = _depositVault;
     tokenDecimals = _tokenDecimals;
+    lastRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
   }
@@ -114,6 +136,7 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, amount);
+    _updateClaimableUnderlying(msg.sender);
     _stakeYT(amount);
     emit Deposit(msg.sender, amount);
   }
@@ -122,6 +145,7 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
   function redeemOwnership(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
+    _updateClaimableUnderlying(msg.sender);
     _unstakeYT(amount);
     OwnershipToken(ot).burnOT(msg.sender, amount);
     if(remainingTime > 0) {
@@ -208,18 +232,47 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
     emit YTSell(msg.sender, ytAmount, receivedDt - fee);
   }
 
+  /// @notice Stakes YT
+  function stakeYT(uint256 amount) external {
+    _updateClaimableUnderlying(msg.sender);
+    _stakeYT(amount);
+  }
+
+  /// @notice Unstakes YT
+  function unstakeYT(uint256 amount) external {
+    _updateClaimableUnderlying(msg.sender);
+    _unstakeYT(amount);
+  }
+
   /// @notice Claims rewards for YT stakers
   function claim() public nonReentrant {
-    uint256 oldRatio = lastRatio[msg.sender];
-    uint256 newRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
-    uint256 claimable = FixedPointMathLib.mulWad(ytStaked[msg.sender], FixedPointMathLib.divWad(newRatio - oldRatio, oldRatio));
-    lastRatio[msg.sender] = newRatio;
-    ERC4626(depositVault).withdraw(claimable, msg.sender, address(this));
+    _updateClaimableUnderlying(msg.sender);
+    _claim(msg.sender, claimableUnderlying[msg.sender]);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    INTERNAL FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @notice Updates claimable Underlying
+  /// @param user Address of user
+  function _updateClaimableUnderlying(address user) internal {
+    claimableUnderlyingPerYTStored = _claimableUnderlyingPerYT();
+    lastRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
+    if(user != address(0)) {
+      claimableUnderlying[user] = _calculateClaimableUnderlying(user);
+      underlyingPerTokenDebt[user] = claimableUnderlyingPerYTStored;
+    }
+  }
+
+  /// @notice Internal function for claiming underlying
+  function _claim(address claimer, uint256 claimable) internal {
+    if(claimable > 0) {
+      claimableUnderlying[claimer] = 0;
+      ERC4626(depositVault).withdraw(claimable, msg.sender, address(this));
+      emit Claim(claimer, claimable);
+    }
+  }
 
   /// @notice Internal deposit function for buy and sell functions
   function _deposit(uint256 amount) internal {
@@ -229,6 +282,7 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, amount);
+    _updateClaimableUnderlying(msg.sender);
     _stakeYT(amount);
     emit Deposit(msg.sender, amount);
   }
@@ -236,6 +290,7 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
   /// @notice Internal redeem function for buy and sell functions
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
+    _updateClaimableUnderlying(msg.sender);
     _unstakeYT(amount);
     YieldToken(yt).burnYT(msg.sender, amount);
     ERC4626(depositVault).withdraw(amount, msg.sender, address(this));
@@ -245,23 +300,39 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
 
   /// @notice Stakes YT into contract
   function _stakeYT(uint256 amount) internal {
-    uint256 newRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
-    SafeTransferLib.safeTransferFrom(yt, msg.sender, address(this), amount);
-    if(lastRatio[msg.sender] == 0) {
-      lastRatio[msg.sender] = newRatio;
-      return;
-    }
-    claim();
     ytStaked[msg.sender] += amount;
+    SafeTransferLib.safeTransferFrom(yt, msg.sender, address(this), amount);
     emit YTStake(msg.sender, amount);
   }
 
+  /// @notice Unstakes YT from contract
   function _unstakeYT(uint256 amount) internal {
     if(amount > ytStaked[msg.sender]) revert InvalidUnstake();
-    claim();
     ytStaked[msg.sender] -= amount;
     SafeTransferLib.safeTransfer(yt, msg.sender, amount);
     emit YTUnstake(msg.sender, amount);
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                   INTERNAL VIEW FUNCTIONS                  */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice Calculates claimable underlying
+  function _calculateClaimableUnderlying(address user) internal view returns (uint256) {
+    return FixedPointMathLib.mulWad(ytStaked[user], _claimableUnderlyingPerYT() - underlyingPerTokenDebt[user]) + claimableUnderlying[user];
+  }
+
+  /// @notice Calculates claimable underlying per YT
+  function _claimableUnderlyingPerYT() internal view returns (uint256) {
+    uint256 oldRatio = lastRatio;
+    uint256 newRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
+    uint256 ratioDiff = newRatio - oldRatio;
+    if(ratioDiff == 0) {
+      return claimableUnderlyingPerYTStored;
+    }
+    return claimableUnderlyingPerYTStored + ratioDiff;
   }
 
 }
