@@ -17,12 +17,12 @@ pragma solidity ^0.8.20;
 // ==============================================================================================
 
 
-import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
-import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
-import { GoldivaultNegative } from "./GoldivaultNegative.sol";
-import { IInfraredBHoneyVault } from "../../interfaces/IInfraredBHoneyVault.sol";
-import { IBHoneyVault } from "../../interfaces/IBHoneyVault.sol";
-import { IiBGTVault } from "../../interfaces/IiBGTVault.sol";
+import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
+import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
+import { GoldivaultNegative } from "../core/goldivault/GoldivaultNegative.sol";
+import { IInfraredBHoneyVault } from "../interfaces/IInfraredBHoneyVault.sol";
+import { IBHoneyVault } from "../interfaces/IBHoneyVault.sol";
+import { IiBGTVault } from "../interfaces/IiBGTVault.sol";
 
 
 contract BHoneyGoldivault is GoldivaultNegative {

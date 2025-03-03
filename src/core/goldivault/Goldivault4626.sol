@@ -32,7 +32,7 @@ import { YieldToken } from "./YieldToken.sol";
 /// @notice Splits deposited assets into ownership tokens representing
 /// deposited assets and yield tokens representing future yield of those assets
 ///This vault is for streaming the yield continuously to users. Staking mechanism for YT copied from Goldilend
-contract Goldivault is IGoldivault4626, ReentrancyGuard {
+contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -250,9 +250,11 @@ contract Goldivault is IGoldivault4626, ReentrancyGuard {
     _claim(msg.sender, claimableUnderlying[msg.sender]);
   }
 
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    INTERNAL FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
 
   /// @notice Updates claimable Underlying
   /// @param user Address of user

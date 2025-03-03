@@ -17,10 +17,10 @@ pragma solidity ^0.8.20;
 // ==============================================================================================
 
 
-import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
-import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
-import { Goldivault } from "./Goldivault.sol";
-import { IiBGTVault } from "../../interfaces/IiBGTVault.sol";
+import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
+import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
+import { Goldivault } from "../core/goldivault/Goldivault.sol";
+import { IiBGTVault } from "../interfaces/IiBGTVault.sol";
 
 
 contract HoneyWBeraGoldivault is Goldivault {
