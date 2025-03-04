@@ -5,7 +5,7 @@ import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { IBHoneyVault } from "../../src/interfaces/IBHoneyVault.sol";
-import { BHoneyGoldivault } from "../../src/core/goldivault/BHoneyGoldivault.sol";
+import { BHoneyGoldivault } from "../../src/mock/BHoneyGoldivault.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 
