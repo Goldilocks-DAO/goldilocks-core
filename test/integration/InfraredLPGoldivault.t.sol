@@ -72,4 +72,12 @@ contract IntegrationUSDCHoneyInfraredLPGoldivaultTest is Test {
     );
   }
 
+  // Staking different amounts of YT over the same time period and checking that they receive rewards proportional to stake size
+  // Repeat 1 with cases where other users are staking/unstaking/claiming in during the staking period.
+  // Adding in new reward tokens and claiming them once vault is already live and users are already staked.
+  // Test buy and sell and check they don’t mess up staking rewards
+  // Redeeming before and after maturity, checking the YT burning works correctly
+  // Check that unstaking YT, transferring to another wallet, staking and then selling works as expected
+  // Check that unstaked selling works
+
 }

@@ -165,7 +165,8 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     _updateClaimableRewards(msg.sender);
-    _unstakeYT(amount);
+    uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
+    _unstakeYT(unstakableAmount);
     OwnershipToken(ot).burnOT(msg.sender, amount);
     if(remainingTime > 0) {
       YieldToken(yt).burnYT(msg.sender, amount);
@@ -260,7 +261,8 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   /// @notice Unstakes YT
   function unstakeYT(uint256 amount) external {
     _updateClaimableRewards(msg.sender);
-    _unstakeYT(amount);
+    uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
+    _unstakeYT(unstakableAmount);
   }
 
   /// @notice Claims rewards for YT stakers
@@ -341,7 +343,8 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
     _updateClaimableRewards(msg.sender);
-    _unstakeYT(amount);
+    uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
+    _unstakeYT(unstakableAmount);
     YieldToken(yt).burnYT(msg.sender, amount);
     _unstakeDepositToken(amount);
     depositTokenAmount -= amount; 
@@ -393,6 +396,17 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
       return claimableRewardsPerYTStored[rewardToken];
     }
     return claimableRewardsPerYTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards, totalYtStaked);
+  }
+
+  /// @notice Calculates if the user has unstaked YT
+  function _unstakableYT(address user, uint256 unstakeAmount) internal view returns (uint256) {
+    uint256 _ytStaked = ytStaked[user];
+    if(unstakeAmount > _ytStaked) {
+      return unstakeAmount - _ytStaked;
+    }
+    else {
+      return unstakeAmount;      
+    }
   }
 
 }
