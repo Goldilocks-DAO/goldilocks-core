@@ -49,17 +49,17 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   /// @notice Address of deposit vault
   address public immutable depositVault;
 
-  /// @notice Address of the reward token
-  address public immutable rewardToken;
-
   /// @notice Address of multisig
   address public immutable multisig;
 
   /// @notice Address of Kodiak SwapRouter02
-  address router;
+  address public immutable router;
 
   /// @notice YT trade fee
-  uint256 tradeFee;
+  uint256 public immutable tradeFee;
+
+  /// @notice Fee charged for yield
+  uint256 public immutable yieldFee;
 
   /// @notice Timestamp of vault start time
   uint256 public startTime;
@@ -67,44 +67,29 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   /// @notice Timestamp of vault end time
   uint256 public endTime;
 
-  /// @notice Timestamp of vault conclude time
-  uint256 public concludeTime;
-
-  /// @notice Fee charged for early withdrawal
-  uint256 public earlyWithdrawalFee;
-
-  /// @notice Fee charged for yield
-  uint256 public yieldFee;
-
-  /// @notice Delay period after vault concludes before redemption is allowed
-  uint256 public delay;
-
-  /// @notice Duration of vault
-  uint256 public duration;
-
   /// @notice Amount of deposit token in vault
   uint256 public depositTokenAmount;
 
   /// @notice Amount of yield tokens staked in contract
   uint256 public totalYtStaked;
 
-  /// @notice Amount of time before deposits are closed
-  uint256 public depositWindow;
+  /// @notice Previous claimable rewards per YT Staked
+  mapping(address => uint256) public claimableRewardsPerYTStored;
 
-  /// @notice Claimable underlying per staked YT
-  uint256 public claimableUnderlyingPerYTStored;
-
-  /// @notice block.timestamp at last claim update
-  uint256 public lastUpdate;
+  /// @notice block.timestamp at last reward update
+  mapping(address => uint256) public lastRewardUpdateTime;
 
   /// @notice Amount of YT staked per user
   mapping(address => uint256) public ytStaked;
 
-  /// @notice Maps user to amount of claimable Underlying
-  mapping(address => uint256) public claimableUnderlying;
+  /// @notice Maps user to reward token to amount of claimable rewards
+  mapping(address => mapping(address => uint256)) public claimableRewards;
 
-  /// @notice Maps user to amount of Underlying reward debt
-  mapping(address => uint256) public underlyingPerTokenDebt;
+  /// @notice Maps user to reward token to amount of reward debt
+  mapping(address => mapping(address => uint256)) public rewardPerTokenDebt;
+
+  /// @notice Addresses of the reward tokens
+  address[] public rewardTokens;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -118,25 +103,42 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   /// @param _multisig Address of multisig
   /// @param _depositToken Address of deposit token
   /// @param _depositVault Address of deposit token vault
-  /// @param _rewardToken Address of the reward token
+  /// @param _router Address of the Kodiak SwapRouter02
+  /// @param _yieldFee Fee charged on yield claims
+  /// @param _tradeFee Fee charged on YT trades
   /// @param _duration Duration of vault
+  /// @param _rewardTokens Addresses of the reward tokens
   constructor(
     address _ot,
     address _yt,
     address _multisig,
     address _depositToken,
     address _depositVault,
-    address _rewardToken,
-    uint256 _duration
+    address _router,
+    uint256 _tradeFee,
+    uint256 _yieldFee,
+    uint256 _duration,
+    address[] memory _rewardTokens
   ) {
     ot = _ot;
     yt = _yt;
     multisig = _multisig;
     depositToken = _depositToken;
     depositVault = _depositVault;
-    rewardToken = _rewardToken;
+    router = _router;
+    tradeFee = _tradeFee;
+    yieldFee = _yieldFee;
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
+    uint256 rewardTokensLength = _rewardTokens.length;
+    if(rewardTokensLength > 20) revert TooManyTokens();
+    for(uint256 i; i < rewardTokensLength;) {
+      rewardTokens.push(_rewardTokens[i]);
+      lastRewardUpdateTime[_rewardTokens[i]] = block.timestamp;
+      unchecked {
+        ++i;
+      }
+    }
   }
 
 
@@ -153,7 +155,7 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, amount);
-    _updateClaimableUnderlying(msg.sender);
+    _updateClaimableRewards(msg.sender);
     _stakeYT(amount);
     emit Deposit(msg.sender, amount);
   }
@@ -162,7 +164,7 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   function redeemOwnership(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    _updateClaimableUnderlying(msg.sender);
+    _updateClaimableRewards(msg.sender);
     _unstakeYT(amount);
     OwnershipToken(ot).burnOT(msg.sender, amount);
     if(remainingTime > 0) {
@@ -174,7 +176,7 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
 
-    /// @notice Buys YT using the vault and kodiak pool
+  /// @notice Buys YT using the vault and kodiak pool
   /// @dev These parameters cannot be 0
   /// @param ytAmount Amount of YT for user to buy
   /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
@@ -251,20 +253,25 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
 
   /// @notice Stakes YT
   function stakeYT(uint256 amount) external {
-    _updateClaimableUnderlying(msg.sender);
+    _updateClaimableRewards(msg.sender);
     _stakeYT(amount);
   }
 
   /// @notice Unstakes YT
   function unstakeYT(uint256 amount) external {
-    _updateClaimableUnderlying(msg.sender);
+    _updateClaimableRewards(msg.sender);
     _unstakeYT(amount);
   }
 
   /// @notice Claims rewards for YT stakers
   function claim() public nonReentrant {
-    _updateClaimableUnderlying(msg.sender);
-    _claim(msg.sender, claimableUnderlying[msg.sender]);
+    _updateClaimableRewards(msg.sender);
+    _claim(msg.sender);
+  }
+
+  /// @notice Updates claimable rewards
+  function _updateClaimableRewards() external {
+    _updateClaimableRewards(address(0));
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -272,26 +279,48 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-  /// @notice Updates claimable Underlying
-  /// @param user Address of user
-  function _updateClaimableUnderlying(address user) internal {
-    uint256 prevRewardBalance = ERC20(depositToken).balanceOf(address(this));
+  /// @notice Updates claimable rewards for user
+  /// @param user Address of user to update claimable rewards for
+  function _updateClaimableRewards(address user) internal {
+    uint256 rewardTokensLength = rewardTokens.length;
+    uint256[] memory outstandingRewardsPerReward = new uint256[](rewardTokensLength);
+    for(uint256 i; i < rewardTokensLength;) {
+      outstandingRewardsPerReward[i] = ERC20(rewardTokens[i]).balanceOf(address(this));
+      unchecked {
+        ++i;
+      }
+    }
     IiBGTVault(depositVault).getReward();
-    uint256 outstandingRewards = ERC20(depositToken).balanceOf(address(this)) - prevRewardBalance;
-    claimableUnderlyingPerYTStored = _claimableUnderlyingPerYT(outstandingRewards);
-    lastUpdate = block.timestamp;
-    if(user != address(0)) {
-      claimableUnderlying[user] = _calculateClaimableUnderlying(user, outstandingRewards);
-      underlyingPerTokenDebt[user] = claimableUnderlyingPerYTStored;
+    for(uint256 i; i < rewardTokensLength;) {
+      address rewardToken = rewardTokens[i];
+      uint256 outstandingRewards = ERC20(rewardToken).balanceOf(address(this)) - outstandingRewardsPerReward[i];
+      claimableRewardsPerYTStored[rewardToken] = _claimableRewardPerYT(rewardToken, outstandingRewards);
+      lastRewardUpdateTime[rewardToken] = block.timestamp;
+      if(user != address(0)) {
+        claimableRewards[user][rewardToken] = _calculateClaimableRewards(user, rewardToken, outstandingRewards);
+        rewardPerTokenDebt[user][rewardToken] = claimableRewardsPerYTStored[rewardToken];
+      }
+      unchecked {
+        ++i;
+      }
     }
   }
 
   /// @notice Internal function for claiming underlying
-  function _claim(address claimer, uint256 claimable) internal {
-    if(claimable > 0) {
-      claimableUnderlying[claimer] = 0;
-      IiBGTVault(depositVault).getReward();
-      emit Claim(claimer, claimable);
+  function _claim(address claimer) internal {
+    uint256 rewardTokensLength = rewardTokens.length;
+    for(uint256 i; i < rewardTokensLength;) {
+      address rewardToken = rewardTokens[i];
+      uint256 reward = claimableRewards[claimer][rewardToken];
+      if(reward > 0) {
+        uint256 fee = yieldFee * reward / 1000;
+        claimableRewards[claimer][rewardToken] = 0;
+        SafeTransferLib.safeTransfer(rewardToken, claimer, reward - fee);
+        SafeTransferLib.safeTransfer(rewardToken, multisig, fee);
+      }
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -303,7 +332,7 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, amount);
-    _updateClaimableUnderlying(msg.sender);
+    _updateClaimableRewards(msg.sender);
     _stakeYT(amount);
     emit Deposit(msg.sender, amount);
   }
@@ -311,7 +340,7 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   /// @notice Internal redeem function for buy and sell functions
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
-    _updateClaimableUnderlying(msg.sender);
+    _updateClaimableRewards(msg.sender);
     _unstakeYT(amount);
     YieldToken(yt).burnYT(msg.sender, amount);
     _unstakeDepositToken(amount);
@@ -354,16 +383,16 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
 
 
   /// @notice Calculates claimable underlying
-  function _calculateClaimableUnderlying(address user, uint256 outstandingRewards) internal view returns (uint256) {
-    return FixedPointMathLib.mulWad(ytStaked[user], _claimableUnderlyingPerYT(outstandingRewards) - underlyingPerTokenDebt[user]) + claimableUnderlying[user];
+  function _calculateClaimableRewards(address user, address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
+    return FixedPointMathLib.mulWad(ytStaked[user], _claimableRewardPerYT(rewardToken, outstandingRewards) - rewardPerTokenDebt[user][rewardToken]) + claimableRewards[user][rewardToken];
   }
 
   /// @notice Calculates claimable underlying per YT
-  function _claimableUnderlyingPerYT(uint256 outstandingRewards) internal view returns (uint256) {
-    if(block.timestamp - lastUpdate == 0) {
-      return claimableUnderlyingPerYTStored;
+  function _claimableRewardPerYT(address rewardToken, uint256 outstandingRewards) internal view returns (uint256) {
+    if(block.timestamp - lastRewardUpdateTime[rewardToken] == 0 || outstandingRewards == 0 || totalYtStaked == 0) {
+      return claimableRewardsPerYTStored[rewardToken];
     }
-    return claimableUnderlyingPerYTStored + FixedPointMathLib.divWad(outstandingRewards, totalYtStaked);
+    return claimableRewardsPerYTStored[rewardToken] + FixedPointMathLib.divWad(outstandingRewards, totalYtStaked);
   }
 
 }

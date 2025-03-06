@@ -10,8 +10,6 @@ interface IGoldivaultStaking {
 
   event Deposit(address indexed user, uint256 amount);
   event OwnershipTokenRedemption(address indexed user, uint256 amount);
-  event YieldTokenRedemption(address indexed user, uint256 amount);
-  event NewProtocolParameters(uint256 newEarlyWithdrawalFee, uint256 newYieldFee, uint256 newDelay, uint256 newDepositWindow);
   event YTBuy(address indexed user, uint256 boughtYt, uint256 spentDt);
   event YTSell(address indexed user, uint256 soldYt, uint256 receivedDt);
   event YTStake(address indexed user, uint256 amount);
@@ -24,15 +22,14 @@ interface IGoldivaultStaking {
 
   error InvalidRedemption();
   error InvalidDeposit();
-  error NotMultisig();
   error AlreadyConcluded();
-  error AlreadyInitialized();
   error SpentTooMuch();
   error ReceivedTooMuch();
   error ReceivedTooLitte();
   error FlashLoanFailed();
   error InvalidTrade();
   error InvalidUnstake();
+  error TooManyTokens();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
