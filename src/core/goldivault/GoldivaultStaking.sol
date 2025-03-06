@@ -104,8 +104,8 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   /// @param _depositToken Address of deposit token
   /// @param _depositVault Address of deposit token vault
   /// @param _router Address of the Kodiak SwapRouter02
-  /// @param _yieldFee Fee charged on yield claims
   /// @param _tradeFee Fee charged on YT trades
+  /// @param _yieldFee Fee charged on yield claims
   /// @param _duration Duration of vault
   /// @param _rewardTokens Addresses of the reward tokens
   constructor(

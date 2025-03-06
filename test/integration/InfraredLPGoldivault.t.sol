@@ -40,7 +40,9 @@ contract IntegrationUSDCHoneyInfraredLPGoldivaultTest is Test {
   USDCHoneyInfraredOT uhiot;
   USDCHoneyInfraredYT uhiyt;
 
+  address multisig = 0x6FD990680deB2e5DCcb2FFEfC3307Dd34138Ac7F;
   address ibgt = 0xac03CABA51e17c86c921E1f6CBFBdC91F8BB2E6b;
+  address router = 0xe301E48F77963D3F7DbD2a4796962Bd7f3867Fb4;
   address depositToken = 0xF961a8f6d8c69E7321e78d254ecAfBcc3A637621; // usdc-honey LP token
   address depositVault = 0x1419515d3703d8F2cc72Fa6A341685E4f8e7e8e1; // usdc-honey LP infrared vault
 
@@ -57,15 +59,16 @@ contract IntegrationUSDCHoneyInfraredLPGoldivaultTest is Test {
     uhiot = new USDCHoneyInfraredOT("USDC/Honey Infrared LP OT", "UHIOT", address(usdchoneyinfraredvaultComputed));
     uhiyt = new USDCHoneyInfraredYT("USDC/Honey Infrared LP YT", "UHIYT", address(usdchoneyinfraredvaultComputed));
     usdchoneyinfraredvault = new GoldivaultStaking(
-      address(bhot),
-      address(bhyt),
-      address(this),
-      address(this),
-      honey,
-      bhoney,
-      ibgt,
-      ibgtVault,
-      bhoney
+      address(uhiot),
+      address(uhiyt),
+      multisig,
+      depositToken,
+      depositVault,
+      router,
+      5,
+      30,
+      30 days,
+      yieldTokens
     );
   }
 
