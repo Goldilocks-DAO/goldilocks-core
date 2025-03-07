@@ -401,7 +401,10 @@ contract GoldivaultStaking is IGoldivaultStaking, ReentrancyGuard {
   /// @notice Calculates if the user has unstaked YT
   function _unstakableYT(address user, uint256 unstakeAmount) internal view returns (uint256) {
     uint256 _ytStaked = ytStaked[user];
-    if(unstakeAmount > _ytStaked) {
+    if(_ytStaked == 0) {
+      return 0;
+    }
+    else if(unstakeAmount > _ytStaked) {
       return unstakeAmount - _ytStaked;
     }
     else {
