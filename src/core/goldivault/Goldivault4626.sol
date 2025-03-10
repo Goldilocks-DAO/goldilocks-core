@@ -79,6 +79,9 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Assets/shares ratio at last claim update
   uint256 public lastRatio;
 
+  /// @notice Amount of yield tokens staked in contract
+  uint256 public totalYtStaked;
+
   /// @notice Amount of YT staked per user
   mapping(address => uint256) public ytStaked;
 
@@ -146,7 +149,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     _updateClaimableUnderlying(msg.sender);
-    _unstakeYT(amount);
+    uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
+    _unstakeYT(unstakableAmount);
     OwnershipToken(ot).burnOT(msg.sender, amount);
     if(remainingTime > 0) {
       YieldToken(yt).burnYT(msg.sender, amount);
@@ -241,13 +245,24 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Unstakes YT
   function unstakeYT(uint256 amount) external {
     _updateClaimableUnderlying(msg.sender);
-    _unstakeYT(amount);
+    uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
+    _unstakeYT(unstakableAmount);
   }
 
   /// @notice Claims rewards for YT stakers
   function claim() public nonReentrant {
     _updateClaimableUnderlying(msg.sender);
     _claim(msg.sender, claimableUnderlying[msg.sender]);
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                    EXTERNAL FUNCTIONS                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  function userClaimableUnderlying(address user) external view returns (uint256) {
+    return _calculateClaimableUnderlying(user);
   }
 
 
@@ -293,7 +308,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
     _updateClaimableUnderlying(msg.sender);
-    _unstakeYT(amount);
+    uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
+    _unstakeYT(unstakableAmount);
     YieldToken(yt).burnYT(msg.sender, amount);
     ERC4626(depositVault).withdraw(amount, msg.sender, address(this));
     depositTokenAmount -= amount; 
@@ -303,6 +319,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Stakes YT into contract
   function _stakeYT(uint256 amount) internal {
     ytStaked[msg.sender] += amount;
+    totalYtStaked += amount;
     SafeTransferLib.safeTransferFrom(yt, msg.sender, address(this), amount);
     emit YTStake(msg.sender, amount);
   }
@@ -311,6 +328,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function _unstakeYT(uint256 amount) internal {
     if(amount > ytStaked[msg.sender]) revert InvalidUnstake();
     ytStaked[msg.sender] -= amount;
+    totalYtStaked -= amount;
     SafeTransferLib.safeTransfer(yt, msg.sender, amount);
     emit YTUnstake(msg.sender, amount);
   }
@@ -331,10 +349,24 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 oldRatio = lastRatio;
     uint256 newRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
     uint256 ratioDiff = newRatio - oldRatio;
-    if(ratioDiff == 0) {
+    if(ratioDiff == 0 || totalYtStaked == 0) {
       return claimableUnderlyingPerYTStored;
     }
-    return claimableUnderlyingPerYTStored + ratioDiff;
+    return claimableUnderlyingPerYTStored + FixedPointMathLib.divWad(ratioDiff, totalYtStaked);
+  }
+
+  /// @notice Calculates if the user has unstaked YT
+  function _unstakableYT(address user, uint256 unstakeAmount) internal view returns (uint256) {
+    uint256 _ytStaked = ytStaked[user];
+    if(_ytStaked == 0) {
+      return 0;
+    }
+    else if(unstakeAmount > _ytStaked) {
+      return unstakeAmount - _ytStaked;
+    }
+    else {
+      return unstakeAmount;      
+    }
   }
 
 }
