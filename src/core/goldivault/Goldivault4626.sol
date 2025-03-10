@@ -135,7 +135,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function deposit(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidDeposit();
     uint256 depositAmount = ERC4626(depositVault).convertToAssets(amount);
-    SafeTransferLib.safeTransferFrom(depositVault, msg.sender, address(this), depositAmount);
+    SafeTransferLib.safeTransferFrom(depositVault, msg.sender, address(this), amount);
     depositTokenAmount += depositAmount;
     OwnershipToken(ot).mintOT(msg.sender, depositAmount);
     YieldToken(yt).mintYT(msg.sender, depositAmount);
