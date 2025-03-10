@@ -286,7 +286,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function _claim(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
       claimableUnderlying[claimer] = 0;
-      ERC4626(depositVault).withdraw(claimable, msg.sender, address(this));
+      SafeTransferLib.safeTransfer(depositVault, claimer, claimable);
       emit Claim(claimer, claimable);
     }
   }
