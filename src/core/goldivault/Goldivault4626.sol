@@ -134,20 +134,21 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @inheritdoc IGoldivault4626
   function deposit(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidDeposit();
-    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
-    ERC4626(depositVault).deposit(amount, address(this));
-    depositTokenAmount += amount;
-    OwnershipToken(ot).mintOT(msg.sender, amount);
-    YieldToken(yt).mintYT(msg.sender, amount);
+    uint256 depositAmount = ERC4626(depositVault).convertToAssets(amount);
+    SafeTransferLib.safeTransferFrom(depositVault, msg.sender, address(this), depositAmount);
+    depositTokenAmount += depositAmount;
+    OwnershipToken(ot).mintOT(msg.sender, depositAmount);
+    YieldToken(yt).mintYT(msg.sender, depositAmount);
     _updateClaimableUnderlying(msg.sender);
-    _stakeYT(amount);
-    emit Deposit(msg.sender, amount);
+    _stakeYT(depositAmount);
+    emit Deposit(msg.sender, depositAmount);
   }
 
   /// @inheritdoc IGoldivault4626
   function redeemOwnership(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
+    uint256 withdrawAmount = ERC4626(depositVault).convertToShares(amount);
     _updateClaimableUnderlying(msg.sender);
     uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
     _unstakeYT(unstakableAmount);
@@ -155,7 +156,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(remainingTime > 0) {
       YieldToken(yt).burnYT(msg.sender, amount);
     }
-    ERC4626(depositVault).withdraw(amount, address(this), address(this));
+    ERC4626(depositVault).withdraw(withdrawAmount, address(this), address(this));
     depositTokenAmount -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
     emit OwnershipTokenRedemption(msg.sender, amount);
@@ -245,8 +246,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Unstakes YT
   function unstakeYT(uint256 amount) external {
     _updateClaimableUnderlying(msg.sender);
-    uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
-    _unstakeYT(unstakableAmount);
+    _unstakeYT(amount);
   }
 
   /// @notice Claims rewards for YT stakers
@@ -257,7 +257,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                    EXTERNAL FUNCTIONS                      */
+  /*                 EXTERNAL VIEW FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
@@ -294,24 +294,25 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Internal deposit function for buy and sell functions
   function _deposit(uint256 amount) internal {
     if(amount == 0) revert InvalidDeposit();
-    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
-    ERC4626(depositVault).deposit(amount, address(this));
-    depositTokenAmount += amount;
-    OwnershipToken(ot).mintOT(msg.sender, amount);
-    YieldToken(yt).mintYT(msg.sender, amount);
+    uint256 depositAmount = ERC4626(depositVault).convertToAssets(amount);
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), depositAmount);
+    depositTokenAmount += depositAmount;
+    OwnershipToken(ot).mintOT(msg.sender, depositAmount);
+    YieldToken(yt).mintYT(msg.sender, depositAmount);
     _updateClaimableUnderlying(msg.sender);
-    _stakeYT(amount);
-    emit Deposit(msg.sender, amount);
+    _stakeYT(depositAmount);
+    emit Deposit(msg.sender, depositAmount);
   }
 
   /// @notice Internal redeem function for buy and sell functions
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
+    uint256 withdrawAmount = ERC4626(depositVault).convertToShares(amount);
     _updateClaimableUnderlying(msg.sender);
     uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
     _unstakeYT(unstakableAmount);
     YieldToken(yt).burnYT(msg.sender, amount);
-    ERC4626(depositVault).withdraw(amount, msg.sender, address(this));
+    ERC4626(depositVault).withdraw(withdrawAmount, msg.sender, address(this));
     depositTokenAmount -= amount; 
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
