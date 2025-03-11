@@ -134,21 +134,20 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @inheritdoc IGoldivault4626
   function deposit(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidDeposit();
-    uint256 depositAmount = ERC4626(depositVault).convertToAssets(amount);
-    SafeTransferLib.safeTransferFrom(depositVault, msg.sender, address(this), amount);
-    depositTokenAmount += depositAmount;
-    OwnershipToken(ot).mintOT(msg.sender, depositAmount);
-    YieldToken(yt).mintYT(msg.sender, depositAmount);
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
+    ERC4626(depositVault).deposit(amount, address(this));
+    depositTokenAmount += amount;
+    OwnershipToken(ot).mintOT(msg.sender, amount);
+    YieldToken(yt).mintYT(msg.sender, amount);
     _updateClaimableUnderlying(msg.sender);
-    _stakeYT(depositAmount);
-    emit Deposit(msg.sender, depositAmount);
+    _stakeYT(amount);
+    emit Deposit(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldivault4626
   function redeemOwnership(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidRedemption();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
-    uint256 withdrawAmount = ERC4626(depositVault).convertToShares(amount);
     _updateClaimableUnderlying(msg.sender);
     uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
     _unstakeYT(unstakableAmount);
@@ -156,7 +155,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(remainingTime > 0) {
       YieldToken(yt).burnYT(msg.sender, amount);
     }
-    ERC4626(depositVault).withdraw(withdrawAmount, address(this), address(this));
+    ERC4626(depositVault).withdraw(amount, address(this), address(this));
     depositTokenAmount -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
     emit OwnershipTokenRedemption(msg.sender, amount);
@@ -172,11 +171,15 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
+    // need to track change in share balance as well as change in asset balance
+    uint256 startingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
     uint256 dtNeeded = dtAmountMax > ytAmount ? 0 : ytAmount - dtAmountMax;
     uint256 depositAmount = dtAmountMax + dtNeeded;
     if(dtNeeded == 0) dtAmountMax = ytAmount;
-    if(ERC20(depositToken).balanceOf(address(this)) < dtNeeded) revert FlashLoanFailed();
-    if(dtNeeded > 0) SafeTransferLib.safeTransfer(depositToken, msg.sender, dtNeeded);
+    // because the contract holds shares, not assets, need to check there are enough shares
+    if(ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
+    // because the contract holds shares, not assets, need to withdraw to the user rather than transfer
+    if(dtNeeded > 0) ERC4626(depositVault).withdraw(dtNeeded, msg.sender, address(this));
     _deposit(depositAmount);
     SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), depositAmount);
     ERC20(ot).approve(router, type(uint256).max);
@@ -191,7 +194,12 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     });
     IV3SwapRouter(router).exactInputSingle(params);
     ERC20(ot).approve(router, 0);
+    // because user receives shares rather than assets from the LP, they need to convert back to assets here
+    uint256 endingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
+    ERC4626(depositVault).redeem(endingShareBalance - startingShareBalance, msg.sender, msg.sender);
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
+    // vault needs to redeposit the received assets
+    ERC4626(depositVault).deposit(dtNeeded, address(this));
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
     uint256 spentDt = startingBalance - endingBalance;
@@ -211,8 +219,11 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
+    // need to track change in share balance as well as change in asset balance
+    uint256 startingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
     _redeemOwnership(ytAmount);
-    uint256 startingVaultBalance = ERC20(depositToken).balanceOf(address(this));
+    // since the contract holds shares, not assets, we should check balance of underlying assets
+    uint256 startingVaultBalance = ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this)));
     ERC20(depositToken).approve(router, type(uint256).max);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
       tokenIn: depositToken,
@@ -226,8 +237,13 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     IV3SwapRouter(router).exactOutputSingle(params);
     ERC20(depositToken).approve(router, 0);
     OwnershipToken(ot).burnOT(address(this), ytAmount);
-    uint256 vaultSpend = startingVaultBalance - ERC20(depositToken).balanceOf(address(this));
+    // do the same here again
+    uint256 vaultSpend = startingVaultBalance - ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this)));
+    // here the user needs to convert accrued shares to assets
+    ERC4626(depositVault).redeem(ERC4626(depositVault).balanceOf(msg.sender) - startingShareBalance , msg.sender, msg.sender);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), vaultSpend);
+    // vault needs to redeposit the received assets
+    ERC4626(depositVault).deposit(vaultSpend, address(this));
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance < startingBalance) revert ReceivedTooLitte(); 
     uint256 receivedDt = endingBalance - startingBalance;
@@ -246,7 +262,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Unstakes YT
   function unstakeYT(uint256 amount) external {
     _updateClaimableUnderlying(msg.sender);
-    _unstakeYT(amount);
+    uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
+    _unstakeYT(unstakableAmount);
   }
 
   /// @notice Claims rewards for YT stakers
@@ -286,7 +303,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function _claim(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
       claimableUnderlying[claimer] = 0;
-      SafeTransferLib.safeTransfer(depositVault, claimer, claimable);
+      ERC4626(depositVault).withdraw(claimable, msg.sender, address(this));
       emit Claim(claimer, claimable);
     }
   }
@@ -294,25 +311,24 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Internal deposit function for buy and sell functions
   function _deposit(uint256 amount) internal {
     if(amount == 0) revert InvalidDeposit();
-    uint256 depositAmount = ERC4626(depositVault).convertToAssets(amount);
-    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), depositAmount);
-    depositTokenAmount += depositAmount;
-    OwnershipToken(ot).mintOT(msg.sender, depositAmount);
-    YieldToken(yt).mintYT(msg.sender, depositAmount);
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
+    ERC4626(depositVault).deposit(amount, address(this));
+    depositTokenAmount += amount;
+    OwnershipToken(ot).mintOT(msg.sender, amount);
+    YieldToken(yt).mintYT(msg.sender, amount);
     _updateClaimableUnderlying(msg.sender);
-    _stakeYT(depositAmount);
-    emit Deposit(msg.sender, depositAmount);
+    _stakeYT(amount);
+    emit Deposit(msg.sender, amount);
   }
 
   /// @notice Internal redeem function for buy and sell functions
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
-    uint256 withdrawAmount = ERC4626(depositVault).convertToShares(amount);
     _updateClaimableUnderlying(msg.sender);
     uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
     _unstakeYT(unstakableAmount);
     YieldToken(yt).burnYT(msg.sender, amount);
-    ERC4626(depositVault).withdraw(withdrawAmount, msg.sender, address(this));
+    ERC4626(depositVault).withdraw(amount, msg.sender, address(this));
     depositTokenAmount -= amount; 
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
