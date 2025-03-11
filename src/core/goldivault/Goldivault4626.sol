@@ -185,7 +185,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     ERC20(ot).approve(router, type(uint256).max);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
       tokenIn: ot,
-      tokenOut: depositToken,
+      tokenOut: depositVault,
       fee: 500,
       recipient: msg.sender,
       amountIn: depositAmount,
@@ -226,7 +226,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 startingVaultBalance = ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this)));
     ERC20(depositToken).approve(router, type(uint256).max);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
-      tokenIn: depositToken,
+      tokenIn: depositVault,
       tokenOut: ot,
       fee: 500,
       recipient: address(this),
