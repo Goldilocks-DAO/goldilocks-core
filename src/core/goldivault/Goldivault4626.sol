@@ -171,14 +171,11 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    // need to track change in share balance as well as change in asset balance
     uint256 startingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
     uint256 dtNeeded = dtAmountMax > ytAmount ? 0 : ytAmount - dtAmountMax;
     uint256 depositAmount = dtAmountMax + dtNeeded;
     if(dtNeeded == 0) dtAmountMax = ytAmount;
-    // because the contract holds shares, not assets, need to check there are enough shares
     if(ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
-    // because the contract holds shares, not assets, need to withdraw to the user rather than transfer
     if(dtNeeded > 0) ERC4626(depositVault).withdraw(dtNeeded, msg.sender, address(this));
     _deposit(depositAmount);
     SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), depositAmount);
@@ -194,11 +191,9 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     });
     IV3SwapRouter(router).exactInputSingle(params);
     ERC20(ot).approve(router, 0);
-    // because user receives shares rather than assets from the LP, they need to convert back to assets here
     uint256 endingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
     ERC4626(depositVault).redeem(endingShareBalance - startingShareBalance, msg.sender, msg.sender);
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
-    // vault needs to redeposit the received assets
     ERC4626(depositVault).deposit(dtNeeded, address(this));
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
@@ -219,9 +214,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    // need to track change in share balance as well as change in asset balance
     _redeemOwnership(ytAmount);
-    // since the contract holds shares, not assets, we should check balance of shares
     uint256 startingVaultBalance = ERC20(depositVault).balanceOf(address(this));
     ERC20(depositVault).approve(router, type(uint256).max);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
@@ -236,9 +229,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     IV3SwapRouter(router).exactOutputSingle(params);
     ERC20(depositVault).approve(router, 0);
     OwnershipToken(ot).burnOT(address(this), ytAmount);
-    // check how many shares the vault spent
     uint256 vaultSpend = startingVaultBalance - ERC20(depositVault).balanceOf(address(this));
-    //repay the vault spend
     uint256 repayAmount = ERC4626(depositVault).convertToAssets(vaultSpend);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), repayAmount);
     ERC4626(depositVault).deposit(repayAmount, address(this));
