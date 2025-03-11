@@ -103,6 +103,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @param _multisig Address of multisig
   /// @param _depositToken Address of deposit token
   /// @param _depositVault Address of deposit token vault
+  /// @param _router Address of Kodiak SwapRouter02
+  /// @param _tradeFee Fee charged on YT trades
   /// @param _tokenDecimals Decimals of underlying asset
   /// @param _duration Duration of vault
   constructor(
@@ -111,6 +113,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     address _multisig,
     address _depositToken,
     address _depositVault,
+    address _router,
+    uint256 _tradeFee,
     uint256 _tokenDecimals,
     uint256 _duration
   ) {
@@ -119,6 +123,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     multisig = _multisig;
     depositToken = _depositToken;
     depositVault = _depositVault;
+    router = _router;
+    tradeFee = _tradeFee;
     tokenDecimals = _tokenDecimals;
     lastRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
     startTime = block.timestamp;
