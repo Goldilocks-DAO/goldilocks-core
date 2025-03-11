@@ -222,9 +222,9 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     // need to track change in share balance as well as change in asset balance
     uint256 startingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
     _redeemOwnership(ytAmount);
-    // since the contract holds shares, not assets, we should check balance of underlying assets
-    uint256 startingVaultBalance = ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this)));
-    ERC20(depositToken).approve(router, type(uint256).max);
+    // since the contract holds shares, not assets, we should check balance of shares
+    uint256 startingVaultBalance = ERC20(depositVault).balanceOf(address(this));
+    ERC20(depositVault).approve(router, type(uint256).max);
     IV3SwapRouter.ExactOutputSingleParams memory params = IV3SwapRouter.ExactOutputSingleParams({
       tokenIn: depositVault,
       tokenOut: ot,
@@ -235,15 +235,14 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
       sqrtPriceLimitX96: 0
     });
     IV3SwapRouter(router).exactOutputSingle(params);
-    ERC20(depositToken).approve(router, 0);
+    ERC20(depositVault).approve(router, 0);
     OwnershipToken(ot).burnOT(address(this), ytAmount);
-    // do the same here again
-    uint256 vaultSpend = startingVaultBalance - ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this)));
-    // here the user needs to convert accrued shares to assets
-    ERC4626(depositVault).redeem(ERC4626(depositVault).balanceOf(msg.sender) - startingShareBalance , msg.sender, msg.sender);
-    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), vaultSpend);
-    // vault needs to redeposit the received assets
-    ERC4626(depositVault).deposit(vaultSpend, address(this));
+    // check how many shares the vault spent
+    uint256 vaultSpend = startingVaultBalance - ERC20(depositVault).balanceOf(address(this));
+    //repay the vault spend
+    uint256 repayAmount = ERC4626(depositVault).convertToAssets(vaultSpend);
+    SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), repayAmount);
+    ERC4626(depositVault).deposit(repayAmount, address(this));
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance < startingBalance) revert ReceivedTooLitte(); 
     uint256 receivedDt = endingBalance - startingBalance;
