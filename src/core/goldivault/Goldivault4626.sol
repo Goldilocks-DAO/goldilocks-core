@@ -220,7 +220,6 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     // need to track change in share balance as well as change in asset balance
-    uint256 startingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
     _redeemOwnership(ytAmount);
     // since the contract holds shares, not assets, we should check balance of shares
     uint256 startingVaultBalance = ERC20(depositVault).balanceOf(address(this));
