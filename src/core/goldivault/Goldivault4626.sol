@@ -177,7 +177,6 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
     uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
-    uint256 startingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
     uint256 dtNeeded = dtAmountMax > ytAmount ? 0 : ytAmount - dtAmountMax;
     uint256 depositAmount = dtAmountMax + dtNeeded;
     if(dtNeeded == 0) dtAmountMax = ytAmount;
@@ -197,11 +196,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     });
     IV3SwapRouter(router).exactInputSingle(params);
     ERC20(ot).approve(router, 0);
-    uint256 endingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
-    ERC4626(depositVault).redeem(endingShareBalance - startingShareBalance, msg.sender, msg.sender);
-    if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
-    ERC20(depositToken).approve(depositVault, dtNeeded);
-    ERC4626(depositVault).deposit(dtNeeded, address(this));
+    if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositVault, msg.sender, address(this), ERC4626(depositVault).convertToShares(dtNeeded));
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
     uint256 spentDt = startingBalance - endingBalance;
