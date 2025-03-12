@@ -141,6 +141,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function deposit(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidDeposit();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
+    ERC20(depositToken).approve(depositVault, amount);
     ERC4626(depositVault).deposit(amount, address(this));
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
@@ -200,6 +201,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 endingShareBalance = ERC20(depositVault).balanceOf(msg.sender);
     ERC4626(depositVault).redeem(endingShareBalance - startingShareBalance, msg.sender, msg.sender);
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
+    ERC20(depositToken).approve(depositVault, dtNeeded);
     ERC4626(depositVault).deposit(dtNeeded, address(this));
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
@@ -238,6 +240,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 vaultSpend = startingVaultBalance - ERC20(depositVault).balanceOf(address(this));
     uint256 repayAmount = ERC4626(depositVault).convertToAssets(vaultSpend);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), repayAmount);
+    ERC20(depositToken).approve(depositVault, repayAmount);
     ERC4626(depositVault).deposit(repayAmount, address(this));
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance < startingBalance) revert ReceivedTooLitte(); 
@@ -307,6 +310,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function _deposit(uint256 amount) internal {
     if(amount == 0) revert InvalidDeposit();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
+    ERC20(depositToken).approve(depositVault, amount);
     ERC4626(depositVault).deposit(amount, address(this));
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);

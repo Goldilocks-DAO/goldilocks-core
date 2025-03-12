@@ -1,1 +1,1 @@
-anvil --fork-url https://rpc.berachain.com --fork-block-number 1936029
+anvil --fork-url https://rpc.berachain.com --fork-block-number 2233720
