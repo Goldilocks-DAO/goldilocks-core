@@ -162,7 +162,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(remainingTime > 0) {
       YieldToken(yt).burnYT(msg.sender, amount);
     }
-    ERC4626(depositVault).withdraw(amount, address(this), address(this));
+    ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(amount), address(this), address(this));
     depositTokenAmount -= amount;
     SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
     emit OwnershipTokenRedemption(msg.sender, amount);
@@ -183,7 +183,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 depositAmount = dtAmountMax + dtNeeded;
     if(dtNeeded == 0) dtAmountMax = ytAmount;
     if(ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
-    if(dtNeeded > 0) ERC4626(depositVault).withdraw(dtNeeded, msg.sender, address(this));
+    if(dtNeeded > 0) ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(dtNeeded), msg.sender, address(this));
     _deposit(depositAmount);
     SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), depositAmount);
     ERC20(ot).approve(router, type(uint256).max);
@@ -301,7 +301,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function _claim(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
       claimableUnderlying[claimer] = 0;
-      ERC4626(depositVault).withdraw(claimable, msg.sender, address(this));
+      ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(claimable), msg.sender, address(this));
       emit Claim(claimer, claimable);
     }
   }
@@ -327,7 +327,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
     _unstakeYT(unstakableAmount);
     YieldToken(yt).burnYT(msg.sender, amount);
-    ERC4626(depositVault).withdraw(amount, msg.sender, address(this));
+    ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(amount), msg.sender, address(this));
     depositTokenAmount -= amount; 
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
