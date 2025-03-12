@@ -135,7 +135,7 @@ contract IntegrationBeraborrowGoldivaultTest is Test {
     beraborrowgoldivault.deposit(depositNum);
     vm.stopPrank();
 
-    vm.roll(block.number + 1);
+    vm.roll(block.number + 10);
 
     vm.prank(user1);
     beraborrowgoldivault.redeemOwnership(depositNum);

@@ -162,9 +162,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(remainingTime > 0) {
       YieldToken(yt).burnYT(msg.sender, amount);
     }
-    ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(amount), address(this), address(this));
+    ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(amount), msg.sender, address(this));
     depositTokenAmount -= amount;
-    SafeTransferLib.safeTransfer(depositToken, msg.sender, amount);
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
 
