@@ -61,6 +61,9 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice YT trade fee
   uint256 tradeFee;
 
+  /// @notice Fee charged for yield
+  uint256 public yieldFee;
+
   /// @notice Timestamp of vault start time
   uint256 public startTime;
 
@@ -105,6 +108,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @param _depositVault Address of deposit token vault
   /// @param _router Address of Kodiak SwapRouter02
   /// @param _tradeFee Fee charged on YT trades
+  /// @param _yieldFee Fee charged for yield
   /// @param _tokenDecimals Decimals of underlying asset
   /// @param _duration Duration of vault
   constructor(
@@ -115,6 +119,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     address _depositVault,
     address _router,
     uint256 _tradeFee,
+    uint256 _yieldFee,
     uint256 _tokenDecimals,
     uint256 _duration
   ) {
@@ -125,6 +130,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     depositVault = _depositVault;
     router = _router;
     tradeFee = _tradeFee;
+    yieldFee = _yieldFee;
     tokenDecimals = _tokenDecimals;
     lastRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
     startTime = block.timestamp;
@@ -295,7 +301,12 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function _claim(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
       claimableUnderlying[claimer] = 0;
-      ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(claimable), msg.sender, address(this));
+      uint256 beforeBal = ERC20(depositToken).balanceOf(address(this));
+      ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(claimable), address(this), address(this));
+      uint256 afterBal = ERC20(depositToken).balanceOf(address(this));
+      uint256 fee = (afterBal - beforeBal) * yieldFee / 100;
+      SafeTransferLib.safeTransfer(depositToken, msg.sender, (afterBal - beforeBal) - fee);
+      SafeTransferLib.safeTransfer(depositToken, multisig, fee);
       emit Claim(claimer, claimable);
     }
   }

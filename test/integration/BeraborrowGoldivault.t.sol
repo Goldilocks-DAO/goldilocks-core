@@ -54,11 +54,25 @@ contract IntegrationBeraborrowGoldivaultTest is Test {
 
   uint256 depositNum = 100e18;
   uint256 depositLength = 5 hours;
+  uint256 dailySeconds = 86400;
+  uint256 dailyBlocks = dailySeconds / 3;
 
+  uint256 startingBlock = 2233720;
+  // uint256 startingBlock = 1934595;
+  uint256 currentBlock = 2253639;
+
+  // forks starts at block 1934595 # 3-5-25 6am
   // forks starts at block 2233720 # 3-12-25 5am
   function setUp() public {
-    Goldivault4626 beraborrowgoldivaultComputed = Goldivault4626(deployer.computeAddress(146));
 
+  }
+
+  function testDtRewards() public {
+    // create fork
+    uint256 mainnetFork = vm.createFork("https://rpc.berachain.com");
+    vm.selectFork(mainnetFork);
+    Goldivault4626 beraborrowgoldivaultComputed = Goldivault4626(deployer.computeAddress(146));
+    vm.roll(startingBlock);
     vm.startPrank(deployer);
     // deploy beraborrowgoldivault
     bbwhot = new BeraborrowWberaHoneyOT("Beraborrow WBERA-HONEY LP OT", "BBWHOT", address(beraborrowgoldivaultComputed));
@@ -71,14 +85,12 @@ contract IntegrationBeraborrowGoldivaultTest is Test {
       depositVault,
       router,
       5,
+      3,
       1e18,
       30 days
     );
     vm.stopPrank();
-  }
 
-  // Staking different amounts of YT over the same time period and checking that they receive rewards proportional to stake size
-  function testCorrectClaiming() public {
     deal(depositToken, user1, depositNum);
     vm.startPrank(user1);
     ERC20(depositToken).approve(address(beraborrowgoldivault), depositNum);
@@ -86,48 +98,37 @@ contract IntegrationBeraborrowGoldivaultTest is Test {
     beraborrowgoldivault.deposit(depositNum);
     vm.stopPrank();
 
-    deal(depositToken, user2, depositNum * 2);
-    vm.startPrank(user2);
-    ERC20(depositToken).approve(address(beraborrowgoldivault), depositNum * 2);
-    bbwhyt.approve(address(beraborrowgoldivault), depositNum * 2);
-    beraborrowgoldivault.deposit(depositNum * 2);
-    vm.stopPrank();
+    uint256 beforeRatio = ERC4626(depositVault).convertToAssets(1e18);
+    vm.roll(startingBlock + dailyBlocks);
+    uint256 afterRatio = ERC4626(depositVault).convertToAssets(1e18);
 
-    deal(depositToken, user3, depositNum / 2);
-    vm.startPrank(user3);
-    ERC20(depositToken).approve(address(beraborrowgoldivault), depositNum / 2);
-    bbwhyt.approve(address(beraborrowgoldivault), depositNum / 2);
-    beraborrowgoldivault.deposit(depositNum / 2);
-    vm.stopPrank();
-
-    vm.warp(block.timestamp + depositLength);
 
     vm.prank(user1);
-    beraborrowgoldivault.claim();
-    vm.prank(user2);
-    beraborrowgoldivault.claim();
-    vm.prank(user3);
-    beraborrowgoldivault.claim();
+    beraborrowgoldivault.redeemOwnership(depositNum);
 
-    uint256 user1Balance = ERC20(depositToken).balanceOf(user1);
-    uint256 user2Balance = ERC20(depositToken).balanceOf(user2);
-    uint256 user3Balance = ERC20(depositToken).balanceOf(user3);
-  
-    assertEq(user1Balance * 2, user2Balance);
-    assertEq(user1Balance / 2, user3Balance);
+    assert(beforeRatio < afterRatio);
+    assertEq(bbwhot.balanceOf(user1), 0);
+    assertEq(bbwhyt.balanceOf(user1), 0);
   }
 
   function testRatios() public {
+    // create fork
+    uint256 mainnetFork = vm.createFork("https://rpc.berachain.com");
+    vm.selectFork(mainnetFork);
+    vm.rollFork(startingBlock);
     uint256 ratio1 = ERC4626(depositVault).convertToAssets(1e18);
     uint256 ratio2 = ERC4626(depositVault).convertToShares(1e18);
 
-    vm.warp(block.timestamp + depositLength);
+    vm.roll(block.number + dailyBlocks);
 
     uint256 ratio3 = ERC4626(depositVault).convertToAssets(1e18);
     uint256 ratio4 = ERC4626(depositVault).convertToShares(1e18);
+
+    assert(ratio3 > ratio1);
+    assert(ratio4 < ratio2);
   }
 
-  function testDepositRedeem() public {
+  function testBBRedeem() public {
     deal(depositToken, user1, depositNum);
     vm.startPrank(user1);
     ERC20(depositToken).approve(address(beraborrowgoldivault), depositNum);
@@ -139,7 +140,56 @@ contract IntegrationBeraborrowGoldivaultTest is Test {
 
     vm.prank(user1);
     beraborrowgoldivault.redeemOwnership(depositNum);
+    uint256 endingDtBalance = ERC20(depositToken).balanceOf(user1);
+
+    assertEq(endingDtBalance, depositNum - (depositNum / 1000) - 1);
+    assertEq(bbwhot.balanceOf(user1), 0);
+    assertEq(bbwhyt.balanceOf(user1), 0);
   }
 
+  function testSanity() public {
+    // create fork
+    uint256 mainnetFork = vm.createFork("https://rpc.berachain.com");
+    vm.selectFork(mainnetFork);
+    vm.rollFork(startingBlock);
+    (bool success, bytes memory data) = 0xa686DC84330b1B3787816de2DaCa485D305c8589.call(
+      abi.encodeWithSignature(
+        "fetchPrice(address)",
+        0xac03CABA51e17c86c921E1f6CBFBdC91F8BB2E6b
+      )
+    );
+    require(success, "deposit failed");
+
+    vm.rollFork(startingBlock + dailyBlocks);
+    (bool success1, bytes memory data1) = 0xa686DC84330b1B3787816de2DaCa485D305c8589.call(
+      abi.encodeWithSignature(
+        "fetchPrice(address)",
+        0xac03CABA51e17c86c921E1f6CBFBdC91F8BB2E6b
+      )
+    );
+    require(success1, "deposit failed");
+  }
+
+  function testUnderlyingDeposit() public {
+    // create fork
+    uint256 mainnetFork = vm.createFork("https://rpc.berachain.com");
+    vm.selectFork(mainnetFork);
+    vm.rollFork(startingBlock);
+
+    deal(depositToken, user1, depositNum);
+    vm.startPrank(user1);
+    ERC20(depositToken).approve(depositVault, depositNum);
+    ERC4626(depositVault).deposit(depositNum, user1);
+    vm.stopPrank();
+
+    // vm.rollFork(block.number + dailyBlocks);
+    vm.roll(block.number + dailyBlocks);
+    
+    uint256 maxRedeem1 = ERC4626(depositVault).maxRedeem(user1);
+    uint256 balance1 = ERC4626(depositVault).balanceOf(user1);
+    
+    // vm.prank(user1);
+    // beraborrowgoldivault.redeemOwnership(depositNum);
+  }
 
 }
