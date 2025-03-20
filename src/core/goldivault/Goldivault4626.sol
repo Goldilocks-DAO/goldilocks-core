@@ -206,6 +206,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 proceeds = ERC20(depositVault).balanceOf(msg.sender) - startingShareBalance;
     ERC4626(depositVault).redeem(proceeds, msg.sender, msg.sender);
     if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
+    ERC20(depositToken).approve(depositVault, dtNeeded);
     ERC4626(depositVault).deposit(dtNeeded, address(this));
     uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
