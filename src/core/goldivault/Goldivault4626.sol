@@ -73,8 +73,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Amount of deposit token in vault
   uint256 public depositTokenAmount;
 
-  /// @notice Decimals of underlying asset
-  uint256 public tokenDecimals;
+  /// @notice Defines the value of one token
+  uint256 public inputRatioAmount;
 
   /// @notice Claimable underlying per staked YT
   uint256 public claimableUnderlyingPerYTStored;
@@ -109,7 +109,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @param _router Address of Kodiak SwapRouter02
   /// @param _tradeFee Fee charged on YT trades
   /// @param _yieldFee Fee charged for yield
-  /// @param _tokenDecimals Decimals of underlying asset
+  /// @param _inputRatioAmount Defines the value of one token
   /// @param _duration Duration of vault
   constructor(
     address _ot,
@@ -120,7 +120,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     address _router,
     uint256 _tradeFee,
     uint256 _yieldFee,
-    uint256 _tokenDecimals,
+    uint256 _inputRatioAmount,
     uint256 _duration
   ) {
     ot = _ot;
@@ -131,8 +131,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     router = _router;
     tradeFee = _tradeFee;
     yieldFee = _yieldFee;
-    tokenDecimals = _tokenDecimals;
-    lastRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
+    inputRatioAmount = _inputRatioAmount;
+    lastRatio = ERC4626(depositVault).convertToAssets(_inputRatioAmount);
     startTime = block.timestamp;
     endTime = block.timestamp + _duration;
   }
@@ -295,7 +295,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @param user Address of user
   function _updateClaimableUnderlying(address user) internal {
     claimableUnderlyingPerYTStored = _claimableUnderlyingPerYT();
-    lastRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
+    lastRatio = ERC4626(depositVault).convertToAssets(inputRatioAmount);
     if(user != address(0)) {
       claimableUnderlying[user] = _calculateClaimableUnderlying(user);
       underlyingPerTokenDebt[user] = claimableUnderlyingPerYTStored;
@@ -373,7 +373,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @notice Calculates claimable underlying per YT
   function _claimableUnderlyingPerYT() internal view returns (uint256) {
     uint256 oldRatio = lastRatio;
-    uint256 newRatio = ERC4626(depositVault).convertToAssets(tokenDecimals);
+    uint256 newRatio = ERC4626(depositVault).convertToAssets(inputRatioAmount);
     uint256 ratioDiff = newRatio - oldRatio;
     if(ratioDiff == 0 || totalYtStaked == 0) {
       return claimableUnderlyingPerYTStored;
