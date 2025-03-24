@@ -296,10 +296,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function _updateClaimableUnderlying(address user) internal {
     claimableUnderlyingPerYTStored = _claimableUnderlyingPerYT();
     lastRatio = ERC4626(depositVault).convertToAssets(inputRatioAmount);
-    if(user != address(0)) {
-      claimableUnderlying[user] = _calculateClaimableUnderlying(user);
-      underlyingPerTokenDebt[user] = claimableUnderlyingPerYTStored;
-    }
+    claimableUnderlying[user] = _calculateClaimableUnderlying(user);
+    underlyingPerTokenDebt[user] = claimableUnderlyingPerYTStored;
   }
 
   /// @notice Internal function for claiming underlying
