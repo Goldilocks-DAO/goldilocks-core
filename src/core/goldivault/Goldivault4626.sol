@@ -168,7 +168,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(remainingTime > 0) {
       YieldToken(yt).burnYT(msg.sender, amount);
     }
-    ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(amount), msg.sender, address(this));
+    ERC4626(depositVault).withdraw(amount, msg.sender, address(this));
     depositTokenAmount -= amount;
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
@@ -183,7 +183,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 depositAmount = dtAmountMax + dtNeeded;
     if(dtNeeded == 0) dtAmountMax = ytAmount;
     if(ERC4626(depositVault).previewRedeem(ERC20(depositVault).balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
-    if(dtNeeded > 0) ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(dtNeeded), msg.sender, address(this));
+    if(dtNeeded > 0) ERC4626(depositVault).withdraw(dtNeeded, msg.sender, address(this));
     _deposit(depositAmount);
     SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), depositAmount);
     uint256 startingShareBalance = ERC20(depositVault).balanceOf(address(this));
@@ -300,7 +300,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(claimable > 0) {
       claimableUnderlying[claimer] = 0;
       uint256 beforeBal = ERC20(depositToken).balanceOf(address(this));
-      ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(claimable), address(this), address(this));
+      ERC4626(depositVault).withdraw(claimable, address(this), address(this));
       uint256 afterBal = ERC20(depositToken).balanceOf(address(this));
       uint256 fee = (afterBal - beforeBal) * yieldFee / 100;
       SafeTransferLib.safeTransfer(depositToken, msg.sender, (afterBal - beforeBal) - fee);
@@ -332,7 +332,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
     _unstakeYT(unstakableAmount);
     YieldToken(yt).burnYT(msg.sender, amount);
-    ERC4626(depositVault).redeem(ERC4626(depositVault).convertToShares(amount), msg.sender, address(this));
+    ERC4626(depositVault).withdraw(amount, msg.sender, address(this));
     depositTokenAmount -= amount; 
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
