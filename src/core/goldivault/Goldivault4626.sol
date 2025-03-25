@@ -369,9 +369,11 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   }
 
   /// @notice Calculates claimable underlying per YT
+  /// @dev This function will revert if there is a loss in the underlying vault
   function _claimableUnderlyingPerYT() internal view returns (uint256) {
     uint256 oldRatio = lastRatio;
     uint256 newRatio = ERC4626(depositVault).convertToAssets(inputRatioAmount);
+    if(newRatio < oldRatio) revert NegativeYield();
     uint256 ratioDiff = newRatio - oldRatio;
     if(ratioDiff == 0 || totalYtStaked == 0) {
       return claimableUnderlyingPerYTStored;

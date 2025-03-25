@@ -33,6 +33,7 @@ interface IGoldivault4626 {
   error FlashLoanFailed();
   error InvalidTrade();
   error InvalidUnstake();
+  error NegativeYield();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    EXTERNAL FUNCTIONS                      */
