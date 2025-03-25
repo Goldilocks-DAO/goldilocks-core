@@ -326,6 +326,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     _updateClaimableUnderlying(msg.sender);
     ytStaked[msg.sender] += amount;
     totalYtStaked += amount;
+    emit YTStake(msg.sender, amount);
     emit Deposit(msg.sender, amount);
   }
 
