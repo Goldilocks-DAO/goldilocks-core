@@ -187,7 +187,6 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(_depositVault.previewRedeem(_shares.balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
     if(dtNeeded > 0) _depositVault.withdraw(dtNeeded, msg.sender, address(this));
     _deposit(depositAmount);
-    SafeTransferLib.safeTransferFrom(ot, msg.sender, address(this), depositAmount);
     uint256 startingShareBalance = _shares.balanceOf(address(this));
     ERC20(ot).approve(router, type(uint256).max);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
@@ -322,10 +321,11 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     ERC20(depositToken).approve(depositVault, amount);
     ERC4626(depositVault).deposit(amount, address(this));
     depositTokenAmount += amount;
-    OwnershipToken(ot).mintOT(msg.sender, amount);
-    YieldToken(yt).mintYT(msg.sender, amount);
+    OwnershipToken(ot).mintOT(address(this), amount);
+    YieldToken(yt).mintYT(address(this), amount);
     _updateClaimableUnderlying(msg.sender);
-    _stakeYT(amount);
+    ytStaked[msg.sender] += amount;
+    totalYtStaked += amount;
     emit Deposit(msg.sender, amount);
   }
 
