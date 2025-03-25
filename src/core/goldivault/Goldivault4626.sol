@@ -92,7 +92,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   mapping(address => uint256) public claimableUnderlying;
 
   /// @notice Maps user to amount of Underlying reward debt
-  mapping(address => uint256) public underlyingPerTokenDebt;
+  mapping(address => uint256) public underlyingPerYTDebt;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -297,7 +297,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     claimableUnderlyingPerYTStored = _claimableUnderlyingPerYT();
     lastRatio = ERC4626(depositVault).convertToAssets(inputRatioAmount);
     claimableUnderlying[user] = _calculateClaimableUnderlying(user);
-    underlyingPerTokenDebt[user] = claimableUnderlyingPerYTStored;
+    underlyingPerYTDebt[user] = claimableUnderlyingPerYTStored;
   }
 
   /// @notice Internal function for claiming underlying
@@ -365,7 +365,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
 
   /// @notice Calculates claimable underlying
   function _calculateClaimableUnderlying(address user) internal view returns (uint256) {
-    return FixedPointMathLib.mulWad(ytStaked[user], _claimableUnderlyingPerYT() - underlyingPerTokenDebt[user]) + claimableUnderlying[user];
+    return FixedPointMathLib.mulWad(ytStaked[user], _claimableUnderlyingPerYT() - underlyingPerYTDebt[user]) + claimableUnderlying[user];
   }
 
   /// @notice Calculates claimable underlying per YT
