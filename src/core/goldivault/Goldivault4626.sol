@@ -386,18 +386,9 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     return claimableUnderlyingPerYTStored + FixedPointMathLib.divWad(ratioDiff, totalYtStaked);
   }
 
-  /// @notice Calculates if the user has unstaked YT
+  /// @notice Calculate the maximum amount the user can unstake YT of a given unstakeAmount
   function _unstakableYT(address user, uint256 unstakeAmount) internal view returns (uint256) {
-    uint256 _ytStaked = ytStaked[user];
-    if(_ytStaked == 0) {
-      return 0;
-    }
-    else if(unstakeAmount > _ytStaked) {
-      return unstakeAmount - _ytStaked;
-    }
-    else {
-      return unstakeAmount;      
-    }
+    return FixedPointMathLib.min(unstakeAmount, ytStaked[user]);
   }
 
 }
