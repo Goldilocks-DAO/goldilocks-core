@@ -243,7 +243,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     ERC20(depositVault).approve(router, 0);
     OwnershipToken(ot).burnOT(address(this), ytAmount);
     uint256 vaultSpend = startingVaultBalance - ERC20(depositVault).balanceOf(address(this));
-    uint256 repayAmount = ERC4626(depositVault).convertToAssets(vaultSpend);
+    uint256 repayAmount = ERC4626(depositVault).previewMint(vaultSpend);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), repayAmount);
     ERC20(depositToken).approve(depositVault, repayAmount);
     ERC4626(depositVault).deposit(repayAmount, address(this));
