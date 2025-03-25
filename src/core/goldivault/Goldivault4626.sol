@@ -202,10 +202,12 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     IV3SwapRouter(router).exactInputSingle(params);
     ERC20(ot).approve(router, 0);
     uint256 proceeds = _shares.balanceOf(address(this)) - startingShareBalance;
-    _depositVault.redeem(proceeds, msg.sender, address(this));
-    if(dtNeeded > 0) SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), dtNeeded);
-    _depositToken.approve(depositVault, dtNeeded);
-    _depositVault.deposit(dtNeeded, address(this));
+    if (dtNeeded == 0) {
+      _depositVault.redeem(proceeds, msg.sender, address(this));
+    } else {
+      uint256 contractShares = _depositVault.convertToShares(dtNeeded);
+      _depositVault.redeem(proceeds - contractShares, msg.sender, address(this));
+    }
     uint256 endingBalance = _depositToken.balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
     uint256 spentDt = startingBalance - endingBalance;
