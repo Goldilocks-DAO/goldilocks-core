@@ -28,10 +28,10 @@ import { OwnershipToken } from "./OwnershipToken.sol";
 import { YieldToken } from "./YieldToken.sol";
 
 
-/// @title Goldivaults
+/// @title Goldivault4626
 /// @notice Splits deposited assets into ownership tokens representing
 /// deposited assets and yield tokens representing future yield of those assets
-///This vault is for streaming the yield continuously to users. Staking mechanism for YT copied from Goldilend
+/// This vault is for streaming the yield continuously to users. Staking mechanism for YT copied from Goldilend
 contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
 
 
@@ -173,11 +173,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     emit OwnershipTokenRedemption(msg.sender, amount);
   }
 
-  /// @notice Buys YT using the vault and kodiak pool
-  /// @dev These parameters cannot be 0
-  /// @param ytAmount Amount of YT for user to buy
-  /// @param dtAmountMax Maximum amount of deposit token that user wishes to pay
-  /// @param amountOutMin Minimum amount of tokens to receive out from the kodiak pool swap
+  /// @inheritdoc IGoldivault4626
   function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 amountOutMin) external nonReentrant {
     if(ytAmount == 0 || dtAmountMax == 0 || amountOutMin == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
@@ -217,11 +213,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     emit YTBuy(msg.sender, ytAmount, spentDt);
   }
   
-  /// @notice Sells YT using the vault and kodiak pool
-  /// @dev These parameters cannot be 0
-  /// @param ytAmount Amount of YT for user to sell
-  /// @param dtAmountMin Minimum amount of deposit token that user wishes to receive
-  /// @param amountInMax Maximum amount of tokens to spend from the kodiak pool swap
+  /// @inheritdoc IGoldivault4626
   function sellYT (uint256 ytAmount, uint256 dtAmountMin, uint256 amountInMax) external nonReentrant {
     if(ytAmount == 0 || dtAmountMin == 0 || amountInMax == 0) revert InvalidTrade();
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
@@ -256,21 +248,21 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     emit YTSell(msg.sender, ytAmount, receivedDt - fee);
   }
 
-  /// @notice Stakes YT
+  /// @inheritdoc IGoldivault4626
   function stakeYT(uint256 amount) external {
     _updateClaimableUnderlying(msg.sender);
     _stakeYT(amount);
   }
 
-  /// @notice Unstakes YT
+  /// @inheritdoc IGoldivault4626
   function unstakeYT(uint256 amount) external {
     _updateClaimableUnderlying(msg.sender);
     uint256 unstakableAmount = _unstakableYT(msg.sender, amount);
     _unstakeYT(unstakableAmount);
   }
 
-  /// @notice Claims rewards for YT stakers
-  function claim() public nonReentrant {
+  /// @inheritdoc IGoldivault4626
+  function claim() external nonReentrant {
     _updateClaimableUnderlying(msg.sender);
     _claim(msg.sender, claimableUnderlying[msg.sender]);
   }
@@ -281,6 +273,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
+  /// @inheritdoc IGoldivault4626
   function userClaimableUnderlying(address user) external view returns (uint256) {
     return _calculateClaimableUnderlying(user);
   }
@@ -301,6 +294,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   }
 
   /// @notice Internal function for claiming underlying
+  /// @param claimer Address of user claiming
+  /// @param claimable Amount of underlying token to claim
   function _claim(address claimer, uint256 claimable) internal {
     if(claimable > 0) {
       claimableUnderlying[claimer] = 0;
@@ -315,6 +310,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   }
 
   /// @notice Internal deposit function for buy and sell functions
+  /// @param amount Amount of DT to deposit into the underlying vault
   function _deposit(uint256 amount) internal {
     if(amount == 0) revert InvalidDeposit();
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
@@ -329,6 +325,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   }
 
   /// @notice Internal redeem function for buy and sell functions
+  /// @param amount Amount of OT to redeem
   function _redeemOwnership(uint256 amount) internal {
     if(amount == 0) revert InvalidRedemption();
     _updateClaimableUnderlying(msg.sender);
@@ -341,6 +338,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   }
 
   /// @notice Stakes YT into contract
+  /// @param amount Amount of YT to stake
   function _stakeYT(uint256 amount) internal {
     ytStaked[msg.sender] += amount;
     totalYtStaked += amount;
@@ -349,6 +347,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   }
 
   /// @notice Unstakes YT from contract
+  /// @param amount Amount of YT to unstake
   function _unstakeYT(uint256 amount) internal {
     if(amount > ytStaked[msg.sender]) revert InvalidUnstake();
     ytStaked[msg.sender] -= amount;
@@ -364,6 +363,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
 
 
   /// @notice Calculates claimable underlying
+  /// @param user Address of user to calculate the claimable for
   function _calculateClaimableUnderlying(address user) internal view returns (uint256) {
     return FixedPointMathLib.mulWad(ytStaked[user], _claimableUnderlyingPerYT() - underlyingPerYTDebt[user]) + claimableUnderlying[user];
   }
