@@ -176,18 +176,16 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   function buyYT (uint256 ytAmount, uint256 dtAmountMax, uint256 amountOutMin) external nonReentrant {
     if(ytAmount == 0 || dtAmountMax == 0 || amountOutMin == 0) revert InvalidTrade();
     ERC4626 _depositVault = ERC4626(depositVault);
-    ERC20 _depositToken = ERC20(depositToken);
-    ERC20 _shares = ERC20(depositVault);
     uint256 remainingTime = block.timestamp > endTime ? 0 : endTime - block.timestamp;
     if(remainingTime == 0) revert AlreadyConcluded();
-    uint256 startingBalance = _depositToken.balanceOf(msg.sender);
+    uint256 startingBalance = ERC20(depositToken).balanceOf(msg.sender);
     uint256 dtNeeded = dtAmountMax > ytAmount ? 0 : ytAmount - dtAmountMax;
     uint256 depositAmount = dtAmountMax + dtNeeded;
     if(dtNeeded == 0) dtAmountMax = ytAmount;
-    if(_depositVault.previewRedeem(_shares.balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
+    if(_depositVault.previewRedeem(ERC20(depositVault).balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
     if(dtNeeded > 0) _depositVault.withdraw(dtNeeded, msg.sender, address(this));
     _deposit(depositAmount);
-    uint256 startingShareBalance = _shares.balanceOf(address(this));
+    uint256 startingShareBalance = ERC20(depositVault).balanceOf(address(this));
     ERC20(ot).approve(router, type(uint256).max);
     IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
       tokenIn: ot,
@@ -200,14 +198,14 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     });
     IV3SwapRouter(router).exactInputSingle(params);
     ERC20(ot).approve(router, 0);
-    uint256 proceeds = _shares.balanceOf(address(this)) - startingShareBalance;
+    uint256 proceeds = ERC20(depositVault).balanceOf(address(this)) - startingShareBalance;
     if (dtNeeded == 0) {
       _depositVault.redeem(proceeds, msg.sender, address(this));
     } else {
       uint256 contractShares = _depositVault.convertToShares(dtNeeded);
       _depositVault.redeem(proceeds - contractShares, msg.sender, address(this));
     }
-    uint256 endingBalance = _depositToken.balanceOf(msg.sender);
+    uint256 endingBalance = ERC20(depositToken).balanceOf(msg.sender);
     if(endingBalance > startingBalance) revert ReceivedTooMuch();
     uint256 spentDt = startingBalance - endingBalance;
     uint256 fee = tradeFee * spentDt / 1000;
