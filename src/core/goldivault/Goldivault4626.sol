@@ -86,13 +86,13 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   uint256 public totalYtStaked;
 
   /// @notice Amount of YT staked per user
-  mapping(address => uint256) public ytStaked;
+  mapping(address user => uint256 amount) public ytStaked;
 
   /// @notice Maps user to amount of claimable Underlying
-  mapping(address => uint256) public claimableUnderlying;
+  mapping(address user => uint256 amount) public claimableUnderlying;
 
   /// @notice Maps user to amount of Underlying reward debt
-  mapping(address => uint256) public underlyingPerYTDebt;
+  mapping(address user => uint256 amount) public underlyingPerYTDebt;
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
