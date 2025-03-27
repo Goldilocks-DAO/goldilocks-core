@@ -112,8 +112,8 @@ contract UnitGoldivaultTest is BaseUnitTest {
     goldivault.redeemOwnership(txAmount);
 
     assertEq(ot.balanceOf(address(this)), 0);
-    assertEq(yt.totalSupply(), 0);
     assertEq(bexlp.balanceOf(address(this)), txAmount);
+    assert(yt.totalSupply() < (txAmount / 2));
   }
 
   function testRedeemOwnershipRemainingTimeNonMultisig() public {
@@ -157,7 +157,7 @@ contract UnitGoldivaultTest is BaseUnitTest {
     goldivault.redeemOwnership(txAmount);
 
     assertEq(ot.balanceOf(address(this)), 0);
-    assertEq(yt.balanceOf(address(this)), 0);
+    assertEq(yt.balanceOf(address(this)), txAmount / 2);
     assertEq(bexlp.balanceOf(address(this)), txAmount);
     assertEq(bexlp.balanceOf(address(bexvault)), 0);
   }

@@ -161,7 +161,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     );
 
     // deploy golidlocked
-    address[] memory allocationsAddress = new address[](30);
+    address[] memory allocationsAddress = new address[](31);
     allocationsAddress[0] = address(0x69);
     allocationsAddress[1] = address(0x420);
     allocationsAddress[2] = address(0x42069);
@@ -192,9 +192,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAddress[27] = address(0x6969696969);
     allocationsAddress[28] = address(0x6969696969);
     allocationsAddress[29] = address(0x696969696969);
-    uint256[] memory allocationsAmt = new uint256[](30);
+    allocationsAddress[30] = address(0x42042069);
+    uint256[] memory allocationsAmt = new uint256[](31);
     allocationsAmt[0] = 12_000_000e18;
-    allocationsAmt[1] = 12_000_000e18;
+    allocationsAmt[1] = 5_000_000e18;
     allocationsAmt[2] = 10_000_000e18;
     allocationsAmt[3] = 7_000_000e18;
     allocationsAmt[4] = 113_000_000e18;
@@ -223,6 +224,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAmt[27] = 1_000_000e18;
     allocationsAmt[28] = 1_000_000e18;
     allocationsAmt[29] = 1_000_000e18;
+    allocationsAmt[30] = 7_000_000e18;
     goldilocked = new Goldilocked(
       address(goldiswap),
       address(goldilendComputed),

@@ -48,7 +48,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
   }
 
   function testStakeLocksFailVesting() public {
-    vm.prank(address(0x69420));
+    vm.prank(address(0x42042069));
     vm.expectRevert(abi.encodeWithSelector(IGoldilocked.Vesting.selector));
     goldilocked.stake(1);
   }
@@ -309,12 +309,12 @@ contract UnitGoldilockedTest is BaseUnitTest {
   }
 
   function testSeedRoundNoVest() public {
-    assertEq(goldilocked.userVestingCheck(address(0x69420)), 0);
+    assertEq(goldilocked.userVestingCheck(address(0x42042069)), 0);
   }
 
   function testSeedRoundFullVest() public {
     vm.warp(90 days + 365 days + 1);
-    assertEq(goldilocked.userVestingCheck(address(0x69420)), 7_000_000e18);
+    assertEq(goldilocked.userVestingCheck(address(0x42042069)), 7_000_000e18);
   }
 
   function testGoldilendMintFailGoldilend() public {
@@ -570,27 +570,27 @@ contract UnitGoldilockedTest is BaseUnitTest {
   }
 
   function testSeedUnstakeFail() public {
-    vm.prank(address(0x69420));
+    vm.prank(address(0x42042069));
     vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
     goldilocked.unstake(1);
   }
 
   function testSeedUnstakeWaitFail() public {
     vm.warp(7776000 + 15768000 + 1);
-    deal(address(honey), address(0x69420), 36750e18);
-    vm.prank(address(0x69420));
+    deal(address(honey), address(0x42042069), 36750e18);
+    vm.prank(address(0x42042069));
     honey.approve(address(goldilocked), 36750e18);
-    vm.prank(address(0x69420));
+    vm.prank(address(0x42042069));
     goldilocked.repay(36750e18);
-    vm.prank(address(0x69420));
+    vm.prank(address(0x42042069));
     vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotVested.selector));
     goldilocked.unstake(3_500_001e18);
   }
 
   function testSeedUnstakeSuccess() public {
     vm.warp(7776000 + 15768000 + 1);
-    deal(address(honey), address(0x69420), 36750e18);
-    vm.startPrank(address(0x69420));
+    deal(address(honey), address(0x42042069), 36750e18);
+    vm.startPrank(address(0x42042069));
     honey.approve(address(goldilocked), 36750e18);
     goldilocked.repay(36750e18);
     goldilocked.unstake(3_500_000e18);
@@ -599,8 +599,8 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testSeedUnstakeFailBeforeVest() public {
     vm.warp(7776000 + 15768000 + 1);
-    deal(address(honey), address(0x69420), 42000e18);
-    vm.startPrank(address(0x69420));
+    deal(address(honey), address(0x42042069), 42000e18);
+    vm.startPrank(address(0x42042069));
     honey.approve(address(goldilocked), 42000e18);
     goldilocked.repay(42000e18);
     goldilocked.unstake(3_500_000e18);
@@ -611,24 +611,24 @@ contract UnitGoldilockedTest is BaseUnitTest {
 
   function testSeedUnstakeFullVestSuccess() public {
     vm.warp(90 days + 365 days + 1);
-    deal(address(honey), address(0x69420), 42000e18);
-    vm.startPrank(address(0x69420));
+    deal(address(honey), address(0x42042069), 42000e18);
+    vm.startPrank(address(0x42042069));
     honey.approve(address(goldilocked), 42000e18);
     goldilocked.repay(42000e18);
     goldilocked.unstake(7_000_000e18);
     vm.stopPrank();
     
-    assertEq(goldilocked.userStakedLocks(address(0x69420)), 0);
-    assertEq(goldilocked.seedAllocations(address(0x69420)), 7_000_000e18);
-    assertEq(goldilocked.borrowedHoney(address(0x69420)), 0);
-    assertEq(goldiswap.balanceOf(address(0x69420)), 7_000_000e18);
+    assertEq(goldilocked.userStakedLocks(address(0x42042069)), 0);
+    assertEq(goldilocked.seedAllocations(address(0x42042069)), 7_000_000e18);
+    assertEq(goldilocked.borrowedHoney(address(0x42042069)), 0);
+    assertEq(goldiswap.balanceOf(address(0x42042069)), 7_000_000e18);
   }
 
   function testSeedUnstakeRestakeFail() public {
     vm.warp(7776000 + 15768000 + 1);
-    deal(address(honey), address(0x69420), 42000e18);
-    deal(address(goldiswap), address(0x69420), 1e18);
-    vm.startPrank(address(0x69420));
+    deal(address(honey), address(0x42042069), 42000e18);
+    deal(address(goldiswap), address(0x42042069), 1e18);
+    vm.startPrank(address(0x42042069));
     honey.approve(address(goldilocked), 42000e18);
     goldiswap.approve(address(goldilocked), 1e18);
     goldilocked.repay(42000e18);
@@ -636,7 +636,7 @@ contract UnitGoldilockedTest is BaseUnitTest {
     vm.stopPrank();
     vm.warp(block.timestamp + 15768000);
 
-    assertEq(goldilocked.userVestingCheck(address(0x69420)), 3_500_000e18);
+    assertEq(goldilocked.userVestingCheck(address(0x42042069)), 3_500_000e18);
   }
 
   function testNoStirSandwich() public dealStakeLocks {
