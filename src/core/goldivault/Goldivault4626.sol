@@ -252,13 +252,13 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   }
 
   /// @inheritdoc IGoldivault4626
-  function stakeYT(uint256 amount) external {
+  function stakeYT(uint256 amount) external nonReentrant {
     _updateClaimableUnderlying(msg.sender);
     _stakeYT(amount);
   }
 
   /// @inheritdoc IGoldivault4626
-  function unstakeYT(uint256 amount) external {
+  function unstakeYT(uint256 amount) external nonReentrant {
     _updateClaimableUnderlying(msg.sender);
     _unstakeYT(amount);
   }
