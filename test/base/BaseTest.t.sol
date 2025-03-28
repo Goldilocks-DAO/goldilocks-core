@@ -9,6 +9,7 @@ import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
+import { Goldivault4626 } from "../../src/core/goldivault/Goldivault4626.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
 import { YieldToken } from "../../src/core/goldivault/YieldToken.sol";
 import { Goldigovernor } from "../../src/core/goldigovernance/Goldigovernor.sol";
@@ -16,6 +17,7 @@ import { Timelock } from "../../src/core/goldigovernance/Timelock.sol";
 import { GovLocks } from "../../src/core/goldigovernance/GovLocks.sol";
 import { Honey } from "../../src/mock/Honey.sol";
 import { iBGT } from "../../src/mock/iBGT.sol";
+import { oriBGT } from "../../src/mock/oriBGT.sol";
 import { HoneyComb } from "../../src/mock/HoneyComb.sol";
 import { Beradrome } from "../../src/mock/Beradrome.sol";
 import { BondBear } from "../../src/mock/BondBear.sol";
@@ -75,6 +77,29 @@ contract BexLPToken is ERC20 {
   }
 }
 
+contract oriBGTOT is OwnershipToken {
+  constructor(
+    string memory _tokenName,
+    string memory _tokenSymbol,
+    address _vault
+  ) OwnershipToken(
+    _tokenName,
+    _tokenSymbol,
+    _vault
+  ) {}
+}
+contract oriBGTYT is YieldToken {
+  constructor(
+    string memory _tokenName,
+    string memory _tokenSymbol,
+    address _vault
+  ) YieldToken(
+    _tokenName,
+    _tokenSymbol,
+    _vault
+  ) {}
+}
+
 abstract contract BaseTest is Test, IERC721Receiver {
 
   using LibRLP for address;
@@ -97,6 +122,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
   yBexLPToken yt;
   BexLPToken bexlp;
   BexLPVault bexvault;
+  oriBGT oribgt;
+  Goldivault4626 oribgtgoldivault;
+  oriBGTOT oribgtot;
+  oriBGTYT oribgtyt;
 
   uint256 initialFSL = 1_140_000e18;
   uint256 initialPSL = 400_000e18;
@@ -112,10 +141,11 @@ abstract contract BaseTest is Test, IERC721Receiver {
   function deployProtocol() public {
     
     // precompute addresses
-    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(13));
-    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(14));
-    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(15));
-    InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(18));
+    Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(14));
+    Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(15));
+    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(16));
+    InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(19));
+    Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(22));
 
     // deploy mock contracts
     bexlp = new BexLPToken();
@@ -127,6 +157,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bandbear = new BandBear();
     ibgtvault = new iBGTVault(address(ibgt), address(ibgt), address(honey));
     bexvault = new BexLPVault(address(bexlp), address(ibgt));
+    oribgt = new oriBGT(address(ibgt));
 
     // deploy timelock
     timelock = new Timelock(address(goldigovComputed), address(this), 2 days);
@@ -301,6 +332,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(ibgt),
       address(ibgtvault)
     );
+    assert(ot.vault() == address(goldivault));
+    assert(ot.decimals() == ERC20(bexlp).decimals());
 
     // initialization of goldivault
     goldivault.initializeProtocol(
@@ -311,6 +344,25 @@ abstract contract BaseTest is Test, IERC721Receiver {
       1 days,
       yieldTokens
     );
+
+    // deploy oribgtgoldivault
+    oribgtot = new oriBGTOT("oriBGT-OT", "oriBGTOT", address(oribgtgoldivaultComputed));
+    oribgtyt = new oriBGTYT("oriBGT-YT", "oriBGTYT", address(oribgtgoldivaultComputed));
+    oribgtgoldivault = new Goldivault4626(
+      address(oribgtot),
+      address(oribgtyt),
+      address(this),
+      address(ibgt),
+      address(oribgt),
+      address(0),
+      5,
+      3,
+      1e18,
+      365 days
+    );
+    assert(oribgtot.vault() == address(oribgtgoldivault));
+    assert(oribgtot.decimals() == ERC20(ibgt).decimals());
+    
   }
 
   function withinVariance(uint256 num1, uint256 num2) public pure returns (bool) {
