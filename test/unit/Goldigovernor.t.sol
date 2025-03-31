@@ -450,7 +450,7 @@ contract UnitGoldigovernorTest is BaseUnitTest {
       bytes[] memory calldatas,
       uint256[] memory values
     ) = proposyDiff();
-    address voter = 0x1e3C6BE5d1178E4BeFdE4Ff74cF19148F6416470;
+    address voter = 0x0811695A7247B36425f3d3dA0267cEAa60228553;
     deal(address(goldiswap), address(voter), 5_000_001e18);
     vm.prank(voter);
     goldiswap.approve(address(govlocks), 5_000_001e18);
