@@ -52,6 +52,7 @@ contract IntegrationOribgtGoldivaultTest is Test {
   address oribgtvaultaddy = 0xE5e4B198c115f59bde4a3740381284EA13103EB7;
 
   address user = address(0xabc123);
+  uint256 txAmt = 10e18;
 
   function setUp() public {
     uint256 berachainFork = vm.createFork("https://rpc.berachain.com", 3090200);
@@ -78,13 +79,17 @@ contract IntegrationOribgtGoldivaultTest is Test {
   }
 
   function testBuyYTSuccess() public {
-    uint256 txAmt = 10e18;
+    uint256 ytAmt = 15413847991370307;
+    uint256 dtAmountMax = 1e14;
     deal(address(ibgt), user, txAmt);
     vm.startPrank(user);
     ibgt.approve(address(oribgtgoldivault), txAmt);
     oribgtyt.approve(address(oribgtgoldivault), txAmt);
-    oribgtgoldivault.buyYT(15413847991370307, 1e14, 14611297191257916);
+    oribgtgoldivault.buyYT(ytAmt, dtAmountMax, 14611297191257916);
     vm.stopPrank();
+
+    assertEq(oribgtgoldivault.ytStaked(user), ytAmt);
+    assert(ibgt.balanceOf(user) >= txAmt - dtAmountMax);
   }
 
   function testSellYTFailInvalid() public {
@@ -94,14 +99,66 @@ contract IntegrationOribgtGoldivaultTest is Test {
   }
 
   function testSellYTSuccess() public {
-    uint256 txAmt = 10e18;
+    uint256 ytAmt = 1e16;
+    uint256 dtAmountMin = 14816756545257;
     deal(address(oribgtyt), user, txAmt);
     vm.startPrank(user);
     ibgt.approve(address(oribgtgoldivault), txAmt);
     oribgtyt.approve(address(oribgtgoldivault), txAmt);
     oribgtgoldivault.stakeYT(txAmt);
-    oribgtgoldivault.sellYT(1e16, 14816756545257, 9552006660243499);
+    oribgtgoldivault.sellYT(ytAmt, dtAmountMin, 9552006660243499);
     vm.stopPrank();
+
+    assertEq(oribgtgoldivault.ytStaked(user), txAmt - ytAmt);
+    assert(ibgt.balanceOf(user) >= dtAmountMin);
   }
 
+  function testSellYTNeverDecrease() public {
+    uint256 ytAmt = 1e16;
+    uint256 dtAmountMin = 14816756545257;
+    deal(address(oribgtyt), user, txAmt);
+    uint256 shareBal = oribgt.balanceOf(user);
+    uint256 dtBal = ibgt.balanceOf(user);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), txAmt);
+    oribgtyt.approve(address(oribgtgoldivault), txAmt);
+    oribgtgoldivault.stakeYT(txAmt);
+    oribgtgoldivault.sellYT(ytAmt, dtAmountMin, 9552006660243499);
+    vm.stopPrank();
+
+    assert(oribgt.balanceOf(user) >= shareBal);
+    assert(ibgt.balanceOf(user) >= dtBal);
+  }
+
+  function testSupplyRatios() public {
+    address user2 = address(0x123abc);
+    deal(address(ibgt), user2, txAmt);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), txAmt);
+    oribgtyt.approve(address(oribgtgoldivault), txAmt);
+    oribgtgoldivault.deposit(txAmt);
+    vm.stopPrank();
+
+    address user3 = address(0x123abccc);
+    deal(address(ibgt), user3, 20e18);
+    vm.startPrank(user3);
+    ibgt.approve(address(oribgtgoldivault), 20e18);
+    oribgtyt.approve(address(oribgtgoldivault), 20e18);
+    oribgtgoldivault.deposit(20e18);
+    vm.stopPrank();
+
+    deal(address(ibgt), user, txAmt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), txAmt);
+    oribgtyt.approve(address(oribgtgoldivault), txAmt);
+    oribgtgoldivault.buyYT(15413847991370307, 1e14, 14611297191257916);
+    vm.stopPrank();
+
+    vm.prank(user3);
+    oribgtgoldivault.unstakeYT(20e18);
+
+    assertEq(oribgtot.totalSupply(), oribgtyt.totalSupply());
+    assertEq(oribgtot.totalSupply(), oribgtgoldivault.depositTokenAmount());
+    assert(oribgt.convertToAssets(oribgt.balanceOf(address(oribgtgoldivault))) >= oribgtot.totalSupply());
+  }
 }

@@ -224,4 +224,170 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     assertEq(ibgt.balanceOf(address(this)), fee - 1);
   }
 
+  function testFourDifferentClaimers() public {
+    deal(address(ibgt), user, 50e18);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), 50e18);
+    oribgtyt.approve(address(oribgtgoldivault), 50e18);
+    oribgtgoldivault.deposit(50e18);
+    vm.stopPrank();
+
+    address user2 = address(0x123abc);
+    deal(address(ibgt), user2, 10e18);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), 10e18);
+    oribgtyt.approve(address(oribgtgoldivault), 10e18);
+    oribgtgoldivault.deposit(10e18);
+    vm.stopPrank();
+
+    address user3 = address(0x123abccc);
+    deal(address(ibgt), user3, 20e18);
+    vm.startPrank(user3);
+    ibgt.approve(address(oribgtgoldivault), 20e18);
+    oribgtyt.approve(address(oribgtgoldivault), 20e18);
+    oribgtgoldivault.deposit(20e18);
+    vm.stopPrank();
+
+    address user4 = address(0x123abcaa);
+    deal(address(ibgt), user4, 20e18);
+    vm.startPrank(user4);
+    ibgt.approve(address(oribgtgoldivault), 20e18);
+    oribgtyt.approve(address(oribgtgoldivault), 20e18);
+    oribgtgoldivault.deposit(20e18);
+    vm.stopPrank();
+    
+    deal(address(ibgt), address(oribgt), depositAmt + four626yield);
+    vm.prank(user);
+    oribgtgoldivault.claim();
+    vm.prank(user2);
+    oribgtgoldivault.claim();
+    vm.prank(user3);
+    oribgtgoldivault.claim();
+    vm.prank(user4);
+    oribgtgoldivault.claim();
+    uint256 fee = four626claimable * oribgtgoldivault.yieldFee() / 100;
+
+    assertEq(ibgt.balanceOf(user), (ibgt.balanceOf(user2) * 5) - 3);
+    assertEq(ibgt.balanceOf(user3), ibgt.balanceOf(user4));
+    assertEq(oribgtgoldivault.ytStaked(user), 50e18);
+    assertEq(oribgtgoldivault.userClaimableUnderlying(user), 0);
+    assertEq(oribgtgoldivault.ytStaked(user2), 10e18);
+    assertEq(oribgtgoldivault.userClaimableUnderlying(user2), 0);
+    assertEq(oribgtgoldivault.ytStaked(user3), 20e18);
+    assertEq(oribgtgoldivault.userClaimableUnderlying(user3), 0);
+    assertEq(oribgtgoldivault.ytStaked(user4), 20e18);
+    assertEq(oribgtgoldivault.userClaimableUnderlying(user4), 0);
+    assertEq(ibgt.balanceOf(address(this)), fee - 2);
+  }
+
+  function testAssetValue() public {
+    uint256 startingRatio = oribgt.convertToAssets(1e18);
+
+    deal(address(ibgt), user, depositAmt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user2 = address(0x123abc);
+    deal(address(ibgt), user2, depositAmt);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user3 = address(0x123abccc);
+    deal(address(ibgt), user3, 20e18);
+    vm.startPrank(user3);
+    ibgt.approve(address(oribgtgoldivault), 20e18);
+    oribgtyt.approve(address(oribgtgoldivault), 20e18);
+    oribgtgoldivault.deposit(20e18);
+    vm.stopPrank();
+
+    vm.prank(user3);
+    oribgtgoldivault.unstakeYT(20e18);
+    deal(address(ibgt), address(oribgt), (depositAmt * 2) + four626yield);
+    uint256 endingRatio = oribgt.convertToAssets(1e18);
+    oribgtgoldivault.ytStaked(user);
+
+    assertEq(oribgtgoldivault.userClaimableUnderlying(user), ((endingRatio - startingRatio) / 2) - 72);
+  }
+
+  function testAssetBacking() public {
+    deal(address(ibgt), user, depositAmt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user2 = address(0x123abc);
+    deal(address(ibgt), user2, depositAmt);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user3 = address(0x123abccc);
+    deal(address(ibgt), user3, 20e18);
+    vm.startPrank(user3);
+    ibgt.approve(address(oribgtgoldivault), 20e18);
+    oribgtyt.approve(address(oribgtgoldivault), 20e18);
+    oribgtgoldivault.deposit(20e18);
+    vm.stopPrank();
+
+    deal(address(ibgt), address(oribgt), (depositAmt * 2) + 20e18 + four626yield);
+    vm.prank(user);
+    oribgtgoldivault.claim();
+    vm.prank(user2);
+    oribgtgoldivault.claim();
+    vm.prank(user3);
+    oribgtgoldivault.claim();
+
+    assert(oribgt.convertToAssets(oribgt.balanceOf(address(oribgtgoldivault))) >= oribgtot.totalSupply());
+  }
+
+  function testAllRedeem() public {
+    deal(address(ibgt), user, depositAmt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user2 = address(0x123abc);
+    deal(address(ibgt), user2, depositAmt);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user3 = address(0x123abccc);
+    deal(address(ibgt), user3, 20e18);
+    vm.startPrank(user3);
+    ibgt.approve(address(oribgtgoldivault), 20e18);
+    oribgtyt.approve(address(oribgtgoldivault), 20e18);
+    oribgtgoldivault.deposit(20e18);
+    vm.stopPrank();
+
+    vm.startPrank(user);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(depositAmt);
+    vm.stopPrank();
+    vm.startPrank(user2);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(depositAmt);
+    vm.stopPrank();
+    vm.startPrank(user3);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(20e18);
+    vm.stopPrank();
+
+    assertEq(oribgt.balanceOf(address(oribgtgoldivault)), 0);
+  }
+
 }
