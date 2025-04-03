@@ -381,7 +381,7 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(ratioDiff == 0 || totalYtStaked == 0) {
       return claimableUnderlyingPerYTStored;
     }
-    return claimableUnderlyingPerYTStored + FixedPointMathLib.divWad(ratioDiff, totalYtStaked);
+    return claimableUnderlyingPerYTStored + FixedPointMathLib.divWad(newRatio - oldRatio, oldRatio);
   }
 
 }

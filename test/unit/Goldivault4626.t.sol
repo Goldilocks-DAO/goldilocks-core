@@ -3,13 +3,14 @@ pragma solidity ^0.8.20;
 
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { IGoldivault4626 } from "../../src/interfaces/IGoldivault4626.sol";
+import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 
 contract UnitGoldivault4626Test is BaseUnitTest {
 
   address user = address(0xabc123);
   uint256 depositAmt = 100e18;
   uint256 four626yield = 1000e18;
-  uint256 four626claimable = 9999999999999999900;
+  uint256 four626claimable = 999999999999999999900;
 
   function testDepositFailInvalid() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldivault4626.InvalidDeposit.selector));
@@ -183,14 +184,14 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     oribgtgoldivault.claim();
     vm.prank(user2);
     oribgtgoldivault.claim();
-    uint256 fee = (four626claimable / 4) * oribgtgoldivault.yieldFee() / 100;
+    uint256 fee = (four626claimable / 2) * oribgtgoldivault.yieldFee() / 100;
 
     assertEq(ibgt.balanceOf(user), ibgt.balanceOf(user2));
     assertEq(oribgtgoldivault.ytStaked(user), depositAmt);
     assertEq(oribgtgoldivault.userClaimableUnderlying(user), 0);
     assertEq(oribgtgoldivault.ytStaked(user2), depositAmt);
     assertEq(oribgtgoldivault.userClaimableUnderlying(user2), 0);
-    assertEq(ibgt.balanceOf(address(this)), (fee * 2) - 4);
+    assertEq(ibgt.balanceOf(address(this)), (fee * 2) - 2);
   }
 
   function testTwoDifferentClaimers() public {
@@ -312,7 +313,7 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     uint256 endingRatio = oribgt.convertToAssets(1e18);
     oribgtgoldivault.ytStaked(user);
 
-    assertEq(oribgtgoldivault.userClaimableUnderlying(user), ((endingRatio - startingRatio) / 2) - 72);
+    assertEq(oribgtgoldivault.userClaimableUnderlying(user), FixedPointMathLib.mulWad((endingRatio - startingRatio), depositAmt));
   }
 
   function testAssetBacking() public {
@@ -347,7 +348,7 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     vm.prank(user3);
     oribgtgoldivault.claim();
 
-    assert(oribgt.convertToAssets(oribgt.balanceOf(address(oribgtgoldivault))) >= oribgtot.totalSupply());
+    assertEq(oribgt.convertToAssets(oribgt.balanceOf(address(oribgtgoldivault))), oribgtot.totalSupply() + 115);
   }
 
   function testAllRedeem() public {
@@ -388,6 +389,35 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     vm.stopPrank();
 
     assertEq(oribgt.balanceOf(address(oribgtgoldivault)), 0);
+  }
+
+  function testStakeSums() public {
+    deal(address(ibgt), user, depositAmt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user2 = address(0x123abc);
+    deal(address(ibgt), user2, depositAmt);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    deal(address(ibgt), address(oribgt), (depositAmt * 2) + four626yield);
+    vm.prank(user);
+    oribgtgoldivault.claim();
+
+    deal(address(ibgt), address(oribgt), (depositAmt * 2) + four626yield + four626yield);
+    vm.prank(user);
+    oribgtgoldivault.claim();
+    vm.prank(user2);
+    oribgtgoldivault.claim();
+    
+    assertEq(ibgt.balanceOf(user), ibgt.balanceOf(user2));
   }
 
 }
