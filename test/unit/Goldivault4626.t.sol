@@ -391,6 +391,46 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     assertEq(oribgt.balanceOf(address(oribgtgoldivault)), 0);
   }
 
+  function testAllRedeemBackwards() public {
+    deal(address(ibgt), user, depositAmt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user2 = address(0x123abc);
+    deal(address(ibgt), user2, depositAmt);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    address user3 = address(0x123abccc);
+    deal(address(ibgt), user3, 20e18);
+    vm.startPrank(user3);
+    ibgt.approve(address(oribgtgoldivault), 20e18);
+    oribgtyt.approve(address(oribgtgoldivault), 20e18);
+    oribgtgoldivault.deposit(20e18);
+    vm.stopPrank();
+
+    vm.startPrank(user3);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(20e18);
+    vm.stopPrank();
+    vm.startPrank(user2);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(depositAmt);
+    vm.stopPrank();
+    vm.startPrank(user);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(depositAmt);
+    vm.stopPrank();
+
+    assertEq(oribgt.balanceOf(address(oribgtgoldivault)), 0);
+  }
+
   function testStakeSums() public {
     deal(address(ibgt), user, depositAmt);
     vm.startPrank(user);
@@ -418,6 +458,48 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     oribgtgoldivault.claim();
     
     assertEq(ibgt.balanceOf(user), ibgt.balanceOf(user2));
+    assertEq(oribgt.balanceOf(user), oribgt.balanceOf(user2));
+    assertEq(oribgtot.balanceOf(user), oribgtot.balanceOf(user2));
+    assertEq(oribgtyt.balanceOf(user), oribgtyt.balanceOf(user2));
+  }
+
+  function testDifferentStakeTimes() public {
+    //user a stakes x, t passes, user b stakes x, t/10 passes, both claim and redeem, both should have principal and a with y, b with y/10
+    deal(address(ibgt), user, depositAmt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    deal(address(ibgt), address(oribgt), depositAmt + four626yield);
+
+    address user2 = address(0x123abc);
+    deal(address(ibgt), user2, depositAmt);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    vm.stopPrank();
+
+    deal(address(ibgt), address(oribgt), (depositAmt * 2) + four626yield + (four626yield / 10));
+
+    vm.startPrank(user);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(depositAmt);
+    vm.stopPrank();
+    vm.startPrank(user2);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(depositAmt);
+    vm.stopPrank();
+
+    assertEq(ibgt.balanceOf(user) / 10, ibgt.balanceOf(user2));
+    assertEq(oribgt.balanceOf(user), 0);
+    assertEq(oribgt.balanceOf(user), oribgt.balanceOf(user2));
+    assertEq(oribgtot.balanceOf(user), 0);
+    assertEq(oribgtot.balanceOf(user), oribgtot.balanceOf(user2));
+    assertEq(oribgtyt.balanceOf(user), 0);
+    assertEq(oribgtyt.balanceOf(user), oribgtyt.balanceOf(user2));
   }
 
 }
