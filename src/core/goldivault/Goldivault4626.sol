@@ -384,4 +384,17 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     return claimableUnderlyingPerYTStored + FixedPointMathLib.divWad(newRatio - oldRatio, oldRatio);
   }
 
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                    PERMISSIONED FUNCTIONS                  */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  function recoverYield() external {
+    if(msg.sender != multisig) revert NotMultisig();
+    uint256 timeAfterMaturity = endTime > block.timestamp ? 0 : block.timestamp - endTime;
+    if(timeAfterMaturity < 1 weeks) revert DelayTooShort();
+    SafeTransferLib.safeTransfer(depositVault, multisig, ERC20(depositVault).balanceOf(address(this)));
+  }
+
 }

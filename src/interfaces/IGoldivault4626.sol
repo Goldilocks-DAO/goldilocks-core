@@ -20,6 +20,8 @@ interface IGoldivault4626 {
   /*                           ERRORS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+  error NotMultisig();
+  error DelayTooShort();
   error InvalidRedemption();
   error InvalidDeposit();
   error AlreadyConcluded();

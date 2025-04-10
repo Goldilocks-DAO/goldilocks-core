@@ -30,6 +30,7 @@ contract FuzzGovLocksTest is BaseFuzzTest {
 
   function testFuzzDelegateOther(address delegatee, uint256 delegateAmount) public {
     vm.assume(delegatee != address(0));
+    vm.assume(delegatee != address(0x42042069));
     deal(address(goldiswap), address(this), delegateAmount);
     goldiswap.approve(address(govlocks), delegateAmount);
     govlocks.deposit(delegateAmount);

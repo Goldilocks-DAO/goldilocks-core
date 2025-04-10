@@ -526,4 +526,26 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     assertEq(ibgt.balanceOf(address(oribgt)), 0);
   }
 
+  function testRecoverFailMultisig() public {
+    deal(address(oribgt), address(oribgtgoldivault), depositAmt);
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault4626.NotMultisig.selector));
+    vm.prank(user);
+    oribgtgoldivault.recoverYield();
+  }
+
+  function testRecoverFailDelay() public {
+    deal(address(oribgt), address(oribgtgoldivault), depositAmt);
+    vm.expectRevert(abi.encodeWithSelector(IGoldivault4626.DelayTooShort.selector));
+    oribgtgoldivault.recoverYield();
+  }
+
+  function testRecoverSuccess() public {
+    deal(address(oribgt), address(oribgtgoldivault), depositAmt);
+    vm.warp(block.timestamp + 373 days);
+    oribgtgoldivault.recoverYield();
+
+    assertEq(oribgt.balanceOf(address(oribgtgoldivault)), 0);
+    assertEq(oribgt.balanceOf(address(this)), depositAmt);
+  }
+
 }
