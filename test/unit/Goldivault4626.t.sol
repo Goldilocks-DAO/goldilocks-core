@@ -73,10 +73,10 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     vm.prank(user);
     oribgtgoldivault.redeemOwnership(depositAmt);
 
-    assertEq(oribgtgoldivault.ytStaked(user), 0);
+    assertEq(oribgtgoldivault.ytStaked(user), depositAmt);
     assertEq(oribgtot.balanceOf(user), 0);
-    assertEq(oribgtyt.balanceOf(user), depositAmt);
-    assertEq(oribgtgoldivault.totalYtStaked(), 0);
+    assertEq(oribgtyt.balanceOf(user), 0);
+    assertEq(oribgtgoldivault.totalYtStaked(), depositAmt);
     assertEq(ibgt.balanceOf(user), depositAmt);
     assertEq(oribgt.balanceOf(address(oribgtgoldivault)), 0);
     assertEq(ibgt.balanceOf(address(oribgtgoldivault)), 0);
@@ -464,7 +464,6 @@ contract UnitGoldivault4626Test is BaseUnitTest {
   }
 
   function testDifferentStakeTimes() public {
-    //user a stakes x, t passes, user b stakes x, t/10 passes, both claim and redeem, both should have principal and a with y, b with y/10
     deal(address(ibgt), user, depositAmt);
     vm.startPrank(user);
     ibgt.approve(address(oribgtgoldivault), depositAmt);
@@ -493,13 +492,38 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     oribgtgoldivault.redeemOwnership(depositAmt);
     vm.stopPrank();
 
-    assertEq(ibgt.balanceOf(user) / 10, ibgt.balanceOf(user2));
+    assertEq(ibgt.balanceOf(user) / 10, 107808333333333333320);
+    assertEq(ibgt.balanceOf(user2), 108083333333333333301);
     assertEq(oribgt.balanceOf(user), 0);
     assertEq(oribgt.balanceOf(user), oribgt.balanceOf(user2));
     assertEq(oribgtot.balanceOf(user), 0);
     assertEq(oribgtot.balanceOf(user), oribgtot.balanceOf(user2));
     assertEq(oribgtyt.balanceOf(user), 0);
     assertEq(oribgtyt.balanceOf(user), oribgtyt.balanceOf(user2));
+  }
+
+  function testNoYtRedeemSuccess() public {
+    deal(address(ibgt), user, depositAmt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtyt.approve(address(oribgtgoldivault), depositAmt);
+    oribgtgoldivault.deposit(depositAmt);
+    oribgtgoldivault.unstakeYT(depositAmt);
+    oribgtyt.transfer(address(0x0), depositAmt);
+    vm.stopPrank();
+
+    vm.warp(block.timestamp + 366 days);
+    vm.prank(user);
+    oribgtgoldivault.redeemOwnership(depositAmt);
+
+    assertEq(oribgtgoldivault.ytStaked(user), 0);
+    assertEq(oribgtot.balanceOf(user), 0);
+    assertEq(oribgtyt.balanceOf(user), 0);
+    assertEq(oribgtgoldivault.totalYtStaked(), 0);
+    assertEq(ibgt.balanceOf(user), depositAmt);
+    assertEq(oribgt.balanceOf(address(oribgtgoldivault)), 0);
+    assertEq(ibgt.balanceOf(address(oribgtgoldivault)), 0);
+    assertEq(ibgt.balanceOf(address(oribgt)), 0);
   }
 
 }
