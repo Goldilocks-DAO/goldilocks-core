@@ -146,13 +146,13 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @inheritdoc IGoldivault4626
   function deposit(uint256 amount) external nonReentrant {
     if(amount == 0) revert InvalidDeposit();
+    _updateClaimableUnderlying(msg.sender);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
     ERC20(depositToken).approve(depositVault, amount);
     ERC4626(depositVault).deposit(amount, address(this));
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(msg.sender, amount);
     YieldToken(yt).mintYT(msg.sender, amount);
-    _updateClaimableUnderlying(msg.sender);
     _stakeYT(amount);
     emit Deposit(msg.sender, amount);
   }
@@ -315,13 +315,13 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
   /// @param amount Amount of DT to deposit into the underlying vault
   function _deposit(uint256 amount) internal {
     if(amount == 0) revert InvalidDeposit();
+    _updateClaimableUnderlying(msg.sender);
     SafeTransferLib.safeTransferFrom(depositToken, msg.sender, address(this), amount);
     ERC20(depositToken).approve(depositVault, amount);
     ERC4626(depositVault).deposit(amount, address(this));
     depositTokenAmount += amount;
     OwnershipToken(ot).mintOT(address(this), amount);
     YieldToken(yt).mintYT(address(this), amount);
-    _updateClaimableUnderlying(msg.sender);
     ytStaked[msg.sender] += amount;
     totalYtStaked += amount;
     emit YTStake(msg.sender, amount);
@@ -381,7 +381,8 @@ contract Goldivault4626 is IGoldivault4626, ReentrancyGuard {
     if(ratioDiff == 0 || totalYtStaked == 0) {
       return claimableUnderlyingPerYTStored;
     }
-    return claimableUnderlyingPerYTStored + FixedPointMathLib.divWad(newRatio - oldRatio, oldRatio);
+    uint256 totalContractInterest = FixedPointMathLib.mulWad(ratioDiff, ERC20(depositVault).balanceOf(address(this)));
+    return claimableUnderlyingPerYTStored + FixedPointMathLib.divWad(totalContractInterest, totalYtStaked);
   }
 
 
