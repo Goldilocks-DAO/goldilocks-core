@@ -552,11 +552,11 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     ibgt.mint(address(oribgt), four626yield/2);
     vm.startPrank(user);
     oribgtgoldivault.claim();
-    oribgtgoldivault.redeemOwnership(depositAmt/2);
+    oribgtgoldivault.redeemOwnership(depositAmt);
     vm.stopPrank();
     vm.startPrank(user2);
     oribgtgoldivault.claim();
-    oribgtgoldivault.redeemOwnership(depositAmt/2);
+    oribgtgoldivault.redeemOwnership(depositAmt*2);
     vm.stopPrank();
     vm.startPrank(user3);
     oribgtgoldivault.claim();
@@ -564,7 +564,7 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     vm.stopPrank();
 
     uint256 num = oribgt.balanceOf(address(oribgtgoldivault));
-    assertEq(oribgt.convertToAssets(num), oribgtot.totalSupply() + 1057);
+    assertEq(oribgt.convertToAssets(num), oribgtot.totalSupply() + 1056);
   }
 
 }
