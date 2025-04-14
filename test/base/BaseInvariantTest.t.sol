@@ -7,6 +7,7 @@ import { GoldiswapHandler } from "../invariant/handlers/GoldiswapHandler.t.sol";
 import { GoldilockedHandler } from "../invariant/handlers/GoldilockedHandler.t.sol";
 import { GovLocksHandler } from "../invariant/handlers/GovLocksHandler.t.sol";
 import { GoldilendHandler } from "../invariant/handlers/GoldilendHandler.t.sol";
+import { Goldivault4626Handler } from "../invariant/handlers/Goldivault4626Handler.t.sol";
 
 abstract contract BaseInvariantTest is BaseTest {
 
@@ -14,6 +15,7 @@ abstract contract BaseInvariantTest is BaseTest {
   GovLocksHandler public govlocksHandler;
   GoldiswapHandler public goldiswapHandler;
   GoldilendHandler public goldilendHandler;
+  Goldivault4626Handler public goldivault4626Handler;
 
   function setUp() public virtual override {}
 
@@ -49,8 +51,18 @@ abstract contract BaseInvariantTest is BaseTest {
     return new address[](0);
   }
 
+  function assertOribgtotBalanceLteTotalSupply(address account) external returns (address[] memory) {
+    assertLe(oribgtot.balanceOf(account), oribgtot.totalSupply());
+    return new address[](0);
+  }
+
   function assertHoneyBalanceLteInitalDeal(address account) external returns (address[] memory) {
     assertLe(honey.balanceOf(account), 100_000e18);
+    return new address[](0);
+  }
+
+  function assertIbgtBalanceLteInitialDeal(address account) external returns (address[] memory) {
+    assertLe(ibgt.balanceOf(account), 100_000e18);
     return new address[](0);
   }
 
