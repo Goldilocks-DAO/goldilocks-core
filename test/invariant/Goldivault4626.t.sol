@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
 import { Goldivault4626Handler } from "../invariant/handlers/Goldivault4626Handler.t.sol";
 
@@ -10,12 +9,19 @@ contract InvariantGoldivault4626Test is BaseInvariantTest {
   function setUp() public override {
     deployProtocol();
 
-    goldivault4626Handler = new Goldivault4626Handler(oribgtgoldivault, oribgtot, oribgtyt, ibgt);
-    bytes4[] memory goldivault4626Selectors = new bytes4[](4);
+    goldivault4626Handler = new Goldivault4626Handler(oribgtgoldivault, oribgtot, oribgtyt, ibgt, oribgt);
+    bytes4[] memory goldivault4626Selectors = new bytes4[](11);
     goldivault4626Selectors[0] = goldivault4626Handler.deposit.selector;
     goldivault4626Selectors[1] = goldivault4626Handler.redeemOwnership.selector;
     goldivault4626Selectors[2] = goldivault4626Handler.stakeYT.selector;
     goldivault4626Selectors[3] = goldivault4626Handler.unstakeYT.selector;
+    goldivault4626Selectors[4] = goldivault4626Handler.approveot.selector;
+    goldivault4626Selectors[5] = goldivault4626Handler.approveyt.selector;
+    goldivault4626Selectors[6] = goldivault4626Handler.transferot.selector;
+    goldivault4626Selectors[7] = goldivault4626Handler.transferyt.selector;
+    goldivault4626Selectors[8] = goldivault4626Handler.transferFromot.selector;
+    goldivault4626Selectors[9] = goldivault4626Handler.transferFromyt.selector;
+    goldivault4626Selectors[10] = goldivault4626Handler.accumulateYield.selector;
     targetSelector(FuzzSelector({
       addr: address(goldivault4626Handler),
       selectors: goldivault4626Selectors
@@ -27,7 +33,11 @@ contract InvariantGoldivault4626Test is BaseInvariantTest {
     goldivault4626Handler.forEachActor(this.assertOribgtotBalanceLteTotalSupply);
   }
 
+  function invariant_solvencyDeposits() public view {
+    assert(oribgtot.totalSupply() <= ibgt.balanceOf(address(oribgt)));
+  }
+
   function invariant_solvencyBalances() public {
-    goldivault4626Handler.forEachActor(this.assertIbgtBalanceLteInitialDeal);
+    goldivault4626Handler.forEachActor(this.assertOribgtotBalanceLteInitialDeal);
   }
 }

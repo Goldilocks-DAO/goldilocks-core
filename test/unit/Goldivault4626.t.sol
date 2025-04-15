@@ -567,4 +567,70 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     assertEq(oribgt.convertToAssets(num), oribgtot.totalSupply() + 1056);
   }
 
+  function testSolvencyDeposits() public {
+    address guy = address(0xE);
+    deal(address(ibgt), guy, 885);
+    vm.startPrank(guy);
+    ibgt.approve(address(oribgtgoldivault), 885);
+    oribgtyt.approve(address(oribgtgoldivault), 885);
+    oribgtgoldivault.deposit(885);
+    vm.stopPrank();
+    deal(address(ibgt), address(oribgt), 885 + 41601461799406086449130643529608617149993532349104);
+
+    assertEq(oribgtgoldivault.userClaimableUnderlying(guy) + oribgtot.totalSupply() + 1, oribgt.convertToAssets(oribgt.balanceOf(address(oribgtgoldivault))));
+  }
+
+  function testRandomStakers() public {
+    address user2 = address(0x123abc);
+    address user3 = address(0x123abccc);
+    uint256 user1Amt = 60e18;
+    uint256 user2Amt = 74e18;
+    uint256 user3Amt = 26e18;
+
+    deal(address(ibgt), user, user1Amt);
+    vm.startPrank(user);
+    ibgt.approve(address(oribgtgoldivault), user1Amt);
+    oribgtyt.approve(address(oribgtgoldivault), user1Amt);
+    oribgtgoldivault.deposit(user1Amt);
+    vm.stopPrank();
+
+    ibgt.mint(address(oribgt), 4e18);
+
+    deal(address(ibgt), user2, user2Amt);
+    vm.startPrank(user2);
+    ibgt.approve(address(oribgtgoldivault), user2Amt);
+    oribgtyt.approve(address(oribgtgoldivault), user2Amt);
+    oribgtgoldivault.deposit(user2Amt);
+    vm.stopPrank();
+
+    deal(address(ibgt), user3, user3Amt);
+    vm.startPrank(user3);
+    ibgt.approve(address(oribgtgoldivault), user3Amt);
+    oribgtyt.approve(address(oribgtgoldivault), user3Amt);
+    oribgtgoldivault.deposit(user3Amt);
+    vm.stopPrank();
+
+    ibgt.mint(address(oribgt), 7e18);
+
+    vm.startPrank(user);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(user1Amt);
+    vm.stopPrank();
+    vm.startPrank(user2);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(user2Amt);
+    vm.stopPrank();
+
+    ibgt.mint(address(oribgt), 4e18);
+
+    vm.startPrank(user3);
+    oribgtgoldivault.claim();
+    oribgtgoldivault.redeemOwnership(user3Amt);
+    vm.stopPrank();
+
+    uint256 num = oribgt.balanceOf(address(oribgtgoldivault));
+    assertEq(oribgtot.totalSupply(), 0);
+    assertEq(oribgt.convertToAssets(num), oribgtot.totalSupply() + 69);
+  }
+
 }

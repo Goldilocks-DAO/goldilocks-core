@@ -51,18 +51,18 @@ abstract contract BaseInvariantTest is BaseTest {
     return new address[](0);
   }
 
-  function assertOribgtotBalanceLteTotalSupply(address account) external returns (address[] memory) {
-    assertLe(oribgtot.balanceOf(account), oribgtot.totalSupply());
-    return new address[](0);
-  }
-
   function assertHoneyBalanceLteInitalDeal(address account) external returns (address[] memory) {
     assertLe(honey.balanceOf(account), 100_000e18);
     return new address[](0);
   }
 
-  function assertIbgtBalanceLteInitialDeal(address account) external returns (address[] memory) {
-    assertLe(ibgt.balanceOf(account), 100_000e18);
+  function assertOribgtotBalanceLteTotalSupply(address account) external returns (address[] memory) {
+    assertLe(oribgtot.balanceOf(account), oribgtot.totalSupply());
+    return new address[](0);
+  }
+
+  function assertOribgtotBalanceLteInitialDeal(address account) external returns (address[] memory) {
+    assertLe(oribgtot.balanceOf(account), 100_000e18);
     return new address[](0);
   }
 
