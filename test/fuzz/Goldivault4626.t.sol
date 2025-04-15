@@ -72,4 +72,23 @@ contract FuzzGoldivault4626Test is BaseFuzzTest {
     assertEq(oribgtyt.balanceOf(address(oribgtgoldivault)), 0);
     assertEq(oribgtyt.balanceOf(user), unstakeAmt);
   }
+
+  function testFuzzClaimUnderlying(uint256 stakeAmt, uint256 claimAmt) public {
+    vm.assume(stakeAmt > 0 && stakeAmt < 1e40);
+    vm.assume(claimAmt > 0 && claimAmt < 1e40);
+    deal(address(oribgtyt), user, stakeAmt);
+    vm.startPrank(user);
+    oribgtyt.approve(address(oribgtgoldivault), stakeAmt);
+    oribgtgoldivault.stakeYT(stakeAmt);
+    vm.stopPrank();
+    deal(address(ibgt), address(oribgt), stakeAmt + claimAmt);
+    vm.prank(user);
+    oribgtgoldivault.claim();
+
+    assertEq(oribgtgoldivault.ytStaked(user), stakeAmt);
+    assertEq(oribgtgoldivault.totalYtStaked(), stakeAmt);
+    assertEq(oribgtyt.balanceOf(address(oribgtgoldivault)), stakeAmt);
+    assertEq(oribgtyt.balanceOf(user), 0);
+    assertEq(ibgt.balanceOf(user) + ibgt.balanceOf(address(this)) + ibgt.balanceOf(address(oribgt)), stakeAmt + claimAmt);
+  }
 }
