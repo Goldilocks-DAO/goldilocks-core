@@ -64,6 +64,11 @@ contract Goldivault4626Handler is BaseHandler {
     oribgtgoldivault.unstakeYT(amount);
   }
 
+  function claim(uint256 actorSeed) public useActor(actorSeed) countCall("claim") {
+    vm.prank(currentActor);
+    oribgtgoldivault.claim();
+  }
+
   function approveot(
     uint256 actorSeed,
     uint256 spenderSeed,

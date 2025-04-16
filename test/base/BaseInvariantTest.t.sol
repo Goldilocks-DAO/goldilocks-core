@@ -31,6 +31,10 @@ abstract contract BaseInvariantTest is BaseTest {
     return staked + goldilocked.stakedLocks(caller);
   }
 
+  function accumulateClaimableYield(uint256 claimable, address caller) external view returns (uint256) {
+    return claimable + oribgtgoldivault.userClaimableUnderlying(caller);
+  }
+
   function assertGovlocksBalanceLteTotalSupply(address account) external returns (address[] memory) {
     assertLe(govlocks.balanceOf(account), govlocks.totalSupply());
     return new address[](0);

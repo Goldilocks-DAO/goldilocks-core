@@ -580,6 +580,19 @@ contract UnitGoldivault4626Test is BaseUnitTest {
     assertEq(oribgtgoldivault.userClaimableUnderlying(guy) + oribgtot.totalSupply() + 1, oribgt.convertToAssets(oribgt.balanceOf(address(oribgtgoldivault))));
   }
 
+  function testSolvencyDeposits2() public {
+    address guy = address(0xA5c);
+    deal(address(ibgt), guy, 5197288472372036);
+    vm.startPrank(guy);
+    ibgt.approve(address(oribgtgoldivault), 5197288472372036);
+    oribgtyt.approve(address(oribgtgoldivault), 5197288472372036);
+    oribgtgoldivault.deposit(5197288472372036);
+    vm.stopPrank();
+    deal(address(ibgt), address(oribgt), 5197288472372036 + 8379);
+
+    assertEq(oribgtgoldivault.userClaimableUnderlying(guy) + oribgtot.totalSupply() + 1, oribgt.convertToAssets(oribgt.balanceOf(address(oribgtgoldivault))));
+  }
+
   function testRandomStakers() public {
     address user2 = address(0x123abc);
     address user3 = address(0x123abccc);

@@ -10,7 +10,7 @@ contract InvariantGoldivault4626Test is BaseInvariantTest {
     deployProtocol();
 
     goldivault4626Handler = new Goldivault4626Handler(oribgtgoldivault, oribgtot, oribgtyt, ibgt, oribgt);
-    bytes4[] memory goldivault4626Selectors = new bytes4[](11);
+    bytes4[] memory goldivault4626Selectors = new bytes4[](12);
     goldivault4626Selectors[0] = goldivault4626Handler.deposit.selector;
     goldivault4626Selectors[1] = goldivault4626Handler.redeemOwnership.selector;
     goldivault4626Selectors[2] = goldivault4626Handler.stakeYT.selector;
@@ -22,6 +22,7 @@ contract InvariantGoldivault4626Test is BaseInvariantTest {
     goldivault4626Selectors[8] = goldivault4626Handler.transferFromot.selector;
     goldivault4626Selectors[9] = goldivault4626Handler.transferFromyt.selector;
     goldivault4626Selectors[10] = goldivault4626Handler.accumulateYield.selector;
+    goldivault4626Selectors[11] = goldivault4626Handler.claim.selector;
     targetSelector(FuzzSelector({
       addr: address(goldivault4626Handler),
       selectors: goldivault4626Selectors
@@ -33,8 +34,15 @@ contract InvariantGoldivault4626Test is BaseInvariantTest {
     goldivault4626Handler.forEachActor(this.assertOribgtotBalanceLteTotalSupply);
   }
 
-  function invariant_solvencyDeposits() public view {
-    assert(oribgtot.totalSupply() <= ibgt.balanceOf(address(oribgt)));
+  function invariant_solvencyDeposits() public {
+    uint256 sumOfYield = goldivault4626Handler.reduceActors(
+      0,
+      this.accumulateClaimableYield
+    );
+    assertEq(
+      sumOfYield + oribgtot.totalSupply() + 1,
+      oribgt.convertToAssets(oribgt.balanceOf(address(oribgtgoldivault)))
+    );
   }
 
   function invariant_solvencyBalances() public {
