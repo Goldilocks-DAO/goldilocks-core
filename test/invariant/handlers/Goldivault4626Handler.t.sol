@@ -160,6 +160,7 @@ contract Goldivault4626Handler is BaseHandler {
   }
 
   function accumulateYield(uint256 amount) public countCall("accumulate") {
+    amount = bound(amount, 0, 1e40);
     deal(address(ibgt), address(oribgt), ibgt.balanceOf(address(oribgt)) + amount);
   }
 

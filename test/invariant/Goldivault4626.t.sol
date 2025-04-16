@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import { console } from "../../lib/forge-std/src/console.sol";
 import { BaseInvariantTest } from "../base/BaseInvariantTest.t.sol";
 import { Goldivault4626Handler } from "../invariant/handlers/Goldivault4626Handler.t.sol";
 
@@ -34,7 +35,7 @@ contract InvariantGoldivault4626Test is BaseInvariantTest {
     goldivault4626Handler.forEachActor(this.assertOribgtotBalanceLteTotalSupply);
   }
 
-  function invariant_solvencyDeposits() public {
+  function invariant_solvencyOribgtDeposits() public {
     uint256 sumOfYield = goldivault4626Handler.reduceActors(
       0,
       this.accumulateClaimableYield
