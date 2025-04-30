@@ -58,6 +58,8 @@ interface IGoldilend {
   event iBGTLock(address indexed user, uint256 amount);
   event GiBGTStake(address indexed user, uint256 amount);
   event GiBGTUnstake(address indexed user, uint256 amount);
+  event PRGLock(address indexed user, uint256 amount);
+  event PRGUnlock(address indexed user, uint256 amount);
   event Claim(address indexed user, uint256 amount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
   event Repay(address indexed user, uint256 amount);
