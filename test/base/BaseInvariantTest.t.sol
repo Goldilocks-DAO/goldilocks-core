@@ -45,11 +45,6 @@ abstract contract BaseInvariantTest is BaseTest {
     return new address[](0);
   }
 
-  function assertGoldilendBalanceLteTotalSupply(address account) external returns (address[] memory) {
-    assertLe(goldilend.balanceOf(account), goldilend.totalSupply());
-    return new address[](0);
-  }
-
   function assertLocksBalanceLteTotalSupply(address account) external returns (address[] memory) {
     assertLe(goldiswap.balanceOf(account), goldiswap.totalSupply());
     return new address[](0);

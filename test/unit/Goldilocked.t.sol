@@ -322,16 +322,6 @@ contract UnitGoldilockedTest is BaseUnitTest {
     goldilocked.goldilendMint(address(this), 69);
   }
 
-  function testGoldilendMintSuccess() public {
-    deal(address(goldilend), address(this), locksAmount);
-    goldilend.approve(address(goldilend), locksAmount);
-    goldilend.stake(locksAmount);
-    vm.warp(1 days + 1);
-    goldilend.claim();
-
-    assertEq(goldilocked.balanceOf(address(this)), oneDayPrg + prgMintAmount);
-  }
-
   function testChangePorridgeEmissionsFailTimelock() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(IGoldilocked.NotTimelock.selector));

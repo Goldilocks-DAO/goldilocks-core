@@ -8,6 +8,8 @@ import { IERC721Receiver } from "../../lib/openzeppelin-contracts/contracts/toke
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
+import { GPRG } from "../../src/core/goldilend/GPRG.sol";
+import { DPRG } from "../../src/core/goldilend/DPRG.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 import { Goldivault4626 } from "../../src/core/goldivault/Goldivault4626.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
@@ -126,6 +128,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   Goldivault4626 oribgtgoldivault;
   oriBGTOT oribgtot;
   oriBGTYT oribgtyt;
+  GPRG gprg;
+  DPRG dprg;
 
   uint256 initialFSL = 1_140_000e18;
   uint256 initialPSL = 400_000e18;
@@ -143,9 +147,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
     // precompute addresses
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(14));
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(15));
-    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(16));
-    InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(19));
-    Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(22));
+    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(18));
+    InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(21));
+    Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(24));
 
     // deploy mock contracts
     bexlp = new BexLPToken();
@@ -274,17 +278,16 @@ abstract contract BaseTest is Test, IERC721Receiver {
     honey.approve(address(goldiswap), initialPSL);
     goldiswap.initializeProtocol(initialPSL);
 
+    gprg = new GPRG("Goldilend Porridge" , "GPRG", address(goldilendComputed));
+    dprg = new DPRG("Debt Porridge", "DPRG", address(goldilendComputed));
+
     // deploy goldilend
-    address[] memory rewardTokens = new address[](1);
-    rewardTokens[0] = address(honey);
     goldilend = new Goldilend(
-      address(goldilocked),
       address(timelock),
       address(this),
-      apdao,
-      address(ibgt),
-      address(ibgtvault),
-      rewardTokens
+      address(goldilocked),
+      address(gprg),
+      address(dprg)
     );
 
     // initialization of goldilend
@@ -294,28 +297,16 @@ abstract contract BaseTest is Test, IERC721Receiver {
     uint256[] memory values = new uint256[](2);
     values[0] = 50;
     values[1] = 50;
-    address[] memory boostNfts = new address[](2);
-    boostNfts[0] = address(honeycomb);
-    boostNfts[1] = address(beradrome);
-    uint8[] memory boosts = new uint8[](2);
-    boosts[0] = 6;
-    boosts[1] = 9;
     goldilend.initializeParameters(
-      45,
-      5,
       7 days,
       365 days,
       10e18,
-      10e18,
-      5e17,
-      30 days
+      10e18
     );
-    goldilend.initializeBeras(100e18, nfts, values);
-    goldilend.initializePartners(boostNfts, boosts);
-    deal(address(ibgt), address(this), 1000e18);
-    ibgt.approve(address(goldilend), 1000e18);
+    goldilend.initializeBeras(nfts, values);
+    deal(address(gprg), address(this), 1000e18);
+    ibgt.approve(address(gprg), 1000e18);
     goldilend.lock(1000e18);
-    deal(address(ibgt), address(ibgtvault), type(uint256).max / 2);
 
     // deploy goldivault
     address[] memory yieldTokens = new address[](1);

@@ -27,7 +27,6 @@ import { IGoldilocked } from "../../interfaces/IGoldilocked.sol";
 import { GPRG } from "./GPRG.sol";
 import { DPRG } from "./DPRG.sol";
 
-// (ii) introduce a debt token so that when a borrower borrows n porridge, it mints them n debt tokens and when they repay n porridge they have to burn that many debt tokens
 
 /// @title Goldilend
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
