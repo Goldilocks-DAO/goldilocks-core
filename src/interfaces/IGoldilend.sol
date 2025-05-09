@@ -24,6 +24,7 @@ interface IGoldilend {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   error NotMultisig();
+  error NotAPDAO();
   error NotTimelock();
   error NotActive();
   error ArrayMismatch();
@@ -47,9 +48,12 @@ interface IGoldilend {
   event Repay(address indexed user, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount);
   event NewProtocolInterestRate(uint256 newProtocolInterestRate);
+  event NewShareRates(uint256 newMultisigShare, uint256 newApdaoShare);
   event NewSlope(uint256 newSlope);
   event NewDurations(uint256 newMinDuration, uint256 newMaxDuration);
   event NewBorrowingActive(bool newBorrowingActive);
+  event MultisigInterestClaim(uint256 interestClaim);
+  event ApdaoInterestClaim(uint256 interestClaim);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */
@@ -126,6 +130,12 @@ interface IGoldilend {
   /// @param _protocolInterestRate New interest rate
   function changeProtocolInterestRate(uint256 _protocolInterestRate) external;
 
+  /// @notice Allows the DAO to adjust shares of interest payment
+  /// @dev Callable only by Timelock
+  /// @param _multisigShare New share for multisig
+  /// @param _apdaoShare New share for apdao
+  function changeShareRates(uint256 _multisigShare, uint256 _apdaoShare) external;
+
   /// @notice Allows the DAO to adjust the degree of the protocol interest rate
   /// @dev Callable only by Timelock
   /// @param _slope New slope
@@ -142,13 +152,27 @@ interface IGoldilend {
   /// @param _borrowingActive Value that activates or inactivates
   function changeBorrowingActive(bool _borrowingActive) external;
 
+  /// @notice Allows multisig to claim interest
+  /// @dev Callable only by multisig
+  /// @dev 4.5% of all protocol interest
+  function multisigInterestClaim() external;
+
+  /// @notice Allows APDAO to claim interest
+  /// @dev Callable only by APDAO
+  /// @dev 0.5% of all protocol interest
+  function apdaoInterestClaim() external;
+
   /// @notice Allows multisig to initialize the protocol parameters
   /// @dev Callable only by multisig
+  /// @param _multisigShare Share of interest payments to multisig
+  /// @param _apdaoShare of interest payments to apdao
   /// @param _minDuration Minimum loan duration
   /// @param _maxDuration Maximum loan duration
   /// @param _protocolInterestRate Initial interest rate of protocol
   /// @param _slope Initial rate at which interest rate increases
   function initializeParameters(
+    uint256 _multisigShare,
+    uint256 _apdaoShare,
     uint256 _minDuration,
     uint256 _maxDuration,
     uint256 _protocolInterestRate,

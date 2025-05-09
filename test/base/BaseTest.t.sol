@@ -138,7 +138,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 prgMintAmount = 200_000_000e18;
   uint256 txAmount = 10e18;
   uint256 locksAmount = 100_000e18;
-  address apdao = address(0xdddd);
+  address apdao = 0xAe8b5e58E423750a68BbB37ccaaD399deF93D24D;
 
   function setUp() public virtual {}
 
@@ -285,10 +285,13 @@ abstract contract BaseTest is Test, IERC721Receiver {
     goldilend = new Goldilend(
       address(timelock),
       address(this),
+      apdao,
       address(goldilocked),
       address(gprg),
       address(dprg)
     );
+    assert(gprg.goldilend() == address(goldilend));
+    assert(dprg.goldilend() == address(goldilend));
 
     // initialization of goldilend
     address[] memory nfts = new address[](2);
@@ -298,15 +301,14 @@ abstract contract BaseTest is Test, IERC721Receiver {
     values[0] = 50;
     values[1] = 50;
     goldilend.initializeParameters(
+      45,
+      5,
       7 days,
       365 days,
       10e18,
       10e18
     );
     goldilend.initializeBeras(nfts, values);
-    deal(address(gprg), address(this), 1000e18);
-    ibgt.approve(address(gprg), 1000e18);
-    goldilend.lock(1000e18);
 
     // deploy goldivault
     address[] memory yieldTokens = new address[](1);

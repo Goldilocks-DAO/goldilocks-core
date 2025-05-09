@@ -50,6 +50,9 @@ contract Goldilend is IGoldilend, IERC721Receiver {
   /// @notice Address of multisig
   address public immutable multisig;
 
+  /// @notice Address of APDAO
+  address public immutable apdao;
+
   /// @notice Address of Timelock
   address public immutable timelock;
 
@@ -80,6 +83,18 @@ contract Goldilend is IGoldilend, IERC721Receiver {
   /// @notice Maximum loan duration
   uint256 public maxDuration;
 
+  /// @notice Portion of interest payments to multisig
+  uint256 public multisigClaims;
+
+  /// @notice Portion of interest payments to apdao
+  uint256 public apdaoClaims;
+
+  /// @notice Share of interest payments to multisig
+  uint256 public multisigShare;
+
+  /// @notice Share of interest payments to apdao
+  uint256 public apdaoShare;
+
   /// @notice Boolean value if borrowing is active
   bool public borrowingActive;
 
@@ -102,20 +117,23 @@ contract Goldilend is IGoldilend, IERC721Receiver {
   
 
   /// @notice Constructor of this contract
-  /// @param _multisig Address of the multisig
   /// @param _timelock Address of the timelock
+  /// @param _multisig Address of the multisig
+  /// @param _apdao Address of APDAO
   /// @param _porridge Address of Porridge
   /// @param _gprg Address of Goldilend Porridge
   /// @param _dprg Address of Debt Porridge
   constructor(
     address _timelock,
     address _multisig,
+    address _apdao,
     address _porridge,
     address _gprg,
     address _dprg
   ) {
-    multisig = _multisig;
     timelock = _timelock;
+    multisig = _multisig;
+    apdao = _apdao;
     porridge = _porridge;
     gprg = _gprg;
     dprg = _dprg;
@@ -142,7 +160,7 @@ contract Goldilend is IGoldilend, IERC721Receiver {
     uint256 redeemAmount = _GPRGMintAmount(amount);
     poolSize -= amount;
     GPRG(gprg).burnGPRG(msg.sender, redeemAmount);
-    SafeTransferLib.safeTransferFrom(porridge, address(this), msg.sender, amount);
+    SafeTransferLib.safeTransfer(porridge, msg.sender, amount);
     emit PorridgeUnlock(msg.sender, amount);
   }
 
@@ -195,7 +213,8 @@ contract Goldilend is IGoldilend, IERC721Receiver {
     outstandingDebt -= repayAmount - interest > outstandingDebt ? outstandingDebt : repayAmount - interest;
     loans[msg.sender][index].borrowedAmount -= repayAmount;
     loans[msg.sender][index].interest -= interest;
-    poolSize += interest;
+    poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
+    _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(porridge, msg.sender, address(this), repayAmount);
     DPRG(dprg).burnDPRG(msg.sender, repayAmount);
     if(userLoan.borrowedAmount - repayAmount == 0) {
@@ -263,6 +282,20 @@ contract Goldilend is IGoldilend, IERC721Receiver {
     uint256 debt = outstandingDebt;
     if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     return _calculateInterest(borrowAmount, debt, duration);
+  }
+
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      INTERNAL FUNCTIONS                    */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+  /// @notice Update internal variables tracking amount of interest for multisig and apdao
+  /// @dev Multisig can claim 4.5% and apdao can claim 0.5% of interest paid
+  /// @param interest Interest paid during repayment
+  function _updateInterestClaims(uint256 interest) internal {
+    multisigClaims += interest * multisigShare / 1000;
+    apdaoClaims += interest * apdaoShare / 1000;
   }
 
 
@@ -351,6 +384,14 @@ contract Goldilend is IGoldilend, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
+  function changeShareRates(uint256 _multisigShare, uint256 _apdaoShare) external {
+    if(msg.sender != timelock) revert NotTimelock();
+    multisigShare = _multisigShare;
+    apdaoShare = _apdaoShare;
+    emit NewShareRates(_multisigShare, _apdaoShare);
+  }
+
+  /// @inheritdoc IGoldilend
   function changeSlope(uint256 _slope) external {
     if(msg.sender != timelock) revert NotTimelock();
     slope = _slope;
@@ -373,7 +414,27 @@ contract Goldilend is IGoldilend, IERC721Receiver {
   }
 
   /// @inheritdoc IGoldilend
+  function multisigInterestClaim() external {
+    if(msg.sender != multisig) revert NotMultisig();
+    uint256 interestClaim = multisigClaims;
+    multisigClaims = 0;
+    SafeTransferLib.safeTransfer(porridge, multisig, interestClaim);
+    emit MultisigInterestClaim(interestClaim);
+  }
+
+  /// @inheritdoc IGoldilend
+  function apdaoInterestClaim() external {
+    if(msg.sender != apdao) revert NotAPDAO();
+    uint256 interestClaim = apdaoClaims;
+    apdaoClaims = 0;
+    SafeTransferLib.safeTransfer(porridge, apdao, interestClaim);
+    emit ApdaoInterestClaim(interestClaim);
+  }
+
+  /// @inheritdoc IGoldilend
   function initializeParameters(
+    uint256 _multisigShare,
+    uint256 _apdaoShare,
     uint256 _minDuration,
     uint256 _maxDuration,
     uint256 _protocolInterestRate,
@@ -382,10 +443,13 @@ contract Goldilend is IGoldilend, IERC721Receiver {
     if(msg.sender != multisig) revert NotMultisig();
     if(parametersInitialized) revert AlreadyInitialized();
     parametersInitialized = true;
+    multisigShare = _multisigShare;
+    apdaoShare = _apdaoShare;
     minDuration = _minDuration;
     maxDuration = _maxDuration;
     protocolInterestRate = _protocolInterestRate;
     slope = _slope;
+    emit NewShareRates(_multisigShare, _apdaoShare);
     emit NewDurations(_minDuration, _maxDuration);
     emit NewProtocolInterestRate(_protocolInterestRate);
     emit NewSlope(_slope);

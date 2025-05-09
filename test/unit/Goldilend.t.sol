@@ -349,6 +349,8 @@ contract UnitGoldilendTest is BaseUnitTest {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector)); 
     goldilend.initializeParameters(
+      45,
+      5,
       7 days, 
       21 days,
       1e17,
@@ -359,6 +361,8 @@ contract UnitGoldilendTest is BaseUnitTest {
   function testInitalizeParametersFailAlready() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.AlreadyInitialized.selector)); 
     goldilend.initializeParameters(
+      45,
+      5,
       7 days, 
       21 days,
       1e17,
