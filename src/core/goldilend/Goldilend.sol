@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 
 // |============================================================================================|
@@ -22,8 +22,9 @@ import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.s
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import { Initializable } from "../../../lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol";
-import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol";
+import { Initializable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import { IGoldilend } from "../../interfaces/IGoldilend.sol";
 import { IGoldilocked } from "../../interfaces/IGoldilocked.sol";
 import { GPRG } from "./GPRG.sol";
@@ -32,8 +33,7 @@ import { DPRG } from "./DPRG.sol";
 
 /// @title Goldilend
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
-// contract Goldilend is Initializable, UUPSUpgradeable, IGoldilend, IERC721Receiver {
-contract Goldilend is IGoldilend, IERC721Receiver {
+contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldilend, IERC721Receiver {
 
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -147,9 +147,23 @@ contract Goldilend is IGoldilend, IERC721Receiver {
     _disableInitializers();
   }
 
-  function initialize() public initializer {
-    // __Ownable_init();
-    // __UUPSUpgradeable_init();
+  function initialize(
+    address initialOwner,
+    address _timelock,
+    address _multisig,
+    address _apdao,
+    address _porridge,
+    address _gprg,
+    address _dprg
+  ) public initializer {
+    __Ownable_init(initialOwner);
+    __UUPSUpgradeable_init();
+    timelock = _timelock;
+    multisig = _multisig;
+    apdao = _apdao;
+    porridge = _porridge;
+    gprg = _gprg;
+    dprg = _dprg;
   }
 
 
@@ -506,6 +520,10 @@ contract Goldilend is IGoldilend, IERC721Receiver {
     return IERC721Receiver.onERC721Received.selector;
   }
 
-  // function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+  function _authorizeUpgrade(address newImplementation)
+    internal
+    override
+    onlyOwner
+  {}
 
 }

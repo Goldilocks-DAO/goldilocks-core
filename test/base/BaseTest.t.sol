@@ -5,6 +5,7 @@ import "../../lib/forge-std/src/Test.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { IERC721Receiver } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import { ERC1967Proxy } from "../../lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
@@ -278,10 +279,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
     honey.approve(address(goldiswap), initialPSL);
     goldiswap.initializeProtocol(initialPSL);
 
+    // deploy goldilend
     gprg = new GPRG("Goldilend Porridge" , "GPRG", address(goldilendComputed));
     dprg = new DPRG("Debt Porridge", "DPRG", address(goldilendComputed));
-
-    // deploy goldilend
     goldilend = new Goldilend(
       address(timelock),
       address(this),
@@ -292,6 +292,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
     );
     assert(gprg.goldilend() == address(goldilend));
     assert(dprg.goldilend() == address(goldilend));
+
+    bytes memory data = abi.encodeWithSelector(Goldilend.initialize.selector); // need to redo constructor and add variables here
+    ERC1967Proxy proxy = new ERC1967Proxy(address(goldilend), data);
 
     // initialization of goldilend
     address[] memory nfts = new address[](2);
