@@ -22,6 +22,8 @@ import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.s
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import { Initializable } from "../../../lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol";
 import { IGoldilend } from "../../interfaces/IGoldilend.sol";
 import { IGoldilocked } from "../../interfaces/IGoldilocked.sol";
 import { GPRG } from "./GPRG.sol";
@@ -30,6 +32,7 @@ import { DPRG } from "./DPRG.sol";
 
 /// @title Goldilend
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
+// contract Goldilend is Initializable, UUPSUpgradeable, IGoldilend, IERC721Receiver {
 contract Goldilend is IGoldilend, IERC721Receiver {
 
 
@@ -116,27 +119,37 @@ contract Goldilend is IGoldilend, IERC721Receiver {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
   
 
-  /// @notice Constructor of this contract
-  /// @param _timelock Address of the timelock
-  /// @param _multisig Address of the multisig
-  /// @param _apdao Address of APDAO
-  /// @param _porridge Address of Porridge
-  /// @param _gprg Address of Goldilend Porridge
-  /// @param _dprg Address of Debt Porridge
-  constructor(
-    address _timelock,
-    address _multisig,
-    address _apdao,
-    address _porridge,
-    address _gprg,
-    address _dprg
-  ) {
-    timelock = _timelock;
-    multisig = _multisig;
-    apdao = _apdao;
-    porridge = _porridge;
-    gprg = _gprg;
-    dprg = _dprg;
+  // /// @notice Constructor of this contract
+  // /// @param _timelock Address of the timelock
+  // /// @param _multisig Address of the multisig
+  // /// @param _apdao Address of APDAO
+  // /// @param _porridge Address of Porridge
+  // /// @param _gprg Address of Goldilend Porridge
+  // /// @param _dprg Address of Debt Porridge
+  // constructor(
+  //   address _timelock,
+  //   address _multisig,
+  //   address _apdao,
+  //   address _porridge,
+  //   address _gprg,
+  //   address _dprg
+  // ) {
+  //   timelock = _timelock;
+  //   multisig = _multisig;
+  //   apdao = _apdao;
+  //   porridge = _porridge;
+  //   gprg = _gprg;
+  //   dprg = _dprg;
+  // }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
+  function initialize() public initializer {
+    // __Ownable_init();
+    // __UUPSUpgradeable_init();
   }
 
 
@@ -492,5 +505,7 @@ contract Goldilend is IGoldilend, IERC721Receiver {
   ) external virtual returns (bytes4) {
     return IERC721Receiver.onERC721Received.selector;
   }
+
+  // function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
 }
