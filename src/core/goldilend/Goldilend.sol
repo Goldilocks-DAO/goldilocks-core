@@ -366,10 +366,8 @@ contract Goldilend is IGoldilend, IERC721Receiver {
     if(msg.sender != multisig) revert NotMultisig();
     if(_nfts.length != _nftFairValues.length) revert ArrayMismatch();
     uint256 nftFairValuesLength = _nftFairValues.length;
-    uint256 totalNftFairValue;
     for(uint256 i; i < nftFairValuesLength;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
-      totalNftFairValue += _nftFairValues[i];
       unchecked {
         ++i;
       }
@@ -465,10 +463,8 @@ contract Goldilend is IGoldilend, IERC721Receiver {
     if(berasInitialized) revert AlreadyInitialized();
     berasInitialized = true;
     uint256 nftFairValuesLength = _nftFairValues.length;
-    uint256 totalNftFairValue;
     for(uint256 i; i < nftFairValuesLength;) {
       nftFairValues[_nfts[i]] = _nftFairValues[i];
-      totalNftFairValue += _nftFairValues[i];
       unchecked {
         ++i;
       }
