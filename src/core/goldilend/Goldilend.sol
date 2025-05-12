@@ -51,22 +51,22 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   uint256 public constant MAX_LOANS = 25;
 
   /// @notice Address of multisig
-  address public immutable multisig;
+  address public multisig;
 
   /// @notice Address of APDAO
-  address public immutable apdao;
+  address public apdao;
 
   /// @notice Address of Timelock
-  address public immutable timelock;
+  address public timelock;
 
   /// @notice Address of porridge
-  address public immutable porridge;
+  address public porridge;
 
   /// @notice Address of Goldilend Porridge
-  address public immutable gprg;
+  address public gprg;
 
   /// @notice Address of Debt Porridge
-  address public immutable dprg;
+  address public dprg;
 
   /// @notice Interest rate of protocol
   uint256 public protocolInterestRate;
@@ -119,36 +119,19 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
   
 
-  // /// @notice Constructor of this contract
-  // /// @param _timelock Address of the timelock
-  // /// @param _multisig Address of the multisig
-  // /// @param _apdao Address of APDAO
-  // /// @param _porridge Address of Porridge
-  // /// @param _gprg Address of Goldilend Porridge
-  // /// @param _dprg Address of Debt Porridge
-  // constructor(
-  //   address _timelock,
-  //   address _multisig,
-  //   address _apdao,
-  //   address _porridge,
-  //   address _gprg,
-  //   address _dprg
-  // ) {
-  //   timelock = _timelock;
-  //   multisig = _multisig;
-  //   apdao = _apdao;
-  //   porridge = _porridge;
-  //   gprg = _gprg;
-  //   dprg = _dprg;
-  // }
-
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
+  /// @notice Initializer of the contract
+  /// @param _timelock Address of the timelock
+  /// @param _multisig Address of the multisig
+  /// @param _apdao Address of APDAO
+  /// @param _porridge Address of Porridge
+  /// @param _gprg Address of Goldilend Porridge
+  /// @param _dprg Address of Debt Porridge
   function initialize(
-    address initialOwner,
     address _timelock,
     address _multisig,
     address _apdao,
@@ -156,7 +139,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     address _gprg,
     address _dprg
   ) public initializer {
-    __Ownable_init(initialOwner);
+    __Ownable_init(_multisig);
     __UUPSUpgradeable_init();
     timelock = _timelock;
     multisig = _multisig;
