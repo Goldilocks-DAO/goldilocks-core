@@ -74,25 +74,17 @@ abstract contract BaseUnitTest is BaseTest {
     _;
   }
 
-  modifier dealUseriBGT() {
-    deal(address(ibgt), address(this), type(uint256).max / 2);
-    ibgt.approve(address(goldilend), type(uint256).max / 2);
+  modifier dealUserPRG() {
+    deal(address(goldilocked), address(this), type(uint256).max / 2);
+    goldilocked.approve(address(proxy), type(uint256).max / 2);
     _;
   }
 
   modifier dealUserBeras() {
     INFT(address(bondbear)).mint(address(this));
     INFT(address(bandbear)).mint(address(this));
-    IERC721(bondbear).setApprovalForAll(address(goldilend), true);
-    IERC721(bandbear).setApprovalForAll(address(goldilend), true);
-    _;
-  }
-
-  modifier dealUserPartnerNFTs() {
-    INFT(address(honeycomb)).mint(address(this));
-    INFT(address(beradrome)).mint(address(this));
-    IERC721(honeycomb).setApprovalForAll(address(goldilend), true);
-    IERC721(beradrome).setApprovalForAll(address(goldilend), true);
+    IERC721(bondbear).setApprovalForAll(address(proxy), true);
+    IERC721(bandbear).setApprovalForAll(address(proxy), true);
     _;
   }
 

@@ -226,7 +226,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(porridge, msg.sender, address(this), repayAmount);
-    DPRG(dprg).burnDPRG(msg.sender, repayAmount);
+    DPRG(dprg).burnDPRG(msg.sender, userLoan.borrowedAmount - userLoan.interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
       for(uint256 i; i < userLoanCollateralLength;){

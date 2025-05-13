@@ -149,7 +149,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
     // precompute addresses
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(14));
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(15));
-    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(18));
+    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(16));
+    GPRG gprgComputed = GPRG(address(this).computeAddress(18));
+    DPRG dprgComputed = DPRG(address(this).computeAddress(19));
     InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(22));
     Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(25));
 
@@ -281,11 +283,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     goldiswap.initializeProtocol(initialPSL);
 
     // deploy goldilend
-    gprg = new GPRG("Goldilend Porridge" , "GPRG", address(goldilendComputed));
-    dprg = new DPRG("Debt Porridge", "DPRG", address(goldilendComputed));
     goldilend = new Goldilend();
-    assert(gprg.goldilend() == address(goldilend));
-    assert(dprg.goldilend() == address(goldilend));
 
     // initialization of goldilend
     bytes memory data = abi.encodeWithSelector(
@@ -294,16 +292,20 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(this),
       apdao,
       address(goldilocked),
-      address(gprg),
-      address(dprg)
+      address(gprgComputed),
+      address(dprgComputed)
     );
     proxy = new ERC1967Proxy(address(goldilend), data);
+    gprg = new GPRG("Goldilend Porridge" , "GPRG", address(proxy));
+    dprg = new DPRG("Debt Porridge", "DPRG", address(proxy));
+    assert(gprg.goldilend() == address(proxy));
+    assert(dprg.goldilend() == address(proxy));
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
     uint256[] memory values = new uint256[](2);
-    values[0] = 50;
-    values[1] = 50;
+    values[0] = 50e18;
+    values[1] = 50e18;
     Goldilend(address(proxy)).initializeParameters(
       45,
       5,
@@ -313,6 +315,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
       10e18
     );
     Goldilend(address(proxy)).initializeBeras(nfts, values);
+    deal(address(goldilocked), address(this), prgMintAmount + 1000e18);
+    goldilocked.approve(address(proxy), 1000e18);
+    Goldilend(address(proxy)).lock(1000e18);
+    goldilocked.setGoldilendAddress(address(proxy));
 
     // deploy goldivault
     address[] memory yieldTokens = new address[](1);
