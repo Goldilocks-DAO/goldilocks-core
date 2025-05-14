@@ -166,7 +166,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @inheritdoc IGoldilend
   function unlock(uint256 amount) external {
-    require(poolSize - outstandingDebt >= amount);
+    if(amount > poolSize - outstandingDebt) revert InsufficientPRG();
     uint256 redeemAmount = _GPRGMintAmount(amount);
     poolSize -= amount;
     GPRG(gprg).burnGPRG(msg.sender, redeemAmount);

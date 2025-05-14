@@ -12,7 +12,7 @@ contract UnitGPRGTest is BaseUnitTest {
   }
 
   function testGPRGSymbol() public {
-    assertEq(gprg.symbol(), "GPRG");
+    assertEq(gprg.symbol(), "gPRG");
   }
 
   function testMintGprgFailGoldilend() public {

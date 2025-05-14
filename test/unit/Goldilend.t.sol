@@ -37,6 +37,27 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(Goldilend(address(proxy)).poolSize(), 1000e18 + txAmount);
   }
 
+  function testUnlockFailPRG() public {
+    deal(address(goldilocked), address(this), txAmount);
+    goldilocked.approve(address(proxy), txAmount);
+    Goldilend(address(proxy)).lock(txAmount);
+    vm.store(address(proxy), bytes32(uint256(7)), bytes32(Goldilend(address(proxy)).poolSize()));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.InsufficientPRG.selector));
+    Goldilend(address(proxy)).unlock(txAmount);
+  }
+
+  function testUnlockSuccess() public {
+    deal(address(goldilocked), address(this), txAmount);
+    goldilocked.approve(address(proxy), txAmount);
+    Goldilend(address(proxy)).lock(txAmount);
+    Goldilend(address(proxy)).unlock(txAmount);
+
+    assertEq(gprg.balanceOf(address(this)), 1000e18);
+    assertEq(goldilocked.balanceOf(address(this)), txAmount);
+    assertEq(goldilocked.balanceOf(address(proxy)), 1000e18);
+    assertEq(Goldilend(address(proxy)).poolSize(), 1000e18);
+  }
+
   function testLockLock() public {
     // deal(address(goldilocked), address(this), txAmount);
     // goldilocked.approve(address(proxy), txAmount);

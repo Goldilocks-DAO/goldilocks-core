@@ -37,6 +37,7 @@ interface IGoldilend {
   error Unliquidatable();
   error TooManyLoans();
   error AlreadyInitialized();
+  error InsufficientPRG();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */

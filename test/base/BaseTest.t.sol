@@ -296,8 +296,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(dprgComputed)
     );
     proxy = new ERC1967Proxy(address(goldilend), data);
-    gprg = new GPRG("Goldilend Porridge" , "GPRG", address(proxy));
-    dprg = new DPRG("Debt Porridge", "DPRG", address(proxy));
+    gprg = new GPRG("Goldilend Porridge" , "gPRG", address(proxy));
+    dprg = new DPRG("Debt Porridge", "dPRG", address(proxy));
     assert(gprg.goldilend() == address(proxy));
     assert(dprg.goldilend() == address(proxy));
     address[] memory nfts = new address[](2);

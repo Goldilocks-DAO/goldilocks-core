@@ -12,7 +12,7 @@ contract UnitDPRGTest is BaseUnitTest {
   }
 
   function testDPRGSymbol() public {
-    assertEq(dprg.symbol(), "DPRG");
+    assertEq(dprg.symbol(), "dPRG");
   }
 
   function testMintDprgFailGoldilend() public {
