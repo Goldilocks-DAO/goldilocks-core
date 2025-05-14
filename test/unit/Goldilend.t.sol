@@ -3,11 +3,33 @@ pragma solidity ^0.8.20;
 
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { OwnableUpgradeable } from "../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { INFT } from "../../src/mock/INFT.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
 import { IGoldilend } from "../../src/interfaces/IGoldilend.sol";
 
+contract TestUpgradeableGoldilend is Goldilend {
+  uint256 public specialNumber;
+
+  function setSpecialNumber() public {
+    specialNumber = 69;
+  }
+}
+
 contract UnitGoldilendTest is BaseUnitTest {
+
+  function testLookupLoans() public dealUserBeras {
+    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
+    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+    Goldilend.Loan[] memory userLoans = Goldilend(address(proxy)).lookupLoans(address(this));
+
+    assertEq(userLoans[0].collateralNFTs[0], address(bondbear));
+    assertEq(userLoans[0].collateralNFTIds[0], 1);
+    assertEq(userLoans[0].borrowedAmount, 1e18 + borrowInterest);
+    assertEq(userLoans[1].collateralNFTs[0], address(bandbear));
+    assertEq(userLoans[1].collateralNFTIds[0], 1);
+    assert(userLoans[1].borrowedAmount > 1e18 + borrowInterest);
+  }
 
   function testLookupLoan() public dealUserBeras {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
@@ -15,7 +37,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(userLoan.collateralNFTs[0], address(bondbear));
     assertEq(userLoan.collateralNFTIds[0], 1);
-    assertEq(userLoan.borrowedAmount, 1e18 + singleBorrowInterest);
+    assertEq(userLoan.borrowedAmount, 1e18 + borrowInterest);
   }
 
   function testGetGPRGRatio() public {
@@ -24,6 +46,32 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).lock(txAmount);
 
     assertEq(Goldilend(address(proxy)).getGPRGRatio(), 1e18);
+  }
+
+  function testCalculateInterestFailDuration() public {
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.InvalidDuration.selector));
+    Goldilend(address(proxy)).calculateInterest(1e18, 1, address(bondbear));
+  }
+
+  function testCalculateInterestFailAmount() public {
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.InvalidLoanAmount.selector));
+    Goldilend(address(proxy)).calculateInterest(1e50, goldilendDuration, address(bondbear));
+  }
+
+  function testCalculateInterestFailCollateral() public {
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.InvalidCollateral.selector));
+    Goldilend(address(proxy)).calculateInterest(1e18, goldilendDuration, address(0x69));
+  }
+
+  function testCalculateInterestFailLimit() public {
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.BorrowLimitExceeded.selector));
+    Goldilend(address(proxy)).calculateInterest(51e18, goldilendDuration, address(bondbear));
+  }
+
+  function testCalculateInterestSuccess() public {
+    uint256 interest = Goldilend(address(proxy)).calculateInterest(1e18, goldilendDuration, address(bondbear));
+
+    assertEq(interest, borrowInterest);
   }
 
   function testLockSuccess() public {
@@ -103,40 +151,40 @@ contract UnitGoldilendTest is BaseUnitTest {
     // assertEq(Goldilend(address(proxy)).poolSize(), 50e18 + txAmount);
   }
 
-  function testSingleBorrowFailActive() public {
+  function testBorrowFailActive() public {
     Goldilend(address(proxy)).changeBorrowingActive(false);
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotActive.selector));
     Goldilend(address(proxy)).borrow(69, 69, address(0x69), 69);
   }
 
-  function testSingleBorrowFailDuration() public {
+  function testBorrowFailDuration() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.InvalidDuration.selector));
     Goldilend(address(proxy)).borrow(69, 69, address(0x69), 69);
   }
 
-  function testSingleBorrowFailAmount() public {
+  function testBorrowFailAmount() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.InvalidLoanAmount.selector));
     Goldilend(address(proxy)).borrow(690000e18, 8 days, address(0x69), 69);
   }
 
-  function testSingleBorrowFailCollateral() public {
+  function testBorrowFailCollateral() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.InvalidCollateral.selector));
     Goldilend(address(proxy)).borrow(69, 8 days, address(0x69), 69);
   }
 
-  function testSingleBorrowFailLimit() public {
+  function testBorrowFailLimit() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.BorrowLimitExceeded.selector));
     Goldilend(address(proxy)).borrow(51e18, 8 days, address(bondbear), 69);
   }
 
-  function testSingleBorrowSuccess() public dealUserBeras {
+  function testBorrowSuccess() public dealUserBeras {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
     Goldilend.Loan memory userLoan = Goldilend(address(proxy)).lookupLoan(address(this), 1);
 
     assertEq(userLoan.collateralNFTs[0], address(bondbear));
     assertEq(userLoan.collateralNFTIds[0], 1);
-    assertEq(userLoan.borrowedAmount, 1e18 + singleBorrowInterest);
-    assertEq(userLoan.interest, singleBorrowInterest);
+    assertEq(userLoan.borrowedAmount, 1e18 + borrowInterest);
+    assertEq(userLoan.interest, borrowInterest);
     assertEq(userLoan.duration, goldilendDuration);
     assertEq(userLoan.endDate, block.timestamp + goldilendDuration);
     assertEq(userLoan.loanId, 1);
@@ -147,6 +195,11 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
     vm.warp(69e18);
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.LoanExpired.selector));
+    Goldilend(address(proxy)).repay(1e18, 1);
+  }
+
+  function testRepayFailLoanNotFound() public {
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.LoanNotFound.selector));
     Goldilend(address(proxy)).repay(1e18, 1);
   }
 
@@ -187,6 +240,13 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
     assertEq(Goldilend(address(proxy)).outstandingDebt(), 5e17);
+  }
+
+  function testLiquidateFailUnliquidatable() public dealUserPRG dealUserBeras {
+    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
+    vm.warp(1);
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.Unliquidatable.selector));
+    Goldilend(address(proxy)).liquidate(address(this), 1);
   }
   
   function testLiquidateSuccess() public dealUserPRG dealUserBeras {
@@ -236,6 +296,16 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).changeValue(nfts, values);
   }
 
+  function testChangeValueFailArray() public {
+    address[] memory nfts = new address[](2);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    uint256[] memory values = new uint256[](1);
+    values[0] = 50;
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.ArrayMismatch.selector));
+    Goldilend(address(proxy)).changeValue(nfts, values);
+  }
+
   function testChangeValueSuccess() public {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
@@ -281,6 +351,41 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(executed, true);
     assertEq(Goldilend(address(proxy)).protocolInterestRate(), 69);
+  }
+
+  function testChangeShareRatesFailTimelock() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotTimelock.selector));
+    Goldilend(address(proxy)).changeShareRates(69, 69);
+  }
+
+  function testChangeShareRatesSuccess() public {
+    bytes memory _calldata = abi.encodeWithSignature("changeShareRates(uint256,uint256)", 69, 69);
+    address[] memory targets = new address[](1);
+    targets[0] = address(proxy);
+    string[] memory signatures = new string[](1);
+    signatures[0] = "";
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = _calldata;
+    uint256[] memory valuess = new uint256[](1);
+    valuess[0] = 0;
+    deal(address(goldiswap), address(this), quorumVotesNum);
+    goldiswap.approve(address(govlocks), quorumVotesNum);
+    govlocks.deposit(quorumVotesNum);
+    govlocks.delegate(address(this));
+    vm.roll(2);
+    goldigov.propose(targets, valuess, signatures, calldatas, "");
+    vm.roll(52600);
+    goldigov.castVote(1, 1);
+    vm.roll(200000);
+    goldigov.queue(1);
+    vm.warp(6 days);
+    goldigov.execute(1);
+    (, , , , , , , , , bool executed) = goldigov.proposals(1);
+
+    assertEq(executed, true);
+    assertEq(Goldilend(address(proxy)).multisigShare(), 69);
+    assertEq(Goldilend(address(proxy)).apdaoShare(), 69);
   }
 
   function testChangeSlopeFailTimelock() public {
@@ -364,6 +469,37 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(Goldilend(address(proxy)).borrowingActive(), false);
   }
 
+  function testMultisigInterestClaimFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector));
+    Goldilend(address(proxy)).multisigInterestClaim();
+  }
+
+  function testMultisigInterestClaimSuccess() public {
+    deal(address(goldilocked), address(proxy), 5e18);
+    vm.store(address(proxy), bytes32(uint256(12)), bytes32(uint256(5e18)));
+    Goldilend(address(proxy)).multisigInterestClaim();
+
+    assertEq(goldilocked.balanceOf(address(this)), 5e18 + prgMintAmount);
+    assertEq(goldilocked.balanceOf(address(proxy)), 0);
+  }
+
+  function testApdaoInterestClaimFailApdao() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotAPDAO.selector));
+    Goldilend(address(proxy)).apdaoInterestClaim();
+  }
+
+  function testApdaoInterestClaimSuccess() public {
+    deal(address(goldilocked), address(proxy), 5e18);
+    vm.store(address(proxy), bytes32(uint256(13)), bytes32(uint256(5e18)));
+    vm.prank(apdao);
+    Goldilend(address(proxy)).apdaoInterestClaim();
+
+    assertEq(goldilocked.balanceOf(apdao), 5e18);
+    assertEq(goldilocked.balanceOf(address(proxy)), 0);
+  }
+
   function testInitializeParametersFailMultisig() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector)); 
@@ -406,6 +542,19 @@ contract UnitGoldilendTest is BaseUnitTest {
     values[1] = 50;
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector)); 
+    Goldilend(address(proxy)).initializeBeras(
+      nfts,
+      values
+    );
+  }
+
+  function testInitializeBerasFailArray() public {
+    address[] memory nfts = new address[](2);
+    nfts[0] = address(bondbear);
+    nfts[1] = address(bandbear);
+    uint256[] memory values = new uint256[](1);
+    values[0] = 50;
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.ArrayMismatch.selector)); 
     Goldilend(address(proxy)).initializeBeras(
       nfts,
       values
@@ -593,4 +742,38 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(userLoanTwenty.loanId, 20);
   }
 
+  function testRecoverTokensFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector));
+    Goldilend(address(proxy)).recoverTokens(address(0x69));
+  }
+
+  function testRecoverTokensSuccess() public {
+    deal(address(goldilocked), address(proxy), 5e18);
+    Goldilend(address(proxy)).recoverTokens(address(goldilocked));
+
+    assertEq(goldilocked.balanceOf(address(this)), 5e18 + prgMintAmount);
+    assertEq(goldilocked.balanceOf(address(proxy)), 0);
+  }
+
+  function testOnERC721Received() public {
+    INFT(address(bandbear)).mint(address(proxy));
+
+    assert(IERC721(bandbear).balanceOf(address(proxy)) > 0);
+  }
+
+  function testUpgradeGoldilendFailOwner() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(0x69)));
+    Goldilend(address(proxy)).upgradeToAndCall(address(0x69), "");
+  }
+
+  function testUpgradeGoldilendSuccess() public {
+    TestUpgradeableGoldilend newGoldilend = new TestUpgradeableGoldilend();
+    bytes memory data = abi.encodeWithSelector(TestUpgradeableGoldilend.setSpecialNumber.selector);
+    Goldilend(address(proxy)).upgradeToAndCall(address(newGoldilend), data);
+
+    assertEq(TestUpgradeableGoldilend(address(proxy)).specialNumber(), 69);
+    assertEq(TestUpgradeableGoldilend(address(proxy)).multisig(), address(this));
+  }
 }
