@@ -28,7 +28,7 @@ import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable
 import { IGoldilend } from "../../interfaces/IGoldilend.sol";
 import { IGoldilocked } from "../../interfaces/IGoldilocked.sol";
 import { GPRG } from "./GPRG.sol";
-import { DPRG } from "./DPRG.sol";
+import { GLDWBera } from "./GLDWBera.sol";
 
 
 /// @title Goldilend
@@ -65,8 +65,8 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @notice Address of Goldilend Porridge
   address public gprg;
 
-  /// @notice Address of Debt Porridge
-  address public dprg;
+  /// @notice Address of Goldilend Debt Wrapped Bera
+  address public gldwbera;
 
   /// @notice Interest rate of protocol
   uint256 public protocolInterestRate;
@@ -130,14 +130,14 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @param _apdao Address of APDAO
   /// @param _porridge Address of Porridge
   /// @param _gprg Address of Goldilend Porridge
-  /// @param _dprg Address of Debt Porridge
+  /// @param _gldwbera Address of Goldilend Debt Wrapped Bera
   function initialize(
     address _timelock,
     address _multisig,
     address _apdao,
     address _porridge,
     address _gprg,
-    address _dprg
+    address _gldwbera
   ) public initializer {
     __Ownable_init(_multisig);
     __UUPSUpgradeable_init();
@@ -146,7 +146,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     apdao = _apdao;
     porridge = _porridge;
     gprg = _gprg;
-    dprg = _dprg;
+    gldwbera = _gldwbera;
   }
 
 
@@ -209,7 +209,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     loans[msg.sender].push(loan);
     IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
     SafeTransferLib.safeTransfer(porridge, msg.sender, borrowAmount);
-    DPRG(dprg).mintDPRG(msg.sender, borrowAmount);
+    GLDWBera(gldwbera).mintgldWBERA(msg.sender, borrowAmount);
     emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
   }
 
@@ -226,7 +226,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(porridge, msg.sender, address(this), repayAmount);
-    DPRG(dprg).burnDPRG(msg.sender, userLoan.borrowedAmount - userLoan.interest);
+    GLDWBera(gldwbera).burngldWBERA(msg.sender, userLoan.borrowedAmount - userLoan.interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
       for(uint256 i; i < userLoanCollateralLength;){

@@ -13,16 +13,16 @@ pragma solidity ^0.8.20;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ========================================= DPRG ===============================================
+// ======================================== GLDWBera ============================================
 // ==============================================================================================
 
 
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 
 
-/// @title DPRG
-/// @notice Debt Porridge token representing borrowed Porridge from Goldilend
-contract DPRG is ERC20 {
+/// @title gldWBERA
+/// @notice Goldilend Debt Wrapped Bera token representing borrowed Wrapped Bera from Goldilend
+contract GLDWBera is ERC20 {
 
   string private tokenName;
   string private tokenSymbol;
@@ -61,20 +61,20 @@ contract DPRG is ERC20 {
     return tokenSymbol;
   }
 
-  /// @notice Mints DPRG tokens
+  /// @notice Mints gldWBERA tokens
   /// @dev Callable only by Goldilend
   /// @param to Address to mint to
-  /// @param amount Amount of DPRG tokens to mint
-  function mintDPRG(address to, uint256 amount) external {
+  /// @param amount Amount of gldWBERA tokens to mint
+  function mintgldWBERA(address to, uint256 amount) external {
     if(msg.sender != goldilend) revert NotGoldilend();
     _mint(to, amount);
   }
 
-  /// @notice Burns DPRG tokens
+  /// @notice Burns gldWBERA tokens
   /// @dev Callable only by Goldilend
   /// @param from Address to burn from
-  /// @param amount Amount of DPRG tokens to burn
-  function burnDPRG(address from, uint256 amount) external {
+  /// @param amount Amount of gldWBERA tokens to burn
+  function burngldWBERA(address from, uint256 amount) external {
     if(msg.sender != goldilend) revert NotGoldilend();
     _burn(from, amount);
   }

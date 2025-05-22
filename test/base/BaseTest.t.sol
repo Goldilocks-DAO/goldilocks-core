@@ -10,7 +10,7 @@ import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
 import { GPRG } from "../../src/core/goldilend/GPRG.sol";
-import { DPRG } from "../../src/core/goldilend/DPRG.sol";
+import { GLDWBera } from "../../src/core/goldilend/GLDWBera.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 import { Goldivault4626 } from "../../src/core/goldivault/Goldivault4626.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
@@ -130,7 +130,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   oriBGTOT oribgtot;
   oriBGTYT oribgtyt;
   GPRG gprg;
-  DPRG dprg;
+  GLDWBera gldwbera;
   ERC1967Proxy proxy;
 
   uint256 initialFSL = 1_140_000e18;
@@ -151,7 +151,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(15));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(16));
     GPRG gprgComputed = GPRG(address(this).computeAddress(18));
-    DPRG dprgComputed = DPRG(address(this).computeAddress(19));
+    GLDWBera gldwberaComputed = GLDWBera(address(this).computeAddress(19));
     InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(22));
     Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(25));
 
@@ -293,13 +293,13 @@ abstract contract BaseTest is Test, IERC721Receiver {
       apdao,
       address(goldilocked),
       address(gprgComputed),
-      address(dprgComputed)
+      address(gldwberaComputed)
     );
     proxy = new ERC1967Proxy(address(goldilend), data);
     gprg = new GPRG("Goldilend Porridge" , "gPRG", address(proxy));
-    dprg = new DPRG("Debt Porridge", "dPRG", address(proxy));
+    gldwbera = new GLDWBera("Goldilend Debt Wrapped Bera", "gldWBERA", address(proxy));
     assert(gprg.goldilend() == address(proxy));
-    assert(dprg.goldilend() == address(proxy));
+    assert(gldwbera.goldilend() == address(proxy));
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
     nfts[1] = address(bandbear);
