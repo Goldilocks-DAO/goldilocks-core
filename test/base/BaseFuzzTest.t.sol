@@ -30,24 +30,6 @@ abstract contract BaseFuzzTest is BaseTest {
     _;
   }
 
-  modifier dealUserPartnerNFTs() {
-    INFT(address(honeycomb)).mint(address(this));
-    INFT(address(beradrome)).mint(address(this));
-    IERC721(honeycomb).setApprovalForAll(address(goldilend), true);
-    IERC721(beradrome).setApprovalForAll(address(goldilend), true);
-    _;
-  }
-
-  function boosty() public view returns (address[] memory, uint256[] memory) {
-    address[] memory nfts = new address[](2);
-    nfts[0] = address(honeycomb);
-    nfts[1] = address(beradrome);
-    uint256[] memory ids = new uint256[](2);
-    ids[0] = 1;
-    ids[1] = 1;
-    return (nfts, ids);
-  }
-
   function beras() public view returns (address[] memory, uint256[] memory) {
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);

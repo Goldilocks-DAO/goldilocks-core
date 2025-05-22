@@ -26,8 +26,7 @@ import { Initializable } from "../../../lib/openzeppelin-contracts-upgradeable/c
 import { OwnableUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import { IGoldilend } from "../../interfaces/IGoldilend.sol";
-import { IGoldilocked } from "../../interfaces/IGoldilocked.sol";
-import { GPRG } from "./GPRG.sol";
+import { GLWBera } from "./GLWBera.sol";
 import { GLDWBera } from "./GLDWBera.sol";
 
 
@@ -59,11 +58,11 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @notice Address of Timelock
   address public timelock;
 
-  /// @notice Address of porridge
-  address public porridge;
+  /// @notice Address of WBERA
+  address public wbera;
 
-  /// @notice Address of Goldilend Porridge
-  address public gprg;
+  /// @notice Address of Goldilend Wrapped Bera
+  address public glwbera;
 
   /// @notice Address of Goldilend Debt Wrapped Bera
   address public gldwbera;
@@ -128,15 +127,15 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @param _timelock Address of the timelock
   /// @param _multisig Address of the multisig
   /// @param _apdao Address of APDAO
-  /// @param _porridge Address of Porridge
-  /// @param _gprg Address of Goldilend Porridge
+  /// @param _wbera Address of WBERA
+  /// @param _glwbera Address of Goldilend Wrapped Bera
   /// @param _gldwbera Address of Goldilend Debt Wrapped Bera
   function initialize(
     address _timelock,
     address _multisig,
     address _apdao,
-    address _porridge,
-    address _gprg,
+    address _wbera,
+    address _glwbera,
     address _gldwbera
   ) public initializer {
     __Ownable_init(_multisig);
@@ -144,8 +143,8 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     timelock = _timelock;
     multisig = _multisig;
     apdao = _apdao;
-    porridge = _porridge;
-    gprg = _gprg;
+    wbera = _wbera;
+    glwbera = _glwbera;
     gldwbera = _gldwbera;
   }
 
@@ -157,21 +156,21 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @inheritdoc IGoldilend
   function lock(uint256 amount) external {
-    uint256 mintAmount = _GPRGMintAmount(amount);
+    uint256 mintAmount = _glWBERAMintAmount(amount);
     poolSize += amount;
-    SafeTransferLib.safeTransferFrom(porridge, msg.sender, address(this), amount);
-    GPRG(gprg).mintGPRG(msg.sender, mintAmount);
-    emit PorridgeLock(msg.sender, amount);
+    SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), amount);
+    GLWBera(glwbera).mintglWBERA(msg.sender, mintAmount);
+    emit WBERALock(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldilend
   function unlock(uint256 amount) external {
     if(amount > poolSize - outstandingDebt) revert InsufficientPRG();
-    uint256 redeemAmount = _GPRGMintAmount(amount);
+    uint256 redeemAmount = _glWBERAMintAmount(amount);
     poolSize -= amount;
-    GPRG(gprg).burnGPRG(msg.sender, redeemAmount);
-    SafeTransferLib.safeTransfer(porridge, msg.sender, amount);
-    emit PorridgeUnlock(msg.sender, amount);
+    GLWBera(glwbera).burnglWBERA(msg.sender, redeemAmount);
+    SafeTransferLib.safeTransfer(wbera, msg.sender, amount);
+    emit WBERAUnlock(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldilend
@@ -208,7 +207,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     });
     loans[msg.sender].push(loan);
     IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
-    SafeTransferLib.safeTransfer(porridge, msg.sender, borrowAmount);
+    SafeTransferLib.safeTransfer(wbera, msg.sender, borrowAmount);
     GLDWBera(gldwbera).mintgldWBERA(msg.sender, borrowAmount);
     emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
   }
@@ -225,7 +224,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     loans[msg.sender][index].interest -= interest;
     poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
-    SafeTransferLib.safeTransferFrom(porridge, msg.sender, address(this), repayAmount);
+    SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), repayAmount);
     GLDWBera(gldwbera).burngldWBERA(msg.sender, userLoan.borrowedAmount - userLoan.interest);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
@@ -246,7 +245,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     loans[user][index].liquidated = true;
     loans[user][index].borrowedAmount = 0;
     outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;
-    IGoldilocked(porridge).goldilendMint(address(this), userLoan.borrowedAmount - userLoan.interest);
+    // IGoldilocked(goldilocked).goldilendMint(address(this), userLoan.borrowedAmount - userLoan.interest);
     uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
     for(uint256 i; i < userLoanCollateralLength;) {
       IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), multisig, userLoan.collateralNFTIds[i]);
@@ -273,10 +272,10 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   }
 
   /// @inheritdoc IGoldilend
-  function getGPRGRatio() external view returns (uint256) {
-    uint256 supply = GPRG(gprg).totalSupply();
+  function getglWBERARatio() external view returns (uint256) {
+    uint256 supply = GLWBera(glwbera).totalSupply();
     uint256 _poolSize = poolSize;
-    return _GPRGRatio(supply, _poolSize);
+    return _glWBERARatio(supply, _poolSize);
   }
 
   /// @inheritdoc IGoldilend
@@ -347,18 +346,18 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     revert LoanNotFound();
   }
 
-  /// @notice Calculates the amount of GiBGT to mint
+  /// @notice Calculates the amount of glwBERA to mint
   /// @param lockAmount Amount of iBGT to lock
-  /// @return mintAmount Total supply of GiBGT divided by the lending pool size multiplied by lockAmount
-  function _GPRGMintAmount(uint256 lockAmount) internal view returns (uint256) {
-    uint256 supply = GPRG(gprg).totalSupply();
+  /// @return mintAmount Total supply of glwBERA divided by the lending pool size multiplied by lockAmount
+  function _glWBERAMintAmount(uint256 lockAmount) internal view returns (uint256) {
+    uint256 supply = GLWBera(glwbera).totalSupply();
     uint256 _poolSize = poolSize;
-    return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _GPRGRatio(supply, _poolSize)) : lockAmount;
+    return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _glWBERARatio(supply, _poolSize)) : lockAmount;
   }
 
-  /// @notice Calculates the current $GiBGT ratio
-  /// @return gibgtRatio Total supply of $GiBGT divided by the lending pool size
-  function _GPRGRatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
+  /// @notice Calculates the current glWBERA ratio
+  /// @return glWBERARatio Total supply of glWBERA divided by the lending pool size
+  function _glWBERARatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
     return FixedPointMathLib.divWad(supply, _poolSize);
   }
 
@@ -426,7 +425,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     if(msg.sender != multisig) revert NotMultisig();
     uint256 interestClaim = multisigClaims;
     multisigClaims = 0;
-    SafeTransferLib.safeTransfer(porridge, multisig, interestClaim);
+    SafeTransferLib.safeTransfer(wbera, multisig, interestClaim);
     emit MultisigInterestClaim(interestClaim);
   }
 
@@ -435,7 +434,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     if(msg.sender != apdao) revert NotAPDAO();
     uint256 interestClaim = apdaoClaims;
     apdaoClaims = 0;
-    SafeTransferLib.safeTransfer(porridge, apdao, interestClaim);
+    SafeTransferLib.safeTransfer(wbera, apdao, interestClaim);
     emit ApdaoInterestClaim(interestClaim);
   }
 

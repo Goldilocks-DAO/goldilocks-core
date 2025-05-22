@@ -9,7 +9,7 @@ import { ERC1967Proxy } from "../../lib/openzeppelin-contracts/contracts/proxy/E
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
-import { GPRG } from "../../src/core/goldilend/GPRG.sol";
+import { GLWBera } from "../../src/core/goldilend/GLWBera.sol";
 import { GLDWBera } from "../../src/core/goldilend/GLDWBera.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 import { Goldivault4626 } from "../../src/core/goldivault/Goldivault4626.sol";
@@ -19,10 +19,10 @@ import { Goldigovernor } from "../../src/core/goldigovernance/Goldigovernor.sol"
 import { Timelock } from "../../src/core/goldigovernance/Timelock.sol";
 import { GovLocks } from "../../src/core/goldigovernance/GovLocks.sol";
 import { Honey } from "../../src/mock/Honey.sol";
+import { WBERA } from "../../src/mock/WBERA.sol";
 import { iBGT } from "../../src/mock/iBGT.sol";
 import { oriBGT } from "../../src/mock/oriBGT.sol";
 import { HoneyComb } from "../../src/mock/HoneyComb.sol";
-import { Beradrome } from "../../src/mock/Beradrome.sol";
 import { BondBear } from "../../src/mock/BondBear.sol";
 import { BandBear } from "../../src/mock/BandBear.sol";
 import { iBGTVault } from "../../src/mock/iBGTVault.sol";
@@ -116,7 +116,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   Honey honey;
   iBGT ibgt;
   HoneyComb honeycomb;
-  Beradrome beradrome;
+  WBERA wbera;
   BondBear bondbear;
   BandBear bandbear;
   iBGTVault ibgtvault;
@@ -129,7 +129,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   Goldivault4626 oribgtgoldivault;
   oriBGTOT oribgtot;
   oriBGTYT oribgtyt;
-  GPRG gprg;
+  GLWBera glwbera;
   GLDWBera gldwbera;
   ERC1967Proxy proxy;
 
@@ -150,7 +150,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(14));
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(15));
     Goldilend goldilendComputed = Goldilend(address(this).computeAddress(16));
-    GPRG gprgComputed = GPRG(address(this).computeAddress(18));
+    GLWBera glwberaComputed = GLWBera(address(this).computeAddress(18));
     GLDWBera gldwberaComputed = GLDWBera(address(this).computeAddress(19));
     InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(22));
     Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(25));
@@ -160,7 +160,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     honey = new Honey();
     ibgt = new iBGT();
     honeycomb = new HoneyComb();
-    beradrome = new Beradrome();
+    wbera = new WBERA();
     bondbear = new BondBear();
     bandbear = new BandBear();
     ibgtvault = new iBGTVault(address(ibgt), address(ibgt), address(honey));
@@ -291,14 +291,14 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(timelock),
       address(this),
       apdao,
-      address(goldilocked),
-      address(gprgComputed),
+      address(wbera),
+      address(glwberaComputed),
       address(gldwberaComputed)
     );
     proxy = new ERC1967Proxy(address(goldilend), data);
-    gprg = new GPRG("Goldilend Porridge" , "gPRG", address(proxy));
+    glwbera = new GLWBera("Goldilend Wrapped Bera" , "glWBERA", address(proxy));
     gldwbera = new GLDWBera("Goldilend Debt Wrapped Bera", "gldWBERA", address(proxy));
-    assert(gprg.goldilend() == address(proxy));
+    assert(glwbera.goldilend() == address(proxy));
     assert(gldwbera.goldilend() == address(proxy));
     address[] memory nfts = new address[](2);
     nfts[0] = address(bondbear);
@@ -315,10 +315,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
       10e18
     );
     Goldilend(address(proxy)).initializeBeras(nfts, values);
-    deal(address(goldilocked), address(this), prgMintAmount + 1000e18);
-    goldilocked.approve(address(proxy), 1000e18);
+    deal(address(wbera), address(this), 1000e18);
+    wbera.approve(address(proxy), 1000e18);
     Goldilend(address(proxy)).lock(1000e18);
-    goldilocked.setGoldilendAddress(address(proxy));
+    // goldilocked.setGoldilendAddress(address(proxy));
 
     // deploy goldivault
     address[] memory yieldTokens = new address[](1);

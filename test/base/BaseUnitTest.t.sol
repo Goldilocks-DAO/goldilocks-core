@@ -74,9 +74,9 @@ abstract contract BaseUnitTest is BaseTest {
     _;
   }
 
-  modifier dealUserPRG() {
-    deal(address(goldilocked), address(this), type(uint256).max / 2);
-    goldilocked.approve(address(proxy), type(uint256).max / 2);
+  modifier dealUserWBERA() {
+    deal(address(wbera), address(this), type(uint256).max / 2);
+    wbera.approve(address(proxy), type(uint256).max / 2);
     _;
   }
 
@@ -176,44 +176,6 @@ abstract contract BaseUnitTest is BaseTest {
     deal(address(bexlp), address(this), txAmount);
     bexlp.approve(address(goldivault), txAmount);
     goldivault.deposit(txAmount);
-  }
-
-  function boosty() public view returns (address[] memory, uint256[] memory) {
-    address[] memory nfts = new address[](2);
-    nfts[0] = address(honeycomb);
-    nfts[1] = address(beradrome);
-    uint256[] memory ids = new uint256[](2);
-    ids[0] = 1;
-    ids[1] = 1;
-
-    return (nfts, ids);
-  }
-
-  function maxBoosty() public returns (address[] memory, uint256[] memory) {
-    INFT(address(honeycomb)).mint(address(this));
-    INFT(address(beradrome)).mint(address(this));
-    INFT(address(beradrome)).mint(address(this));
-    INFT(address(beradrome)).mint(address(this));
-    INFT(address(beradrome)).mint(address(this));
-    INFT(address(beradrome)).mint(address(this));
-    address[] memory nfts = new address[](6);
-    nfts[0] = address(honeycomb);
-    nfts[1] = address(beradrome);
-    nfts[2] = address(beradrome);
-    nfts[3] = address(beradrome);
-    nfts[4] = address(beradrome);
-    nfts[5] = address(beradrome);
-    uint256[] memory ids = new uint256[](6);
-    ids[0] = 1;
-    ids[1] = 1;
-    ids[2] = 2;
-    ids[3] = 3;
-    ids[4] = 4;
-    ids[5] = 5;
-    IERC721(honeycomb).setApprovalForAll(address(goldilend), true);
-    IERC721(beradrome).setApprovalForAll(address(goldilend), true);
-
-    return (nfts, ids);
   }
 
   function beras() public view returns (address[] memory, uint256[] memory) {

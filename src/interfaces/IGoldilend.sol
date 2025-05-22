@@ -43,8 +43,8 @@ interface IGoldilend {
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  event PorridgeLock(address indexed user, uint256 amount);
-  event PorridgeUnlock(address indexed user, uint256 amount);
+  event WBERALock(address indexed user, uint256 amount);
+  event WBERAUnlock(address indexed user, uint256 amount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
   event Repay(address indexed user, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount);
@@ -60,12 +60,12 @@ interface IGoldilend {
   /*                      EXTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
   
-  /// @notice Locks PRG and mints GPRG
-  /// @param amount Amount of PRG to lock
+  /// @notice Locks WBERA and mints glWBERA
+  /// @param amount Amount of WBERA to lock
   function lock(uint256 amount) external;
 
-  /// @notice Unlocks PRG and burns GPRG
-  /// @param amount Amount of PRG to unlock
+  /// @notice Unlocks WBERA and burns glWBERA
+  /// @param amount Amount of WBERA to unlock
   function unlock(uint256 amount) external;
 
   /// @notice Borrows iBGT against value of NFT
@@ -103,8 +103,8 @@ interface IGoldilend {
   /// @param userLoanId Id of loan
   function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory);
 
-  /// @notice Returns current GPRG ratio
-  function getGPRGRatio() external view returns (uint256);
+  /// @notice Returns current glWBERA ratio
+  function getglWBERARatio() external view returns (uint256);
 
   /// @notice Returns interest on single NFT loan
   function calculateInterest(

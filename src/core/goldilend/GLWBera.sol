@@ -13,16 +13,16 @@ pragma solidity ^0.8.20;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ========================================= GPRG ===============================================
+// ======================================= GLWBera ==============================================
 // ==============================================================================================
 
 
 import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
 
 
-/// @title GPRG
-/// @notice Goldilend Porridge token representing Porridge locked in Goldilend
-contract GPRG is ERC20 {
+/// @title glWBERA
+/// @notice Goldilend Wrapped Bera token representing Wrapped Bera locked in Goldilend
+contract GLWBera is ERC20 {
 
   string private tokenName;
   string private tokenSymbol;
@@ -61,20 +61,20 @@ contract GPRG is ERC20 {
     return tokenSymbol;
   }
 
-  /// @notice Mints GPRG tokens
+  /// @notice Mints glWBERA tokens
   /// @dev Callable only by Goldilend
   /// @param to Address to mint to
-  /// @param amount Amount of GPRG tokens to mint
-  function mintGPRG(address to, uint256 amount) external {
+  /// @param amount Amount of glWBERA tokens to mint
+  function mintglWBERA(address to, uint256 amount) external {
     if(msg.sender != goldilend) revert NotGoldilend();
     _mint(to, amount);
   }
 
-  /// @notice Burns GPRG tokens
+  /// @notice Burns glWBERA tokens
   /// @dev Callable only by Goldilend
   /// @param from Address to burn from
-  /// @param amount Amount of GPRG tokens to burn
-  function burnGPRG(address from, uint256 amount) external {
+  /// @param amount Amount of glWBERA tokens to burn
+  function burnglWBERA(address from, uint256 amount) external {
     if(msg.sender != goldilend) revert NotGoldilend();
     _burn(from, amount);
   }
