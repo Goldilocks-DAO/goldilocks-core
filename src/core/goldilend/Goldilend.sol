@@ -164,19 +164,17 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @inheritdoc IGoldilend
   function lock(uint256 amount) external {
-    uint256 mintAmount = _glWBERAMintAmount(amount);
     poolSize += amount;
     SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), amount);
-    GLWBera(glwbera).mintglWBERA(msg.sender, mintAmount);
+    GLWBera(glwbera).mintglWBERA(msg.sender, amount);
     emit WBERALock(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldilend
   function unlock(uint256 amount) external {
-    if(amount > poolSize - outstandingDebt) revert InsufficientPRG();
-    uint256 redeemAmount = _glWBERAMintAmount(amount);
+    if(amount > poolSize - outstandingDebt) revert InsufficientWBERA();
     poolSize -= amount;
-    GLWBera(glwbera).burnglWBERA(msg.sender, redeemAmount);
+    GLWBera(glwbera).burnglWBERA(msg.sender, amount);
     SafeTransferLib.safeTransfer(wbera, msg.sender, amount);
     emit WBERAUnlock(msg.sender, amount);
   }
@@ -318,13 +316,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   }
 
   /// @inheritdoc IGoldilend
-  function getglWBERARatio() external view returns (uint256) {
-    uint256 supply = GLWBera(glwbera).totalSupply();
-    uint256 _poolSize = poolSize;
-    return _glWBERARatio(supply, _poolSize);
-  }
-
-  /// @inheritdoc IGoldilend
   function calculateInterest(
     uint256 borrowAmount,
     uint256 duration,
@@ -394,21 +385,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
       if(loans[user][i].loanId == userLoanId) return (loans[user][i], i);
     }
     revert LoanNotFound();
-  }
-
-  /// @notice Calculates the amount of glwBERA to mint
-  /// @param lockAmount Amount of iBGT to lock
-  /// @return mintAmount Total supply of glwBERA divided by the lending pool size multiplied by lockAmount
-  function _glWBERAMintAmount(uint256 lockAmount) internal view returns (uint256) {
-    uint256 supply = GLWBera(glwbera).totalSupply();
-    uint256 _poolSize = poolSize;
-    return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _glWBERARatio(supply, _poolSize)) : lockAmount;
-  }
-
-  /// @notice Calculates the current glWBERA ratio
-  /// @return glWBERARatio Total supply of glWBERA divided by the lending pool size
-  function _glWBERARatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
-    return FixedPointMathLib.divWad(supply, _poolSize);
   }
 
   /// @notice Returns the BGT balance of the token bound account

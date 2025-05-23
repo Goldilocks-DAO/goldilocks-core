@@ -40,14 +40,6 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(userLoan.borrowedAmount, 1e18 + borrowInterest);
   }
 
-  function testGetglWBERARatio() public {
-    deal(address(wbera), address(this), txAmount);
-    wbera.approve(address(proxy), txAmount);
-    Goldilend(address(proxy)).lock(txAmount);
-
-    assertEq(Goldilend(address(proxy)).getglWBERARatio(), 1e18);
-  }
-
   function testCalculateInterestFailDuration() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.InvalidDuration.selector));
     Goldilend(address(proxy)).calculateInterest(1e18, 1, address(bondbear));
@@ -85,12 +77,12 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(Goldilend(address(proxy)).poolSize(), 1000e18 + txAmount);
   }
 
-  function testUnlockFailPRG() public {
+  function testUnlockFailWBERA() public {
     deal(address(wbera), address(this), txAmount);
     wbera.approve(address(proxy), txAmount);
     Goldilend(address(proxy)).lock(txAmount);
-    vm.store(address(proxy), bytes32(uint256(7)), bytes32(Goldilend(address(proxy)).poolSize()));
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.InsufficientPRG.selector));
+    vm.store(address(proxy), bytes32(uint256(8)), bytes32(Goldilend(address(proxy)).poolSize()));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.InsufficientWBERA.selector));
     Goldilend(address(proxy)).unlock(txAmount);
   }
 
@@ -104,51 +96,6 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(wbera.balanceOf(address(this)), txAmount);
     assertEq(wbera.balanceOf(address(proxy)), 1000e18);
     assertEq(Goldilend(address(proxy)).poolSize(), 1000e18);
-  }
-
-  function testLockLock() public {
-    // deal(address(wbera), address(this), txAmount);
-    // wbera.approve(address(proxy), txAmount);
-    // Goldilend(address(proxy)).lock(txAmount);
-    // deal(address(wbera), address(0xabc), txAmount);
-    // vm.prank(address(0xabc));
-    // wbera.approve(address(proxy), txAmount);
-    // vm.prank(address(0xabc));
-    // Goldilend(address(proxy)).lock(txAmount);
-
-    // assertEq(glwbera.balanceOf(address(this)), 1000e18 + txAmount);
-    // assertEq(glwbera.balanceOf(address(0xabc)), txAmount);
-    // assertEq(wbera.balanceOf(address(this)), 0);
-    // assertEq(wbera.balanceOf(address(proxy)), 0);
-    // assertEq(wbera.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount+txAmount);
-    // assertEq(Goldilend(address(proxy)).poolSize(), 1000e18 + txAmount+txAmount);
-  }
-
-  function testLockHalf() public {
-    // vm.store(address(proxy), bytes32(uint256(4)), bytes32(uint256(100e18)));
-    // vm.store(address(proxy), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(50e18)));
-    // deal(address(wbera), address(this), txAmount);
-    // wbera.approve(address(proxy), txAmount);
-    // Goldilend(address(proxy)).lock(txAmount);
-
-    // assertEq(glwbera.balanceOf(address(this)), 1000e18 + (txAmount / 2));
-    // assertEq(wbera.balanceOf(address(this)), 0);
-    // assertEq(wbera.balanceOf(address(proxy)), 0);
-    // assertEq(wbera.balanceOf(address(ibgtvault)), (type(uint256).max / 2) + txAmount);
-    // assertEq(Goldilend(address(proxy)).poolSize(), 100e18 + txAmount);
-  }
-
-  function testLockDouble() public {
-    // vm.store(address(proxy), bytes32(uint256(8)), bytes32(uint256(50e18)));
-    // vm.store(address(proxy), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(100e18)));
-    // deal(address(wbera), address(this), txAmount);
-    // wbera.approve(address(proxy), txAmount);
-    // Goldilend(address(proxy)).lock(txAmount);
-
-    // assertEq(glwbera.balanceOf(address(this)), 1000e18 + (txAmount * 2));
-    // assertEq(wbera.balanceOf(address(this)), 0);
-    // assertEq(wbera.balanceOf(address(proxy)), 0);
-    // assertEq(Goldilend(address(proxy)).poolSize(), 50e18 + txAmount);
   }
 
   function testBorrowFailActive() public {
@@ -477,7 +424,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
   function testMultisigInterestClaimSuccess() public {
     deal(address(wbera), address(proxy), 5e18);
-    vm.store(address(proxy), bytes32(uint256(12)), bytes32(uint256(5e18)));
+    vm.store(address(proxy), bytes32(uint256(13)), bytes32(uint256(5e18)));
     Goldilend(address(proxy)).multisigInterestClaim();
 
     assertEq(wbera.balanceOf(address(this)), 5e18);
@@ -492,7 +439,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
   function testApdaoInterestClaimSuccess() public {
     deal(address(wbera), address(proxy), 5e18);
-    vm.store(address(proxy), bytes32(uint256(13)), bytes32(uint256(5e18)));
+    vm.store(address(proxy), bytes32(uint256(14)), bytes32(uint256(5e18)));
     vm.prank(apdao);
     Goldilend(address(proxy)).apdaoInterestClaim();
 

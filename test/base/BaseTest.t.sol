@@ -20,9 +20,9 @@ import { Timelock } from "../../src/core/goldigovernance/Timelock.sol";
 import { GovLocks } from "../../src/core/goldigovernance/GovLocks.sol";
 import { Honey } from "../../src/mock/Honey.sol";
 import { WBERA } from "../../src/mock/WBERA.sol";
+import { BGT } from "../../src/mock/BGT.sol";
 import { iBGT } from "../../src/mock/iBGT.sol";
 import { oriBGT } from "../../src/mock/oriBGT.sol";
-import { HoneyComb } from "../../src/mock/HoneyComb.sol";
 import { BondBear } from "../../src/mock/BondBear.sol";
 import { BandBear } from "../../src/mock/BandBear.sol";
 import { iBGTVault } from "../../src/mock/iBGTVault.sol";
@@ -115,7 +115,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   Goldigovernor goldigov;
   Honey honey;
   iBGT ibgt;
-  HoneyComb honeycomb;
+  BGT bgt;
   WBERA wbera;
   BondBear bondbear;
   BandBear bandbear;
@@ -159,7 +159,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bexlp = new BexLPToken();
     honey = new Honey();
     ibgt = new iBGT();
-    honeycomb = new HoneyComb();
+    bgt = new BGT();
     wbera = new WBERA();
     bondbear = new BondBear();
     bandbear = new BandBear();
@@ -292,6 +292,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
       address(this),
       apdao,
       address(wbera),
+      address(bgt),
       address(glwberaComputed),
       address(gldwberaComputed)
     );

@@ -37,7 +37,7 @@ interface IGoldilend {
   error Unliquidatable();
   error TooManyLoans();
   error AlreadyInitialized();
-  error InsufficientPRG();
+  error InsufficientWBERA();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
@@ -102,9 +102,6 @@ interface IGoldilend {
   /// @param user Address of user for query
   /// @param userLoanId Id of loan
   function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory);
-
-  /// @notice Returns current glWBERA ratio
-  function getglWBERARatio() external view returns (uint256);
 
   /// @notice Returns interest on single NFT loan
   function calculateInterest(
