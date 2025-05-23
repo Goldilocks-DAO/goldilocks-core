@@ -25,6 +25,8 @@ import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/t
 import { Initializable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import { IBeraBondNFT } from "../../interfaces/IBeraBondNFT.sol";
+import { IGl00DelegationRegistry } from "../../interfaces/IGl00DelegationRegistry.sol";
 import { IGoldilend } from "../../interfaces/IGoldilend.sol";
 import { GLWBera } from "./GLWBera.sol";
 import { GLDWBera } from "./GLDWBera.sol";
@@ -60,6 +62,9 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @notice Address of WBERA
   address public wbera;
+
+  /// @notice Address of BGT
+  address public bgt;
 
   /// @notice Address of Goldilend Wrapped Bera
   address public glwbera;
@@ -128,6 +133,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @param _multisig Address of the multisig
   /// @param _apdao Address of APDAO
   /// @param _wbera Address of WBERA
+  /// @param _bgt Address of BGT
   /// @param _glwbera Address of Goldilend Wrapped Bera
   /// @param _gldwbera Address of Goldilend Debt Wrapped Bera
   function initialize(
@@ -135,6 +141,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     address _multisig,
     address _apdao,
     address _wbera,
+    address _bgt,
     address _glwbera,
     address _gldwbera
   ) public initializer {
@@ -144,6 +151,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     multisig = _multisig;
     apdao = _apdao;
     wbera = _wbera;
+    bgt = _bgt;
     glwbera = _glwbera;
     gldwbera = _gldwbera;
   }
@@ -210,6 +218,44 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     SafeTransferLib.safeTransfer(wbera, msg.sender, borrowAmount);
     GLDWBera(gldwbera).mintgldWBERA(msg.sender, borrowAmount);
     emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
+  }
+
+  function berabondBorrow(
+    uint256 borrowAmount,
+    address collateralNFT,
+    uint256 collateralNFTId
+  ) external {
+    if(!borrowingActive) revert NotActive();
+    if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
+    uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
+    uint256 maxBorrow = bgtBalance * 80 / 100;
+    if(borrowAmount > maxBorrow) revert InvalidLoanAmount();
+    uint256 userLoansLength = loans[msg.sender].length;
+    if(userLoansLength == MAX_LOANS) revert TooManyLoans();
+    uint256 fairValue = nftFairValues[collateralNFT];
+    uint256 debt = outstandingDebt;
+    if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+    outstandingDebt += borrowAmount;
+    address[] memory collateralNFTs = new address[](1);
+    collateralNFTs[0] = collateralNFT;
+    uint256[] memory collateralNFTIds = new uint256[](1);
+    collateralNFTIds[0] = collateralNFTId;
+    Loan memory loan = Loan({
+      collateralNFTs: collateralNFTs,
+      collateralNFTIds: collateralNFTIds,
+      borrowedAmount: borrowAmount,
+      interest: 0,
+      duration: 180 days,
+      endDate: block.timestamp + 180 days,
+      loanId: userLoansLength + 1,
+      liquidated: false
+    });
+    loans[msg.sender].push(loan);
+    // use nft's existing approval mechanism to lock bgt during transfer
+    IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
+    SafeTransferLib.safeTransfer(wbera, msg.sender, borrowAmount);
+    GLDWBera(gldwbera).mintgldWBERA(msg.sender, borrowAmount);
+    emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, 0, block.timestamp + 180 days, collateralNFT, collateralNFTId);
   }
 
   /// @inheritdoc IGoldilend
@@ -293,6 +339,10 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     return _calculateInterest(borrowAmount, debt, duration);
   }
 
+  function getTBABGTBalance(address nft, uint256 tokenId) external view returns (uint256) {
+    return _getTBABGTBalance(nft, tokenId);
+  }
+
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      INTERNAL FUNCTIONS                    */
@@ -359,6 +409,14 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @return glWBERARatio Total supply of glWBERA divided by the lending pool size
   function _glWBERARatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
     return FixedPointMathLib.divWad(supply, _poolSize);
+  }
+
+  /// @notice Returns the BGT balance of the token bound account
+  /// @return bgtBalance BGT balance of TBA
+  function _getTBABGTBalance(address nft, uint256 tokenId) internal view returns (uint256) {
+    if(nftFairValues[nft] == 0) revert InvalidCollateral();
+    address tba = IBeraBondNFT(nft).getTokenBoundAccount(tokenId);
+    return ERC20(bgt).balanceOf(tba);
   }
 
 
@@ -485,6 +543,22 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   function recoverTokens(address token) external {
     if(msg.sender != multisig) revert NotMultisig();
     SafeTransferLib.safeTransfer(token, multisig, ERC20(token).balanceOf(address(this)));
+  }
+
+  function manageDelegation(
+    address nft,
+    uint256 tokenId,
+    address delegatee,
+    uint256 permissions
+  ) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    address tba = IBeraBondNFT(nft).getTokenBoundAccount(tokenId);
+    // IGl00DelegationRegistry(delegationRegistry).setDelegation(
+    //   tba,
+    //   delegatee,
+    //   permissions,
+    //   30 days
+    // );
   }
 
 
