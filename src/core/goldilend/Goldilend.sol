@@ -90,6 +90,9 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @notice Maximum loan duration
   uint256 public maxDuration;
 
+  /// @notice Maximum utilization of protocol liquidity
+  uint256 public maxUtilization;
+
   /// @notice Portion of interest payments to multisig
   uint256 public multisigClaims;
 
@@ -195,6 +198,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     uint256 fairValue = nftFairValues[collateralNFT];
     uint256 debt = outstandingDebt;
     uint256 interest = _calculateInterest(borrowAmount, debt, duration);
+    if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
     if(borrowAmount + interest > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     outstandingDebt += borrowAmount;
     address[] memory collateralNFTs = new address[](1);
@@ -230,9 +234,9 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     if(borrowAmount > maxBorrow) revert InvalidLoanAmount();
     uint256 userLoansLength = loans[msg.sender].length;
     if(userLoansLength == MAX_LOANS) revert TooManyLoans();
-    uint256 fairValue = nftFairValues[collateralNFT];
     uint256 debt = outstandingDebt;
-    if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+    if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+    if(borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     outstandingDebt += borrowAmount;
     address[] memory collateralNFTs = new address[](1);
     collateralNFTs[0] = collateralNFT;
@@ -266,7 +270,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     outstandingDebt -= repayAmount - interest > outstandingDebt ? outstandingDebt : repayAmount - interest;
     loans[msg.sender][index].borrowedAmount -= repayAmount;
     loans[msg.sender][index].interest -= interest;
-    poolSize += interest * (1000 - (multisigShare + apdaoShare)) / 1000;
     _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), repayAmount);
     GLDWBera(gldwbera).burngldWBERA(msg.sender, userLoan.borrowedAmount - userLoan.interest);
@@ -289,7 +292,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     loans[user][index].liquidated = true;
     loans[user][index].borrowedAmount = 0;
     outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;
-    // IGoldilocked(goldilocked).goldilendMint(address(this), userLoan.borrowedAmount - userLoan.interest);
     uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
     for(uint256 i; i < userLoanCollateralLength;) {
       IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), multisig, userLoan.collateralNFTIds[i]);
@@ -297,7 +299,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
         ++i;
       }
     }
-    emit Liquidation(msg.sender, user, userLoan.borrowedAmount);
+    emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -479,7 +481,8 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     uint256 _minDuration,
     uint256 _maxDuration,
     uint256 _protocolInterestRate,
-    uint256 _slope 
+    uint256 _slope,
+    uint256 _maxUtilization
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
     if(parametersInitialized) revert AlreadyInitialized();
@@ -490,6 +493,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     maxDuration = _maxDuration;
     protocolInterestRate = _protocolInterestRate;
     slope = _slope;
+    maxUtilization = _maxUtilization;
     emit NewShareRates(_multisigShare, _apdaoShare);
     emit NewDurations(_minDuration, _maxDuration);
     emit NewProtocolInterestRate(_protocolInterestRate);

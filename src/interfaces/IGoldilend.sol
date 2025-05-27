@@ -32,6 +32,7 @@ interface IGoldilend {
   error InvalidLoanAmount();
   error InvalidCollateral();
   error BorrowLimitExceeded();
+  error MaxUtilizationExceeded();
   error LoanNotFound();
   error LoanExpired();
   error Unliquidatable();
@@ -47,7 +48,7 @@ interface IGoldilend {
   event WBERAUnlock(address indexed user, uint256 amount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
   event Repay(address indexed user, uint256 amount);
-  event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount);
+  event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount, uint256 loanId);
   event NewProtocolInterestRate(uint256 newProtocolInterestRate);
   event NewShareRates(uint256 newMultisigShare, uint256 newApdaoShare);
   event NewSlope(uint256 newSlope);
@@ -174,7 +175,8 @@ interface IGoldilend {
     uint256 _minDuration,
     uint256 _maxDuration,
     uint256 _protocolInterestRate,
-    uint256 _slope
+    uint256 _slope,
+    uint256 _maxUtilization
   ) external;
 
   /// @notice Allows multisig to initalize bera nft fair values

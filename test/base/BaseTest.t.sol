@@ -313,7 +313,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
       7 days,
       365 days,
       10e18,
-      10e18
+      10e18,
+      69
     );
     Goldilend(address(proxy)).initializeBeras(nfts, values);
     deal(address(wbera), address(this), 1000e18);

@@ -167,7 +167,6 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(userLoan.loanId, 1);
     assertEq(userLoan.liquidated, false);
     assertEq(Goldilend(address(proxy)).outstandingDebt(), 0);
-    assertEq(Goldilend(address(proxy)).poolSize(), 1000e18 + (userLoanBefore.interest * 950 / 1000));
   }
 
   function testRepayHalfSuccess() public dealUserWBERA dealUserBeras {
@@ -424,7 +423,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
   function testMultisigInterestClaimSuccess() public {
     deal(address(wbera), address(proxy), 5e18);
-    vm.store(address(proxy), bytes32(uint256(13)), bytes32(uint256(5e18)));
+    vm.store(address(proxy), bytes32(uint256(14)), bytes32(uint256(5e18)));
     Goldilend(address(proxy)).multisigInterestClaim();
 
     assertEq(wbera.balanceOf(address(this)), 5e18);
@@ -439,7 +438,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
   function testApdaoInterestClaimSuccess() public {
     deal(address(wbera), address(proxy), 5e18);
-    vm.store(address(proxy), bytes32(uint256(14)), bytes32(uint256(5e18)));
+    vm.store(address(proxy), bytes32(uint256(15)), bytes32(uint256(5e18)));
     vm.prank(apdao);
     Goldilend(address(proxy)).apdaoInterestClaim();
 
@@ -456,7 +455,8 @@ contract UnitGoldilendTest is BaseUnitTest {
       7 days, 
       21 days,
       1e17,
-      10
+      10,
+      69
     );
   }
 
@@ -468,7 +468,8 @@ contract UnitGoldilendTest is BaseUnitTest {
       7 days, 
       21 days,
       1e17,
-      10
+      10,
+      69
     );
   }
 
@@ -478,6 +479,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(Goldilend(address(proxy)).poolSize(), 1000e18);
     assertEq(Goldilend(address(proxy)).protocolInterestRate(), 10e18);
     assertEq(Goldilend(address(proxy)).slope(), 10e18);
+    assertEq(Goldilend(address(proxy)).maxUtilization(), 69);
   }
 
   function testInitializeBerasFailMultisig() public {
