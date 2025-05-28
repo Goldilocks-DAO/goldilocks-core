@@ -33,10 +33,8 @@ interface IGoldilend {
   error InvalidCollateral();
   error BorrowLimitExceeded();
   error MaxUtilizationExceeded();
-  error LoanNotFound();
   error LoanExpired();
   error Unliquidatable();
-  error TooManyLoans();
   error AlreadyInitialized();
   error InsufficientWBERA();
 
@@ -95,14 +93,8 @@ interface IGoldilend {
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @notice Returns details of all loans originated from user
-  /// @param user Address of user for query
-  function lookupLoans(address user) external view returns (Loan[] memory userLoans);
-
-  /// @notice Returns details of a specific loan
-  /// @param user Address of user for query
-  /// @param userLoanId Id of loan
-  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory);
+  /// @notice Returns info on a user loan
+  function getUserLoan(address user, uint256 userLoanId) external view returns (Loan memory);
 
   /// @notice Returns interest on single NFT loan
   function calculateInterest(

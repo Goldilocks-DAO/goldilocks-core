@@ -35,7 +35,6 @@ import { GLDWBera } from "./GLDWBera.sol";
 // You need to add the delegationRegistry address as a variable.
 // You can directly use the berabond interface when EOA directly calls a function. But in our case, TBA calls the smart contract function, so we designed to get calldata using abi.encodeWithSignature.
 // In BeraBondNFT, it defines mapping(uint256 => bool) _bgtLocked in storage as private variable. You can set true/false to lock/unlock bgt.
-// Maybe my answers are not aligned with the points of your questions. Please feel free to ask more questions.
 
 /// @title Goldilend
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
@@ -119,8 +118,11 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @notice Indicates if contract beras are initialized
   bool public berasInitialized;
 
-  /// @notice Maps user to loans
-  mapping(address => Loan[]) public loans;
+  /// @notice Maps users to total amount of their loans
+  mapping(address => uint256) public userLoanAmount;
+
+  /// @notice Maps users to loans
+  mapping(address => mapping(uint256 => Loan)) public loans;
 
   /// @notice Maps NFT to fair value
   mapping(address => uint256) public nftFairValues;
@@ -198,8 +200,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
     if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
     if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
-    uint256 userLoansLength = loans[msg.sender].length;
-    if(userLoansLength == MAX_LOANS) revert TooManyLoans();
+    uint256 userLoansLength = userLoanAmount[msg.sender];
     uint256 fairValue = nftFairValues[collateralNFT];
     uint256 debt = outstandingDebt;
     uint256 interest = _calculateInterest(borrowAmount, debt, duration);
@@ -220,7 +221,8 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
       loanId: userLoansLength + 1,
       liquidated: false
     });
-    loans[msg.sender].push(loan);
+    loans[msg.sender][userLoansLength + 1] = loan;
+    userLoanAmount[msg.sender]++;
     IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
     SafeTransferLib.safeTransfer(wbera, msg.sender, borrowAmount);
     GLDWBera(gldwbera).mintgldWBERA(msg.sender, borrowAmount);
@@ -237,8 +239,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
     uint256 maxBorrow = bgtBalance * 80 / 100;
     if(borrowAmount > maxBorrow) revert InvalidLoanAmount();
-    uint256 userLoansLength = loans[msg.sender].length;
-    if(userLoansLength == MAX_LOANS) revert TooManyLoans();
+    uint256 userLoansLength = userLoanAmount[msg.sender];
     uint256 debt = outstandingDebt;
     if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
     if(borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
@@ -257,7 +258,8 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
       loanId: userLoansLength + 1,
       liquidated: false
     });
-    loans[msg.sender].push(loan);
+    loans[msg.sender][userLoansLength + 1] = loan;
+    userLoanAmount[msg.sender]++;
     // use nft's existing approval mechanism to lock bgt during transfer
     IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
     SafeTransferLib.safeTransfer(wbera, msg.sender, borrowAmount);
@@ -267,14 +269,14 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @inheritdoc IGoldilend
   function repay(uint256 repayAmount, uint256 userLoanId) external {
-    (Loan memory userLoan, uint256 index) = _lookupLoan(msg.sender, userLoanId);
+    Loan memory userLoan = loans[msg.sender][userLoanId];
     if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
     if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
     uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoan.interest, userLoan.borrowedAmount);
     uint256 interest = FixedPointMathLib.mulWadUp(repayAmount, interestLoanRatio);
     outstandingDebt -= repayAmount - interest > outstandingDebt ? outstandingDebt : repayAmount - interest;
-    loans[msg.sender][index].borrowedAmount -= repayAmount;
-    loans[msg.sender][index].interest -= interest;
+    loans[msg.sender][userLoanId].borrowedAmount -= repayAmount;
+    loans[msg.sender][userLoanId].interest -= interest;
     _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), repayAmount);
     GLDWBera(gldwbera).burngldWBERA(msg.sender, userLoan.borrowedAmount - userLoan.interest);
@@ -292,10 +294,10 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @inheritdoc IGoldilend
   function liquidate(address user, uint256 userLoanId) external {
-    (Loan memory userLoan, uint256 index) = _lookupLoan(user, userLoanId);
+    Loan memory userLoan = loans[msg.sender][userLoanId];
     if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
-    loans[user][index].liquidated = true;
-    loans[user][index].borrowedAmount = 0;
+    loans[user][userLoanId].liquidated = true;
+    loans[user][userLoanId].borrowedAmount = 0;
     outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;
     uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
     for(uint256 i; i < userLoanCollateralLength;) {
@@ -307,19 +309,15 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
   }
 
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                  EXTERNAL VIEW FUNCTIONS                   */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
   /// @inheritdoc IGoldilend
-  function lookupLoans(address user) external view returns (Loan[] memory userLoans) {
-    userLoans = loans[user];
-  }
-
-  /// @inheritdoc IGoldilend
-  function lookupLoan(address user, uint256 userLoanId) external view returns (Loan memory loan) {
-    (loan, ) = _lookupLoan(user, userLoanId);
+  function getUserLoan(address user, uint256 userLoanId) external view returns (Loan memory) {
+    return loans[user][userLoanId];
   }
 
   /// @inheritdoc IGoldilend
@@ -376,22 +374,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
     uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     return interestAdjusted / 100;
-  }
-
-  /// @notice Finds the loan by userId
-  /// @param userLoanId Id of loan to be found
-  function _lookupLoan(
-    address user, 
-    uint256 userLoanId
-  ) internal view returns (Loan memory userLoan, uint256 index) {
-    uint256 loanLength = loans[user].length;
-    for(uint256 i = loanLength; i > 0;) {
-      unchecked {
-        --i;
-      }
-      if(loans[user][i].loanId == userLoanId) return (loans[user][i], i);
-    }
-    revert LoanNotFound();
   }
 
   /// @notice Returns the BGT balance of the token bound account

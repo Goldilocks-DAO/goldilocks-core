@@ -18,28 +18,6 @@ contract TestUpgradeableGoldilend is Goldilend {
 
 contract UnitGoldilendTest is BaseUnitTest {
 
-  function testLookupLoans() public dealUserBeras {
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
-    Goldilend.Loan[] memory userLoans = Goldilend(address(proxy)).lookupLoans(address(this));
-
-    assertEq(userLoans[0].collateralNFTs[0], address(bondbear));
-    assertEq(userLoans[0].collateralNFTIds[0], 1);
-    assertEq(userLoans[0].borrowedAmount, 1e18 + borrowInterest);
-    assertEq(userLoans[1].collateralNFTs[0], address(bandbear));
-    assertEq(userLoans[1].collateralNFTIds[0], 1);
-    assert(userLoans[1].borrowedAmount > 1e18 + borrowInterest);
-  }
-
-  function testLookupLoan() public dealUserBeras {
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
-    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).lookupLoan(address(this), 1);
-
-    assertEq(userLoan.collateralNFTs[0], address(bondbear));
-    assertEq(userLoan.collateralNFTIds[0], 1);
-    assertEq(userLoan.borrowedAmount, 1e18 + borrowInterest);
-  }
-
   function testCalculateInterestFailDuration() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.InvalidDuration.selector));
     Goldilend(address(proxy)).calculateInterest(1e18, 1, address(bondbear));
@@ -126,7 +104,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
   function testBorrowSuccess() public dealUserBeras {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
-    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).lookupLoan(address(this), 1);
+    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).getUserLoan(address(this), 1);
 
     assertEq(userLoan.collateralNFTs[0], address(bondbear));
     assertEq(userLoan.collateralNFTIds[0], 1);
@@ -145,16 +123,11 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).repay(1e18, 1);
   }
 
-  function testRepayFailLoanNotFound() public {
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.LoanNotFound.selector));
-    Goldilend(address(proxy)).repay(1e18, 1);
-  }
-
   function testRepaySuccess() public dealUserWBERA dealUserBeras {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
-    Goldilend.Loan memory userLoanBefore = Goldilend(address(proxy)).lookupLoan(address(this), 1);
+    Goldilend.Loan memory userLoanBefore = Goldilend(address(proxy)).getUserLoan(address(this), 1);
     Goldilend(address(proxy)).repay(1e18+userLoanBefore.interest, 1);
-    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).lookupLoan(address(this), 1);
+    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).getUserLoan(address(this), 1);
 
     assertEq(IERC721(address(bondbear)).balanceOf(address(proxy)), 0);
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 1);
@@ -171,9 +144,9 @@ contract UnitGoldilendTest is BaseUnitTest {
 
   function testRepayHalfSuccess() public dealUserWBERA dealUserBeras {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
-    Goldilend.Loan memory userLoanBefore = Goldilend(address(proxy)).lookupLoan(address(this), 1);
+    Goldilend.Loan memory userLoanBefore = Goldilend(address(proxy)).getUserLoan(address(this), 1);
     Goldilend(address(proxy)).repay((1e18+userLoanBefore.interest) / 2, 1);
-    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).lookupLoan(address(this), 1);
+    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).getUserLoan(address(this), 1);
 
     assertEq(IERC721(address(bondbear)).balanceOf(address(proxy)), 1);
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 0);
@@ -199,7 +172,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
     vm.warp(1209602 + 86401);
     Goldilend(address(proxy)).liquidate(address(this), 1);
-    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).lookupLoan(address(this), 1);    
+    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).getUserLoan(address(this), 1);    
 
     assertEq(userLoan.collateralNFTs[0], address(bondbear));
     assertEq(userLoan.collateralNFTIds[0], 1);
@@ -216,7 +189,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
     vm.warp(68e18);
     Goldilend(address(proxy)).liquidate(address(this), 1);
-    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).lookupLoan(address(this), 1);
+    Goldilend.Loan memory userLoan = Goldilend(address(proxy)).getUserLoan(address(this), 1);
     
     assertEq(Goldilend(address(proxy)).poolSize(), 1000e18);
     assertEq(userLoan.collateralNFTs[0], address(bondbear));
@@ -468,63 +441,6 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).borrow(50e18, maxDuration, address(bondbear), 1);
   }
 
-  function testBorrowFailTooManyLoans() public {
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    INFT(address(bondbear)).mint(address(this));
-    IERC721(bondbear).setApprovalForAll(address(proxy), true);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 2);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 3);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 4);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 5);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 6);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 7);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 8);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 9);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 10);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 11);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 12);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 13);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 14);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 15);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 16);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 17);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 18);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 19);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 20);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 21);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 22);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 23);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 24);
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 25);
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.TooManyLoans.selector));
-    Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 26);
-  }
-
   function testRepayLoanNumberTwoAndTwenty() public dealUserWBERA {
     INFT(address(bondbear)).mint(address(this));
     INFT(address(bondbear)).mint(address(this));
@@ -579,8 +495,8 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 25);
     Goldilend(address(proxy)).repay(10e18, 2);
     Goldilend(address(proxy)).repay(10e18, 20);
-    Goldilend.Loan memory userLoanTwo = Goldilend(address(proxy)).lookupLoan(address(this), 2);
-    Goldilend.Loan memory userLoanTwenty = Goldilend(address(proxy)).lookupLoan(address(this), 20);
+    Goldilend.Loan memory userLoanTwo = Goldilend(address(proxy)).getUserLoan(address(this), 2);
+    Goldilend.Loan memory userLoanTwenty = Goldilend(address(proxy)).getUserLoan(address(this), 20);
 
     assertEq(IERC721(address(bondbear)).balanceOf(address(proxy)), 23);
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 2);
