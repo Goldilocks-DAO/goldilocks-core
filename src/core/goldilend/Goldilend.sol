@@ -31,6 +31,11 @@ import { IGoldilend } from "../../interfaces/IGoldilend.sol";
 import { GLWBera } from "./GLWBera.sol";
 import { GLDWBera } from "./GLDWBera.sol";
 
+// Gl00DelegationRegistry and BeraBondERC6551Account contracts are generic contracts, so there is no need to use supportedNFTContracts variable.
+// You need to add the delegationRegistry address as a variable.
+// You can directly use the berabond interface when EOA directly calls a function. But in our case, TBA calls the smart contract function, so we designed to get calldata using abi.encodeWithSignature.
+// In BeraBondNFT, it defines mapping(uint256 => bool) _bgtLocked in storage as private variable. You can set true/false to lock/unlock bgt.
+// Maybe my answers are not aligned with the points of your questions. Please feel free to ask more questions.
 
 /// @title Goldilend
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
@@ -420,32 +425,24 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   } 
 
   /// @inheritdoc IGoldilend
-  function changeProtocolInterestRate(uint256 _protocolInterestRate) external {
+  function changeLendingParams(
+    uint256 _protocolInterestRate,
+    uint256 _multisigShare,
+    uint256 _apdaoShare,
+    uint256 _slope,
+    uint256 _minDuration,
+    uint256 _maxDuration
+  ) external {
     if(msg.sender != timelock) revert NotTimelock();
     protocolInterestRate = _protocolInterestRate;
-    emit NewProtocolInterestRate(_protocolInterestRate);
-  }
-
-  /// @inheritdoc IGoldilend
-  function changeShareRates(uint256 _multisigShare, uint256 _apdaoShare) external {
-    if(msg.sender != timelock) revert NotTimelock();
     multisigShare = _multisigShare;
     apdaoShare = _apdaoShare;
-    emit NewShareRates(_multisigShare, _apdaoShare);
-  }
-
-  /// @inheritdoc IGoldilend
-  function changeSlope(uint256 _slope) external {
-    if(msg.sender != timelock) revert NotTimelock();
     slope = _slope;
-    emit NewSlope(_slope);
-  }
-
-  /// @inheritdoc IGoldilend
-  function changeDurations(uint256 _minDuration, uint256 _maxDuration) external {
-    if(msg.sender != timelock) revert NotTimelock();
     minDuration = _minDuration;
     maxDuration = _maxDuration;
+    emit NewProtocolInterestRate(_protocolInterestRate);
+    emit NewShareRates(_multisigShare, _apdaoShare);
+    emit NewSlope(_slope);
     emit NewDurations(_minDuration, _maxDuration);
   }
 

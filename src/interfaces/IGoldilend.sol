@@ -124,27 +124,22 @@ interface IGoldilend {
     uint256[] calldata _nftFairValues
   ) external;
 
-  /// @notice Allows the DAO to adjust the interest rate for the protocol
+  /// @notice Allows the DAO to adjust the protocol lending parameters
   /// @dev Callable only by Timelock
   /// @param _protocolInterestRate New interest rate
-  function changeProtocolInterestRate(uint256 _protocolInterestRate) external;
-
-  /// @notice Allows the DAO to adjust shares of interest payment
-  /// @dev Callable only by Timelock
   /// @param _multisigShare New share for multisig
   /// @param _apdaoShare New share for apdao
-  function changeShareRates(uint256 _multisigShare, uint256 _apdaoShare) external;
-
-  /// @notice Allows the DAO to adjust the degree of the protocol interest rate
-  /// @dev Callable only by Timelock
   /// @param _slope New slope
-  function changeSlope(uint256 _slope) external;
-
-  /// @notice Allows the DAO to adjust the min and max duration of loans
-  /// @dev Callable only by Timelock
   /// @param _minDuration New minimum duration
   /// @param _maxDuration New maximum duration
-  function changeDurations(uint256 _minDuration, uint256 _maxDuration) external;
+  function changeLendingParams(
+    uint256 _protocolInterestRate,
+    uint256 _multisigShare,
+    uint256 _apdaoShare,
+    uint256 _slope,
+    uint256 _minDuration,
+    uint256 _maxDuration
+  ) external;
 
   /// @notice Allows multisig to activate or inactivate the protocol
   /// @dev Callable only by multisig

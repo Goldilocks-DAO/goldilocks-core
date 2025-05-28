@@ -265,14 +265,22 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(Goldilend(address(proxy)).nftFairValues(address(bandbear)), 50);
   }
 
-  function testChangeProtocolInterestRateFailTimelock() public {
+  function testChangeLendingParamsFailTimelock() public {
     vm.prank(address(0x69));
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotTimelock.selector));
-    Goldilend(address(proxy)).changeProtocolInterestRate(69);
+    Goldilend(address(proxy)).changeLendingParams(69, 69, 69, 69, 69, 69);
   }
 
-  function testChangeProtocolInterestRateSuccess() public {
-    bytes memory _calldata = abi.encodeWithSignature("changeProtocolInterestRate(uint256)", 69);
+  function testChangeLendingParamsSuccess() public {
+    bytes memory _calldata = abi.encodeWithSignature(
+      "changeLendingParams(uint256,uint256,uint256,uint256,uint256,uint256)",
+      69,
+      69,
+      69,
+      69,
+      69,
+      69
+    );
     address[] memory targets = new address[](1);
     targets[0] = address(proxy);
     string[] memory signatures = new string[](1);
@@ -297,108 +305,9 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(executed, true);
     assertEq(Goldilend(address(proxy)).protocolInterestRate(), 69);
-  }
-
-  function testChangeShareRatesFailTimelock() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotTimelock.selector));
-    Goldilend(address(proxy)).changeShareRates(69, 69);
-  }
-
-  function testChangeShareRatesSuccess() public {
-    bytes memory _calldata = abi.encodeWithSignature("changeShareRates(uint256,uint256)", 69, 69);
-    address[] memory targets = new address[](1);
-    targets[0] = address(proxy);
-    string[] memory signatures = new string[](1);
-    signatures[0] = "";
-    bytes[] memory calldatas = new bytes[](1);
-    calldatas[0] = _calldata;
-    uint256[] memory valuess = new uint256[](1);
-    valuess[0] = 0;
-    deal(address(goldiswap), address(this), quorumVotesNum);
-    goldiswap.approve(address(govlocks), quorumVotesNum);
-    govlocks.deposit(quorumVotesNum);
-    govlocks.delegate(address(this));
-    vm.roll(2);
-    goldigov.propose(targets, valuess, signatures, calldatas, "");
-    vm.roll(52600);
-    goldigov.castVote(1, 1);
-    vm.roll(200000);
-    goldigov.queue(1);
-    vm.warp(6 days);
-    goldigov.execute(1);
-    (, , , , , , , , , bool executed) = goldigov.proposals(1);
-
-    assertEq(executed, true);
     assertEq(Goldilend(address(proxy)).multisigShare(), 69);
     assertEq(Goldilend(address(proxy)).apdaoShare(), 69);
-  }
-
-  function testChangeSlopeFailTimelock() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotTimelock.selector));
-    Goldilend(address(proxy)).changeSlope(69);
-  }
-
-  function testChangeSlopeSuccess() public {
-    bytes memory _calldata = abi.encodeWithSignature("changeSlope(uint256)", 69);
-    address[] memory targets = new address[](1);
-    targets[0] = address(proxy);
-    string[] memory signatures = new string[](1);
-    signatures[0] = "";
-    bytes[] memory calldatas = new bytes[](1);
-    calldatas[0] = _calldata;
-    uint256[] memory valuess = new uint256[](1);
-    valuess[0] = 0;
-    deal(address(goldiswap), address(this), quorumVotesNum);
-    goldiswap.approve(address(govlocks), quorumVotesNum);
-    govlocks.deposit(quorumVotesNum);
-    govlocks.delegate(address(this));
-    vm.roll(2);
-    goldigov.propose(targets, valuess, signatures, calldatas, "");
-    vm.roll(52600);
-    goldigov.castVote(1, 1);
-    vm.roll(200000);
-    goldigov.queue(1);
-    vm.warp(6 days);
-    goldigov.execute(1);
-    (, , , , , , , , , bool executed) = goldigov.proposals(1);
-
-    assertEq(executed, true);
     assertEq(Goldilend(address(proxy)).slope(), 69);
-  }
-
-  function testChangeDurationsFailTimelock() public {
-    vm.prank(address(0x69));
-    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotTimelock.selector));
-    Goldilend(address(proxy)).changeDurations(69, 69);
-  }
-
-  function testChangeDurationsSuccess() public {
-    bytes memory _calldata = abi.encodeWithSignature("changeDurations(uint256,uint256)", 69, 69);
-    address[] memory targets = new address[](1);
-    targets[0] = address(proxy);
-    string[] memory signatures = new string[](1);
-    signatures[0] = "";
-    bytes[] memory calldatas = new bytes[](1);
-    calldatas[0] = _calldata;
-    uint256[] memory valuess = new uint256[](1);
-    valuess[0] = 0;
-    deal(address(goldiswap), address(this), quorumVotesNum);
-    goldiswap.approve(address(govlocks), quorumVotesNum);
-    govlocks.deposit(quorumVotesNum);
-    govlocks.delegate(address(this));
-    vm.roll(2);
-    goldigov.propose(targets, valuess, signatures, calldatas, "");
-    vm.roll(52600);
-    goldigov.castVote(1, 1);
-    vm.roll(200000);
-    goldigov.queue(1);
-    vm.warp(6 days);
-    goldigov.execute(1);
-    (, , , , , , , , , bool executed) = goldigov.proposals(1);
-
-    assertEq(executed, true);
     assertEq(Goldilend(address(proxy)).minDuration(), 69);
     assertEq(Goldilend(address(proxy)).maxDuration(), 69);
   }
