@@ -36,7 +36,6 @@ interface IGoldilend {
   error LoanExpired();
   error Unliquidatable();
   error AlreadyInitialized();
-  error InsufficientWBERA();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */

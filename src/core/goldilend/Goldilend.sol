@@ -182,15 +182,9 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @inheritdoc IGoldilend
   function unlock(uint256 amount) external {
-    uint256 unlockAmount;
-    if(amount > poolSize - outstandingDebt) {
-      unlockAmount = 69; // what should the formula be here? google doc said a proportional amount of backing. is that ERC20(wbera).balanceOf(address(this)) / poolSize ?  
-    }
-    else {
-      unlockAmount = amount;
-    }
+    uint256 unlockAmount = _glWBERAUnlockAmount(amount);
     poolSize -= unlockAmount;
-    GLWBera(glwbera).burnglWBERA(msg.sender, unlockAmount);
+    GLWBera(glwbera).burnglWBERA(msg.sender, amount);
     SafeTransferLib.safeTransfer(wbera, msg.sender, unlockAmount);
     emit WBERAUnlock(msg.sender, unlockAmount);
   }
@@ -391,6 +385,15 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     uint256 supply = GLWBera(glwbera).totalSupply();
     uint256 _poolSize = poolSize;
     return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _glWBERARatio(supply, _poolSize)) : lockAmount;
+  }
+
+  /// @notice Calculates the amount of WBERA to unlock
+  /// @param burnAmount Amount of glWBERA to burn 
+  /// @return unlockAmount The burnAmount divided by the total supply of glWBERA divided by the lending pool size
+  function _glWBERAUnlockAmount(uint256 burnAmount) internal view returns (uint256) {
+    uint256 supply = GLWBera(glwbera).totalSupply();
+    uint256 _poolSize = poolSize;
+    return FixedPointMathLib.divWad(burnAmount, _glWBERARatio(supply, _poolSize));
   }
 
   /// @notice Calculates the current glWBERA ratio
