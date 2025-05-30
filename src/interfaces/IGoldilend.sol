@@ -67,8 +67,8 @@ interface IGoldilend {
   /// @param amount Amount of WBERA to unlock
   function unlock(uint256 amount) external;
 
-  /// @notice Borrows iBGT against value of NFT
-  /// @param borrowAmount Amount of iBGT to borrow
+  /// @notice Borrows WBERA against value of NFT
+  /// @param borrowAmount Amount of WBERA to borrow
   /// @param duration Duration of loan
   /// @param collateralNFT NFT collection to use as collateral
   /// @param collateralNFTId Token Id of NFT to use as collateral
@@ -79,12 +79,22 @@ interface IGoldilend {
     uint256 collateralNFTId
   ) external;
 
-  /// @notice Repays loan of iBGT
-  /// @param repayAmount Amount of iBGT to repay
+  /// @notice Borrows WBERA against value of the BeraBond NFT
+  /// @param borrowAmount Amount of WBERA to borrow
+  /// @param collateralNFT Berabond NFT to use as collateral
+  /// @param collateralNFTId Token Id of NFT to use as collateral
+  function berabondBorrow(
+    uint256 borrowAmount,
+    address collateralNFT,
+    uint256 collateralNFTId
+  ) external;
+
+  /// @notice Repays loan of WBERA
+  /// @param repayAmount Amount of WBERA to repay
   /// @param userLoanId ID of loan to repay
   function repay(uint256 repayAmount, uint256 userLoanId) external;
 
-  /// @notice Liquidates overdue loans by paying iiBGT to purchase collateral
+  /// @notice Liquidates overdue loans by paying WBERA to purchase collateral
   /// @param user Owner of loan to be liquidated
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external;
@@ -102,6 +112,9 @@ interface IGoldilend {
     uint256 duration,
     address collateralNFT
   ) external view returns (uint256);
+
+  /// @notice Returns BGT balance of the token bound account
+  function getTBABGTBalance(address nft, uint256 tokenId) external view returns (uint256);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */
@@ -179,5 +192,19 @@ interface IGoldilend {
   /// @dev Callable only by multisig
   /// @param token Address of token to recover
   function recoverTokens(address token) external;
+
+  /// @notice Allows multisig to increase backing of glWBERA by sending WBERA
+  /// @dev Callable only by multisig
+  /// @param amount Amount of WBERA to send
+  function increaseglWBERABacking(uint256 amount) external;
+
+  /// @notice Allows multisig to manage the delegation of the BeraBond NFT
+  /// @dev Callable only by multisig
+  function manageDelegation(
+    address nft,
+    uint256 tokenId,
+    address delegatee,
+    uint256 permissions
+  ) external;
 
 }

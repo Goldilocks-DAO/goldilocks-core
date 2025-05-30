@@ -31,10 +31,6 @@ import { IGoldilend } from "../../interfaces/IGoldilend.sol";
 import { GLWBera } from "./GLWBera.sol";
 import { GLDWBera } from "./GLDWBera.sol";
 
-// Gl00DelegationRegistry and BeraBondERC6551Account contracts are generic contracts, so there is no need to use supportedNFTContracts variable.
-// You need to add the delegationRegistry address as a variable.
-// You can directly use the berabond interface when EOA directly calls a function. But in our case, TBA calls the smart contract function, so we designed to get calldata using abi.encodeWithSignature.
-// In BeraBondNFT, it defines mapping(uint256 => bool) _bgtLocked in storage as private variable. You can set true/false to lock/unlock bgt.
 
 /// @title Goldilend
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
@@ -69,6 +65,9 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @notice Address of BGT
   address public bgt;
+
+  /// @notice Address of Delegation Registry
+  address public delegationRegistry;
 
   /// @notice Address of Goldilend Wrapped Bera
   address public glwbera;
@@ -174,19 +173,26 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @inheritdoc IGoldilend
   function lock(uint256 amount) external {
+    uint256 mintAmount = _glWBERAMintAmount(amount);
     poolSize += amount;
     SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), amount);
-    GLWBera(glwbera).mintglWBERA(msg.sender, amount);
+    GLWBera(glwbera).mintglWBERA(msg.sender, mintAmount);
     emit WBERALock(msg.sender, amount);
   }
 
   /// @inheritdoc IGoldilend
   function unlock(uint256 amount) external {
-    if(amount > poolSize - outstandingDebt) revert InsufficientWBERA();
-    poolSize -= amount;
-    GLWBera(glwbera).burnglWBERA(msg.sender, amount);
-    SafeTransferLib.safeTransfer(wbera, msg.sender, amount);
-    emit WBERAUnlock(msg.sender, amount);
+    uint256 unlockAmount;
+    if(amount > poolSize - outstandingDebt) {
+      unlockAmount = 69; // what should the formula be here? google doc said a proportional amount of backing. is that ERC20(wbera).balanceOf(address(this)) / poolSize ?  
+    }
+    else {
+      unlockAmount = amount;
+    }
+    poolSize -= unlockAmount;
+    GLWBera(glwbera).burnglWBERA(msg.sender, unlockAmount);
+    SafeTransferLib.safeTransfer(wbera, msg.sender, unlockAmount);
+    emit WBERAUnlock(msg.sender, unlockAmount);
   }
 
   /// @inheritdoc IGoldilend
@@ -229,6 +235,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
   }
 
+  /// @inheritdoc IGoldilend
   function berabondBorrow(
     uint256 borrowAmount,
     address collateralNFT,
@@ -335,6 +342,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     return _calculateInterest(borrowAmount, debt, duration);
   }
 
+  /// @inheritdoc IGoldilend
   function getTBABGTBalance(address nft, uint256 tokenId) external view returns (uint256) {
     return _getTBABGTBalance(nft, tokenId);
   }
@@ -374,6 +382,21 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
     uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     return interestAdjusted / 100;
+  }
+
+  /// @notice Calculates the amount of glWBERA to mint
+  /// @param lockAmount Amount of WBERA to lock
+  /// @return mintAmount Total supply of glWBERA divided by the lending pool size multiplied by lockAmount
+  function _glWBERAMintAmount(uint256 lockAmount) internal view returns (uint256) {
+    uint256 supply = GLWBera(glwbera).totalSupply();
+    uint256 _poolSize = poolSize;
+    return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _glWBERARatio(supply, _poolSize)) : lockAmount;
+  }
+
+  /// @notice Calculates the current glWBERA ratio
+  /// @return gibgtRatio Total supply of glWBERA divided by the lending pool size
+  function _glWBERARatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
+    return FixedPointMathLib.divWad(supply, _poolSize);
   }
 
   /// @notice Returns the BGT balance of the token bound account
@@ -504,6 +527,14 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     SafeTransferLib.safeTransfer(token, multisig, ERC20(token).balanceOf(address(this)));
   }
 
+  /// @inheritdoc IGoldilend
+  function increaseglWBERABacking(uint256 amount) external {
+    if(msg.sender != multisig) revert NotMultisig();
+    SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), amount);
+    poolSize += amount;
+  }
+
+  /// @inheritdoc IGoldilend
   function manageDelegation(
     address nft,
     uint256 tokenId,
@@ -511,13 +542,13 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     uint256 permissions
   ) external {
     if(msg.sender != multisig) revert NotMultisig();
-    address tba = IBeraBondNFT(nft).getTokenBoundAccount(tokenId);
-    // IGl00DelegationRegistry(delegationRegistry).setDelegation(
-    //   tba,
-    //   delegatee,
-    //   permissions,
-    //   30 days
-    // );
+    address payable tba = IBeraBondNFT(nft).getTokenBoundAccount(tokenId);
+    IGl00DelegationRegistry(delegationRegistry).setDelegation(
+      tba,
+      delegatee,
+      permissions,
+      30 days
+    );
   }
 
 
