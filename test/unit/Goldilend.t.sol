@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import { console } from "../../lib/forge-std/src/console.sol";
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { OwnableUpgradeable } from "../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
@@ -91,6 +92,26 @@ contract UnitGoldilendTest is BaseUnitTest {
   function testBorrowFailLimit() public {
     vm.expectRevert(abi.encodeWithSelector(IGoldilend.BorrowLimitExceeded.selector));
     Goldilend(address(proxy)).borrow(51e18, 8 days, address(bondbear), 69);
+  }
+
+  function testBorrowFailMaxUtilization() public dealUserABunchOfBeras {
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bondbear), 1);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bandbear), 1);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bondbear), 2);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bandbear), 2);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bondbear), 3);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bandbear), 3);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bondbear), 4);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bandbear), 4);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bondbear), 5);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bandbear), 5);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bondbear), 6);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bandbear), 6);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bondbear), 7);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bandbear), 7);
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bondbear), 8);
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.MaxUtilizationExceeded.selector ));
+    Goldilend(address(proxy)).borrow(45e18, goldilendDuration, address(bandbear), 8);
   }
 
   function testBorrowSuccess() public dealUserBeras {
@@ -519,6 +540,22 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(wbera.balanceOf(address(this)), 5e18);
     assertEq(wbera.balanceOf(address(proxy)), 0);
+  }
+
+  function testIncreaseglWBERABackingFailMultisig() public {
+    vm.prank(address(0x69));
+    vm.expectRevert(abi.encodeWithSelector(IGoldilend.NotMultisig.selector));
+    Goldilend(address(proxy)).increaseglWBERABacking(69);    
+  }
+
+  function testIncreaseglWBERABackingSuccess() public {
+    deal(address(wbera), address(this), 69);
+    wbera.approve(address(proxy), 69);
+    Goldilend(address(proxy)).increaseglWBERABacking(69);    
+
+    assertEq(wbera.balanceOf(address(proxy)), 1000e18 + 69);
+    assertEq(wbera.balanceOf(address(this)), 0);
+    assertEq(Goldilend(address(proxy)).poolSize(), 1000e18 + 69);
   }
 
   function testOnERC721Received() public {

@@ -88,6 +88,38 @@ abstract contract BaseUnitTest is BaseTest {
     _;
   }
 
+  modifier dealUserABunchOfBeras() {
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    INFT(address(bondbear)).mint(address(this));
+    INFT(address(bandbear)).mint(address(this));
+    IERC721(bondbear).setApprovalForAll(address(proxy), true);
+    IERC721(bandbear).setApprovalForAll(address(proxy), true);
+    _;
+  }
+
   function proposySame() public pure returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {
     address[] memory targets = new address[](2);
     targets[0] = address(0x69);
