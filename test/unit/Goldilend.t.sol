@@ -579,7 +579,7 @@ contract UnitGoldilendTest is BaseUnitTest {
     assertEq(TestUpgradeableGoldilend(address(proxy)).multisig(), address(this));
   }
 
-  function testGetTBABGTBalanceSuccess() public mintBeraBond {
+  function testGetTBABGTBalanceSuccess() public {
 
   }
 }
