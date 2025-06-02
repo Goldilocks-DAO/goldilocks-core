@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { BaseTest } from "./BaseTest.t.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { INFT } from "../../src/mock/INFT.sol";
+import { BeraBondNFT } from "../../lib/PoC-00Bera/src/BeraBondNFT.sol";
 
 abstract contract BaseUnitTest is BaseTest {
 
@@ -219,6 +220,10 @@ abstract contract BaseUnitTest is BaseTest {
     ids[1] = 1;
     
     return (nfts, ids);
+  }
+
+  function deployBerabond() public returns (BeraBondNFT berabond) {
+    
   }
 
 }
