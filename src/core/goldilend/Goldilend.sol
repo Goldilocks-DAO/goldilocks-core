@@ -280,7 +280,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     loans[msg.sender][userLoanId].interest -= interest;
     _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), repayAmount);
-    GLDWBera(gldwbera).burngldWBERA(msg.sender, userLoan.borrowedAmount - userLoan.interest);
+    GLDWBera(gldwbera).burngldWBERA(msg.sender, repayAmount);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
       for(uint256 i; i < userLoanCollateralLength;){
