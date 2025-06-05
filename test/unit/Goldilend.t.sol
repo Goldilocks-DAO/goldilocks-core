@@ -317,7 +317,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
   function testMultisigInterestClaimSuccess() public {
     deal(address(wbera), address(proxy), 5e18);
-    vm.store(address(proxy), bytes32(uint256(15)), bytes32(uint256(5e18)));
+    vm.store(address(proxy), bytes32(uint256(14)), bytes32(uint256(5e18)));
     Goldilend(address(proxy)).multisigInterestClaim();
 
     assertEq(wbera.balanceOf(address(this)), 5e18);
@@ -332,7 +332,7 @@ contract UnitGoldilendTest is BaseUnitTest {
 
   function testApdaoInterestClaimSuccess() public {
     deal(address(wbera), address(proxy), 5e18);
-    vm.store(address(proxy), bytes32(uint256(16)), bytes32(uint256(5e18)));
+    vm.store(address(proxy), bytes32(uint256(15)), bytes32(uint256(5e18)));
     vm.prank(apdao);
     Goldilend(address(proxy)).apdaoInterestClaim();
 

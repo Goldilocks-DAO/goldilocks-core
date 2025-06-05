@@ -29,7 +29,6 @@ import { IBeraBondNFT } from "../../interfaces/IBeraBondNFT.sol";
 import { IGl00DelegationRegistry } from "../../interfaces/IGl00DelegationRegistry.sol";
 import { IGoldilend } from "../../interfaces/IGoldilend.sol";
 import { GLWBera } from "./GLWBera.sol";
-import { GLDWBera } from "./GLDWBera.sol";
 
 
 /// @title Goldilend
@@ -71,9 +70,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
 
   /// @notice Address of Goldilend Wrapped Bera
   address public glwbera;
-
-  /// @notice Address of Goldilend Debt Wrapped Bera
-  address public gldwbera;
 
   /// @notice Interest rate of protocol
   uint256 public protocolInterestRate;
@@ -144,15 +140,13 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
   /// @param _wbera Address of WBERA
   /// @param _bgt Address of BGT
   /// @param _glwbera Address of Goldilend Wrapped Bera
-  /// @param _gldwbera Address of Goldilend Debt Wrapped Bera
   function initialize(
     address _timelock,
     address _multisig,
     address _apdao,
     address _wbera,
     address _bgt,
-    address _glwbera,
-    address _gldwbera
+    address _glwbera
   ) public initializer {
     __Ownable_init(_multisig);
     __UUPSUpgradeable_init();
@@ -162,7 +156,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     wbera = _wbera;
     bgt = _bgt;
     glwbera = _glwbera;
-    gldwbera = _gldwbera;
   }
 
 
@@ -225,7 +218,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     userLoanAmount[msg.sender]++;
     IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
     SafeTransferLib.safeTransfer(wbera, msg.sender, borrowAmount);
-    GLDWBera(gldwbera).mintgldWBERA(msg.sender, borrowAmount);
     emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
   }
 
@@ -261,10 +253,8 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     });
     loans[msg.sender][userLoansLength + 1] = loan;
     userLoanAmount[msg.sender]++;
-    // use nft's existing approval mechanism to lock bgt during transfer
     IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
     SafeTransferLib.safeTransfer(wbera, msg.sender, borrowAmount);
-    GLDWBera(gldwbera).mintgldWBERA(msg.sender, borrowAmount);
     emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, 0, block.timestamp + 180 days, collateralNFT, collateralNFTId);
   }
 
@@ -280,7 +270,6 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     loans[msg.sender][userLoanId].interest -= interest;
     _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), repayAmount);
-    GLDWBera(gldwbera).burngldWBERA(msg.sender, repayAmount);
     if(userLoan.borrowedAmount - repayAmount == 0) {
       uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
       for(uint256 i; i < userLoanCollateralLength;){
