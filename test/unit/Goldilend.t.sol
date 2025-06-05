@@ -118,8 +118,8 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).borrow(1e18, goldilendDuration, address(bondbear), 1);
     Goldilend.Loan memory userLoan = Goldilend(address(proxy)).getUserLoan(address(this), 1);
 
-    assertEq(userLoan.collateralNFTs[0], address(bondbear));
-    assertEq(userLoan.collateralNFTIds[0], 1);
+    assertEq(userLoan.collateralNFT, address(bondbear));
+    assertEq(userLoan.collateralNFTId, 1);
     assertEq(userLoan.borrowedAmount, 1e18 + borrowInterest);
     assertEq(userLoan.interest, borrowInterest);
     assertEq(userLoan.duration, goldilendDuration);
@@ -143,8 +143,8 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(IERC721(address(bondbear)).balanceOf(address(proxy)), 0);
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 1);
-    assertEq(userLoan.collateralNFTs[0], address(bondbear));
-    assertEq(userLoan.collateralNFTIds[0], 1);
+    assertEq(userLoan.collateralNFT, address(bondbear));
+    assertEq(userLoan.collateralNFTId, 1);
     assertEq(userLoan.borrowedAmount, 0);
     assertEq(userLoan.interest, 0);
     assertEq(userLoan.duration, goldilendDuration);
@@ -162,8 +162,8 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(IERC721(address(bondbear)).balanceOf(address(proxy)), 1);
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 0);
-    assertEq(userLoan.collateralNFTs[0], address(bondbear));
-    assertEq(userLoan.collateralNFTIds[0], 1);
+    assertEq(userLoan.collateralNFT, address(bondbear));
+    assertEq(userLoan.collateralNFTId, 1);
     assertEq(userLoan.borrowedAmount, ((1e18+userLoanBefore.interest) / 2));
     assertEq(userLoan.interest, userLoanBefore.interest / 2);
     assertEq(userLoan.duration, goldilendDuration);
@@ -186,8 +186,8 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend(address(proxy)).liquidate(address(this), 1);
     Goldilend.Loan memory userLoan = Goldilend(address(proxy)).getUserLoan(address(this), 1);    
 
-    assertEq(userLoan.collateralNFTs[0], address(bondbear));
-    assertEq(userLoan.collateralNFTIds[0], 1);
+    assertEq(userLoan.collateralNFT, address(bondbear));
+    assertEq(userLoan.collateralNFTId, 1);
     assertEq(userLoan.borrowedAmount, 0);
     assertEq(userLoan.duration, goldilendDuration);
     assertEq(userLoan.endDate, 1209601);
@@ -204,8 +204,8 @@ contract UnitGoldilendTest is BaseUnitTest {
     Goldilend.Loan memory userLoan = Goldilend(address(proxy)).getUserLoan(address(this), 1);
     
     assertEq(Goldilend(address(proxy)).poolSize(), 1000e18);
-    assertEq(userLoan.collateralNFTs[0], address(bondbear));
-    assertEq(userLoan.collateralNFTIds[0], 1);
+    assertEq(userLoan.collateralNFT, address(bondbear));
+    assertEq(userLoan.collateralNFTId, 1);
     assertEq(userLoan.borrowedAmount, 0);
     assertEq(userLoan.duration, goldilendDuration);
     assertEq(userLoan.endDate, 1209601);
@@ -512,10 +512,10 @@ contract UnitGoldilendTest is BaseUnitTest {
 
     assertEq(IERC721(address(bondbear)).balanceOf(address(proxy)), 23);
     assertEq(IERC721(address(bondbear)).balanceOf(address(this)), 2);
-    assertEq(userLoanTwo.collateralNFTs[0], address(bondbear));
-    assertEq(userLoanTwenty.collateralNFTs[0], address(bondbear));
-    assertEq(userLoanTwo.collateralNFTIds[0], 2);
-    assertEq(userLoanTwenty.collateralNFTIds[0], 20);
+    assertEq(userLoanTwo.collateralNFT, address(bondbear));
+    assertEq(userLoanTwenty.collateralNFT, address(bondbear));
+    assertEq(userLoanTwo.collateralNFTId, 2);
+    assertEq(userLoanTwenty.collateralNFTId, 20);
     assertEq(userLoanTwo.borrowedAmount, 0);
     assertEq(userLoanTwenty.borrowedAmount, 0);
     assertEq(userLoanTwo.interest, 0);

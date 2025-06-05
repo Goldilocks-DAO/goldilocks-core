@@ -9,8 +9,8 @@ interface IGoldilend {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   struct Loan {
-    address[] collateralNFTs;
-    uint256[] collateralNFTIds;
+    address collateralNFT;
+    uint256 collateralNFTId;
     uint256 borrowedAmount;
     uint256 interest;
     uint256 duration;

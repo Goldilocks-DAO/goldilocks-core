@@ -200,13 +200,9 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
     if(borrowAmount + interest > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     outstandingDebt += borrowAmount;
-    address[] memory collateralNFTs = new address[](1);
-    collateralNFTs[0] = collateralNFT;
-    uint256[] memory collateralNFTIds = new uint256[](1);
-    collateralNFTIds[0] = collateralNFTId;
     Loan memory loan = Loan({
-      collateralNFTs: collateralNFTs,
-      collateralNFTIds: collateralNFTIds,
+      collateralNFT: collateralNFT,
+      collateralNFTId: collateralNFTId,
       borrowedAmount: borrowAmount + interest,
       interest: interest,
       duration: duration,
@@ -237,13 +233,9 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
     if(borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
     outstandingDebt += borrowAmount;
-    address[] memory collateralNFTs = new address[](1);
-    collateralNFTs[0] = collateralNFT;
-    uint256[] memory collateralNFTIds = new uint256[](1);
-    collateralNFTIds[0] = collateralNFTId;
     Loan memory loan = Loan({
-      collateralNFTs: collateralNFTs,
-      collateralNFTIds: collateralNFTIds,
+      collateralNFT: collateralNFT,
+      collateralNFTId: collateralNFTId,
       borrowedAmount: borrowAmount,
       interest: 0,
       duration: 180 days,
@@ -271,13 +263,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     _updateInterestClaims(interest);
     SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), repayAmount);
     if(userLoan.borrowedAmount - repayAmount == 0) {
-      uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
-      for(uint256 i; i < userLoanCollateralLength;){
-        IERC721(userLoan.collateralNFTs[i]).transferFrom(address(this), msg.sender, userLoan.collateralNFTIds[i]);
-        unchecked {
-          ++i;
-        }
-      }
+      IERC721(userLoan.collateralNFT).transferFrom(address(this), msg.sender, userLoan.collateralNFTId);
     }
     emit Repay(msg.sender, repayAmount);
   }
@@ -289,13 +275,7 @@ contract Goldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldi
     loans[user][userLoanId].liquidated = true;
     loans[user][userLoanId].borrowedAmount = 0;
     outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;
-    uint256 userLoanCollateralLength = userLoan.collateralNFTs.length;
-    for(uint256 i; i < userLoanCollateralLength;) {
-      IERC721(userLoan.collateralNFTs[i]).safeTransferFrom(address(this), multisig, userLoan.collateralNFTIds[i]);
-      unchecked {
-        ++i;
-      }
-    }
+    IERC721(userLoan.collateralNFT).safeTransferFrom(address(this), multisig, userLoan.collateralNFTId);
     emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
   }
 
