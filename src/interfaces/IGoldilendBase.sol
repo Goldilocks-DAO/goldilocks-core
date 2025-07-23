@@ -68,6 +68,11 @@ interface IGoldilendBase {
   /// @param userLoanId ID of loan to repay
   function repay(uint256 repayAmount, uint256 userLoanId) external;
 
+  /// @notice Liquidates overdue loans by paying WBERA to purchase collateral
+  /// @param user Owner of loan to be liquidated
+  /// @param userLoanId Loan to be liquidated
+  function liquidate(address user, uint256 userLoanId) external;
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

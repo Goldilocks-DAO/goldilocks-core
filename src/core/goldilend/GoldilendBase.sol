@@ -164,7 +164,6 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         emit WBERAUnlock(msg.sender, unlockAmount);
     }
 
-
     /// @inheritdoc IGoldilendBase
     function repay(uint256 repayAmount, uint256 userLoanId) external {
         Loan memory userLoan = loans[msg.sender][userLoanId];
@@ -181,6 +180,17 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         IERC721(userLoan.collateralNFT).transferFrom(address(this), msg.sender, userLoan.collateralNFTId);
         }
         emit Repay(msg.sender, repayAmount);
+    }
+
+    /// @inheritdoc IGoldilendBase
+    function liquidate(address user, uint256 userLoanId) external {
+        Loan memory userLoan = loans[msg.sender][userLoanId];
+        if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
+        loans[user][userLoanId].liquidated = true;
+        loans[user][userLoanId].borrowedAmount = 0;
+        outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;
+        IERC721(userLoan.collateralNFT).safeTransferFrom(address(this), multisig, userLoan.collateralNFTId);
+        emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
     }
 
 

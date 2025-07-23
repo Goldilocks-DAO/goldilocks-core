@@ -18,6 +18,11 @@ pragma solidity ^0.8.22;
 
 
 import { GoldilendBase } from "./GoldilendBase.sol";
+import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
+import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
+import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { IBeraBondNFT } from "../../interfaces/IBeraBondNFT.sol";
+import { IGl00DelegationRegistry } from "../../interfaces/IGl00DelegationRegistry.sol";
 
 
 /// @title BerabondGoldilend 
@@ -68,7 +73,6 @@ contract BerabondGoldilend is GoldilendBase {
         return ERC20(bgt).balanceOf(tba);
     }
 
-    /// @inheritdoc IGoldilend
     function manageDelegation(
         address nft,
         uint256 tokenId,

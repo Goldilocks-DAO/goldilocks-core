@@ -18,6 +18,8 @@ pragma solidity ^0.8.22;
 
 
 import { GoldilendBase } from "./GoldilendBase.sol";
+import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 
 
 /// @title RebaseGoldilend 
@@ -73,8 +75,6 @@ contract RebaseGoldilend is GoldilendBase {
         }
     }
 
-
-    /// @inheritdoc IGoldilend
     function initializeBeras(
         address[] calldata _nfts,
         uint256[] calldata _nftFairValues
