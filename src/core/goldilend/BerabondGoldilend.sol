@@ -29,6 +29,9 @@ import { IGl00DelegationRegistry } from "../../interfaces/IGl00DelegationRegistr
 /// @notice Berabond Fixed Term NFT Lending
 contract BerabondGoldilend is GoldilendBase {
 
+    address public bgt;
+    address public delegationRegistry;
+
     function berabondBorrow(
         uint256 borrowAmount,
         address collateralNFT,
@@ -57,7 +60,7 @@ contract BerabondGoldilend is GoldilendBase {
         loans[msg.sender][userLoansLength + 1] = loan;
         userLoanAmount[msg.sender]++;
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
-        SafeTransferLib.safeTransfer(wbera, msg.sender, borrowAmount);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount);
         emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, 0, block.timestamp + 180 days, collateralNFT, collateralNFTId);
     }
 

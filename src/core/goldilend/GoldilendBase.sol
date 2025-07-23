@@ -25,10 +25,8 @@ import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/t
 import { Initializable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
-import { IBeraBondNFT } from "../../interfaces/IBeraBondNFT.sol";
-import { IGl00DelegationRegistry } from "../../interfaces/IGl00DelegationRegistry.sol";
 import { IGoldilendBase } from "../../interfaces/IGoldilendBase.sol";
-import { GLWBera } from "./GLWBera.sol";
+import { GoldilendDebtAsset } from "./GoldilendDebtAsset.sol";
 
 
 /// @title GoldilendBase
@@ -53,17 +51,11 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
     /// @notice Address of Timelock
     address public timelock;
 
-    /// @notice Address of WBERA
-    address public wbera;
+    /// @notice Address of the Debt Asset
+    address public debtAsset;
 
-    /// @notice Address of BGT
-    address public bgt;
-
-    /// @notice Address of Delegation Registry
-    address public delegationRegistry;
-
-    /// @notice Address of Goldilend Wrapped Bera
-    address public glwbera;
+    /// @notice Address of Goldilend Debt Asset
+    address public glDebtAsset;
 
     /// @notice Interest rate of protocol
     uint256 public protocolInterestRate;
@@ -121,23 +113,20 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
     /// @notice Initializer of the contract
     /// @param _timelock Address of the timelock
     /// @param _multisig Address of the multisig
-    /// @param _wbera Address of WBERA
-    /// @param _bgt Address of BGT
-    /// @param _glwbera Address of Goldilend Wrapped Bera
+    /// @param _debtAsset Address of the Debt Asset
+    /// @param _glDebtAsset Address of Goldilend Debt Asset
     function initialize(
         address _timelock,
         address _multisig,
-        address _wbera,
-        address _bgt,
-        address _glwbera
+        address _debtAsset,
+        address _glDebtAsset
     ) public initializer {
         __Ownable_init(_multisig);
         __UUPSUpgradeable_init();
         timelock = _timelock;
         multisig = _multisig;
-        wbera = _wbera;
-        bgt = _bgt;
-        glwbera = _glwbera;
+        debtAsset = _debtAsset;
+        glDebtAsset = _glDebtAsset;
     }
 
 
@@ -148,20 +137,20 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
 
     /// @inheritdoc IGoldilendBase
     function lock(uint256 amount) external {
-        uint256 mintAmount = _glWBERAMintAmount(amount);
+        uint256 mintAmount = _glDebtAssetMintAmount(amount);
         poolSize += amount;
-        SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), amount);
-        GLWBera(glwbera).mintglWBERA(msg.sender, mintAmount);
-        emit WBERALock(msg.sender, amount);
+        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
+        GoldilendDebtAsset(debtAsset).mintglDebtAsset(msg.sender, mintAmount);
+        emit DebtAssetLock(msg.sender, amount);
     }
 
     /// @inheritdoc IGoldilendBase
     function unlock(uint256 amount) external {
-        uint256 unlockAmount = _glWBERAUnlockAmount(amount);
+        uint256 unlockAmount = _glDebtAssetUnlockAmount(amount);
         poolSize -= unlockAmount;
-        GLWBera(glwbera).burnglWBERA(msg.sender, amount);
-        SafeTransferLib.safeTransfer(wbera, msg.sender, unlockAmount);
-        emit WBERAUnlock(msg.sender, unlockAmount);
+        GoldilendDebtAsset(debtAsset).burnglDebtAsset(msg.sender, amount);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, unlockAmount);
+        emit DebtAssetUnlock(msg.sender, unlockAmount);
     }
 
     /// @inheritdoc IGoldilendBase
@@ -175,7 +164,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         loans[msg.sender][userLoanId].borrowedAmount -= repayAmount;
         loans[msg.sender][userLoanId].interest -= interest;
         multisigClaims += interest;
-        SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), repayAmount);
+        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), repayAmount);
         if(userLoan.borrowedAmount - repayAmount == 0) {
         IERC721(userLoan.collateralNFT).transferFrom(address(this), msg.sender, userLoan.collateralNFTId);
         }
@@ -243,27 +232,27 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
     }
 
 
-    /// @notice Calculates the amount of glWBERA to mint
-    /// @param lockAmount Amount of WBERA to lock
-    /// @return mintAmount Total supply of glWBERA divided by the lending pool size multiplied by lockAmount
-    function _glWBERAMintAmount(uint256 lockAmount) internal view returns (uint256) {
-        uint256 supply = GLWBera(glwbera).totalSupply();
+    /// @notice Calculates the amount of Goldilend Debt Asset to mint
+    /// @param lockAmount Amount of the debt asset to lock
+    /// @return mintAmount Total supply of the goldilend debt asset divided by the lending pool size multiplied by lockAmount
+    function _glDebtAssetMintAmount(uint256 lockAmount) internal view returns (uint256) {
+        uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 _poolSize = poolSize;
-        return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _glWBERARatio(supply, _poolSize)) : lockAmount;
+        return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _glDebtAssetRatio(supply, _poolSize)) : lockAmount;
     }
 
-    /// @notice Calculates the amount of WBERA to unlock
-    /// @param burnAmount Amount of glWBERA to burn 
-    /// @return unlockAmount The burnAmount divided by the total supply of glWBERA divided by the lending pool size
-    function _glWBERAUnlockAmount(uint256 burnAmount) internal view returns (uint256) {
-        uint256 supply = GLWBera(glwbera).totalSupply();
+    /// @notice Calculates the amount of debt asset to unlock
+    /// @param burnAmount Amount of the Goldilend Debt Asset to burn 
+    /// @return unlockAmount The burnAmount divided by the total supply of goldilend debt asset divided by the lending pool size
+    function _glDebtAssetUnlockAmount(uint256 burnAmount) internal view returns (uint256) {
+        uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 _poolSize = poolSize;
-        return FixedPointMathLib.divWad(burnAmount, _glWBERARatio(supply, _poolSize));
+        return FixedPointMathLib.divWad(burnAmount, _glDebtAssetRatio(supply, _poolSize));
     }
 
-    /// @notice Calculates the current glWBERA ratio
-    /// @return gibgtRatio Total supply of glWBERA divided by the lending pool size
-    function _glWBERARatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
+    /// @notice Calculates the current glDebtAsset ratio
+    /// @return gibgtRatio Total supply of glDebtAsset divided by the lending pool size
+    function _glDebtAssetRatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
         return FixedPointMathLib.divWad(supply, _poolSize);
     }
 
@@ -302,7 +291,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         if(msg.sender != multisig) revert NotMultisig();
         uint256 interestClaim = multisigClaims;
         multisigClaims = 0;
-        SafeTransferLib.safeTransfer(wbera, multisig, interestClaim);
+        SafeTransferLib.safeTransfer(debtAsset, multisig, interestClaim);
         emit MultisigInterestClaim(interestClaim);
     }
 
@@ -334,9 +323,9 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
     }
 
     /// @inheritdoc IGoldilendBase
-    function increaseglWBERABacking(uint256 amount) external {
+    function increaseglDebtAssetBacking(uint256 amount) external {
         if(msg.sender != multisig) revert NotMultisig();
-        SafeTransferLib.safeTransferFrom(wbera, msg.sender, address(this), amount);
+        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
         poolSize += amount;
     }
 

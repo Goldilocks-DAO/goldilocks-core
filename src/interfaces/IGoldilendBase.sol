@@ -40,8 +40,8 @@ interface IGoldilendBase {
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  event WBERALock(address indexed user, uint256 amount);
-  event WBERAUnlock(address indexed user, uint256 amount);
+  event DebtAssetLock(address indexed user, uint256 amount);
+  event DebtAssetUnlock(address indexed user, uint256 amount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
   event Repay(address indexed user, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount, uint256 loanId);
@@ -55,20 +55,20 @@ interface IGoldilendBase {
   /*                      EXTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @notice Locks WBERA and mints glWBERA
-  /// @param amount Amount of WBERA to lock
+  /// @notice Locks debt asset and mints Goldilend Debt Asset
+  /// @param amount Amount of debt asset to lock
   function lock(uint256 amount) external;
 
-  /// @notice Unlocks WBERA and burns glWBERA
-  /// @param amount Amount of WBERA to unlock
+  /// @notice Unlocks debt asset and burns Goldilend Debt Asset
+  /// @param amount Amount of debt asset to unlock
   function unlock(uint256 amount) external;
 
-  /// @notice Repays loan of WBERA
-  /// @param repayAmount Amount of WBERA to repay
+  /// @notice Repays loan of debt asset
+  /// @param repayAmount Amount of debt asset to repay
   /// @param userLoanId ID of loan to repay
   function repay(uint256 repayAmount, uint256 userLoanId) external;
 
-  /// @notice Liquidates overdue loans by paying WBERA to purchase collateral
+  /// @notice Liquidates overdue loans by paying debt asset to purchase collateral
   /// @param user Owner of loan to be liquidated
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external;
@@ -134,9 +134,9 @@ interface IGoldilendBase {
   /// @param token Address of token to recover
   function recoverTokens(address token) external;
 
-  /// @notice Allows multisig to increase backing of glWBERA by sending WBERA
+  /// @notice Allows multisig to increase backing of Goldilend Debt Asset by sending debt asset
   /// @dev Callable only by multisig
-  /// @param amount Amount of WBERA to send
-  function increaseglWBERABacking(uint256 amount) external;
+  /// @param amount Amount of debt asset to send
+  function increaseglDebtAssetBacking(uint256 amount) external;
 
 }
