@@ -182,6 +182,13 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
     }
 
+    /// @inheritdoc IGoldilendBase
+    function renew(
+        uint256 userLoanId,
+        uint256 newExpiry,
+        uint256 additionalLoanAmount
+    ) external virtual {}
+
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  EXTERNAL VIEW FUNCTIONS                   */

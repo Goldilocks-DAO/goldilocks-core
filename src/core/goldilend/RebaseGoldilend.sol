@@ -26,6 +26,9 @@ import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.s
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
 contract RebaseGoldilend is GoldilendBase {
 
+    error BackwardsExpiry();
+    event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newExpiry);
+
     function borrow(
         uint256 borrowAmount,
         uint256 duration,
@@ -58,6 +61,31 @@ contract RebaseGoldilend is GoldilendBase {
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
         SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount);
         emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
+    }
+
+    function renew(
+        uint256 userLoanId,
+        uint256 newExpiry,
+        uint256 additionalLoanAmount
+    ) external override {
+        if(newExpiry < block.timestamp) revert BackwardsExpiry();
+        Loan memory userLoan = loans[msg.sender][userLoanId];
+        uint256 debt = outstandingDebt;
+        uint256 newDuration = newExpiry - block.timestamp;
+        uint256 newBorrowAmount = userLoan.borrowedAmount - userLoan.interest + additionalLoanAmount;
+        uint256 newInterest = _calculateInterest(newBorrowAmount, debt, newDuration);
+        if(!borrowingActive) revert NotActive();
+        if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
+        if(newBorrowAmount > poolSize / 10) revert InvalidLoanAmount();
+        if(debt + newBorrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(newBorrowAmount + (newInterest + userLoan.interest) > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+        Loan storage newUserLoan = loans[msg.sender][userLoanId];
+        newUserLoan.borrowedAmount = newBorrowAmount + newInterest + userLoan.interest;
+        newUserLoan.interest += newInterest;
+        newUserLoan.duration += newDuration;
+        newUserLoan.endDate += newExpiry;
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount);
+        emit Renew(msg.sender, userLoanId, additionalLoanAmount, newExpiry);
     }
 
     function changeValue(
