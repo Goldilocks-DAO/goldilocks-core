@@ -140,7 +140,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         uint256 mintAmount = _glDebtAssetMintAmount(amount);
         poolSize += amount;
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
-        GoldilendDebtAsset(debtAsset).mintglDebtAsset(msg.sender, mintAmount);
+        GoldilendDebtAsset(gldebtAsset).mintglDebtAsset(msg.sender, mintAmount);
         emit DebtAssetLock(msg.sender, amount);
     }
 
@@ -148,7 +148,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
     function unlock(uint256 amount) external {
         uint256 unlockAmount = _glDebtAssetUnlockAmount(amount);
         poolSize -= unlockAmount;
-        GoldilendDebtAsset(debtAsset).burnglDebtAsset(msg.sender, amount);
+        GoldilendDebtAsset(gldebtAsset).burnglDebtAsset(msg.sender, amount);
         SafeTransferLib.safeTransfer(debtAsset, msg.sender, unlockAmount);
         emit DebtAssetUnlock(msg.sender, unlockAmount);
     }
