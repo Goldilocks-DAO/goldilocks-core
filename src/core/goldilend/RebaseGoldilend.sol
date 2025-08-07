@@ -49,7 +49,7 @@ contract RebaseGoldilend is GoldilendBase {
         Loan memory loan = Loan({
         collateralNFT: collateralNFT,
         collateralNFTId: collateralNFTId,
-        borrowedAmount: borrowAmount + interest,
+        borrowedAmount: borrowAmount,
         interest: interest,
         duration: duration,
         endDate: block.timestamp + duration,
@@ -59,7 +59,8 @@ contract RebaseGoldilend is GoldilendBase {
         loans[msg.sender][userLoansLength + 1] = loan;
         userLoanAmount[msg.sender]++;
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount - interest);
+        SafeTransferLib.safeTransfer(debtAsset, multisig, interest);
         emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
     }
 
