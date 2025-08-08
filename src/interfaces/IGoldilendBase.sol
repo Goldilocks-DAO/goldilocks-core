@@ -119,12 +119,6 @@ interface IGoldilendBase {
   /// @param _borrowingActive Value that activates or inactivates
   function changeBorrowingActive(bool _borrowingActive) external;
 
-  /// @notice Allows multisig to claim interest
-  /// @dev Callable only by multisig
-  /// @dev 4.5% of all protocol interest
-  function multisigInterestClaim() external;
-
-
   /// @notice Allows multisig to initialize the protocol parameters
   /// @dev Callable only by multisig
   /// @param _minDuration Minimum loan duration

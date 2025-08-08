@@ -158,12 +158,8 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         Loan memory userLoan = loans[msg.sender][userLoanId];
         if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
-        uint256 interestLoanRatio = FixedPointMathLib.divWad(userLoan.interest, userLoan.borrowedAmount);
-        uint256 interest = FixedPointMathLib.mulWadUp(repayAmount, interestLoanRatio);
-        outstandingDebt -= repayAmount - interest > outstandingDebt ? outstandingDebt : repayAmount - interest;
+        outstandingDebt -= repayAmount > outstandingDebt ? outstandingDebt : repayAmount;
         loans[msg.sender][userLoanId].borrowedAmount -= repayAmount;
-        loans[msg.sender][userLoanId].interest -= interest;
-        multisigClaims += interest;
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), repayAmount);
         if((userLoan.borrowedAmount - userLoan.interest) - repayAmount == 0) {
             IERC721(userLoan.collateralNFT).transferFrom(address(this), msg.sender, userLoan.collateralNFTId);
@@ -291,15 +287,6 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         if(msg.sender != multisig) revert NotMultisig();
         borrowingActive = _borrowingActive;
         emit NewBorrowingActive(_borrowingActive);
-    }
-
-    /// @inheritdoc IGoldilendBase
-    function multisigInterestClaim() external {
-        if(msg.sender != multisig) revert NotMultisig();
-        uint256 interestClaim = multisigClaims;
-        multisigClaims = 0;
-        SafeTransferLib.safeTransfer(debtAsset, multisig, interestClaim);
-        emit MultisigInterestClaim(interestClaim);
     }
 
     /// @inheritdoc IGoldilendBase
