@@ -48,14 +48,15 @@ contract BerabondGoldilend is GoldilendBase {
         if(borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
-        collateralNFT: collateralNFT,
-        collateralNFTId: collateralNFTId,
-        borrowedAmount: borrowAmount,
-        interest: 0,
-        duration: 180 days,
-        endDate: block.timestamp + 180 days,
-        loanId: userLoansLength + 1,
-        liquidated: false
+            collateralNFT: collateralNFT,
+            collateralNFTId: collateralNFTId,
+            borrowedAmount: borrowAmount,
+            interest: 0,
+            duration: 180 days,
+            endDate: block.timestamp + 180 days,
+            loanId: userLoansLength + 1,
+            repaid: false,
+            liquidated: false
         });
         loans[msg.sender][userLoansLength + 1] = loan;
         userLoanAmount[msg.sender]++;

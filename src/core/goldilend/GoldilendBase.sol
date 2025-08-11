@@ -159,10 +159,14 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
         outstandingDebt -= repayAmount > outstandingDebt ? outstandingDebt : repayAmount;
-        loans[msg.sender][userLoanId].borrowedAmount -= repayAmount;
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), repayAmount);
         if((userLoan.borrowedAmount - userLoan.interest) - repayAmount == 0) {
+            loans[msg.sender][userLoanId].borrowedAmount = 0;
+            loans[msg.sender][userLoanId].repaid = true;
             IERC721(userLoan.collateralNFT).transferFrom(address(this), msg.sender, userLoan.collateralNFTId);
+        }
+        else {
+            loans[msg.sender][userLoanId].borrowedAmount -= repayAmount;
         }
         emit Repay(msg.sender, repayAmount);
     }

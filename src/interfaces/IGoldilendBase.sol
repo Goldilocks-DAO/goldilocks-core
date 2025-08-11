@@ -16,6 +16,7 @@ interface IGoldilendBase {
     uint256 duration;
     uint256 endDate;
     uint256 loanId;
+    bool repaid;
     bool liquidated;
   }
 

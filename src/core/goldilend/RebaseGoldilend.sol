@@ -47,14 +47,15 @@ contract RebaseGoldilend is GoldilendBase {
         if(borrowAmount + interest > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
-        collateralNFT: collateralNFT,
-        collateralNFTId: collateralNFTId,
-        borrowedAmount: borrowAmount,
-        interest: interest,
-        duration: duration,
-        endDate: block.timestamp + duration,
-        loanId: userLoansLength + 1,
-        liquidated: false
+            collateralNFT: collateralNFT,
+            collateralNFTId: collateralNFTId,
+            borrowedAmount: borrowAmount,
+            interest: interest,
+            duration: duration,
+            endDate: block.timestamp + duration,
+            loanId: userLoansLength + 1,
+            repaid: false,
+            liquidated: false
         });
         loans[msg.sender][userLoansLength + 1] = loan;
         userLoanAmount[msg.sender]++;
