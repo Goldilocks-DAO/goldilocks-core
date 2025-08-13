@@ -136,21 +136,21 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
 
 
     /// @inheritdoc IGoldilendBase
-    function lock(uint256 amount) external {
+    function deposit(uint256 amount) external {
         uint256 mintAmount = _glDebtAssetMintAmount(amount);
         poolSize += amount;
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
         GoldilendDebtAsset(glDebtAsset).mintglDebtAsset(msg.sender, mintAmount);
-        emit DebtAssetLock(msg.sender, amount);
+        emit Deposit(msg.sender, amount, mintAmount);
     }
 
     /// @inheritdoc IGoldilendBase
-    function unlock(uint256 amount) external {
-        uint256 unlockAmount = _glDebtAssetUnlockAmount(amount);
-        poolSize -= unlockAmount;
+    function withdraw(uint256 amount) external {
+        uint256 withdrawAmount = _glDebtAssetWithdrawAmount(amount);
+        poolSize -= withdrawAmount;
         GoldilendDebtAsset(glDebtAsset).burnglDebtAsset(msg.sender, amount);
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, unlockAmount);
-        emit DebtAssetUnlock(msg.sender, unlockAmount);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, withdrawAmount);
+        emit Withdraw(msg.sender, withdrawAmount, amount);
     }
 
     /// @inheritdoc IGoldilendBase
@@ -240,18 +240,18 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
 
 
     /// @notice Calculates the amount of Goldilend Debt Asset to mint
-    /// @param lockAmount Amount of the debt asset to lock
-    /// @return mintAmount Total supply of the goldilend debt asset divided by the lending pool size multiplied by lockAmount
-    function _glDebtAssetMintAmount(uint256 lockAmount) internal view returns (uint256) {
+    /// @param depositAmount Amount of the debt asset to deposit
+    /// @return mintAmount Total supply of the goldilend debt asset divided by the lending pool size multiplied by depsoitAmount
+    function _glDebtAssetMintAmount(uint256 depositAmount) internal view returns (uint256) {
         uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 _poolSize = poolSize;
-        return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(lockAmount, _glDebtAssetRatio(supply, _poolSize)) : lockAmount;
+        return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(depositAmount, _glDebtAssetRatio(supply, _poolSize)) : depositAmount;
     }
 
-    /// @notice Calculates the amount of debt asset to unlock
+    /// @notice Calculates the amount of debt asset to withdraw
     /// @param burnAmount Amount of the Goldilend Debt Asset to burn 
-    /// @return unlockAmount The burnAmount divided by the total supply of goldilend debt asset divided by the lending pool size
-    function _glDebtAssetUnlockAmount(uint256 burnAmount) internal view returns (uint256) {
+    /// @return withdrawAmount The burnAmount divided by the total supply of goldilend debt asset divided by the lending pool size
+    function _glDebtAssetWithdrawAmount(uint256 burnAmount) internal view returns (uint256) {
         uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 _poolSize = poolSize;
         return FixedPointMathLib.divWad(burnAmount, _glDebtAssetRatio(supply, _poolSize));

@@ -41,8 +41,8 @@ interface IGoldilendBase {
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  event DebtAssetLock(address indexed user, uint256 amount);
-  event DebtAssetUnlock(address indexed user, uint256 amount);
+  event Deposit(address indexed user, uint256 amount, uint256 mintAmount);
+  event Withdraw(address indexed user, uint256 amount, uint256 burnAmount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
   event Repay(address indexed user, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount, uint256 loanId);
@@ -56,13 +56,13 @@ interface IGoldilendBase {
   /*                      EXTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @notice Locks debt asset and mints Goldilend Debt Asset
-  /// @param amount Amount of debt asset to lock
-  function lock(uint256 amount) external;
+  /// @notice Deposits debt asset and mints Goldilend Debt Asset
+  /// @param amount Amount of debt asset to deposit
+  function deposit(uint256 amount) external;
 
-  /// @notice Unlocks debt asset and burns Goldilend Debt Asset
-  /// @param amount Amount of debt asset to unlock
-  function unlock(uint256 amount) external;
+  /// @notice Withdraws debt asset and burns Goldilend Debt Asset
+  /// @param amount Amount of goldilend debt asset to burn
+  function withdraw(uint256 amount) external;
 
   /// @notice Repays loan of debt asset
   /// @param repayAmount Amount of debt asset to repay

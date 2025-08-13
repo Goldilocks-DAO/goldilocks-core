@@ -37,6 +37,8 @@ abstract contract BaseUnitTest is BaseTest {
   uint256 yearMockBexLPYield = 11574074074074000;  
   uint256 govLocksAmt = 5_000_001e18;
 
+  uint256 dealAmt = type(uint256).max / 2;
+
   function setUp() public override {
     deployProtocol();
   }
@@ -119,6 +121,12 @@ abstract contract BaseUnitTest is BaseTest {
     IERC721(bandbear).setApprovalForAll(address(proxy), true);
     _;
   }
+
+  modifier dealGoldilendHoney() {
+    deal(address(honey), address(this), dealAmt);
+    _;
+  }
+
 
   function proposySame() public pure returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {
     address[] memory targets = new address[](2);
@@ -220,9 +228,4 @@ abstract contract BaseUnitTest is BaseTest {
     
     return (nfts, ids);
   }
-
-  function deployBerabond() public {
-    
-  }
-
 }
