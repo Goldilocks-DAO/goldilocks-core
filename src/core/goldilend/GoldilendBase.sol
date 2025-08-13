@@ -276,7 +276,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         uint256 _minDuration,
         uint256 _maxDuration
     ) external {
-        if(msg.sender != timelock) revert NotTimelock();
+        if(msg.sender != multisig) revert NotMultisig();
         protocolInterestRate = _protocolInterestRate;
         slope = _slope;
         minDuration = _minDuration;

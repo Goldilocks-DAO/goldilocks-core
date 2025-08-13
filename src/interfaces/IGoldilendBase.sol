@@ -102,8 +102,8 @@ interface IGoldilendBase {
   /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @notice Allows the DAO to adjust the protocol lending parameters
-  /// @dev Callable only by Timelock
+  /// @notice Allows multisig to adjust the protocol lending parameters
+  /// @dev Callable only by multisig
   /// @param _protocolInterestRate New interest rate
   /// @param _slope New slope
   /// @param _minDuration New minimum duration
