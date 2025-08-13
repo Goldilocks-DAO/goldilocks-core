@@ -86,7 +86,9 @@ abstract contract BaseUnitTest is BaseTest {
     INFT(address(bondbear)).mint(address(this));
     INFT(address(bandbear)).mint(address(this));
     IERC721(bondbear).setApprovalForAll(address(proxy), true);
+    IERC721(bondbear).setApprovalForAll(address(rebaseproxy), true);
     IERC721(bandbear).setApprovalForAll(address(proxy), true);
+    IERC721(bandbear).setApprovalForAll(address(rebaseproxy), true);
     _;
   }
 
@@ -118,11 +120,13 @@ abstract contract BaseUnitTest is BaseTest {
     INFT(address(bondbear)).mint(address(this));
     INFT(address(bandbear)).mint(address(this));
     IERC721(bondbear).setApprovalForAll(address(proxy), true);
+    IERC721(bondbear).setApprovalForAll(address(rebaseproxy), true);
     IERC721(bandbear).setApprovalForAll(address(proxy), true);
+    IERC721(bandbear).setApprovalForAll(address(rebaseproxy), true);
     _;
   }
 
-  modifier dealGoldilendHoney() {
+  modifier dealHoneyForGoldilend() {
     deal(address(honey), address(this), dealAmt);
     _;
   }

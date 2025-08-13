@@ -389,10 +389,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
     rebasevalues[0] = 50e18;
     RebaseGoldilend(address(rebaseproxy)).initializeParameters(
         1 days,
-        90 days,
+        365 days,
         20e18,
         2e18,
-        90e18
+        90
     );
     RebaseGoldilend(address(rebaseproxy)).initializeBeras(rebasenfts, rebasevalues);
 
