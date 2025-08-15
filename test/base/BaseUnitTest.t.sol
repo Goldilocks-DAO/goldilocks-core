@@ -38,6 +38,7 @@ abstract contract BaseUnitTest is BaseTest {
   uint256 govLocksAmt = 5_000_001e18;
 
   uint256 dealAmt = type(uint256).max / 2;
+  uint256 rebaseInterest = 8024319759804841;
 
   function setUp() public override {
     deployProtocol();

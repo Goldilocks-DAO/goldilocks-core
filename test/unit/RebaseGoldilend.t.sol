@@ -3,6 +3,7 @@ pragma solidity ^0.8.22;
 
 import { console } from "../../lib/forge-std/src/console.sol";
 import { OwnableUpgradeable } from "../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { GoldilendBase } from "../../src/core/goldilend/GoldilendBase.sol";
 import { IGoldilendBase } from "../../src/interfaces/IGoldilendBase.sol";
@@ -103,6 +104,53 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         GoldilendBase(address(rebaseproxy)).deposit(1_000_000e18);
         vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.BorrowLimitExceeded.selector));
         RebaseGoldilend(address(rebaseproxy)).borrow(49e18, 300 days, address(bandbear), 10);
+    }
+
+    function testRebaseBorrowSuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        GoldilendBase.Loan memory userLoan = GoldilendBase(address(rebaseproxy)).getUserLoan(address(this), 1);
+
+        assertEq(GoldilendBase(address(rebaseproxy)).outstandingDebt(), 1e18);
+        assertEq(userLoan.collateralNFT, address(bandbear));
+        assertEq(userLoan.collateralNFTId, 1);
+        assertEq(userLoan.borrowedAmount, 1e18);
+        assertEq(userLoan.interest, rebaseInterest);
+        assertEq(userLoan.duration, goldilendDuration);
+        assertEq(userLoan.endDate, block.timestamp + goldilendDuration);
+        assertEq(userLoan.loanId, 1);
+        assertEq(userLoan.repaid, false);
+        assertEq(userLoan.liquidated, false);
+        assertEq(GoldilendBase(address(rebaseproxy)).userLoanAmount(address(this)), 1);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 1);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 0);
+        assertEq(honey.balanceOf(address(this)), dealAmt - txAmount + 1e18);
+        assertEq(honey.balanceOf(address(rebaseproxy)), txAmount - 1e18);
+    }
+
+    function testRenewFailBackwards() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        vm.warp(70);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        vm.expectRevert(abi.encodeWithSelector(RebaseGoldilend.BackwardsExpiry.selector));
+        RebaseGoldilend(address(rebaseproxy)).renew(1, 69, 69);
+    }
+
+    function testRenewFailActive() public dealHoneyForGoldilend {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        GoldilendBase(address(rebaseproxy)).changeBorrowingActive(false);
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.NotActive.selector));
+        RebaseGoldilend(address(rebaseproxy)).renew(1, 69, 69);
+    }
+
+    function testRenewFailDuration() public dealHoneyForGoldilend {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.InvalidDuration.selector));
+        RebaseGoldilend(address(rebaseproxy)).renew(1, 69, 69);
     }
 
     function testChangeLendingParamsFailMultisig() public {
@@ -238,6 +286,12 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         values[1] = 50;
         vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.AlreadyInitialized.selector));
         RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values);
+    }
+
+    function testOnERC721Received() public {
+        bandbear.mint(address(rebaseproxy));
+
+        assert(IERC721(bandbear).balanceOf(address(rebaseproxy)) > 0);
     }
 
     function testUpgradeRebaseGoldilendFailOwner() public {
