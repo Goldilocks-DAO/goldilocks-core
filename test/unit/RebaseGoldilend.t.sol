@@ -176,6 +176,66 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(honey.balanceOf(address(rebaseproxy)), txAmount - 1e18);
     }
 
+    function testRepayFailLoanExpired() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 69 days);
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.LoanExpired.selector));
+        GoldilendBase(address(rebaseproxy)).repay(69, 1);
+    }
+
+    function testRepaySuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        honey.approve(address(rebaseproxy), 1e18);
+        GoldilendBase(address(rebaseproxy)).repay(1e18, 1);
+        GoldilendBase.Loan memory userLoan = GoldilendBase(address(rebaseproxy)).getUserLoan(address(this), 1);
+
+        assertEq(GoldilendBase(address(rebaseproxy)).outstandingDebt(), 0);
+        assertEq(honey.balanceOf(address(this)), dealAmt - txAmount);
+        assertEq(honey.balanceOf(address(rebaseproxy)), txAmount);
+        assertEq(userLoan.repaid, true);
+        assertEq(userLoan.borrowedAmount, 0);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 0);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 1);
+    }
+
+    function testRepaySuccessAmountTooHigh() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        honey.approve(address(rebaseproxy), 2e18);
+        GoldilendBase(address(rebaseproxy)).repay(2e18, 1);
+        GoldilendBase.Loan memory userLoan = GoldilendBase(address(rebaseproxy)).getUserLoan(address(this), 1);
+
+        assertEq(GoldilendBase(address(rebaseproxy)).outstandingDebt(), 0);
+        assertEq(honey.balanceOf(address(this)), dealAmt - txAmount);
+        assertEq(honey.balanceOf(address(rebaseproxy)), txAmount);
+        assertEq(userLoan.repaid, true);
+        assertEq(userLoan.borrowedAmount, 0);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 0);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 1);
+    }
+
+    function testPartialRepaySuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        honey.approve(address(rebaseproxy), 5e17);
+        GoldilendBase(address(rebaseproxy)).repay(5e17, 1);
+        GoldilendBase.Loan memory userLoan = GoldilendBase(address(rebaseproxy)).getUserLoan(address(this), 1);
+
+        assertEq(GoldilendBase(address(rebaseproxy)).outstandingDebt(), 5e17);
+        assertEq(honey.balanceOf(address(this)), dealAmt - txAmount + 5e17);
+        assertEq(honey.balanceOf(address(rebaseproxy)), txAmount - 5e17);
+        assertEq(userLoan.repaid, false);
+        assertEq(userLoan.borrowedAmount, 5e17);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 1);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 0);
+    }
+
     function testRenewFailBackwards() public dealHoneyForGoldilend dealUserBeras {
         honey.approve(address(rebaseproxy), txAmount);
         GoldilendBase(address(rebaseproxy)).deposit(txAmount);
