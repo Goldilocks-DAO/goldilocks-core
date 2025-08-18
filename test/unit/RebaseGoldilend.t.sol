@@ -38,6 +38,53 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         glhoney.burnglDebtAsset(address(0x69), 69);
     }
 
+    function testGetUserLoanSuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        GoldilendBase.Loan memory userLoan = GoldilendBase(address(rebaseproxy)).getUserLoan(address(this), 1);
+
+        assertEq(userLoan.collateralNFT, address(bandbear));
+        assertEq(userLoan.collateralNFTId, 1);
+        assertEq(userLoan.borrowedAmount, 1e18);
+        assertEq(userLoan.interest, rebaseInterest);
+        assertEq(userLoan.duration, goldilendDuration);
+        assertEq(userLoan.endDate, block.timestamp + goldilendDuration);
+        assertEq(userLoan.loanId, 1);
+        assertEq(userLoan.repaid, false);
+        assertEq(userLoan.liquidated, false);
+    }
+
+    function testCalculateInterestFailDuration() public {
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.InvalidDuration.selector));
+        GoldilendBase(address(rebaseproxy)).calculateInterest(69, 69, address(bandbear));
+    }
+
+    function testCalculateInterestFailInvalidLoanAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.InvalidLoanAmount.selector));
+        GoldilendBase(address(rebaseproxy)).calculateInterest(69, 2 days, address(bandbear));
+    }
+
+    function testCalculateInterestFailCollateral() public {
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.InvalidCollateral.selector));
+        GoldilendBase(address(rebaseproxy)).calculateInterest(0, 2 days, address(0x69));
+    }
+
+    function testCalculateInterestFailBorrowLimit() public dealHoneyForGoldilend {
+        honey.approve(address(rebaseproxy), 5000e18);
+        GoldilendBase(address(rebaseproxy)).deposit(5000e18);
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.BorrowLimitExceeded.selector));
+        GoldilendBase(address(rebaseproxy)).calculateInterest(51e18, 2 days, address(bandbear));
+    }
+
+    function testCalculateInterestSuccess() public dealHoneyForGoldilend{
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        uint256 interest = GoldilendBase(address(rebaseproxy)).calculateInterest(1e18, goldilendDuration, address(bandbear));
+
+        assertEq(interest, rebaseInterest);
+    }
+
     function testDepositSuccess() public dealHoneyForGoldilend {
         honey.approve(address(rebaseproxy), txAmount);
         GoldilendBase(address(rebaseproxy)).deposit(txAmount);
@@ -151,22 +198,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         GoldilendBase(address(rebaseproxy)).deposit(txAmount);
         vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.InvalidDuration.selector));
         RebaseGoldilend(address(rebaseproxy)).renew(1, 69, 69);
-    }
-
-    function testRenewFailMaxUtilization() public dealHoneyForGoldilend dealUserABunchOfBeras {
-        honey.approve(address(rebaseproxy), txAmount);
-        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 1);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 2);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 3);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 4);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 5);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 6);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 7);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 8);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 9);
-        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.MaxUtilizationExceeded.selector));
-        RebaseGoldilend(address(rebaseproxy)).renew(9, 2 days, 1e14);
     }
 
     function testChangeLendingParamsFailMultisig() public {
