@@ -74,7 +74,7 @@ contract RebaseGoldilend is GoldilendBase {
         Loan memory userLoan = loans[msg.sender][userLoanId];
         uint256 debt = outstandingDebt;
         uint256 newDuration = newExpiry - block.timestamp;
-        uint256 newBorrowAmount = userLoan.borrowedAmount - userLoan.interest + additionalLoanAmount;
+        uint256 newBorrowAmount = userLoan.borrowedAmount + additionalLoanAmount;
         uint256 newInterest = _calculateInterest(newBorrowAmount, debt, newDuration);
         if(!borrowingActive) revert NotActive();
         if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
