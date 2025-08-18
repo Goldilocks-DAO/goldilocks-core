@@ -177,7 +177,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
         loans[user][userLoanId].liquidated = true;
         loans[user][userLoanId].borrowedAmount = 0;
-        outstandingDebt -=  userLoan.borrowedAmount - userLoan.interest > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount - userLoan.interest;
+        outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
         IERC721(userLoan.collateralNFT).safeTransferFrom(address(this), multisig, userLoan.collateralNFTId);
         emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
     }

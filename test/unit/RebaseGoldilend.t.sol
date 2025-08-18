@@ -236,13 +236,36 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 0);
     }
 
+    function testLiquidateFailUnliquidatable() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.Unliquidatable.selector));
+        GoldilendBase(address(rebaseproxy)).liquidate(address(this), 1);
+    }
+
+    function testLiquidateSuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 69 days);
+        GoldilendBase(address(rebaseproxy)).liquidate(address(this), 1);
+        GoldilendBase.Loan memory userLoan = GoldilendBase(address(rebaseproxy)).getUserLoan(address(this), 1);
+
+        assertEq(userLoan.liquidated, true);
+        assertEq(userLoan.borrowedAmount, 0);
+        assertEq(GoldilendBase(address(rebaseproxy)).outstandingDebt(), 0);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 0);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 1);
+    }
+
     function testRenewFailBackwards() public dealHoneyForGoldilend dealUserBeras {
         honey.approve(address(rebaseproxy), txAmount);
         GoldilendBase(address(rebaseproxy)).deposit(txAmount);
         vm.warp(70);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
         vm.expectRevert(abi.encodeWithSelector(RebaseGoldilend.BackwardsExpiry.selector));
-        RebaseGoldilend(address(rebaseproxy)).renew(1, 69, 69);
+        GoldilendBase(address(rebaseproxy)).renew(1, 69, 69);
     }
 
     function testRenewFailActive() public dealHoneyForGoldilend {
