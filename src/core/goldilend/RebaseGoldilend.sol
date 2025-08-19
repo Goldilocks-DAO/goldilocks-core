@@ -26,8 +26,7 @@ import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.s
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
 contract RebaseGoldilend is GoldilendBase {
 
-    error BackwardsExpiry();
-    event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newExpiry);
+    event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newDuration);
 
     function borrow(
         uint256 borrowAmount,
@@ -37,14 +36,15 @@ contract RebaseGoldilend is GoldilendBase {
     ) external {
         if(!borrowingActive) revert NotActive();
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-        if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
-        if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
-        uint256 userLoansLength = userLoanAmount[msg.sender];
+        uint256 _poolSize = poolSize;
         uint256 fairValue = nftFairValues[collateralNFT];
-        uint256 debt = outstandingDebt;
-        uint256 interest = _calculateInterest(borrowAmount, debt, duration);
-        if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount + interest > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+        uint256 userLoansLength = userLoanAmount[msg.sender];
+        uint256 _outstandingDebt = outstandingDebt;
+        if(borrowAmount > _poolSize / 10) revert InvalidLoanAmount();
+        uint256 interest = _calculateInterest(borrowAmount, _outstandingDebt, duration);
+        if(fairValue == 0) revert InvalidCollateral();
+        if(_outstandingDebt + borrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + interest > fairValue || borrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
             collateralNFT: collateralNFT,
@@ -67,31 +67,31 @@ contract RebaseGoldilend is GoldilendBase {
 
     /// @notice Renews loan with new expiry
     /// @param userLoanId Loan to be renewed
-    /// @param newExpiry New expiry of the loan
-    /// @param additionalLoanAmount Amount of additional debt asset to be borrowed
+    /// @param newDuration New duration of the loan
+    /// @param newBorrowAmount Amount of additional debt asset to be borrowed
     function renew(
         uint256 userLoanId,
-        uint256 newExpiry,
-        uint256 additionalLoanAmount
+        uint256 newDuration,
+        uint256 newBorrowAmount
     ) external {
-        if(newExpiry < block.timestamp) revert BackwardsExpiry();
-        Loan memory userLoan = loans[msg.sender][userLoanId];
-        uint256 debt = outstandingDebt;
-        uint256 newDuration = newExpiry - block.timestamp;
-        uint256 newBorrowAmount = userLoan.borrowedAmount + additionalLoanAmount;
-        uint256 newInterest = _calculateInterest(newBorrowAmount, debt, newDuration);
         if(!borrowingActive) revert NotActive();
         if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
-        if(newBorrowAmount > poolSize / 10) revert InvalidLoanAmount();
-        if(debt + newBorrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+        Loan memory userLoan = loans[msg.sender][userLoanId];
+        uint256 _outstandingDebt = outstandingDebt;
+        uint256 _poolSize = poolSize;
+        uint256 newInterest = _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration);
+        if(newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
+        if(_outstandingDebt + newBorrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
+        outstandingDebt += newBorrowAmount;
         Loan storage newUserLoan = loans[msg.sender][userLoanId];
-        newUserLoan.borrowedAmount = newBorrowAmount + newInterest + userLoan.interest;
+        newUserLoan.borrowedAmount += newBorrowAmount;
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
-        newUserLoan.endDate += newExpiry;
+        newUserLoan.endDate += newDuration;
         SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount);
-        emit Renew(msg.sender, userLoanId, additionalLoanAmount, newExpiry);
+        SafeTransferLib.safeTransfer(debtAsset, multisig, newBorrowAmount - newInterest);
+        emit Renew(msg.sender, userLoanId, newBorrowAmount, newDuration);
     }
 
     function changeValue(
