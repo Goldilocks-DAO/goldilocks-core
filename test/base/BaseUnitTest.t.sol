@@ -39,6 +39,8 @@ abstract contract BaseUnitTest is BaseTest {
 
   uint256 dealAmt = type(uint256).max / 2;
   uint256 rebaseInterest = 8024319759804841;
+  uint256 renewBorrowInterest = 7994895852880465;
+  uint256 renewInterest = 8024319759804841;
 
   function setUp() public override {
     deployProtocol();

@@ -26,7 +26,7 @@ import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.s
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
 contract RebaseGoldilend is GoldilendBase {
 
-    event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newDuration);
+    event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newInterest, uint256 newDuration);
 
     function borrow(
         uint256 borrowAmount,
@@ -89,9 +89,9 @@ contract RebaseGoldilend is GoldilendBase {
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
         newUserLoan.endDate += newDuration;
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount);
-        SafeTransferLib.safeTransfer(debtAsset, multisig, newBorrowAmount - newInterest);
-        emit Renew(msg.sender, userLoanId, newBorrowAmount, newDuration);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount - newInterest);
+        SafeTransferLib.safeTransfer(debtAsset, multisig, newInterest);
+        emit Renew(msg.sender, userLoanId, newBorrowAmount, newInterest, newDuration);
     }
 
     function changeValue(

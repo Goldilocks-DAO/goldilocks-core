@@ -295,14 +295,33 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 8);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 9);
         vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.MaxUtilizationExceeded.selector));
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 10);
+        RebaseGoldilend(address(rebaseproxy)).renew(9, 2 days, 1e18);
     }
 
-    function testRenewSuccess() public dealHoneyForGoldilend dealUserBeras {
-        honey.approve(address(rebaseproxy), txAmount*2);
-        GoldilendBase(address(rebaseproxy)).deposit(txAmount*2);
+    function testRenewFailBorrowLimit() public dealUserBeras {
+        deal(address(honey), address(this), 1_000_000e18);
+        honey.approve(address(rebaseproxy), 1_000_000e18);
+        GoldilendBase(address(rebaseproxy)).deposit(1_000_000e18);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1 days, address(bandbear),1);
+        vm.expectRevert(abi.encodeWithSelector(IGoldilendBase.BorrowLimitExceeded.selector));
+        RebaseGoldilend(address(rebaseproxy)).renew(1, 300 days, 49e18);
+    }
+
+    function testRebaseRenewSuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount + txAmount);
+        GoldilendBase(address(rebaseproxy)).deposit(txAmount + txAmount);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, goldilendDuration, address(bandbear), 1);
-        RebaseGoldilend(address(rebaseproxy)).renew(1, 6 days, 1e18);
+        RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 1e18);
+        GoldilendBase.Loan memory userLoan = GoldilendBase(address(rebaseproxy)).getUserLoan(address(this), 1);
+
+        assertEq(GoldilendBase(address(rebaseproxy)).outstandingDebt(), 2e18);
+        assertEq(userLoan.borrowedAmount, 2e18);
+        assertEq(userLoan.interest, renewBorrowInterest + renewInterest);
+        assertEq(userLoan.duration, 28 days);
+        assertEq(userLoan.endDate, block.timestamp + 28 days);
+        assertEq(honey.balanceOf(address(this)), dealAmt - 18e18);
+        assertEq(honey.balanceOf(address(rebaseproxy)), 18e18);
+
     }
 
     function testChangeLendingParamsFailMultisig() public {
