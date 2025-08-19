@@ -65,11 +65,15 @@ contract RebaseGoldilend is GoldilendBase {
         emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
     }
 
+    /// @notice Renews loan with new expiry
+    /// @param userLoanId Loan to be renewed
+    /// @param newExpiry New expiry of the loan
+    /// @param additionalLoanAmount Amount of additional debt asset to be borrowed
     function renew(
         uint256 userLoanId,
         uint256 newExpiry,
         uint256 additionalLoanAmount
-    ) external override {
+    ) external {
         if(newExpiry < block.timestamp) revert BackwardsExpiry();
         Loan memory userLoan = loans[msg.sender][userLoanId];
         uint256 debt = outstandingDebt;

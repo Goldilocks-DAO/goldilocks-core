@@ -74,16 +74,6 @@ interface IGoldilendBase {
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external;
 
-  /// @notice Renews loan with new expiry
-  /// @param userLoanId Loan to be renewed
-  /// @param newExpiry New expiry of the loan
-  /// @param additionalLoanAmount Amount of additional debt asset to be borrowed
-  function renew(
-    uint256 userLoanId,
-    uint256 newExpiry,
-    uint256 additionalLoanAmount
-  ) external;
-
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
