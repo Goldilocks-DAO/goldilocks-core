@@ -31,38 +31,65 @@ contract BerabondGoldilend is GoldilendBase {
 
     address public bgt;
     address public delegationRegistry;
+    address public berabond;
+    mapping(address => uint256[]) public userTokenIds;
 
     function berabondBorrow(
         uint256 borrowAmount,
+        uint256 duration,
         address collateralNFT,
         uint256 collateralNFTId
     ) external {
         if(!borrowingActive) revert NotActive();
+        if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
         if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
+        uint256 _poolSize = poolSize;
+        uint256 _outstandingDebt = outstandingDebt;
         uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
         uint256 maxBorrow = bgtBalance * 80 / 100;
-        if(borrowAmount > maxBorrow) revert InvalidLoanAmount();
         uint256 userLoansLength = userLoanAmount[msg.sender];
-        uint256 debt = outstandingDebt;
-        if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+        if(borrowAmount > maxBorrow) revert InvalidLoanAmount();
+        uint256 interest = _calculateInterest(borrowAmount, _outstandingDebt, duration);
+        if(_outstandingDebt + borrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
             collateralNFT: collateralNFT,
             collateralNFTId: collateralNFTId,
             borrowedAmount: borrowAmount,
-            interest: 0,
-            duration: 180 days,
-            endDate: block.timestamp + 180 days,
+            interest: interest,
+            duration: duration,
+            endDate: block.timestamp + duration,
             loanId: userLoansLength + 1,
             repaid: false,
             liquidated: false
         });
         loans[msg.sender][userLoansLength + 1] = loan;
         userLoanAmount[msg.sender]++;
+        userTokenIds[msg.sender].push(collateralNFTId);
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount);
-        emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, 0, block.timestamp + 180 days, collateralNFT, collateralNFTId);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount - interest);
+        SafeTransferLib.safeTransfer(debtAsset, multisig, interest);
+        emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, 0, block.timestamp + duration, collateralNFT, collateralNFTId);
+    }
+
+    function renew(
+        uint256 userLoanId,
+        uint256 newDuration,
+        uint256 newBorrowAmount
+    ) external {
+
+    }
+
+    function claimYield(address[] memory rewardContracts) external {
+        uint256 userTokenIdsLength = userTokenIds[msg.sender].length;
+        for(uint256 i; i < userTokenIdsLength;) {
+            address payable tba = IBeraBondNFT(berabond).getTokenBoundAccount(userTokenIds[msg.sender][i]);
+            IBeraBondNFT(tba).claimFromEach(rewardContracts, msg.sender);
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     function getTBABGTBalance(address nft, uint256 tokenId) external view returns (uint256) {
@@ -72,7 +99,6 @@ contract BerabondGoldilend is GoldilendBase {
     /// @notice Returns the BGT balance of the token bound account
     /// @return bgtBalance BGT balance of TBA
     function _getTBABGTBalance(address nft, uint256 tokenId) internal view returns (uint256) {
-        if(nftFairValues[nft] == 0) revert InvalidCollateral();
         address tba = IBeraBondNFT(nft).getTokenBoundAccount(tokenId);
         return ERC20(bgt).balanceOf(tba);
     }

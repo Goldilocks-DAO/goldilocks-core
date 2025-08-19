@@ -30,6 +30,7 @@ interface IBeraBondNFT {
   function batchRedeemBgtAndBurn(uint256[] memory tokenIds) external;
   function bgtToken() external view returns (address);
   function burn(uint256 tokenId) external;
+  function claimFromEach(address[] memory _rewardContracts, address recipient) external returns (uint256 totalClaimed);
   function delegationRegistry() external view returns (address);
   function getApproved(uint256 tokenId) external view returns (address);
   function getNextTokenId() external view returns (uint256);
