@@ -44,7 +44,7 @@ interface IGoldilendBase {
   event Deposit(address indexed user, uint256 amount, uint256 mintAmount);
   event Withdraw(address indexed user, uint256 amount, uint256 burnAmount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
-  event Repay(address indexed user, uint256 amount);
+  event Repay(address indexed user, uint256 userLoanId, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount, uint256 loanId);
   event NewProtocolInterestRate(uint256 newProtocolInterestRate);
   event NewSlope(uint256 newSlope);

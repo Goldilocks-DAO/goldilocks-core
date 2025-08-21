@@ -168,7 +168,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         else {
             loans[msg.sender][userLoanId].borrowedAmount -= repayAmount;
         }
-        emit Repay(msg.sender, repayAmount);
+        emit Repay(msg.sender, userLoanId, repayAmount);
     }
 
     /// @inheritdoc IGoldilendBase
@@ -323,7 +323,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
 
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                   IMPLEMENTATION FUNCTION                  */
+    /*                  IMPLEMENTATION FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 

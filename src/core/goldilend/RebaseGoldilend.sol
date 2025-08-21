@@ -28,6 +28,11 @@ contract RebaseGoldilend is GoldilendBase {
 
     event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newInterest, uint256 newDuration);
 
+    /// @notice Borrows HONEY against value of Rebase Bera
+    /// @param borrowAmount Amount of HONEY to borrow
+    /// @param duration Duration of loan
+    /// @param collateralNFT Rebase Bera to use as collateral
+    /// @param collateralNFTId Token Id of Rebase Bera to use as collateral
     function borrow(
         uint256 borrowAmount,
         uint256 duration,
@@ -94,6 +99,10 @@ contract RebaseGoldilend is GoldilendBase {
         emit Renew(msg.sender, userLoanId, newBorrowAmount, newInterest, newDuration);
     }
 
+    /// @notice Allows multisig to adjust the valuation of the NFTs to borrow against
+    /// @dev Callable only by multisig
+    /// @param _nfts NFTs that are able to be borrowed against
+    /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation
     function changeValue(
         address[] calldata _nfts,
         uint256[] calldata _nftFairValues
@@ -109,6 +118,10 @@ contract RebaseGoldilend is GoldilendBase {
         }
     }
 
+    /// @notice Allows multisig to initalize bera nft fair values
+    /// @dev Callable only by multisig
+    /// @param _nfts Bera nft addresses
+    /// @param _nftFairValues Bera nft fair values
     function initializeBeras(
         address[] calldata _nfts,
         uint256[] calldata _nftFairValues
