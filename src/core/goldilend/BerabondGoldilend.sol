@@ -32,6 +32,7 @@ contract BerabondGoldilend is GoldilendBase {
     address public bgt;
     address public delegationRegistry;
     address public berabond;
+    uint256 public LTV;
     mapping(address => uint256[]) public userTokenIds;
 
     function berabondBorrow(
@@ -46,7 +47,7 @@ contract BerabondGoldilend is GoldilendBase {
         uint256 _poolSize = poolSize;
         uint256 _outstandingDebt = outstandingDebt;
         uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
-        uint256 maxBorrow = bgtBalance * 80 / 100;
+        uint256 maxBorrow = bgtBalance * LTV / 100;
         uint256 userLoansLength = userLoanAmount[msg.sender];
         if(borrowAmount > maxBorrow) revert InvalidLoanAmount();
         uint256 interest = _calculateInterest(borrowAmount, _outstandingDebt, duration);

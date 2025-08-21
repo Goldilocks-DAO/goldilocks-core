@@ -79,7 +79,7 @@ contract RebaseGoldilend is GoldilendBase {
         Loan memory userLoan = loans[msg.sender][userLoanId];
         uint256 _outstandingDebt = outstandingDebt;
         uint256 _poolSize = poolSize;
-        uint256 newInterest = _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration);
+        uint256 newInterest = _calculateInterest(userLoan.borrowedAmount + newBorrowAmount, _outstandingDebt, newDuration);
         if(newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
         if(_outstandingDebt + newBorrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
