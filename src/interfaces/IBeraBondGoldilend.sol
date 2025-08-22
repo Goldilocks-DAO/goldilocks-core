@@ -34,6 +34,8 @@ interface IBeraBondGoldilend {
   error LoanExpired();
   error Unliquidatable();
   error AlreadyInitialized();
+  error InvalidAmount();
+  error TransferFailed();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
@@ -56,11 +58,10 @@ interface IBeraBondGoldilend {
   /*                      EXTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @notice Deposits debt asset and mints Goldilend Debt Asset
-  /// @param amount Amount of debt asset to deposit
-  function deposit(uint256 amount) external;
+  /// @notice Deposits BERA and mints Goldilend Debt Asset
+  function deposit() external payable;
 
-  /// @notice Withdraws debt asset and burns Goldilend Debt Asset
+  /// @notice Withdraws BERA and burns Goldilend Debt Asset
   /// @param amount Amount of goldilend debt asset to burn
   function withdraw(uint256 amount) external;
 
@@ -74,24 +75,23 @@ interface IBeraBondGoldilend {
     uint256 duration,
     address collateralNFT,
     uint256 collateralNFTId
-  ) external;
+  ) external payable;
 
   /// @notice Renews loan with new expiry
   /// @param userLoanId Loan to be renewed
   /// @param newDuration New duration of the loan
-  /// @param newBorrowAmount Amount of additional debt asset to be borrowed
+  /// @param newBorrowAmount Amount of additional BERA to be borrowed
   function renew(
     uint256 userLoanId,
     uint256 newDuration,
     uint256 newBorrowAmount
-  ) external;
+  ) external payable;
 
-  /// @notice Repays loan of debt asset
-  /// @param repayAmount Amount of debt asset to repay
+  /// @notice Repays loan with BERA
   /// @param userLoanId ID of loan to repay
-  function repay(uint256 repayAmount, uint256 userLoanId) external;
+  function repay(uint256 userLoanId) external payable;
 
-  /// @notice Liquidates overdue loans by paying debt asset to purchase collateral
+  /// @notice Liquidates overdue loans by paying BERA to purchase collateral
   /// @param user Owner of loan to be liquidated
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external;
@@ -168,11 +168,9 @@ interface IBeraBondGoldilend {
   /// @param token Address of token to recover
   function recoverTokens(address token) external;
 
-  /// @notice Allows multisig to increase backing of Goldilend Debt Asset by sending debt asset
+  /// @notice Allows multisig to increase backing of Goldilend Debt Asset by sending BERA
   /// @dev Callable only by multisig
-  /// @param amount Amount of debt asset to send
-  function increaseglDebtAssetBacking(uint256 amount) external;
-
+  function increaseglDebtAssetBacking() external payable;
 
   /// @notice Manages the delegation of the token bound account to a delegatee
   /// @param nft Address of BeraBond

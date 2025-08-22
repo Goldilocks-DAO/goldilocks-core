@@ -53,9 +53,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @notice Address of Timelock
     address public timelock;
 
-    /// @notice Address of the Debt Asset
-    address public debtAsset;
-
     /// @notice Address of Goldilend Debt Asset
     address public glDebtAsset;
 
@@ -130,7 +127,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @notice Initializer of the contract
     /// @param _timelock Address of the timelock
     /// @param _multisig Address of the multisig
-    /// @param _debtAsset Address of the Debt Asset
     /// @param _glDebtAsset Address of Goldilend Debt Asset
     /// @param _bgt Address of BGT
     /// @param _berabond Address of BeraBond
@@ -138,7 +134,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     function initialize(
         address _timelock,
         address _multisig,
-        address _debtAsset,
         address _glDebtAsset,
         address _bgt,
         address _berabond,
@@ -148,7 +143,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         __UUPSUpgradeable_init();
         timelock = _timelock;
         multisig = _multisig;
-        debtAsset = _debtAsset;
         glDebtAsset = _glDebtAsset;
         bgt = _bgt;
         berabond = _berabond;
@@ -162,12 +156,12 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
 
 
     /// @inheritdoc IBeraBondGoldilend
-    function deposit(uint256 amount) external {
-        uint256 mintAmount = _glDebtAssetMintAmount(amount);
-        poolSize += amount;
-        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
+    function deposit() external payable {
+        if(msg.value == 0) revert InvalidAmount();
+        uint256 mintAmount = _glDebtAssetMintAmount(msg.value);
+        poolSize += msg.value;
         GoldilendDebtAsset(glDebtAsset).mintglDebtAsset(msg.sender, mintAmount);
-        emit Deposit(msg.sender, amount, mintAmount);
+        emit Deposit(msg.sender, msg.value, mintAmount);
     }
 
     /// @inheritdoc IBeraBondGoldilend
@@ -175,7 +169,8 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 withdrawAmount = _glDebtAssetWithdrawAmount(amount);
         poolSize -= withdrawAmount;
         GoldilendDebtAsset(glDebtAsset).burnglDebtAsset(msg.sender, amount);
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, withdrawAmount);
+        (bool success, ) = payable(msg.sender).call{value: withdrawAmount}("");
+        if(!success) revert TransferFailed();
         emit Withdraw(msg.sender, withdrawAmount, amount);
     }
 
@@ -185,21 +180,18 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 duration,
         address collateralNFT,
         uint256 collateralNFTId
-    ) external {
+    ) external payable {
         if(!borrowingActive) revert NotActive();
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-        uint256 _poolSize = poolSize;
-        uint256 fairValue = nftFairValues[collateralNFT];
-        uint256 userLoansLength = userLoanAmount[msg.sender];
-        uint256 _outstandingDebt = outstandingDebt;
+        if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
         uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
         uint256 maxBorrow = bgtBalance * LTV / 100;
-        if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
         if(borrowAmount > maxBorrow) revert InvalidLoanAmount();
-        if(borrowAmount > _poolSize / 10) revert InvalidLoanAmount();
-        uint256 interest = _calculateInterest(borrowAmount, _outstandingDebt, duration);
-        if(_outstandingDebt + borrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount + interest > fairValue || borrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
+        if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
+        uint256 interest = _calculateInterest(borrowAmount, outstandingDebt, duration);
+        if(outstandingDebt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + interest > nftFairValues[collateralNFT] || borrowAmount > poolSize - outstandingDebt) revert BorrowLimitExceeded();
+        uint256 userLoansLength = userLoanAmount[msg.sender];
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
             collateralNFT: collateralNFT,
@@ -216,9 +208,11 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         userLoanAmount[msg.sender]++;
         userTokenIds[msg.sender].push(collateralNFTId);
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount - interest);
-        SafeTransferLib.safeTransfer(debtAsset, multisig, interest);
-        emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, 0, block.timestamp + duration, collateralNFT, collateralNFTId);
+        (bool success1, ) = payable(msg.sender).call{value: borrowAmount - interest}("");
+        if(!success1) revert TransferFailed();
+        (bool success2, ) = payable(multisig).call{value: interest}("");
+        if(!success2) revert TransferFailed();
+        emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
     }
 
     /// @inheritdoc IBeraBondGoldilend
@@ -226,7 +220,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 userLoanId,
         uint256 newDuration,
         uint256 newBorrowAmount
-    ) external {
+    ) external payable {
         if(!borrowingActive) revert NotActive();
         if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
         Loan memory userLoan = loans[msg.sender][userLoanId];
@@ -242,18 +236,21 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
         newUserLoan.endDate += newDuration;
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount - newInterest);
-        SafeTransferLib.safeTransfer(debtAsset, multisig, newInterest);
+        (bool success1, ) = payable(msg.sender).call{value: newBorrowAmount - newInterest}("");
+        if(!success1) revert TransferFailed();
+        (bool success2, ) = payable(multisig).call{value: newInterest}("");
+        if(!success2) revert TransferFailed();
         emit Renew(msg.sender, userLoanId, newBorrowAmount, newInterest, newDuration);
     }
 
     /// @inheritdoc IBeraBondGoldilend
-    function repay(uint256 repayAmount, uint256 userLoanId) external {
+    function repay(uint256 userLoanId) external payable {
+        if(msg.value == 0) revert InvalidAmount();
         Loan memory userLoan = loans[msg.sender][userLoanId];
+        uint256 repayAmount = msg.value;
         if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
         outstandingDebt -= repayAmount > outstandingDebt ? outstandingDebt : repayAmount;
-        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), repayAmount);
         if(userLoan.borrowedAmount - repayAmount == 0) {
             loans[msg.sender][userLoanId].borrowedAmount = 0;
             loans[msg.sender][userLoanId].repaid = true;
@@ -344,7 +341,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     }
 
     /// @notice Calculates the amount of Goldilend Debt Asset to mint
-    /// @param depositAmount Amount of the debt asset to deposit
+    /// @param depositAmount Amount of BERA to deposit
     /// @return mintAmount Total supply of the goldilend debt asset divided by the lending pool size multiplied by depsoitAmount
     function _glDebtAssetMintAmount(uint256 depositAmount) internal view returns (uint256) {
         uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
@@ -352,7 +349,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(depositAmount, _glDebtAssetRatio(supply, _poolSize)) : depositAmount;
     }
 
-    /// @notice Calculates the amount of debt asset to withdraw
+    /// @notice Calculates the amount of BERA to withdraw
     /// @param burnAmount Amount of the Goldilend Debt Asset to burn 
     /// @return withdrawAmount The burnAmount divided by the total supply of goldilend debt asset divided by the lending pool size
     function _glDebtAssetWithdrawAmount(uint256 burnAmount) internal view returns (uint256) {
@@ -440,14 +437,15 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @inheritdoc IBeraBondGoldilend
     function recoverTokens(address token) external {
         if(msg.sender != multisig) revert NotMultisig();
-        SafeTransferLib.safeTransfer(token, multisig, ERC20(token).balanceOf(address(this)));
+        uint256 balance = ERC20(token).balanceOf(address(this));
+        SafeTransferLib.safeTransfer(token, multisig, balance);
     }
 
     /// @inheritdoc IBeraBondGoldilend
-    function increaseglDebtAssetBacking(uint256 amount) external {
+    function increaseglDebtAssetBacking() external payable {
         if(msg.sender != multisig) revert NotMultisig();
-        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
-        poolSize += amount;
+        if(msg.value == 0) revert InvalidAmount();
+        poolSize += msg.value;
     }
 
     /// @inheritdoc IBeraBondGoldilend
@@ -487,5 +485,8 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         override
         onlyOwner
     {}
+
+    /// @notice Allows the contract to receive BERA
+    receive() external payable {}
 
 }
