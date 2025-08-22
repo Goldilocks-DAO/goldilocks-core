@@ -17,22 +17,143 @@ pragma solidity ^0.8.22;
 // ==============================================================================================
 
 
-import { GoldilendBase } from "./GoldilendBase.sol";
-import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
+import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
+import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import { Initializable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import { IRebaseGoldilend } from "../../interfaces/IRebaseGoldilend.sol";
+import { GoldilendDebtAsset } from "./GoldilendDebtAsset.sol";
 
 
 /// @title RebaseGoldilend 
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
-contract RebaseGoldilend is GoldilendBase {
+contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IRebaseGoldilend, IERC721Receiver {
+    
 
-    event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newInterest, uint256 newDuration);
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      STATE VARIABLES                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Borrows HONEY against value of Rebase Bera
-    /// @param borrowAmount Amount of HONEY to borrow
-    /// @param duration Duration of loan
-    /// @param collateralNFT Rebase Bera to use as collateral
-    /// @param collateralNFTId Token Id of Rebase Bera to use as collateral
+
+    /// @notice Value for calculating interest payment on loans
+    uint256 public constant INTEREST_PAYMENT_PERCENTAGE = 5e17;
+
+    /// @notice Buffer period where borrowers are protected from liquidation
+    uint256 public constant LOAN_GRACE_PERIOD = 1 days;
+
+    /// @notice Address of multisig
+    address public multisig;
+
+    /// @notice Address of Timelock
+    address public timelock;
+
+    /// @notice Address of the Debt Asset
+    address public debtAsset;
+
+    /// @notice Address of Goldilend Debt Asset
+    address public glDebtAsset;
+
+    /// @notice Interest rate of protocol
+    uint256 public protocolInterestRate;
+
+    /// @notice Outstanding debt of all unpaid loans
+    uint256 public outstandingDebt;
+
+    /// @notice Size of lending pool
+    uint256 public poolSize;
+
+    /// @notice Rate at which interest rate increases
+    uint256 public slope;
+
+    /// @notice Minimum loan duration
+    uint256 public minDuration;
+
+    /// @notice Maximum loan duration
+    uint256 public maxDuration;
+
+    /// @notice Maximum utilization of protocol liquidity
+    uint256 public maxUtilization;
+
+    /// @notice Portion of interest payments to multisig
+    uint256 public multisigClaims;
+
+    /// @notice Boolean value if borrowing is active
+    bool public borrowingActive;
+
+    /// @notice Indicates if contract parameters are initialized
+    bool public parametersInitialized;
+
+    /// @notice Indicates if contract beras are initialized
+    bool public berasInitialized;
+
+    /// @notice Maps users to total amount of their loans
+    mapping(address => uint256) public userLoanAmount;
+
+    /// @notice Maps users to loans
+    mapping(address => mapping(uint256 => Loan)) public loans;
+
+    /// @notice Maps NFT to fair value
+    mapping(address => uint256) public nftFairValues;
+
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTRUCTOR                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializer of the contract
+    /// @param _timelock Address of the timelock
+    /// @param _multisig Address of the multisig
+    /// @param _debtAsset Address of the Debt Asset
+    /// @param _glDebtAsset Address of Goldilend Debt Asset
+    function initialize(
+        address _timelock,
+        address _multisig,
+        address _debtAsset,
+        address _glDebtAsset
+    ) public initializer {
+        __Ownable_init(_multisig);
+        __UUPSUpgradeable_init();
+        timelock = _timelock;
+        multisig = _multisig;
+        debtAsset = _debtAsset;
+        glDebtAsset = _glDebtAsset;
+    }
+
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      EXTERNAL FUNCTIONS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+    /// @inheritdoc IRebaseGoldilend
+    function deposit(uint256 amount) external {
+        uint256 mintAmount = _glDebtAssetMintAmount(amount);
+        poolSize += amount;
+        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
+        GoldilendDebtAsset(glDebtAsset).mintglDebtAsset(msg.sender, mintAmount);
+        emit Deposit(msg.sender, amount, mintAmount);
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function withdraw(uint256 amount) external {
+        uint256 withdrawAmount = _glDebtAssetWithdrawAmount(amount);
+        poolSize -= withdrawAmount;
+        GoldilendDebtAsset(glDebtAsset).burnglDebtAsset(msg.sender, amount);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, withdrawAmount);
+        emit Withdraw(msg.sender, withdrawAmount, amount);
+    }
+
+    /// @inheritdoc IRebaseGoldilend
     function borrow(
         uint256 borrowAmount,
         uint256 duration,
@@ -70,10 +191,7 @@ contract RebaseGoldilend is GoldilendBase {
         emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
     }
 
-    /// @notice Renews loan with new expiry
-    /// @param userLoanId Loan to be renewed
-    /// @param newDuration New duration of the loan
-    /// @param newBorrowAmount Amount of additional debt asset to be borrowed
+    /// @inheritdoc IRebaseGoldilend
     function renew(
         uint256 userLoanId,
         uint256 newDuration,
@@ -99,10 +217,178 @@ contract RebaseGoldilend is GoldilendBase {
         emit Renew(msg.sender, userLoanId, newBorrowAmount, newInterest, newDuration);
     }
 
-    /// @notice Allows multisig to adjust the valuation of the NFTs to borrow against
-    /// @dev Callable only by multisig
-    /// @param _nfts NFTs that are able to be borrowed against
-    /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation
+    /// @inheritdoc IRebaseGoldilend
+    function repay(uint256 repayAmount, uint256 userLoanId) external {
+        Loan memory userLoan = loans[msg.sender][userLoanId];
+        if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
+        if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
+        outstandingDebt -= repayAmount > outstandingDebt ? outstandingDebt : repayAmount;
+        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), repayAmount);
+        if(userLoan.borrowedAmount - repayAmount == 0) {
+            loans[msg.sender][userLoanId].borrowedAmount = 0;
+            loans[msg.sender][userLoanId].repaid = true;
+            IERC721(userLoan.collateralNFT).transferFrom(address(this), msg.sender, userLoan.collateralNFTId);
+        }
+        else {
+            loans[msg.sender][userLoanId].borrowedAmount -= repayAmount;
+        }
+        emit Repay(msg.sender, userLoanId, repayAmount);
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function liquidate(address user, uint256 userLoanId) external {
+        Loan memory userLoan = loans[user][userLoanId];
+        if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
+        loans[user][userLoanId].liquidated = true;
+        loans[user][userLoanId].borrowedAmount = 0;
+        outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
+        poolSize -= userLoan.borrowedAmount > poolSize ? poolSize : userLoan.borrowedAmount;
+        IERC721(userLoan.collateralNFT).safeTransferFrom(address(this), multisig, userLoan.collateralNFTId);
+        emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
+    }
+
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  EXTERNAL VIEW FUNCTIONS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+    /// @inheritdoc IRebaseGoldilend
+    function getUserLoan(address user, uint256 userLoanId) external view returns (Loan memory) {
+        return loans[user][userLoanId];
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function calculateInterest(
+        uint256 borrowAmount,
+        uint256 duration,
+        address collateralNFT
+    ) external view returns (uint256) {
+        if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
+        if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
+        if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
+        uint256 fairValue = nftFairValues[collateralNFT];
+        uint256 debt = outstandingDebt;
+        if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+        return _calculateInterest(borrowAmount, debt, duration);
+    }
+
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   INTERNAL VIEW FUNCTIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/  
+
+
+    /// @notice Caluclates the total interest due at repayment
+    /// @param borrowAmount Amount to be borrowed
+    /// @param debt Current amount of outstanding debt
+    /// @return interest Total interest due at repayment
+    function _calculateInterest(
+        uint256 borrowAmount, 
+        uint256 debt,
+        uint256 duration
+    ) internal view returns (uint256) {
+        uint256 rate = protocolInterestRate;
+        uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
+        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + INTEREST_PAYMENT_PERCENTAGE;
+        uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
+        uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
+        return interestAdjusted / 100;
+    }
+
+    /// @notice Calculates the amount of Goldilend Debt Asset to mint
+    /// @param depositAmount Amount of the debt asset to deposit
+    /// @return mintAmount Total supply of the goldilend debt asset divided by the lending pool size multiplied by depsoitAmount
+    function _glDebtAssetMintAmount(uint256 depositAmount) internal view returns (uint256) {
+        uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        uint256 _poolSize = poolSize;
+        return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(depositAmount, _glDebtAssetRatio(supply, _poolSize)) : depositAmount;
+    }
+
+    /// @notice Calculates the amount of debt asset to withdraw
+    /// @param burnAmount Amount of the Goldilend Debt Asset to burn 
+    /// @return withdrawAmount The burnAmount divided by the total supply of goldilend debt asset divided by the lending pool size
+    function _glDebtAssetWithdrawAmount(uint256 burnAmount) internal view returns (uint256) {
+        uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        uint256 _poolSize = poolSize;
+        return FixedPointMathLib.divWad(burnAmount, _glDebtAssetRatio(supply, _poolSize));
+    }
+
+    /// @notice Calculates the current glDebtAsset ratio
+    /// @return gibgtRatio Total supply of glDebtAsset divided by the lending pool size
+    function _glDebtAssetRatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
+        return FixedPointMathLib.divWad(supply, _poolSize);
+    }
+
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    PERMISSIONED FUNCTIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+    /// @inheritdoc IRebaseGoldilend
+    function changeLendingParams(
+        uint256 _protocolInterestRate,
+        uint256 _minDuration,
+        uint256 _maxDuration,
+        uint256 _slope,
+        uint256 _maxUtilization
+    ) external {
+        if(msg.sender != multisig) revert NotMultisig();
+        protocolInterestRate = _protocolInterestRate;
+        minDuration = _minDuration;
+        maxDuration = _maxDuration;
+        slope = _slope;
+        maxUtilization = _maxUtilization;
+        emit NewProtocolInterestRate(_protocolInterestRate);
+        emit NewDurations(_minDuration, _maxDuration);
+        emit NewSlope(_slope);
+        emit NewMaxUtilization(_maxUtilization);
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function changeBorrowingActive(bool _borrowingActive) external {
+        if(msg.sender != multisig) revert NotMultisig();
+        borrowingActive = _borrowingActive;
+        emit NewBorrowingActive(_borrowingActive);
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function initializeParameters(
+        uint256 _protocolInterestRate,
+        uint256 _minDuration,
+        uint256 _maxDuration,
+        uint256 _slope,
+        uint256 _maxUtilization
+    ) external {
+        if(msg.sender != multisig) revert NotMultisig();
+        if(parametersInitialized) revert AlreadyInitialized();
+        parametersInitialized = true;
+        protocolInterestRate = _protocolInterestRate;
+        minDuration = _minDuration;
+        maxDuration = _maxDuration;
+        slope = _slope;
+        maxUtilization = _maxUtilization;
+        emit NewProtocolInterestRate(_protocolInterestRate);
+        emit NewDurations(_minDuration, _maxDuration);
+        emit NewSlope(_slope);
+        emit NewMaxUtilization(_maxUtilization);
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function recoverTokens(address token) external {
+        if(msg.sender != multisig) revert NotMultisig();
+        SafeTransferLib.safeTransfer(token, multisig, ERC20(token).balanceOf(address(this)));
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function increaseglDebtAssetBacking(uint256 amount) external {
+        if(msg.sender != multisig) revert NotMultisig();
+        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
+        poolSize += amount;
+    }
+
+    /// @inheritdoc IRebaseGoldilend
     function changeValue(
         address[] calldata _nfts,
         uint256[] calldata _nftFairValues
@@ -118,10 +404,7 @@ contract RebaseGoldilend is GoldilendBase {
         }
     }
 
-    /// @notice Allows multisig to initalize bera nft fair values
-    /// @dev Callable only by multisig
-    /// @param _nfts Bera nft addresses
-    /// @param _nftFairValues Bera nft fair values
+    /// @inheritdoc IRebaseGoldilend
     function initializeBeras(
         address[] calldata _nfts,
         uint256[] calldata _nftFairValues
@@ -139,5 +422,26 @@ contract RebaseGoldilend is GoldilendBase {
         }
         borrowingActive = true;
     }
+
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  IMPLEMENTATION FUNCTIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external virtual returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyOwner
+    {}
 
 }

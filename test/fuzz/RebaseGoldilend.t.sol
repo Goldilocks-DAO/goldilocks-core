@@ -2,8 +2,7 @@
 pragma solidity ^0.8.22;
 
 import { BaseFuzzTest } from "../base/BaseFuzzTest.t.sol";
-import { IGoldilendBase } from "../../src/interfaces/IGoldilendBase.sol";
-import { GoldilendBase } from "../../src/core/goldilend/GoldilendBase.sol";
+import { IRebaseGoldilend } from "../../src/interfaces/IRebaseGoldilend.sol";
 import { RebaseGoldilend } from "../../src/core/goldilend/RebaseGoldilend.sol";
 
 contract FuzzRebaseGoldilendTest is BaseFuzzTest {
@@ -11,12 +10,12 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
     function testFuzzDeposit(uint256 depositAmount) public {
         deal(address(honey), address(this), depositAmount);
         honey.approve(address(rebaseproxy), depositAmount);
-        GoldilendBase(address(rebaseproxy)).deposit(depositAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(depositAmount);
 
         assertEq(glhoney.balanceOf(address(this)), depositAmount);
         assertEq(honey.balanceOf(address(this)), 0);
         assertEq(honey.balanceOf(address(rebaseproxy)), depositAmount);
-        assertEq(GoldilendBase(address(rebaseproxy)).poolSize(), depositAmount);
+        assertEq(RebaseGoldilend(address(rebaseproxy)).poolSize(), depositAmount);
     }
 
     function testFuzzWithdraw(uint256 depositAmount, uint256 withdrawAmount) public {
@@ -25,13 +24,13 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         vm.assume(1e5 < withdrawAmount && withdrawAmount < 1e40);
         deal(address(honey), address(this), depositAmount);
         honey.approve(address(rebaseproxy), depositAmount);
-        GoldilendBase(address(rebaseproxy)).deposit(depositAmount);
-        GoldilendBase(address(rebaseproxy)).withdraw(withdrawAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(depositAmount);
+        RebaseGoldilend(address(rebaseproxy)).withdraw(withdrawAmount);
 
         assertEq(glhoney.balanceOf(address(this)), depositAmount - withdrawAmount);
         assertEq(honey.balanceOf(address(this)), withdrawAmount);
         assertEq(honey.balanceOf(address(rebaseproxy)), depositAmount - withdrawAmount);
-        assertEq(GoldilendBase(address(rebaseproxy)).poolSize(), depositAmount - withdrawAmount);
+        assertEq(RebaseGoldilend(address(rebaseproxy)).poolSize(), depositAmount - withdrawAmount);
     }
 
     function testFuzzRebaseBorrow(uint256 durationAmount) public dealUserBeras {
@@ -47,7 +46,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         // assertEq(userLoan.liquidated, false);
     }
 
-      function testFuzzRepayiBGT(uint256 durationAmount) public dealUseriBGT dealUserBeras {
+      function testFuzzRepayiBGT(uint256 durationAmount) public dealUserBeras { // had dealUseriBGT ehere
         // vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
         // goldilend.borrow(1e18, durationAmount, address(bondbear), 1);
         // Goldilend.Loan memory userLoanBefore = goldilend.lookupLoan(address(this), 1);
@@ -70,7 +69,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         // assertEq(goldilend.poolSize(), 1000e18 + (interest * 950 / 1000));
     }
 
-  function testFuzzLiquidate(uint256 time, uint256 durationAmount) public dealUseriBGT dealUserBeras {
+  function testFuzzLiquidate(uint256 time, uint256 durationAmount) public dealUserBeras { // had dealUseriBGT ehere
         // vm.assume(time < type(uint256).max / 2);
         // vm.assume(durationAmount > goldilend.minDuration() && durationAmount < goldilend.maxDuration());
         // goldilend.borrow(1e18, durationAmount, address(bondbear), 1);

@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
-/// @title IGoldilend
-interface IGoldilend {
+/// @title IRebaseGoldilend
+interface IRebaseGoldilend {
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          STRUCT                            */
@@ -16,6 +16,7 @@ interface IGoldilend {
     uint256 duration;
     uint256 endDate;
     uint256 loanId;
+    bool repaid;
     bool liquidated;
   }
 
@@ -24,8 +25,6 @@ interface IGoldilend {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   error NotMultisig();
-  error NotAPDAO();
-  error NotTimelock();
   error NotActive();
   error ArrayMismatch();
   error InvalidDuration();
@@ -41,36 +40,35 @@ interface IGoldilend {
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  event WBERALock(address indexed user, uint256 amount);
-  event WBERAUnlock(address indexed user, uint256 amount);
+  event Deposit(address indexed user, uint256 amount, uint256 mintAmount);
+  event Withdraw(address indexed user, uint256 amount, uint256 burnAmount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
-  event Repay(address indexed user, uint256 amount);
+  event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newInterest, uint256 newDuration);
+  event Repay(address indexed user, uint256 userLoanId, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount, uint256 loanId);
   event NewProtocolInterestRate(uint256 newProtocolInterestRate);
-  event NewShareRates(uint256 newMultisigShare, uint256 newApdaoShare);
-  event NewSlope(uint256 newSlope);
   event NewDurations(uint256 newMinDuration, uint256 newMaxDuration);
+  event NewSlope(uint256 newSlope);
+  event NewMaxUtilization(uint256 newMaxUtilization);
   event NewBorrowingActive(bool newBorrowingActive);
-  event MultisigInterestClaim(uint256 interestClaim);
-  event ApdaoInterestClaim(uint256 interestClaim);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  
-  /// @notice Locks WBERA and mints glWBERA
-  /// @param amount Amount of WBERA to lock
-  function lock(uint256 amount) external;
 
-  /// @notice Unlocks WBERA and burns glWBERA
-  /// @param amount Amount of WBERA to unlock
-  function unlock(uint256 amount) external;
+  /// @notice Deposits debt asset and mints Goldilend Debt Asset
+  /// @param amount Amount of debt asset to deposit
+  function deposit(uint256 amount) external;
 
-  /// @notice Borrows WBERA against value of NFT
-  /// @param borrowAmount Amount of WBERA to borrow
+  /// @notice Withdraws debt asset and burns Goldilend Debt Asset
+  /// @param amount Amount of goldilend debt asset to burn
+  function withdraw(uint256 amount) external;
+
+  /// @notice Borrows HONEY against value of Rebase Bera
+  /// @param borrowAmount Amount of HONEY to borrow
   /// @param duration Duration of loan
-  /// @param collateralNFT NFT collection to use as collateral
-  /// @param collateralNFTId Token Id of NFT to use as collateral
+  /// @param collateralNFT Rebase Bera to use as collateral
+  /// @param collateralNFTId Token Id of Rebase Bera to use as collateral
   function borrow(
     uint256 borrowAmount,
     uint256 duration,
@@ -78,22 +76,22 @@ interface IGoldilend {
     uint256 collateralNFTId
   ) external;
 
-  /// @notice Borrows WBERA against value of the BeraBond NFT
-  /// @param borrowAmount Amount of WBERA to borrow
-  /// @param collateralNFT Berabond NFT to use as collateral
-  /// @param collateralNFTId Token Id of NFT to use as collateral
-  function berabondBorrow(
-    uint256 borrowAmount,
-    address collateralNFT,
-    uint256 collateralNFTId
+  /// @notice Renews loan with new expiry
+  /// @param userLoanId Loan to be renewed
+  /// @param newDuration New duration of the loan
+  /// @param newBorrowAmount Amount of additional debt asset to be borrowed
+  function renew(
+    uint256 userLoanId,
+    uint256 newDuration,
+    uint256 newBorrowAmount
   ) external;
 
-  /// @notice Repays loan of WBERA
-  /// @param repayAmount Amount of WBERA to repay
+  /// @notice Repays loan of debt asset
+  /// @param repayAmount Amount of debt asset to repay
   /// @param userLoanId ID of loan to repay
   function repay(uint256 repayAmount, uint256 userLoanId) external;
 
-  /// @notice Liquidates overdue loans by paying WBERA to purchase collateral
+  /// @notice Liquidates overdue loans by paying debt asset to purchase collateral
   /// @param user Owner of loan to be liquidated
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external;
@@ -112,37 +110,23 @@ interface IGoldilend {
     address collateralNFT
   ) external view returns (uint256);
 
-  /// @notice Returns BGT balance of the token bound account
-  function getTBABGTBalance(address nft, uint256 tokenId) external view returns (uint256);
-
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @notice Allows multisig to adjust the valuation of the NFTs to borrow against
+  /// @notice Allows multisig to adjust the protocol lending parameters
   /// @dev Callable only by multisig
-  /// @param _nfts NFTs that are able to be borrowed against
-  /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation
-    function changeValue(
-    address[] calldata _nfts,
-    uint256[] calldata _nftFairValues
-  ) external;
-
-  /// @notice Allows the DAO to adjust the protocol lending parameters
-  /// @dev Callable only by Timelock
   /// @param _protocolInterestRate New interest rate
-  /// @param _multisigShare New share for multisig
-  /// @param _apdaoShare New share for apdao
-  /// @param _slope New slope
   /// @param _minDuration New minimum duration
   /// @param _maxDuration New maximum duration
+  /// @param _slope New slope
+  /// @param _maxUtilization New Max Utilization
   function changeLendingParams(
     uint256 _protocolInterestRate,
-    uint256 _multisigShare,
-    uint256 _apdaoShare,
-    uint256 _slope,
     uint256 _minDuration,
-    uint256 _maxDuration
+    uint256 _maxDuration,
+    uint256 _slope,
+    uint256 _maxUtilization
   ) external;
 
   /// @notice Allows multisig to activate or inactivate the protocol
@@ -150,32 +134,38 @@ interface IGoldilend {
   /// @param _borrowingActive Value that activates or inactivates
   function changeBorrowingActive(bool _borrowingActive) external;
 
-  /// @notice Allows multisig to claim interest
-  /// @dev Callable only by multisig
-  /// @dev 4.5% of all protocol interest
-  function multisigInterestClaim() external;
-
-  /// @notice Allows APDAO to claim interest
-  /// @dev Callable only by APDAO
-  /// @dev 0.5% of all protocol interest
-  function apdaoInterestClaim() external;
-
   /// @notice Allows multisig to initialize the protocol parameters
   /// @dev Callable only by multisig
-  /// @param _multisigShare Share of interest payments to multisig
-  /// @param _apdaoShare of interest payments to apdao
+  /// @param _protocolInterestRate Initial interest rate of protocol
   /// @param _minDuration Minimum loan duration
   /// @param _maxDuration Maximum loan duration
-  /// @param _protocolInterestRate Initial interest rate of protocol
   /// @param _slope Initial rate at which interest rate increases
+  /// @param _maxUtilization Maximum amount of protocol debt based on pool size
   function initializeParameters(
-    uint256 _multisigShare,
-    uint256 _apdaoShare,
+    uint256 _protocolInterestRate,
     uint256 _minDuration,
     uint256 _maxDuration,
-    uint256 _protocolInterestRate,
     uint256 _slope,
     uint256 _maxUtilization
+  ) external;
+
+  /// @notice Allows multisig to recover tokens to distribute potential airdrops to borrowers
+  /// @dev Callable only by multisig
+  /// @param token Address of token to recover
+  function recoverTokens(address token) external;
+
+  /// @notice Allows multisig to increase backing of Goldilend Debt Asset by sending debt asset
+  /// @dev Callable only by multisig
+  /// @param amount Amount of debt asset to send
+  function increaseglDebtAssetBacking(uint256 amount) external;
+
+  /// @notice Allows multisig to adjust the valuation of the NFTs to borrow against
+  /// @dev Callable only by multisig
+  /// @param _nfts NFTs that are able to be borrowed against
+  /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation
+  function changeValue(
+    address[] calldata _nfts,
+    uint256[] calldata _nftFairValues
   ) external;
 
   /// @notice Allows multisig to initalize bera nft fair values
@@ -185,25 +175,6 @@ interface IGoldilend {
   function initializeBeras(
     address[] calldata _nfts,
     uint256[] calldata _nftFairValues
-  ) external;
-
-  /// @notice Allows multisig to recover tokens to distribute potential airdrops to borrowers
-  /// @dev Callable only by multisig
-  /// @param token Address of token to recover
-  function recoverTokens(address token) external;
-
-  /// @notice Allows multisig to increase backing of glWBERA by sending WBERA
-  /// @dev Callable only by multisig
-  /// @param amount Amount of WBERA to send
-  function increaseglWBERABacking(uint256 amount) external;
-
-  /// @notice Allows multisig to manage the delegation of the BeraBond NFT
-  /// @dev Callable only by multisig
-  function manageDelegation(
-    address nft,
-    uint256 tokenId,
-    address delegatee,
-    uint256 permissions
   ) external;
 
 }

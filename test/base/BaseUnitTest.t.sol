@@ -79,18 +79,10 @@ abstract contract BaseUnitTest is BaseTest {
     _;
   }
 
-  modifier dealUserWBERA() {
-    deal(address(wbera), address(this), type(uint256).max / 2);
-    wbera.approve(address(proxy), type(uint256).max / 2);
-    _;
-  }
-
   modifier dealUserBeras() {
     INFT(address(bondbear)).mint(address(this));
     INFT(address(bandbear)).mint(address(this));
-    IERC721(bondbear).setApprovalForAll(address(proxy), true);
     IERC721(bondbear).setApprovalForAll(address(rebaseproxy), true);
-    IERC721(bandbear).setApprovalForAll(address(proxy), true);
     IERC721(bandbear).setApprovalForAll(address(rebaseproxy), true);
     _;
   }
@@ -122,9 +114,7 @@ abstract contract BaseUnitTest is BaseTest {
     INFT(address(bandbear)).mint(address(this));
     INFT(address(bondbear)).mint(address(this));
     INFT(address(bandbear)).mint(address(this));
-    IERC721(bondbear).setApprovalForAll(address(proxy), true);
     IERC721(bondbear).setApprovalForAll(address(rebaseproxy), true);
-    IERC721(bandbear).setApprovalForAll(address(proxy), true);
     IERC721(bandbear).setApprovalForAll(address(rebaseproxy), true);
     _;
   }

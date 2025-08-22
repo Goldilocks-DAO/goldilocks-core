@@ -16,17 +16,11 @@ abstract contract BaseFuzzTest is BaseTest {
     deployProtocol();
   }
 
-  modifier dealUseriBGT() {
-    deal(address(ibgt), address(this), type(uint256).max / 2);
-    ibgt.approve(address(goldilend), type(uint256).max / 2);
-    _;
-  }
-
   modifier dealUserBeras() {
     INFT(address(bondbear)).mint(address(this));
     INFT(address(bandbear)).mint(address(this));
-    IERC721(bondbear).setApprovalForAll(address(goldilend), true);
-    IERC721(bandbear).setApprovalForAll(address(goldilend), true);
+    IERC721(bondbear).setApprovalForAll(address(rebasegoldilend), true);
+    IERC721(bandbear).setApprovalForAll(address(rebasegoldilend), true);
     _;
   }
 

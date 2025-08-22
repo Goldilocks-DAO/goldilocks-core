@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-/// @title IGoldilendBase
-interface IGoldilendBase {
+/// @title IBeraBondGoldilend
+interface IBeraBondGoldilend {
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          STRUCT                            */
@@ -25,9 +25,7 @@ interface IGoldilendBase {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   error NotMultisig();
-  error NotTimelock();
   error NotActive();
-  error ArrayMismatch();
   error InvalidDuration();
   error InvalidLoanAmount();
   error InvalidCollateral();
@@ -44,13 +42,15 @@ interface IGoldilendBase {
   event Deposit(address indexed user, uint256 amount, uint256 mintAmount);
   event Withdraw(address indexed user, uint256 amount, uint256 burnAmount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
+  event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newInterest, uint256 newDuration);
   event Repay(address indexed user, uint256 userLoanId, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount, uint256 loanId);
   event NewProtocolInterestRate(uint256 newProtocolInterestRate);
-  event NewSlope(uint256 newSlope);
   event NewDurations(uint256 newMinDuration, uint256 newMaxDuration);
+  event NewSlope(uint256 newSlope);
+  event NewMaxUtilization(uint256 newMaxUtilization);
+  event NewLTV(uint256 newLTV);
   event NewBorrowingActive(bool newBorrowingActive);
-  event MultisigInterestClaim(uint256 interestClaim);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      EXTERNAL FUNCTIONS                    */
@@ -64,6 +64,28 @@ interface IGoldilendBase {
   /// @param amount Amount of goldilend debt asset to burn
   function withdraw(uint256 amount) external;
 
+  /// @notice Borrows BERA against value of BeraBond
+  /// @param borrowAmount Amount of BERA to borrow
+  /// @param duration Duration of loan
+  /// @param collateralNFT BeraBond to use as collateral
+  /// @param collateralNFTId Token Id of BeraBond to use as collateral
+  function borrow(
+    uint256 borrowAmount,
+    uint256 duration,
+    address collateralNFT,
+    uint256 collateralNFTId
+  ) external;
+
+  /// @notice Renews loan with new expiry
+  /// @param userLoanId Loan to be renewed
+  /// @param newDuration New duration of the loan
+  /// @param newBorrowAmount Amount of additional debt asset to be borrowed
+  function renew(
+    uint256 userLoanId,
+    uint256 newDuration,
+    uint256 newBorrowAmount
+  ) external;
+
   /// @notice Repays loan of debt asset
   /// @param repayAmount Amount of debt asset to repay
   /// @param userLoanId ID of loan to repay
@@ -73,6 +95,10 @@ interface IGoldilendBase {
   /// @param user Owner of loan to be liquidated
   /// @param userLoanId Loan to be liquidated
   function liquidate(address user, uint256 userLoanId) external;
+
+  /// @notice Claims BGT rewards from BeraBond NFT
+  /// @param rewardContracts Addresses of BGT reward vaults to claim from
+  function claimYield(address[] memory rewardContracts) external;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
@@ -88,6 +114,12 @@ interface IGoldilendBase {
     address collateralNFT
   ) external view returns (uint256);
 
+  /// @notice Returns the BGT balance of the token bound account
+  /// @param nft Address of the token bound account
+  /// @param tokenId ID of the token bound account
+  /// @return BGT balance of TBA
+  function getTBABGTBalance(address nft, uint256 tokenId) external view returns (uint256);
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -95,14 +127,18 @@ interface IGoldilendBase {
   /// @notice Allows multisig to adjust the protocol lending parameters
   /// @dev Callable only by multisig
   /// @param _protocolInterestRate New interest rate
-  /// @param _slope New slope
   /// @param _minDuration New minimum duration
   /// @param _maxDuration New maximum duration
+  /// @param _slope New slope
+  /// @param _maxUtilization New Max Utilization
+  /// @param _LTV Maximum Loan to Value ratio
   function changeLendingParams(
     uint256 _protocolInterestRate,
-    uint256 _slope,
     uint256 _minDuration,
-    uint256 _maxDuration
+    uint256 _maxDuration,
+    uint256 _slope,
+    uint256 _maxUtilization,
+    uint256 _LTV
   ) external;
 
   /// @notice Allows multisig to activate or inactivate the protocol
@@ -112,16 +148,19 @@ interface IGoldilendBase {
 
   /// @notice Allows multisig to initialize the protocol parameters
   /// @dev Callable only by multisig
+  /// @param _protocolInterestRate Initial interest rate of protocol
   /// @param _minDuration Minimum loan duration
   /// @param _maxDuration Maximum loan duration
-  /// @param _protocolInterestRate Initial interest rate of protocol
   /// @param _slope Initial rate at which interest rate increases
+  /// @param _maxUtilization Maximum amount of protocol debt based on pool size
+  /// @param _LTV Maximum Loan to Value ratio
   function initializeParameters(
+    uint256 _protocolInterestRate,
     uint256 _minDuration,
     uint256 _maxDuration,
-    uint256 _protocolInterestRate,
     uint256 _slope,
-    uint256 _maxUtilization
+    uint256 _maxUtilization,
+    uint256 _LTV
   ) external;
 
   /// @notice Allows multisig to recover tokens to distribute potential airdrops to borrowers
@@ -133,5 +172,18 @@ interface IGoldilendBase {
   /// @dev Callable only by multisig
   /// @param amount Amount of debt asset to send
   function increaseglDebtAssetBacking(uint256 amount) external;
+
+
+  /// @notice Manages the delegation of the token bound account to a delegatee
+  /// @param nft Address of BeraBond
+  /// @param tokenId Token ID of BeraBond
+  /// @param delegatee Address to be delegated to
+  /// @param permissions Permissions to give to the delegatee
+  function manageDelegation(
+    address nft,
+    uint256 tokenId,
+    address delegatee,
+    uint256 permissions
+  ) external;
 
 }

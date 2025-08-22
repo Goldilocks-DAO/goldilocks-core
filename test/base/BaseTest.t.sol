@@ -8,11 +8,8 @@ import { IERC721Receiver } from "../../lib/openzeppelin-contracts/contracts/toke
 import { ERC1967Proxy } from "../../lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
-import { Goldilend } from "../../src/core/goldilend/Goldilend.sol";
-import { GoldilendBase } from "../../src/core/goldilend/GoldilendBase.sol";
 import { RebaseGoldilend } from "../../src/core/goldilend/RebaseGoldilend.sol";
 import { GoldilendDebtAsset } from "../../src/core/goldilend/GoldilendDebtAsset.sol";
-import { GLWBera } from "../../src/core/goldilend/GLWBera.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 import { Goldivault4626 } from "../../src/core/goldivault/Goldivault4626.sol";
 import { OwnershipToken } from "../../src/core/goldivault/OwnershipToken.sol";
@@ -110,8 +107,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
   using LibRLP for address;
 
   Goldiswap goldiswap;
-  Goldilend goldilend;
-  RebaseGoldilend rebasegoldilend;
   GovLocks govlocks;
   Timelock timelock;
   Goldilocked goldilocked;
@@ -132,8 +127,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
   Goldivault4626 oribgtgoldivault;
   oriBGTOT oribgtot;
   oriBGTYT oribgtyt;
-  GLWBera glwbera;
-  ERC1967Proxy proxy;
+  RebaseGoldilend rebasegoldilend;
   ERC1967Proxy rebaseproxy;
   GoldilendDebtAsset glhoney;
 
@@ -153,11 +147,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
     // precompute addresses
     Goldigovernor goldigovComputed = Goldigovernor(address(this).computeAddress(14));
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(15));
-    Goldilend goldilendComputed = Goldilend(address(this).computeAddress(16));
-    GLWBera glwberaComputed = GLWBera(address(this).computeAddress(18));
-    InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(21));
-    Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(24));
-    GoldilendDebtAsset glhoneyComputed = GoldilendDebtAsset(address(this).computeAddress(27));
+    InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(18));
+    Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(21));
+    GoldilendDebtAsset glhoneyComputed = GoldilendDebtAsset(address(this).computeAddress(24));
 
     // deploy mock contracts
     bexlp = new BexLPToken();
@@ -270,7 +262,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     allocationsAmt[30] = 7_000_000e18;
     goldilocked = new Goldilocked(
       address(goldiswap),
-      address(goldilendComputed),
+      address(0),
       address(govlocks),
       address(honey),
       address(timelock),
@@ -285,43 +277,6 @@ abstract contract BaseTest is Test, IERC721Receiver {
     deal(address(honey), address(this), initialPSL);
     honey.approve(address(goldiswap), initialPSL);
     goldiswap.initializeProtocol(initialPSL);
-
-    // deploy goldilend
-    goldilend = new Goldilend();
-
-    // initialization of goldilend
-    bytes memory data = abi.encodeWithSelector(
-      Goldilend.initialize.selector,
-      address(timelock),
-      address(this),
-      apdao,
-      address(wbera),
-      address(bgt),
-      address(glwberaComputed)
-    );
-    proxy = new ERC1967Proxy(address(goldilend), data);
-    glwbera = new GLWBera("Goldilend Wrapped Bera" , "glWBERA", address(proxy));
-    assert(glwbera.goldilend() == address(proxy));
-    address[] memory nfts = new address[](2);
-    nfts[0] = address(bondbear);
-    nfts[1] = address(bandbear);
-    uint256[] memory values = new uint256[](2);
-    values[0] = 50e18;
-    values[1] = 50e18;
-    Goldilend(address(proxy)).initializeParameters(
-      45,
-      5,
-      7 days,
-      365 days,
-      10e18,
-      10e18,
-      69
-    );
-    Goldilend(address(proxy)).initializeBeras(nfts, values);
-    deal(address(wbera), address(this), 1000e18);
-    wbera.approve(address(proxy), 1000e18);
-    Goldilend(address(proxy)).lock(1000e18);
-    // goldilocked.setGoldilendAddress(address(proxy));
 
     // deploy goldivault
     address[] memory yieldTokens = new address[](1);
@@ -374,7 +329,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
 
     // initialization of rebasegoldilend
     bytes memory rebasedata = abi.encodeWithSelector(
-      GoldilendBase.initialize.selector,
+      RebaseGoldilend.initialize.selector,
       address(this),
       address(this),
       address(honey),
@@ -388,15 +343,14 @@ abstract contract BaseTest is Test, IERC721Receiver {
     uint256[] memory rebasevalues = new uint256[](1);
     rebasevalues[0] = 50e18;
     RebaseGoldilend(address(rebaseproxy)).initializeParameters(
-        1 days,
-        365 days,
-        20e18,
-        2e18,
-        90
+      20e18,
+      1 days,
+      365 days,
+      2e18,
+      90
     );
     RebaseGoldilend(address(rebaseproxy)).initializeBeras(rebasenfts, rebasevalues);
-
-    
+  
   }
 
   function withinVariance(uint256 num1, uint256 num2) public pure returns (bool) {

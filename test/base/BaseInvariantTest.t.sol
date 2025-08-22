@@ -6,7 +6,7 @@ import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 import { GoldiswapHandler } from "../invariant/handlers/GoldiswapHandler.t.sol";
 import { GoldilockedHandler } from "../invariant/handlers/GoldilockedHandler.t.sol";
 import { GovLocksHandler } from "../invariant/handlers/GovLocksHandler.t.sol";
-import { GoldilendHandler } from "../invariant/handlers/GoldilendHandler.t.sol";
+import { RebaseGoldilendHandler } from "../invariant/handlers/RebaseGoldilendHandler.t.sol";
 import { Goldivault4626Handler } from "../invariant/handlers/Goldivault4626Handler.t.sol";
 
 abstract contract BaseInvariantTest is BaseTest {
@@ -14,7 +14,7 @@ abstract contract BaseInvariantTest is BaseTest {
   GoldilockedHandler public goldilockedHandler;
   GovLocksHandler public govlocksHandler;
   GoldiswapHandler public goldiswapHandler;
-  GoldilendHandler public goldilendHandler;
+  RebaseGoldilendHandler public rebasegoldilendHandler;
   Goldivault4626Handler public goldivault4626Handler;
 
   function setUp() public virtual override {}

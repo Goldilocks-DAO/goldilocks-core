@@ -13,7 +13,7 @@ pragma solidity ^0.8.22;
 // |                                                                                            |
 // |============================================================================================|
 // ==============================================================================================
-// ===================================== GoldilendBase ==========================================
+// ================================== BeraBondGoldilend =========================================
 // ==============================================================================================
 
 
@@ -25,13 +25,15 @@ import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/t
 import { Initializable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
-import { IGoldilendBase } from "../../interfaces/IGoldilendBase.sol";
+import { IBeraBondNFT } from "../../interfaces/IBeraBondNFT.sol";
+import { IGl00DelegationRegistry } from "../../interfaces/IGl00DelegationRegistry.sol";
 import { GoldilendDebtAsset } from "./GoldilendDebtAsset.sol";
+import { IBeraBondGoldilend } from "../../interfaces/IBeraBondGoldilend.sol";
 
 
-/// @title GoldilendBase
-/// @notice Bong Bear (and rebase) Fixed Term NFT Lending
-abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgradeable, IGoldilendBase, IERC721Receiver {
+/// @title BeraBondGoldilend 
+/// @notice BeraBond Fixed Term NFT Lending
+contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IBeraBondGoldilend, IERC721Receiver {
 
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -56,6 +58,18 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
 
     /// @notice Address of Goldilend Debt Asset
     address public glDebtAsset;
+
+    /// @notice Address of Berachain Governance Token
+    address public bgt;
+
+    /// @notice Address of BeraBond NFT
+    address public berabond;
+
+    /// @notice Address of BeraBond Delegation Registry
+    address public delegationRegistry;
+
+    /// @notice Maximum Loan to Value ratio
+    uint256 public LTV;
 
     /// @notice Interest rate of protocol
     uint256 public protocolInterestRate;
@@ -99,6 +113,9 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
     /// @notice Maps NFT to fair value
     mapping(address => uint256) public nftFairValues;
 
+    /// @notice Maps user address to IDs of BeraBonds in Goldilend
+    mapping(address => uint256[]) public userTokenIds;
+
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTRUCTOR                        */
@@ -115,11 +132,17 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
     /// @param _multisig Address of the multisig
     /// @param _debtAsset Address of the Debt Asset
     /// @param _glDebtAsset Address of Goldilend Debt Asset
+    /// @param _bgt Address of BGT
+    /// @param _berabond Address of BeraBond
+    /// @param _delegationRegistry Address of the BeraBond Delegation Registry
     function initialize(
         address _timelock,
         address _multisig,
         address _debtAsset,
-        address _glDebtAsset
+        address _glDebtAsset,
+        address _bgt,
+        address _berabond,
+        address _delegationRegistry
     ) public initializer {
         __Ownable_init(_multisig);
         __UUPSUpgradeable_init();
@@ -127,6 +150,9 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         multisig = _multisig;
         debtAsset = _debtAsset;
         glDebtAsset = _glDebtAsset;
+        bgt = _bgt;
+        berabond = _berabond;
+        delegationRegistry = _delegationRegistry;
     }
 
 
@@ -135,7 +161,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function deposit(uint256 amount) external {
         uint256 mintAmount = _glDebtAssetMintAmount(amount);
         poolSize += amount;
@@ -144,7 +170,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         emit Deposit(msg.sender, amount, mintAmount);
     }
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function withdraw(uint256 amount) external {
         uint256 withdrawAmount = _glDebtAssetWithdrawAmount(amount);
         poolSize -= withdrawAmount;
@@ -153,7 +179,75 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         emit Withdraw(msg.sender, withdrawAmount, amount);
     }
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
+    function borrow(
+        uint256 borrowAmount,
+        uint256 duration,
+        address collateralNFT,
+        uint256 collateralNFTId
+    ) external {
+        if(!borrowingActive) revert NotActive();
+        if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
+        uint256 _poolSize = poolSize;
+        uint256 fairValue = nftFairValues[collateralNFT];
+        uint256 userLoansLength = userLoanAmount[msg.sender];
+        uint256 _outstandingDebt = outstandingDebt;
+        uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
+        uint256 maxBorrow = bgtBalance * LTV / 100;
+        if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
+        if(borrowAmount > maxBorrow) revert InvalidLoanAmount();
+        if(borrowAmount > _poolSize / 10) revert InvalidLoanAmount();
+        uint256 interest = _calculateInterest(borrowAmount, _outstandingDebt, duration);
+        if(_outstandingDebt + borrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + interest > fairValue || borrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
+        outstandingDebt += borrowAmount;
+        Loan memory loan = Loan({
+            collateralNFT: collateralNFT,
+            collateralNFTId: collateralNFTId,
+            borrowedAmount: borrowAmount,
+            interest: interest,
+            duration: duration,
+            endDate: block.timestamp + duration,
+            loanId: userLoansLength + 1,
+            repaid: false,
+            liquidated: false
+        });
+        loans[msg.sender][userLoansLength + 1] = loan;
+        userLoanAmount[msg.sender]++;
+        userTokenIds[msg.sender].push(collateralNFTId);
+        IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount - interest);
+        SafeTransferLib.safeTransfer(debtAsset, multisig, interest);
+        emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, 0, block.timestamp + duration, collateralNFT, collateralNFTId);
+    }
+
+    /// @inheritdoc IBeraBondGoldilend
+    function renew(
+        uint256 userLoanId,
+        uint256 newDuration,
+        uint256 newBorrowAmount
+    ) external {
+        if(!borrowingActive) revert NotActive();
+        if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
+        Loan memory userLoan = loans[msg.sender][userLoanId];
+        uint256 _outstandingDebt = outstandingDebt;
+        uint256 _poolSize = poolSize;
+        uint256 newInterest = _calculateInterest(userLoan.borrowedAmount + newBorrowAmount, _outstandingDebt, newDuration);
+        if(newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
+        if(_outstandingDebt + newBorrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
+        outstandingDebt += newBorrowAmount;
+        Loan storage newUserLoan = loans[msg.sender][userLoanId];
+        newUserLoan.borrowedAmount += newBorrowAmount;
+        newUserLoan.interest += newInterest;
+        newUserLoan.duration += newDuration;
+        newUserLoan.endDate += newDuration;
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount - newInterest);
+        SafeTransferLib.safeTransfer(debtAsset, multisig, newInterest);
+        emit Renew(msg.sender, userLoanId, newBorrowAmount, newInterest, newDuration);
+    }
+
+    /// @inheritdoc IBeraBondGoldilend
     function repay(uint256 repayAmount, uint256 userLoanId) external {
         Loan memory userLoan = loans[msg.sender][userLoanId];
         if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
@@ -171,7 +265,7 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         emit Repay(msg.sender, userLoanId, repayAmount);
     }
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function liquidate(address user, uint256 userLoanId) external {
         Loan memory userLoan = loans[user][userLoanId];
         if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
@@ -183,18 +277,30 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
     }
 
+    /// @inheritdoc IBeraBondGoldilend
+    function claimYield(address[] memory rewardContracts) external {
+        uint256 userTokenIdsLength = userTokenIds[msg.sender].length;
+        for(uint256 i; i < userTokenIdsLength;) {
+            address payable tba = IBeraBondNFT(berabond).getTokenBoundAccount(userTokenIds[msg.sender][i]);
+            IBeraBondNFT(tba).claimFromEach(rewardContracts, msg.sender);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  EXTERNAL VIEW FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function getUserLoan(address user, uint256 userLoanId) external view returns (Loan memory) {
         return loans[user][userLoanId];
     }
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function calculateInterest(
         uint256 borrowAmount,
         uint256 duration,
@@ -207,6 +313,11 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         uint256 debt = outstandingDebt;
         if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
         return _calculateInterest(borrowAmount, debt, duration);
+    }
+
+    /// @inheritdoc IBeraBondGoldilend
+    function getTBABGTBalance(address nft, uint256 tokenId) external view returns (uint256) {
+        return _getTBABGTBalance(nft, tokenId);
     }
 
 
@@ -232,7 +343,6 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         return interestAdjusted / 100;
     }
 
-
     /// @notice Calculates the amount of Goldilend Debt Asset to mint
     /// @param depositAmount Amount of the debt asset to deposit
     /// @return mintAmount Total supply of the goldilend debt asset divided by the lending pool size multiplied by depsoitAmount
@@ -257,68 +367,104 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         return FixedPointMathLib.divWad(supply, _poolSize);
     }
 
+    /// @notice Returns the BGT balance of the token bound account
+    /// @param nft Address of the token bound account
+    /// @param tokenId ID of the token bound account
+    /// @return BGT balance of TBA
+    function _getTBABGTBalance(address nft, uint256 tokenId) internal view returns (uint256) {
+        address tba = IBeraBondNFT(nft).getTokenBoundAccount(tokenId);
+        return ERC20(bgt).balanceOf(tba);
+    }
+
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    PERMISSIONED FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function changeLendingParams(
         uint256 _protocolInterestRate,
-        uint256 _slope,
         uint256 _minDuration,
-        uint256 _maxDuration
+        uint256 _maxDuration,
+        uint256 _slope,
+        uint256 _maxUtilization,
+        uint256 _LTV
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
         protocolInterestRate = _protocolInterestRate;
-        slope = _slope;
         minDuration = _minDuration;
         maxDuration = _maxDuration;
+        slope = _slope;
+        maxUtilization = _maxUtilization;
+        LTV = _LTV;
         emit NewProtocolInterestRate(_protocolInterestRate);
-        emit NewSlope(_slope);
         emit NewDurations(_minDuration, _maxDuration);
+        emit NewSlope(_slope);
+        emit NewMaxUtilization(_maxUtilization);
+        emit NewLTV(_LTV);
     }
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function changeBorrowingActive(bool _borrowingActive) external {
         if(msg.sender != multisig) revert NotMultisig();
         borrowingActive = _borrowingActive;
         emit NewBorrowingActive(_borrowingActive);
     }
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function initializeParameters(
+        uint256 _protocolInterestRate,
         uint256 _minDuration,
         uint256 _maxDuration,
-        uint256 _protocolInterestRate,
         uint256 _slope,
-        uint256 _maxUtilization
+        uint256 _maxUtilization,
+        uint256 _LTV
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
         if(parametersInitialized) revert AlreadyInitialized();
         parametersInitialized = true;
+        protocolInterestRate = _protocolInterestRate;
         minDuration = _minDuration;
         maxDuration = _maxDuration;
-        protocolInterestRate = _protocolInterestRate;
         slope = _slope;
         maxUtilization = _maxUtilization;
-        emit NewDurations(_minDuration, _maxDuration);
+        LTV = _LTV;
         emit NewProtocolInterestRate(_protocolInterestRate);
+        emit NewDurations(_minDuration, _maxDuration);
         emit NewSlope(_slope);
+        emit NewMaxUtilization(_maxUtilization);
+        emit NewLTV(_LTV);
     }
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function recoverTokens(address token) external {
         if(msg.sender != multisig) revert NotMultisig();
         SafeTransferLib.safeTransfer(token, multisig, ERC20(token).balanceOf(address(this)));
     }
 
-    /// @inheritdoc IGoldilendBase
+    /// @inheritdoc IBeraBondGoldilend
     function increaseglDebtAssetBacking(uint256 amount) external {
         if(msg.sender != multisig) revert NotMultisig();
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
         poolSize += amount;
+    }
+
+    /// @inheritdoc IBeraBondGoldilend
+    function manageDelegation(
+        address nft,
+        uint256 tokenId,
+        address delegatee,
+        uint256 permissions
+    ) external {
+        if(msg.sender != multisig) revert NotMultisig();
+        address payable tba = IBeraBondNFT(nft).getTokenBoundAccount(tokenId);
+        IGl00DelegationRegistry(delegationRegistry).setDelegation(
+            tba,
+            delegatee,
+            permissions,
+            30 days
+        );
     }
 
 
@@ -341,4 +487,5 @@ abstract contract GoldilendBase is Initializable, OwnableUpgradeable, UUPSUpgrad
         override
         onlyOwner
     {}
+
 }
