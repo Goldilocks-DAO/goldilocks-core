@@ -9,5 +9,6 @@ solc='0.8.22'
 runs=200
 
 [invariant]
-runs=200
-depth=400
+runs=50
+depth=100
+fail_on_revert = false

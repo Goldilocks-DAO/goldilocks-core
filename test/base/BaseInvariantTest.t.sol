@@ -63,5 +63,12 @@ abstract contract BaseInvariantTest is BaseTest {
   }
 
   // goldilend
+  function accumulateMintedGlhoney(uint256 minted, address caller) external view returns (uint256) {
+    return minted + glhoney.balanceOf(caller);
+  }
+  function assertMintedGlhoneyLtePoolSize(address account) external returns (address[] memory) {
+    assertLe(glhoney.balanceOf(account), rebasegoldilend.poolSize());
+    return new address[](0);
+  }
 
 }
