@@ -480,7 +480,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         onlyOwner
     {}
 
-    /// @notice Allows the contract to receive BERA
     receive() external payable {}
 
 }
