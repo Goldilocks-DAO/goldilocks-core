@@ -50,9 +50,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @notice Address of multisig
     address public multisig;
 
-    /// @notice Address of Timelock
-    address public timelock;
-
     /// @notice Address of Goldilend Debt Asset
     address public glDebtAsset;
 
@@ -125,14 +122,12 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     }
 
     /// @notice Initializer of the contract
-    /// @param _timelock Address of the timelock
     /// @param _multisig Address of the multisig
     /// @param _glDebtAsset Address of Goldilend Debt Asset
     /// @param _bgt Address of BGT
     /// @param _berabond Address of BeraBond
     /// @param _delegationRegistry Address of the BeraBond Delegation Registry
     function initialize(
-        address _timelock,
         address _multisig,
         address _glDebtAsset,
         address _bgt,
@@ -141,7 +136,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     ) public initializer {
         __Ownable_init(_multisig);
         __UUPSUpgradeable_init();
-        timelock = _timelock;
         multisig = _multisig;
         glDebtAsset = _glDebtAsset;
         bgt = _bgt;
