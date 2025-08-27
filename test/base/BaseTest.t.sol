@@ -9,6 +9,7 @@ import { ERC1967Proxy } from "../../lib/openzeppelin-contracts/contracts/proxy/E
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { RebaseGoldilend } from "../../src/core/goldilend/RebaseGoldilend.sol";
+import { BeraBondGoldilend } from "../../src/core/goldilend/BeraBondGoldilend.sol";
 import { GoldilendDebtAsset } from "../../src/core/goldilend/GoldilendDebtAsset.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 import { Goldivault4626 } from "../../src/core/goldivault/Goldivault4626.sol";
@@ -130,6 +131,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
   RebaseGoldilend rebasegoldilend;
   ERC1967Proxy rebaseproxy;
   GoldilendDebtAsset glhoney;
+  BeraBondGoldilend berabondgoldilend;
+  ERC1967Proxy berabondproxy;
+  GoldilendDebtAsset glbera;
 
   uint256 initialFSL = 1_140_000e18;
   uint256 initialPSL = 400_000e18;
@@ -150,6 +154,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(18));
     Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(21));
     GoldilendDebtAsset glhoneyComputed = GoldilendDebtAsset(address(this).computeAddress(24));
+    GoldilendDebtAsset glberaComputed = GoldilendDebtAsset(address(this).computeAddress(27));
 
     // deploy mock contracts
     bexlp = new BexLPToken();
@@ -350,7 +355,32 @@ abstract contract BaseTest is Test, IERC721Receiver {
       90
     );
     RebaseGoldilend(address(rebaseproxy)).initializeBeras(rebasenfts, rebasevalues);
-  
+
+    // deploy berabondgoldilend
+    berabondgoldilend = new BeraBondGoldilend();
+
+    // initialization of berabondgoldilend
+    bytes memory berabonddata = abi.encodeWithSelector(
+      BeraBondGoldilend.initialize.selector,
+      address(this),
+      address(glberaComputed),
+      address(0),
+      address(0),
+      address(0)
+    );
+    berabondproxy = new ERC1967Proxy(address(berabondgoldilend), berabonddata);
+    address payable berabondproxyaddy = payable(address(berabondproxy));
+    glbera = new GoldilendDebtAsset("Goldilend Bera", "glBERA", address(berabondproxy));
+    assert(BeraBondGoldilend(berabondproxyaddy).glDebtAsset() == address(glbera));
+    BeraBondGoldilend(berabondproxyaddy).initializeParameters(
+      20e18,
+      1 days,
+      365 days,
+      2e18,
+      90,
+      80
+    );
+
   }
 
   function withinVariance(uint256 num1, uint256 num2) public pure returns (bool) {

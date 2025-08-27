@@ -111,7 +111,8 @@ interface IBeraBondGoldilend {
   function calculateInterest(
     uint256 borrowAmount,
     uint256 duration,
-    address collateralNFT
+    address collateralNFT,
+    uint256 collateralNFTId
   ) external view returns (uint256);
 
   /// @notice Returns the BGT balance of the token bound account

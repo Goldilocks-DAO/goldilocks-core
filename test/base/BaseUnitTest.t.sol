@@ -124,6 +124,11 @@ abstract contract BaseUnitTest is BaseTest {
     _;
   }
 
+  modifier dealBeraForGoldilend() {
+    deal(address(this), dealAmt);
+    _;
+  }
+
 
   function proposySame() public pure returns (address[] memory, string[] memory, bytes[] memory, uint256[] memory) {
     address[] memory targets = new address[](2);
