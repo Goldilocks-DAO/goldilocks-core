@@ -138,6 +138,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         bgt = _bgt;
         berabond = _berabond;
         delegationRegistry = _delegationRegistry;
+        isBeraBond[_berabond] = true;
     }
 
 

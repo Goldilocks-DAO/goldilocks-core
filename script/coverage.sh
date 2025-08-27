@@ -1,5 +1,4 @@
-# forge coverage --mc "Unit|Fuzz|Diff|Integration" --report lcov --ffi
-forge coverage --mc "Unit|Fuzz|Diff" --report lcov --ffi
+forge coverage --mc "Unit|Fuzz|Diff|Integration" --report lcov --ffi
 
 lcov --remove lcov.info -o lcov.info 'script/*' 'src/mock/*' 'test/*' --rc lcov_branch_coverage=1
 
