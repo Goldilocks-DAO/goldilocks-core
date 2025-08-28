@@ -17,8 +17,11 @@ contract TestUpgradeableBeraBondGoldilend is BeraBondGoldilend {
   }
 }
 
-contract UnitBeraBondGoldilendTest is BaseUnitTest {
+contract NoTransfersAllowed {
+    uint256 public hello;
+}
 
+contract UnitBeraBondGoldilendTest is BaseUnitTest {
 
     function testCalculateInterestFailDuration() public {
         vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.InvalidDuration.selector));
@@ -35,6 +38,11 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
         BeraBondGoldilend(payable(address(berabondproxy))).calculateInterest(0, 2 days, address(0x69), 1);
     }
 
+    function testDepositFailInvalidAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.InvalidAmount.selector));
+        BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: 0}();
+    }
+
     function testDepositSuccess() public dealBeraForGoldilend {
         uint256 initialBeraBalance = address(this).balance;
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
@@ -43,6 +51,16 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
         assertEq(BeraBondGoldilend(payable(address(berabondproxy))).poolSize(), txAmount);
         assertEq(address(this).balance, initialBeraBalance - txAmount);
         assertEq(address(berabondproxy).balance, txAmount);
+    }
+
+    function testWithdrawFailTransfer() public {
+        NoTransfersAllowed test = new NoTransfersAllowed();
+        deal(address(test), dealAmt);
+        vm.prank(address(test));
+        BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
+        vm.prank(address(test));
+        vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.TransferFailed.selector));
+        BeraBondGoldilend(payable(address(berabondproxy))).withdraw(txAmount);
     }
 
     function testWithdrawSuccess() public dealBeraForGoldilend {
@@ -71,6 +89,35 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
         vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.InvalidCollateral.selector));
         BeraBondGoldilend(payable(address(berabondproxy))).borrow(69, 2 days, address(0x69), 69);
+    }
+
+    function testRecoverTokensFailMultisig() public {
+        vm.prank(address(0x69));
+        vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.NotMultisig.selector));
+        BeraBondGoldilend(payable(address(berabondproxy))).recoverTokens(address(0x69));
+    }
+
+    function testRecoverTokensSuccess() public {
+        deal(address(honey), address(berabondproxy), 69);
+        BeraBondGoldilend(payable(address(berabondproxy))).recoverTokens(address(honey));
+
+        assertEq(honey.balanceOf(address(this)), 69);
+    }
+
+    function testIncreaseglDebtAssetBackingFailMultisig() public {
+        deal(address(0x69), 69);
+        vm.prank(address(0x69));
+        vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.NotMultisig.selector));
+        BeraBondGoldilend(payable(address(berabondproxy))).increaseglDebtAssetBacking{ value: 69 }();
+    }
+
+    function testIncreaseglDebtAssetBackingSuccess() public {
+        deal(address(this), 69);
+        BeraBondGoldilend(payable(address(berabondproxy))).increaseglDebtAssetBacking{ value: 69 }();
+
+        assertEq(address(this).balance, 0);
+        assertEq(address(berabondproxy).balance, 69);
+        assertEq(BeraBondGoldilend(payable(address(berabondproxy))).poolSize(), 69);
     }
 
     receive() external payable {}
