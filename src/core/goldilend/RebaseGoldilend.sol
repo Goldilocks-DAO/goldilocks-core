@@ -222,7 +222,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         Loan memory userLoan = loans[msg.sender][userLoanId];
         if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
-        outstandingDebt -= repayAmount > outstandingDebt ? outstandingDebt : repayAmount;
+        if(repayAmount > _outstandingDebt) repayAmount = _outstandingDebt;
+        outstandingDebt -= repayAmount;
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), repayAmount);
         if(userLoan.borrowedAmount - repayAmount == 0) {
             loans[msg.sender][userLoanId].borrowedAmount = 0;
