@@ -65,19 +65,19 @@ contract IntegrationBeraBondGoldilendTest is Test {
         vm.stopPrank();
     }
 
-    // function testBeraBondClaimYield() public {
-    //     address[] memory rewardVaults = new address[](1);
-    //     rewardVaults[0] = 0x124ca134dd2CD67362E259fb33A2c762d8BAF961;
-    //     deal(rawdog, 5_000e18);
-    //     vm.startPrank(rawdog);
-    //     BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: 5_000e18}();
-    //     IERC721(berabond).setApprovalForAll(address(berabondproxy), true);
-    //     BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 2 days, berabond, 6);
-    //     vm.stopPrank();
+    function testBeraBondClaimYield() public {
+        address[] memory rewardVaults = new address[](1);
+        rewardVaults[0] = 0x124ca134dd2CD67362E259fb33A2c762d8BAF961;
+        deal(rawdog, 5_000e18);
+        vm.startPrank(rawdog);
+        BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: 5_000e18}();
+        IERC721(berabond).setApprovalForAll(address(berabondproxy), true);
+        BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 2 days, berabond, 6);
+        vm.stopPrank();
 
-    //     vm.prank(rawdog);
-    //     BeraBondGoldilend(payable(address(berabondproxy))).claimYield(rewardVaults);
-    // }
+        vm.prank(rawdog);
+        BeraBondGoldilend(payable(address(berabondproxy))).claimYield(rewardVaults);
+    }
 
 
 }
