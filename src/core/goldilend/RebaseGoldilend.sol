@@ -397,11 +397,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(msg.sender != multisig) revert NotMultisig();
         if(_nfts.length != _nftFairValues.length) revert ArrayMismatch();
         uint256 nftFairValuesLength = _nftFairValues.length;
-        for(uint256 i; i < nftFairValuesLength;) {
+        for(uint256 i; i < nftFairValuesLength; ++i) {
             nftFairValues[_nfts[i]] = _nftFairValues[i];
-            unchecked {
-                ++i;
-            }
         }
     }
 
@@ -415,11 +412,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(berasInitialized) revert AlreadyInitialized();
         berasInitialized = true;
         uint256 nftFairValuesLength = _nftFairValues.length;
-        for(uint256 i; i < nftFairValuesLength;) {
+        for(uint256 i; i < nftFairValuesLength; ++i) {
             nftFairValues[_nfts[i]] = _nftFairValues[i];
-            unchecked {
-                ++i;
-            }
         }
         borrowingActive = true;
     }

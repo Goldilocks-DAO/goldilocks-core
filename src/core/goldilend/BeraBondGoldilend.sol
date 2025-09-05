@@ -274,12 +274,9 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @inheritdoc IBeraBondGoldilend
     function claimYield(address[] memory rewardContracts) external {
         uint256 depositedBeraBondIDsLength = depositedBeraBondIDs[msg.sender].length;
-        for(uint256 i; i < depositedBeraBondIDsLength;) {
+        for(uint256 i; i < depositedBeraBondIDsLength; ++i) {
             address payable tba = IBeraBondNFT(berabond).getTokenBoundAccount(depositedBeraBondIDs[msg.sender][i]);
             IBeraBondNFT(tba).claimFromEach(rewardContracts, msg.sender);
-            unchecked {
-                ++i;
-            }
         }
     }
 
@@ -326,14 +323,11 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     function _removeFromDepositedBeraBondIDs(uint256 beraBondID, address user) internal {
         uint256[] storage userDepositedIDs = depositedBeraBondIDs[user];
         uint256 depositedBeraBondIDsLength = depositedBeraBondIDs[user].length;
-        for(uint256 i; i < depositedBeraBondIDsLength;) {   
+        for(uint256 i; i < depositedBeraBondIDsLength; ++i) {   
             if(userDepositedIDs[i] == beraBondID) {
                 userDepositedIDs[i] = userDepositedIDs[userDepositedIDs.length - 1];
                 userDepositedIDs.pop();
                 break;
-            }
-            unchecked {
-                ++i;
             }
         }
     }
