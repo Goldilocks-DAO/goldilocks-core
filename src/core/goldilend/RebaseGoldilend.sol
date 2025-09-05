@@ -31,7 +31,7 @@ import { GoldilendDebtAsset } from "./GoldilendDebtAsset.sol";
 
 /// @title RebaseGoldilend 
 /// @notice Bong Bear (and rebase) Fixed Term NFT Lending
-contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IRebaseGoldilend, IERC721Receiver {
+contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IRebaseGoldilend {
     
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -429,15 +429,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /*                  IMPLEMENTATION FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external virtual returns (bytes4) {
-        return IERC721Receiver.onERC721Received.selector;
-    }
 
     function _authorizeUpgrade(address newImplementation)
         internal

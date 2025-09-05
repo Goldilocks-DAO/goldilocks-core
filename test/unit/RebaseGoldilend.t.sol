@@ -458,12 +458,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values);
     }
 
-    function testOnERC721Received() public {
-        bandbear.mint(address(rebaseproxy));
-
-        assert(IERC721(bandbear).balanceOf(address(rebaseproxy)) > 0);
-    }
-
     function testUpgradeRebaseGoldilendFailOwner() public {
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(0x69)));

@@ -33,7 +33,7 @@ import { IBeraBondGoldilend } from "../../interfaces/IBeraBondGoldilend.sol";
 
 /// @title BeraBondGoldilend 
 /// @notice BeraBond Fixed Term NFT Lending
-contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IBeraBondGoldilend, IERC721Receiver {
+contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, IBeraBondGoldilend {
 
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -492,15 +492,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /*                  IMPLEMENTATION FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external virtual returns (bytes4) {
-        return IERC721Receiver.onERC721Received.selector;
-    }
 
     function _authorizeUpgrade(address newImplementation)
         internal
