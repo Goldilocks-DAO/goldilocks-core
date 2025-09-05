@@ -105,7 +105,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     mapping(address => bool) public isBeraBond;
 
     /// @notice Maps user address to IDs of BeraBonds in Goldilend
-    mapping(address => uint256[]) public userTokenIds;
+    mapping(address => uint256[]) public depositedBeraBondIDs;
 
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -198,7 +198,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         });
         loans[msg.sender][userLoansLength + 1] = loan;
         userLoanAmount[msg.sender]++;
-        userTokenIds[msg.sender].push(collateralNFTId);
+        depositedBeraBondIDs[msg.sender].push(collateralNFTId);
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
         (bool success1, ) = payable(msg.sender).call{value: borrowAmount - interest}("");
         if(!success1) revert TransferFailed();
@@ -249,6 +249,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         if(userLoan.borrowedAmount - repayAmount == 0) {
             loans[msg.sender][userLoanId].borrowedAmount = 0;
             loans[msg.sender][userLoanId].repaid = true;
+            _removeFromDepositedBeraBondIDs(userLoan.collateralNFTId, msg.sender);
             IERC721(userLoan.collateralNFT).transferFrom(address(this), msg.sender, userLoan.collateralNFTId);
         }
         else {
@@ -265,15 +266,16 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         loans[user][userLoanId].borrowedAmount = 0;
         outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
         poolSize -= userLoan.borrowedAmount > poolSize ? poolSize : userLoan.borrowedAmount;
+        _removeFromDepositedBeraBondIDs(userLoan.collateralNFTId, user);
         IERC721(userLoan.collateralNFT).safeTransferFrom(address(this), multisig, userLoan.collateralNFTId);
         emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
     }
 
     /// @inheritdoc IBeraBondGoldilend
     function claimYield(address[] memory rewardContracts) external {
-        uint256 userTokenIdsLength = userTokenIds[msg.sender].length;
-        for(uint256 i; i < userTokenIdsLength;) {
-            address payable tba = IBeraBondNFT(berabond).getTokenBoundAccount(userTokenIds[msg.sender][i]);
+        uint256 depositedBeraBondIDsLength = depositedBeraBondIDs[msg.sender].length;
+        for(uint256 i; i < depositedBeraBondIDsLength;) {
+            address payable tba = IBeraBondNFT(berabond).getTokenBoundAccount(depositedBeraBondIDs[msg.sender][i]);
             IBeraBondNFT(tba).claimFromEach(rewardContracts, msg.sender);
             unchecked {
                 ++i;
@@ -312,6 +314,28 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @inheritdoc IBeraBondGoldilend
     function getTBABGTBalance(address nft, uint256 tokenId) external view returns (uint256) {
         return _getTBABGTBalance(nft, tokenId);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     INTERNAL FUNCTIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/  
+
+    /// @notice Removes an NFT ID from the depositedBeraBondIDs array
+    /// @param beraBondID NFT ID to remove
+    /// @param user User whose array to modify
+    function _removeFromDepositedBeraBondIDs(uint256 beraBondID, address user) internal {
+        uint256[] storage userDepositedIDs = depositedBeraBondIDs[user];
+        uint256 depositedBeraBondIDsLength = depositedBeraBondIDs[user].length;
+        for(uint256 i; i < depositedBeraBondIDsLength;) {   
+            if(userDepositedIDs[i] == beraBondID) {
+                userDepositedIDs[i] = userDepositedIDs[userDepositedIDs.length - 1];
+                userDepositedIDs.pop();
+                break;
+            }
+            unchecked {
+                ++i;
+            }
+        }
     }
 
 
