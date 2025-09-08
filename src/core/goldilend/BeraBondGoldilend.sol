@@ -264,7 +264,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
         poolSize -= userLoan.borrowedAmount > poolSize ? poolSize : userLoan.borrowedAmount;
         _removeFromDepositedBeraBondIDs(userLoan.collateralNFTId, user);
-        IERC721(userLoan.collateralNFT).safeTransferFrom(address(this), multisig, userLoan.collateralNFTId);
+        IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
         emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
     }
 

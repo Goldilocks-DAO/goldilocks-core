@@ -235,7 +235,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         loans[user][userLoanId].borrowedAmount = 0;
         outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
         poolSize -= userLoan.borrowedAmount > poolSize ? poolSize : userLoan.borrowedAmount;
-        IERC721(userLoan.collateralNFT).safeTransferFrom(address(this), multisig, userLoan.collateralNFTId);
+        IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
         emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
     }
 
