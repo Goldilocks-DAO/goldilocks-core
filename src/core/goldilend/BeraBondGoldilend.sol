@@ -86,9 +86,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @notice Maximum utilization of protocol liquidity
     uint256 public maxUtilization;
 
-    /// @notice Portion of interest payments to multisig
-    uint256 public multisigClaims;
-
     /// @notice Boolean value if borrowing is active
     bool public borrowingActive;
 

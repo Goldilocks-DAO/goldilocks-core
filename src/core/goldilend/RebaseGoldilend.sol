@@ -48,9 +48,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Address of multisig
     address public multisig;
 
-    /// @notice Address of Timelock
-    address public timelock;
-
     /// @notice Address of the Debt Asset
     address public debtAsset;
 
@@ -77,9 +74,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
     /// @notice Maximum utilization of protocol liquidity
     uint256 public maxUtilization;
-
-    /// @notice Portion of interest payments to multisig
-    uint256 public multisigClaims;
 
     /// @notice Boolean value if borrowing is active
     bool public borrowingActive;
@@ -111,19 +105,16 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     }
 
     /// @notice Initializer of the contract
-    /// @param _timelock Address of the timelock
     /// @param _multisig Address of the multisig
     /// @param _debtAsset Address of the Debt Asset
     /// @param _glDebtAsset Address of Goldilend Debt Asset
     function initialize(
-        address _timelock,
         address _multisig,
         address _debtAsset,
         address _glDebtAsset
     ) public initializer {
         __Ownable_init(_multisig);
         __UUPSUpgradeable_init();
-        timelock = _timelock;
         multisig = _multisig;
         debtAsset = _debtAsset;
         glDebtAsset = _glDebtAsset;

@@ -166,7 +166,6 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
 
   function invariant_protocol_addresses() public {
     assertTrue(RebaseGoldilend(address(rebaseproxy)).multisig() != address(0), "Multisig should be set");
-    assertTrue(RebaseGoldilend(address(rebaseproxy)).timelock() != address(0), "Timelock should be set");
     assertTrue(RebaseGoldilend(address(rebaseproxy)).debtAsset() != address(0), "Debt asset should be set");
     assertTrue(RebaseGoldilend(address(rebaseproxy)).glDebtAsset() != address(0), "GL debt asset should be set");
   }
