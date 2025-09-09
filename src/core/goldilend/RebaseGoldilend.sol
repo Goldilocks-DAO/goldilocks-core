@@ -326,7 +326,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 _maxDuration,
         uint256 _slope,
         uint256 _maxUtilization
-    ) external {
+    ) public {
         if(msg.sender != multisig) revert NotMultisig();
         protocolInterestRate = _protocolInterestRate;
         minDuration = _minDuration;
@@ -356,16 +356,10 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
         if(parametersInitialized) revert AlreadyInitialized();
+
+        changeLendingParams(_protocolInterestRate, _minDuration, _maxDuration, _slope, _maxUtilization);
+        
         parametersInitialized = true;
-        protocolInterestRate = _protocolInterestRate;
-        minDuration = _minDuration;
-        maxDuration = _maxDuration;
-        slope = _slope;
-        maxUtilization = _maxUtilization;
-        emit NewProtocolInterestRate(_protocolInterestRate);
-        emit NewDurations(_minDuration, _maxDuration);
-        emit NewSlope(_slope);
-        emit NewMaxUtilization(_maxUtilization);
     }
 
     /// @inheritdoc IRebaseGoldilend
@@ -385,7 +379,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     function changeValue(
         address[] calldata _nfts,
         uint256[] calldata _nftFairValues
-    ) external {
+    ) public {
         if(msg.sender != multisig) revert NotMultisig();
         if(_nfts.length != _nftFairValues.length) revert ArrayMismatch();
         uint256 nftFairValuesLength = _nftFairValues.length;
@@ -400,13 +394,11 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256[] calldata _nftFairValues
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
-        if(_nfts.length != _nftFairValues.length) revert ArrayMismatch();
         if(berasInitialized) revert AlreadyInitialized();
+        
+        changeValue(_nfts, _nftFairValues);
+
         berasInitialized = true;
-        uint256 nftFairValuesLength = _nftFairValues.length;
-        for(uint256 i; i < nftFairValuesLength; ++i) {
-            nftFairValues[_nfts[i]] = _nftFairValues[i];
-        }
         borrowingActive = true;
     }
 

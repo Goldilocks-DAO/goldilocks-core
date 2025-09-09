@@ -400,7 +400,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 _slope,
         uint256 _maxUtilization,
         uint256 _LTV
-    ) external {
+    ) public {
         if(msg.sender != multisig) revert NotMultisig();
         protocolInterestRate = _protocolInterestRate;
         minDuration = _minDuration;
@@ -433,19 +433,11 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
         if(parametersInitialized) revert AlreadyInitialized();
-        parametersInitialized = true;
-        protocolInterestRate = _protocolInterestRate;
-        minDuration = _minDuration;
-        maxDuration = _maxDuration;
-        slope = _slope;
-        maxUtilization = _maxUtilization;
-        LTV = _LTV;
+
+        changeLendingParams(_protocolInterestRate, _minDuration, _maxDuration, _slope, _maxUtilization, _LTV);
+
         borrowingActive = true;
-        emit NewProtocolInterestRate(_protocolInterestRate);
-        emit NewDurations(_minDuration, _maxDuration);
-        emit NewSlope(_slope);
-        emit NewMaxUtilization(_maxUtilization);
-        emit NewLTV(_LTV);
+        parametersInitialized = true;
     }
 
     /// @inheritdoc IBeraBondGoldilend

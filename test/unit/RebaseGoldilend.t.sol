@@ -447,16 +447,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values);
     }
 
-    function testInitializeBerasFailArray() public {
-        address[] memory nfts = new address[](2);
-        nfts[0] = address(bondbear);
-        nfts[1] = address(bandbear);
-        uint256[] memory values = new uint256[](1);
-        values[0] = 50;
-        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.ArrayMismatch.selector));
-        RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values);
-    }
-
     function testInitializeBerasFailAlready() public {
         address[] memory nfts = new address[](2);
         nfts[0] = address(bondbear);
