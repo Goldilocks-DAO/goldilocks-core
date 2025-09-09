@@ -198,29 +198,21 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).repay(69, 1);
     }
 
+    function testRepayFailOverPayment() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 0, goldilendDuration, address(bandbear), 1);
+        honey.approve(address(rebaseproxy), 1e18);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.OverPayment.selector));
+        RebaseGoldilend(address(rebaseproxy)).repay(2e18, 1);
+    }
+
     function testRepaySuccess() public dealHoneyForGoldilend dealUserBeras {
         honey.approve(address(rebaseproxy), txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 0, goldilendDuration, address(bandbear), 1);
         honey.approve(address(rebaseproxy), 1e18);
         RebaseGoldilend(address(rebaseproxy)).repay(1e18, 1);
-        RebaseGoldilend.Loan memory userLoan = RebaseGoldilend(address(rebaseproxy)).getUserLoan(address(this), 1);
-
-        assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), 0);
-        assertEq(honey.balanceOf(address(this)), dealAmt - txAmount);
-        assertEq(honey.balanceOf(address(rebaseproxy)), txAmount);
-        assertEq(userLoan.repaid, true);
-        assertEq(userLoan.borrowedAmount, 0);
-        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 0);
-        assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 1);
-    }
-
-    function testRepaySuccessAmountTooHigh() public dealHoneyForGoldilend dealUserBeras {
-        honey.approve(address(rebaseproxy), txAmount);
-        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 0, goldilendDuration, address(bandbear), 1);
-        honey.approve(address(rebaseproxy), 2e18);
-        RebaseGoldilend(address(rebaseproxy)).repay(2e18, 1);
         RebaseGoldilend.Loan memory userLoan = RebaseGoldilend(address(rebaseproxy)).getUserLoan(address(this), 1);
 
         assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), 0);

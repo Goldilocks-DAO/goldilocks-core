@@ -246,7 +246,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         if(msg.value == 0) revert InvalidAmount();
         Loan memory userLoan = loans[msg.sender][userLoanId];
         uint256 repayAmount = msg.value;
-        if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
+        if(repayAmount > userLoan.borrowedAmount) revert OverPayment();
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
         outstandingDebt -= repayAmount > outstandingDebt ? outstandingDebt : repayAmount;
         if(userLoan.borrowedAmount - repayAmount == 0) {

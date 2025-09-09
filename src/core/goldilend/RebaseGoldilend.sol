@@ -218,7 +218,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @inheritdoc IRebaseGoldilend
     function repay(uint256 repayAmount, uint256 userLoanId) external {
         Loan memory userLoan = loans[msg.sender][userLoanId];
-        if(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;
+        if(repayAmount > userLoan.borrowedAmount) revert OverPayment();
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
         if(repayAmount > outstandingDebt) repayAmount = outstandingDebt;
         outstandingDebt -= repayAmount;
