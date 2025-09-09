@@ -40,6 +40,7 @@ interface IBeraBondGoldilend {
   error LessThanMinOut();
   error Dilution();
   error OverPayment();
+  error InvalidRepay();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */

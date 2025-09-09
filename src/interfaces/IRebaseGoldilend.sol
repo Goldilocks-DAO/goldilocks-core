@@ -39,6 +39,7 @@ interface IRebaseGoldilend {
   error LessThanMinOut();
   error Dilution();
   error OverPayment();
+  error InvalidRepay();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
