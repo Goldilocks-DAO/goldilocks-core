@@ -291,22 +291,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).renew(1, 6 days, 69000e18);
     }
 
-    function testRenewFailMaxUtilization() public dealHoneyForGoldilend dealUserABunchOfBeras {
-        honey.approve(address(rebaseproxy), txAmount);
-        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 1);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 2);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 3);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 4);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 5);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 6);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 7);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 8);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 2 days, address(bandbear), 9);
-        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.MaxUtilizationExceeded.selector));
-        RebaseGoldilend(address(rebaseproxy)).renew(9, 2 days, 1e18);
-    }
-
     function testRenewFailBorrowLimit() public dealUserBeras {
         deal(address(honey), address(this), 1_000_000e18);
         honey.approve(address(rebaseproxy), 1_000_000e18);

@@ -195,7 +195,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 _outstandingDebt = outstandingDebt;
         uint256 _poolSize = poolSize;
         uint256 newInterest = _calculateInterest(userLoan.borrowedAmount + newBorrowAmount, _outstandingDebt, newDuration);
-        if(newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
+        if(userLoan.borrowedAmount + newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
         if(_outstandingDebt + newBorrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += newBorrowAmount;

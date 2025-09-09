@@ -220,7 +220,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 bgtBalance = _getTBABGTBalance(userLoan.collateralNFT, userLoan.collateralNFTId);
         uint256 maxBorrow = bgtBalance * LTV / 100;
         if(userLoan.borrowedAmount + newBorrowAmount + newInterest > maxBorrow) revert InvalidLoanAmount();
-        if(newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
+        if(userLoan.borrowedAmount + newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
         if(_outstandingDebt + newBorrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(newBorrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += newBorrowAmount;
