@@ -283,6 +283,15 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 1e18, 0);
     }
 
+    function testRenewFailExpired() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount + txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount + txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 0, goldilendDuration, address(bandbear), 1);
+        vm.warp(6969696969);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.LoanExpired.selector));
+        RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 1e18, 0);
+    }
+
     function testRenewFailDuration() public dealHoneyForGoldilend {
         honey.approve(address(rebaseproxy), txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
