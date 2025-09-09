@@ -166,6 +166,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @inheritdoc IBeraBondGoldilend
     function borrow(
         uint256 borrowAmount,
+        uint256 minOut,
         uint256 duration,
         address collateralNFT,
         uint256 collateralNFTId
@@ -197,6 +198,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         userLoanAmount[msg.sender]++;
         depositedBeraBondIDs[msg.sender].push(collateralNFTId);
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
+        if(borrowAmount - interest < minOut) revert LessThanMinOut();
         (bool success1, ) = payable(msg.sender).call{value: borrowAmount - interest}("");
         if(!success1) revert TransferFailed();
         (bool success2, ) = payable(multisig).call{value: interest}("");
@@ -208,7 +210,8 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     function renew(
         uint256 userLoanId,
         uint256 newDuration,
-        uint256 newBorrowAmount
+        uint256 newBorrowAmount,
+        uint256 minOut
     ) external payable {
         if(!borrowingActive) revert NotActive();
         if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
@@ -218,8 +221,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 _poolSize = poolSize;
         uint256 newInterest = _calculateInterest(userLoan.borrowedAmount + newBorrowAmount, _outstandingDebt, newDuration);
         uint256 bgtBalance = _getTBABGTBalance(userLoan.collateralNFT, userLoan.collateralNFTId);
-        uint256 maxBorrow = bgtBalance * LTV / 100;
-        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > maxBorrow) revert InvalidLoanAmount();
+        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > bgtBalance * LTV / 100) revert InvalidLoanAmount();
         if(userLoan.borrowedAmount + newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
         if(_outstandingDebt + newBorrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(newBorrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
@@ -229,6 +231,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
         newUserLoan.endDate = block.timestamp + newDuration;
+        if(newBorrowAmount - newInterest < minOut) revert LessThanMinOut();
         (bool success1, ) = payable(msg.sender).call{value: newBorrowAmount - newInterest}("");
         if(!success1) revert TransferFailed();
         (bool success2, ) = payable(multisig).call{value: newInterest}("");

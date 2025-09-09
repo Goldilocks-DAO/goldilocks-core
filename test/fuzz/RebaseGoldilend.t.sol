@@ -48,7 +48,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         RebaseGoldilend(address(rebaseproxy)).deposit(1e30);
         
         uint256 initialBalance = honey.balanceOf(address(this));
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, duration, address(bandbear), 1);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 0, duration, address(bandbear), 1);
         
         assertEq(honey.balanceOf(address(this)), initialBalance + borrowAmount);
         assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), borrowAmount);
@@ -65,7 +65,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         honey.approve(address(rebaseproxy), 1e30);
         RebaseGoldilend(address(rebaseproxy)).deposit(1e30);
         
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 30 days, address(bandbear), 1);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 0, 30 days, address(bandbear), 1);
         uint256 initialBalance = honey.balanceOf(address(this));
         honey.approve(address(rebaseproxy), repayAmount);
         RebaseGoldilend(address(rebaseproxy)).repay(repayAmount, 1);
@@ -84,7 +84,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         honey.approve(address(rebaseproxy), 1e30);
         RebaseGoldilend(address(rebaseproxy)).deposit(1e30);
         
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 1 days, address(bandbear), 1);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 0, 1 days, address(bandbear), 1);
         vm.warp(block.timestamp + 2 days);
         
         uint256 initialOutstandingDebt = RebaseGoldilend(address(rebaseproxy)).outstandingDebt();
@@ -123,8 +123,8 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         INFT(address(bandbear)).mint(address(this));
         IERC721(bandbear).setApprovalForAll(address(rebaseproxy), true);
         
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount1, 30 days, address(bandbear), 1);
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount2, 30 days, address(bandbear), 2);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount1, 0, 30 days, address(bandbear), 1);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount2, 0, 30 days, address(bandbear), 2);
         
         assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), borrowAmount1 + borrowAmount2);
     }
@@ -140,7 +140,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         honey.approve(address(rebaseproxy), 1e30);
         RebaseGoldilend(address(rebaseproxy)).deposit(1e30);
         
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 30 days, address(bandbear), 1);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 0, 30 days, address(bandbear), 1);
         
         honey.approve(address(rebaseproxy), partialRepay);
         RebaseGoldilend(address(rebaseproxy)).repay(partialRepay, 1);
@@ -163,7 +163,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         IERC721(bandbear).setApprovalForAll(address(rebaseproxy), true);
         
         uint256 initialBalance = honey.balanceOf(address(this));
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, duration, address(bandbear), 1);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 0, duration, address(bandbear), 1);
         
         assertEq(honey.balanceOf(address(this)), initialBalance + borrowAmount);
         assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), borrowAmount);
@@ -181,7 +181,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         honey.approve(address(rebaseproxy), depositAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(depositAmount);
         
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 30 days, address(bandbear), 1);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 0, 30 days, address(bandbear), 1);
         
         uint256 utilization = (RebaseGoldilend(address(rebaseproxy)).outstandingDebt() * 100) / RebaseGoldilend(address(rebaseproxy)).poolSize();
         assertLe(utilization, 90);
@@ -198,7 +198,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         honey.approve(address(rebaseproxy), 1e30);
         RebaseGoldilend(address(rebaseproxy)).deposit(1e30);
         
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 1 days, address(bandbear), 1);
+        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 0, 1 days, address(bandbear), 1);
         
         vm.warp(block.timestamp + 1 days + 12 hours);
         honey.approve(address(rebaseproxy), borrowAmount);

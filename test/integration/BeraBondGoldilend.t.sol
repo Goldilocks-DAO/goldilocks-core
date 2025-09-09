@@ -61,7 +61,7 @@ contract IntegrationBeraBondGoldilendTest is Test {
         vm.startPrank(rawdog);
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: 5_000e18}();
         IERC721(berabond).setApprovalForAll(address(berabondproxy), true);
-        BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 2 days, berabond, 6);
+        BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 0, 2 days, berabond, 6);
         vm.stopPrank();
     }
 
@@ -70,7 +70,7 @@ contract IntegrationBeraBondGoldilendTest is Test {
         vm.startPrank(rawdog);
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: 5_000e18}();
         IERC721(berabond).setApprovalForAll(address(berabondproxy), true);
-        BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 2 days, berabond, 6);
+        BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 0, 2 days, berabond, 6);
         vm.stopPrank();
         
         assertEq(BeraBondGoldilend(payable(address(berabondproxy))).depositedBeraBondIDs(rawdog, 0), 6);
@@ -81,7 +81,7 @@ contract IntegrationBeraBondGoldilendTest is Test {
         vm.startPrank(rawdog);
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: 5_000e18}();
         IERC721(berabond).setApprovalForAll(address(berabondproxy), true);
-        BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 2 days, berabond, 6);
+        BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 0, 2 days, berabond, 6);
         BeraBondGoldilend(payable(address(berabondproxy))).repay{value: 83e16}(1);
         vm.stopPrank();
         
@@ -96,7 +96,7 @@ contract IntegrationBeraBondGoldilendTest is Test {
     //     vm.startPrank(rawdog);
     //     BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: 5_000e18}();
     //     IERC721(berabond).setApprovalForAll(address(berabondproxy), true);
-    //     BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 2 days, berabond, 6);
+    //     BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e16, 0, 2 days, berabond, 6);
     //     vm.stopPrank();
 
     //     vm.prank(rawdog);

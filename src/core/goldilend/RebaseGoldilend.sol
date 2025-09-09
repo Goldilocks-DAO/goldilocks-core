@@ -147,6 +147,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @inheritdoc IRebaseGoldilend
     function borrow(
         uint256 borrowAmount,
+        uint256 minOut,
         uint256 duration,
         address collateralNFT,
         uint256 collateralNFTId
@@ -177,6 +178,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         loans[msg.sender][userLoansLength + 1] = loan;
         userLoanAmount[msg.sender]++;
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
+        if(borrowAmount - interest < minOut) revert LessThanMinOut();
         SafeTransferLib.safeTransfer(debtAsset, msg.sender, borrowAmount - interest);
         SafeTransferLib.safeTransfer(debtAsset, multisig, interest);
         emit Borrow(msg.sender, userLoansLength + 1, borrowAmount, interest, block.timestamp + duration, collateralNFT, collateralNFTId);
@@ -186,7 +188,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     function renew(
         uint256 userLoanId,
         uint256 newDuration,
-        uint256 newBorrowAmount
+        uint256 newBorrowAmount,
+        uint256 minOut
     ) external {
         if(!borrowingActive) revert NotActive();
         if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
@@ -204,6 +207,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
         newUserLoan.endDate = block.timestamp + newDuration;
+        if(newBorrowAmount - newInterest < minOut) revert LessThanMinOut();
         SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount - newInterest);
         SafeTransferLib.safeTransfer(debtAsset, multisig, newInterest);
         emit Renew(msg.sender, userLoanId, newBorrowAmount, newInterest, newDuration);

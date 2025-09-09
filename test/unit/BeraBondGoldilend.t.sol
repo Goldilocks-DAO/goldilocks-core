@@ -245,18 +245,18 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
     function testBorrowFailActive() public {
         BeraBondGoldilend(payable(address(berabondproxy))).changeBorrowingActive(false);
         vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.NotActive.selector));
-        BeraBondGoldilend(payable(address(berabondproxy))).borrow(69, 69, address(0x69), 69);
+        BeraBondGoldilend(payable(address(berabondproxy))).borrow(69, 0, 69, address(0x69), 69);
     }
 
     function testBorrowFailDuration() public {
         vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.InvalidDuration.selector));
-        BeraBondGoldilend(payable(address(berabondproxy))).borrow(69, 69, address(0x69), 69);
+        BeraBondGoldilend(payable(address(berabondproxy))).borrow(69, 0, 69, address(0x69), 69);
     }
 
     function testBorrowFailCollateral() public dealBeraForGoldilend {
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
         vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.InvalidCollateral.selector));
-        BeraBondGoldilend(payable(address(berabondproxy))).borrow(69, 2 days, address(0x69), 69);
+        BeraBondGoldilend(payable(address(berabondproxy))).borrow(69, 0, 2 days, address(0x69), 69);
     }
 
     function testRepayFailInvalidAmount() public {

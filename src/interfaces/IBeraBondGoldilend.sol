@@ -37,6 +37,7 @@ interface IBeraBondGoldilend {
   error InvalidAmount();
   error TransferFailed();
   error InvalidRenew();
+  error LessThanMinOut();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
@@ -68,11 +69,13 @@ interface IBeraBondGoldilend {
 
   /// @notice Borrows BERA against value of BeraBond
   /// @param borrowAmount Amount of BERA to borrow
+  /// @param minOut Minimum amount of HONEY to send to user
   /// @param duration Duration of loan
   /// @param collateralNFT BeraBond to use as collateral
   /// @param collateralNFTId Token Id of BeraBond to use as collateral
   function borrow(
     uint256 borrowAmount,
+    uint256 minOut,
     uint256 duration,
     address collateralNFT,
     uint256 collateralNFTId
@@ -82,10 +85,12 @@ interface IBeraBondGoldilend {
   /// @param userLoanId Loan to be renewed
   /// @param newDuration New duration of the loan
   /// @param newBorrowAmount Amount of additional BERA to be borrowed
+  /// @param minOut Minimum amount of HONEY to send to user
   function renew(
     uint256 userLoanId,
     uint256 newDuration,
-    uint256 newBorrowAmount
+    uint256 newBorrowAmount,
+    uint256 minOut
   ) external payable;
 
   /// @notice Repays loan with BERA
