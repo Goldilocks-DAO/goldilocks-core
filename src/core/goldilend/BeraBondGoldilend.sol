@@ -228,7 +228,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         newUserLoan.borrowedAmount += newBorrowAmount;
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
-        newUserLoan.endDate += newDuration;
+        newUserLoan.endDate = block.timestamp + newDuration;
         (bool success1, ) = payable(msg.sender).call{value: newBorrowAmount - newInterest}("");
         if(!success1) revert TransferFailed();
         (bool success2, ) = payable(multisig).call{value: newInterest}("");

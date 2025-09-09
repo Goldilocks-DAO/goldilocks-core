@@ -327,7 +327,7 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(userLoan.borrowedAmount, 2e18);
         assertEq(userLoan.interest, renewBorrowInterest + renewInterest);
         assertEq(userLoan.duration, 28 days);
-        assertEq(userLoan.endDate, block.timestamp + 28 days);
+        assertEq(userLoan.endDate, block.timestamp + 14 days);
         assertEq(honey.balanceOf(address(this)), dealAmt - 18e18);
         assertEq(honey.balanceOf(address(rebaseproxy)), 18e18);
 

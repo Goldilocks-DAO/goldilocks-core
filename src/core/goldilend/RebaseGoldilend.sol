@@ -203,7 +203,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         newUserLoan.borrowedAmount += newBorrowAmount;
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
-        newUserLoan.endDate += newDuration;
+        newUserLoan.endDate = block.timestamp + newDuration;
         SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount - newInterest);
         SafeTransferLib.safeTransfer(debtAsset, multisig, newInterest);
         emit Renew(msg.sender, userLoanId, newBorrowAmount, newInterest, newDuration);
