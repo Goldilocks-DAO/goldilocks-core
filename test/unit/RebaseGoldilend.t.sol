@@ -84,6 +84,13 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(interest, rebaseInterest);
     }
 
+    function testDepositFailDilution() public {
+        vm.store(address(rebaseproxy), bytes32(uint256(5)), bytes32(uint256(0)));
+        vm.store(address(glhoney), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(2364e18)));
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.Dilution.selector));
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+    }
+
     function testDepositSuccess() public dealHoneyForGoldilend {
         honey.approve(address(rebaseproxy), txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);

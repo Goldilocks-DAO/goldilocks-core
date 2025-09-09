@@ -128,6 +128,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
     /// @inheritdoc IRebaseGoldilend
     function deposit(uint256 amount) external {
+        if(poolSize == 0 && GoldilendDebtAsset(glDebtAsset).totalSupply() > 0) revert Dilution();
         uint256 mintAmount = _glDebtAssetMintAmount(amount);
         poolSize += amount;
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);

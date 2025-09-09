@@ -37,6 +37,7 @@ interface IRebaseGoldilend {
   error AlreadyInitialized();
   error InvalidRenew();
   error LessThanMinOut();
+  error Dilution();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */

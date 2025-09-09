@@ -38,6 +38,7 @@ interface IBeraBondGoldilend {
   error TransferFailed();
   error InvalidRenew();
   error LessThanMinOut();
+  error Dilution();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */

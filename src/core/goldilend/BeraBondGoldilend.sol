@@ -146,6 +146,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
 
     /// @inheritdoc IBeraBondGoldilend
     function deposit() external payable {
+        if(poolSize == 0 && GoldilendDebtAsset(glDebtAsset).totalSupply() > 0) revert Dilution();
         if(msg.value == 0) revert InvalidAmount();
         uint256 mintAmount = _glDebtAssetMintAmount(msg.value);
         poolSize += msg.value;
