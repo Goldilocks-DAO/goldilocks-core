@@ -354,8 +354,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
         uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + INTEREST_PAYMENT_PERCENTAGE;
         uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
-        uint256 interestAdjusted = FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
-        return interestAdjusted / 100;
+        return FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     }
 
     /// @notice Calculates the amount of Goldilend Debt Asset to mint

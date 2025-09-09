@@ -347,7 +347,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     uint256[] memory rebasevalues = new uint256[](1);
     rebasevalues[0] = 50e18;
     RebaseGoldilend(address(rebaseproxy)).initializeParameters(
-      20e18,
+      2e17,
       1 days,
       365 days,
       2e18,
@@ -372,7 +372,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     glbera = new GoldilendDebtAsset("Goldilend Bera", "glBERA", address(berabondproxy));
     assert(BeraBondGoldilend(berabondproxyaddy).glDebtAsset() == address(glbera));
     BeraBondGoldilend(berabondproxyaddy).initializeParameters(
-      20e18,
+      2e17,
       1 days,
       365 days,
       2e18,

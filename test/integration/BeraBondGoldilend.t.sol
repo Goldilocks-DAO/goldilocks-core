@@ -46,7 +46,7 @@ contract IntegrationBeraBondGoldilendTest is Test {
         glbera = new GoldilendDebtAsset("Goldilend Bera", "glBERA", address(berabondproxy));
         assert(BeraBondGoldilend(berabondproxyaddy).glDebtAsset() == address(glbera));
         BeraBondGoldilend(berabondproxyaddy).initializeParameters(
-            20e18,
+            2e17,
             1 days,
             365 days,
             2e18,
