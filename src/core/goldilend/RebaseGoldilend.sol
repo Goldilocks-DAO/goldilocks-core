@@ -231,7 +231,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @inheritdoc IRebaseGoldilend
     function liquidate(address user, uint256 userLoanId) external {
         Loan memory userLoan = loans[user][userLoanId];
-        if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.liquidated || userLoan.borrowedAmount == 0) revert Unliquidatable();
+        if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.borrowedAmount == 0) revert Unliquidatable();
         loans[user][userLoanId].liquidated = true;
         loans[user][userLoanId].borrowedAmount = 0;
         outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
