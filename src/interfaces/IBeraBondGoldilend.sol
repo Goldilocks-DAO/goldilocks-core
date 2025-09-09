@@ -36,6 +36,7 @@ interface IBeraBondGoldilend {
   error AlreadyInitialized();
   error InvalidAmount();
   error TransferFailed();
+  error InvalidRenew();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */

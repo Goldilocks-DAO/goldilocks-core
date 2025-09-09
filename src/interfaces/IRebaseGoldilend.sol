@@ -35,6 +35,7 @@ interface IRebaseGoldilend {
   error LoanExpired();
   error Unliquidatable();
   error AlreadyInitialized();
+  error InvalidRenew();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
