@@ -308,8 +308,10 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
         uint256 maxBorrow = bgtBalance * LTV / 100;
         uint256 debt = outstandingDebt;
-        if(borrowAmount > maxBorrow || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
-        return _calculateInterest(borrowAmount, debt, duration);
+        uint256 _interest = _calculateInterest(borrowAmount, debt, duration);
+        if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + _interest > maxBorrow || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+        return _interest;
     }
 
     /// @inheritdoc IBeraBondGoldilend

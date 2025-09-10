@@ -269,8 +269,10 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
         uint256 fairValue = nftFairValues[collateralNFT];
         uint256 debt = outstandingDebt;
-        if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
-        return _calculateInterest(borrowAmount, debt, duration);
+        uint256 _interest = _calculateInterest(borrowAmount, debt, duration);
+        if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + _interest > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+        return _interest;
     }
 
 
