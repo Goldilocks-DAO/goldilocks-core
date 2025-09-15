@@ -167,7 +167,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @inheritdoc IBeraBondGoldilend
     function borrow(
         uint256 borrowAmount,
-        uint256 minOut,
+        uint256 maxInterest,
         uint256 duration,
         address collateralNFT,
         uint256 collateralNFTId
@@ -199,7 +199,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         userLoanAmount[msg.sender]++;
         depositedBeraBondIDs[msg.sender].push(collateralNFTId);
         IERC721(collateralNFT).transferFrom(msg.sender, address(this), collateralNFTId);
-        if(borrowAmount - interest < minOut) revert LessThanMinOut();
+        if(interest > maxInterest) revert MoreThanMaxInterest();
         (bool success1, ) = payable(msg.sender).call{value: borrowAmount - interest}("");
         if(!success1) revert TransferFailed();
         (bool success2, ) = payable(multisig).call{value: interest}("");
@@ -212,7 +212,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 userLoanId,
         uint256 newDuration,
         uint256 newBorrowAmount,
-        uint256 minOut
+        uint256 maxInterest
     ) external payable {
         if(!borrowingActive) revert NotActive();
         if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
@@ -233,7 +233,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
         newUserLoan.endDate = block.timestamp + newDuration;
-        if(newBorrowAmount - newInterest < minOut) revert LessThanMinOut();
+        if(newInterest > maxInterest) revert MoreThanMaxInterest();
         (bool success1, ) = payable(msg.sender).call{value: newBorrowAmount - newInterest}("");
         if(!success1) revert TransferFailed();
         (bool success2, ) = payable(multisig).call{value: newInterest}("");

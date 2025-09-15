@@ -100,7 +100,7 @@ contract RebaseGoldilendHandler is BaseHandler {
     duration = bound(duration, RebaseGoldilend(address(rebasegoldilend)).minDuration(), RebaseGoldilend(address(rebasegoldilend)).maxDuration());
 
     if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + borrowAmount > RebaseGoldilend(address(rebasegoldilend)).poolSize() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
-    try RebaseGoldilend(address(rebasegoldilend)).borrow(borrowAmount, 0, duration, address(bandbear), actualTokenId) {
+    try RebaseGoldilend(address(rebasegoldilend)).borrow(borrowAmount, 1_000e18, duration, address(bandbear), actualTokenId) {
       userLoanCount[currentActor]++;
       uint256 loanId = userLoanCount[currentActor];
       activeLoans[currentActor][loanId] = true;
@@ -129,7 +129,7 @@ contract RebaseGoldilendHandler is BaseHandler {
     newDuration = bound(newDuration, RebaseGoldilend(address(rebasegoldilend)).minDuration(), RebaseGoldilend(address(rebasegoldilend)).maxDuration());
 
     if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + newBorrowAmount > RebaseGoldilend(address(rebasegoldilend)).poolSize() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
-    try RebaseGoldilend(address(rebasegoldilend)).renew(loanId, newDuration, newBorrowAmount, 0) {
+    try RebaseGoldilend(address(rebasegoldilend)).renew(loanId, newDuration, newBorrowAmount, 1_000e18) {
       userTotalBorrowed[currentActor] += newBorrowAmount;
       ghost_renewSum += newBorrowAmount;
       ghost_borrowSum += newBorrowAmount;

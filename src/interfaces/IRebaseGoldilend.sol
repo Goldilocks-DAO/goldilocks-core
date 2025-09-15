@@ -36,7 +36,7 @@ interface IRebaseGoldilend {
   error Unliquidatable();
   error AlreadyInitialized();
   error InvalidRenew();
-  error LessThanMinOut();
+  error MoreThanMaxInterest();
   error Dilution();
   error OverPayment();
   error InvalidRepay();
@@ -71,13 +71,13 @@ interface IRebaseGoldilend {
 
   /// @notice Borrows HONEY against value of Rebase Bera
   /// @param borrowAmount Amount of HONEY to borrow
-  /// @param minOut Minimum amount of HONEY to send to user
+  /// @param maxInterest Maximum amount of interest paid by user
   /// @param duration Duration of loan
   /// @param collateralNFT Rebase Bera to use as collateral
   /// @param collateralNFTId Token Id of Rebase Bera to use as collateral
   function borrow(
     uint256 borrowAmount,
-    uint256 minOut,
+    uint256 maxInterest,
     uint256 duration,
     address collateralNFT,
     uint256 collateralNFTId
@@ -87,12 +87,12 @@ interface IRebaseGoldilend {
   /// @param userLoanId Loan to be renewed
   /// @param newDuration New duration of the loan
   /// @param newBorrowAmount Amount of additional debt asset to be borrowed
-  /// @param minOut Minimum amount of HONEY to send to user
+  /// @param maxInterest Maximum amount of interest paid by user
   function renew(
     uint256 userLoanId,
     uint256 newDuration,
     uint256 newBorrowAmount,
-    uint256 minOut
+    uint256 maxInterest
   ) external;
 
   /// @notice Repays loan of debt asset
