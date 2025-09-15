@@ -98,9 +98,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @notice Maps users to loans
     mapping(address => mapping(uint256 => Loan)) public loans;
 
-    /// @notice Maps NFT address to boolean
-    mapping(address => bool) public isBeraBond;
-
     /// @notice Maps user address to IDs of BeraBonds in Goldilend
     mapping(address => uint256[]) public depositedBeraBondIDs;
 
@@ -135,7 +132,6 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         bgt = _bgt;
         berabond = _berabond;
         delegationRegistry = _delegationRegistry;
-        isBeraBond[_berabond] = true;
     }
 
 
@@ -174,7 +170,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     ) external payable {
         if(!borrowingActive) revert NotActive();
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-        if(!isBeraBond[collateralNFT]) revert InvalidCollateral();
+        if(collateralNFT != berabond) revert InvalidCollateral();
         uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
         uint256 maxBorrow = bgtBalance * LTV / 100;
         uint256 interest = _calculateInterest(borrowAmount, outstandingDebt, duration);
@@ -304,7 +300,7 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     ) external view returns (uint256) {
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
         if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
-        if(!isBeraBond[collateralNFT]) revert InvalidCollateral();
+        if(collateralNFT != berabond) revert InvalidCollateral();
         uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
         uint256 maxBorrow = bgtBalance * LTV / 100;
         uint256 debt = outstandingDebt;
