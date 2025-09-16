@@ -106,8 +106,9 @@ interface IBeraBondGoldilend {
   function liquidate(address user, uint256 userLoanId) external;
 
   /// @notice Claims BGT rewards from BeraBond NFT
+  /// @param beraBondID ID of the BeraBond to claim yield from
   /// @param rewardContracts Addresses of BGT reward vaults to claim from
-  function claimYield(address[] memory rewardContracts) external;
+  function claimYield(uint256 beraBondID, address[] memory rewardContracts) external;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */

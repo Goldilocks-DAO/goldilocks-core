@@ -273,12 +273,18 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     }
 
     /// @inheritdoc IBeraBondGoldilend
-    function claimYield(address[] memory rewardContracts) external {
+    function claimYield(uint256 beraBondID, address[] memory rewardContracts) external {
         uint256 depositedBeraBondIDsLength = depositedBeraBondIDs[msg.sender].length;
+        bool found = false;
         for(uint256 i; i < depositedBeraBondIDsLength; ++i) {
-            address payable tba = IBeraBondNFT(berabond).getTokenBoundAccount(depositedBeraBondIDs[msg.sender][i]);
-            IBeraBondNFT(tba).claimFromEach(rewardContracts, msg.sender);
+            if(depositedBeraBondIDs[msg.sender][i] == beraBondID) {
+                found = true;
+                break;
+            }
         }
+        if(!found) revert InvalidCollateral();
+        address payable tba = IBeraBondNFT(berabond).getTokenBoundAccount(beraBondID);
+        IBeraBondNFT(tba).claimFromEach(rewardContracts, msg.sender);
     }
 
 
