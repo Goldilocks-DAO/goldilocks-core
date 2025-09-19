@@ -56,7 +56,7 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
 
   function invariant_glhoney_supply_consistency() public {
     assertGe(glhoney.totalSupply(), 0, "glHONEY supply should be >= 0");
-    if (RebaseGoldilend(address(rebaseproxy)).poolSize() > 0) {
+    if (glhoney.totalSupply() > 0) {
       assertGt(glhoney.totalSupply(), 0, "glHONEY supply should be positive when pool size is positive");
     }
   }
@@ -77,13 +77,13 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
   }
 
   function invariant_pool_size_consistency() public {
-    assertGe(RebaseGoldilend(address(rebaseproxy)).poolSize(), 0);
-    assertLe(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), RebaseGoldilend(address(rebaseproxy)).poolSize());
+    assertGe(glhoney.totalSupply(), 0);
+    assertLe(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), glhoney.totalSupply());
     
-    if (RebaseGoldilend(address(rebaseproxy)).poolSize() > 0) {
+    if (glhoney.totalSupply() > 0) {
       assertLe(
         RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), 
-        RebaseGoldilend(address(rebaseproxy)).poolSize() * RebaseGoldilend(address(rebaseproxy)).maxUtilization() / 100
+        glhoney.totalSupply() * RebaseGoldilend(address(rebaseproxy)).maxUtilization() / 100
       );
     }
   }
@@ -101,7 +101,7 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     
     assertLe(
       RebaseGoldilend(address(rebaseproxy)).outstandingDebt(),
-      RebaseGoldilend(address(rebaseproxy)).poolSize()
+      glhoney.totalSupply()
     );
   }
 
@@ -213,7 +213,7 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     for (uint256 i = 1; i <= rebasegoldilendHandler.userLoanCount(actor); i++) {
       RebaseGoldilend.Loan memory loan = RebaseGoldilend(address(rebaseproxy)).getUserLoan(actor, i);
       if (loan.borrowedAmount > 0) {
-        assertLe(loan.borrowedAmount, RebaseGoldilend(address(rebaseproxy)).poolSize() / 10, "Loan amount exceeds limit");
+        assertLe(loan.borrowedAmount, glhoney.totalSupply() / 10, "Loan amount exceeds limit");
       }
     }
     return new address[](0);

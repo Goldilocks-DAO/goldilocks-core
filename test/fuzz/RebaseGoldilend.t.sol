@@ -18,7 +18,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         assertEq(glhoney.balanceOf(address(this)), depositAmount);
         assertEq(honey.balanceOf(address(this)), 0);
         assertEq(honey.balanceOf(address(rebaseproxy)), depositAmount);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).poolSize(), depositAmount);
+        assertEq(glhoney.totalSupply(), depositAmount);
     }
 
     function testFuzzWithdraw(uint256 depositAmount, uint256 withdrawAmount) public {
@@ -33,7 +33,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         assertEq(glhoney.balanceOf(address(this)), depositAmount - withdrawAmount);
         assertEq(honey.balanceOf(address(this)), withdrawAmount);
         assertEq(honey.balanceOf(address(rebaseproxy)), depositAmount - withdrawAmount);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).poolSize(), depositAmount - withdrawAmount);
+        assertEq(glhoney.totalSupply(), depositAmount - withdrawAmount);
     }
 
     function testFuzzBorrow(uint256 borrowAmount, uint256 duration) public {
@@ -108,7 +108,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
             totalDeposited += amounts[i];
         }
         
-        assertEq(RebaseGoldilend(address(rebaseproxy)).poolSize(), totalDeposited);
+        assertEq(glhoney.totalSupply(), totalDeposited);
     }
 
     function testFuzzMultipleBorrows(uint256 borrowAmount1, uint256 borrowAmount2) public {
@@ -183,7 +183,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         
         RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 1_000e18, 30 days, address(bandbear), 1);
         
-        uint256 utilization = (RebaseGoldilend(address(rebaseproxy)).outstandingDebt() * 100) / RebaseGoldilend(address(rebaseproxy)).poolSize();
+        uint256 utilization = (RebaseGoldilend(address(rebaseproxy)).outstandingDebt() * 100) / glhoney.totalSupply();
         assertLe(utilization, 90);
     }
 

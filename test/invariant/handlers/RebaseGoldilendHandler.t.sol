@@ -93,13 +93,13 @@ contract RebaseGoldilendHandler is BaseHandler {
       nftId = userNFTCount[currentActor] - 1;
     }
     uint256 actualTokenId = userNFTs[currentActor][nftId];
-    uint256 maxBorrow = RebaseGoldilend(address(rebasegoldilend)).poolSize() / 10;
+    uint256 maxBorrow = glhoney.totalSupply() / 10;
     uint256 nftValue = RebaseGoldilend(address(rebasegoldilend)).nftFairValues(address(bandbear));
     borrowAmount = bound(borrowAmount, 0, maxBorrow);
     borrowAmount = bound(borrowAmount, 0, nftValue);
     duration = bound(duration, RebaseGoldilend(address(rebasegoldilend)).minDuration(), RebaseGoldilend(address(rebasegoldilend)).maxDuration());
 
-    if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + borrowAmount > RebaseGoldilend(address(rebasegoldilend)).poolSize() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
+    if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + borrowAmount > glhoney.totalSupply() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
     try RebaseGoldilend(address(rebasegoldilend)).borrow(borrowAmount, 1_000e18, duration, address(bandbear), actualTokenId) {
       userLoanCount[currentActor]++;
       uint256 loanId = userLoanCount[currentActor];
@@ -124,11 +124,11 @@ contract RebaseGoldilendHandler is BaseHandler {
     if (!activeLoans[currentActor][loanId]) return;
     RebaseGoldilend.Loan memory loan = RebaseGoldilend(address(rebasegoldilend)).getUserLoan(currentActor, loanId);
     if (loan.borrowedAmount == 0 || loan.repaid || loan.liquidated) return;
-    uint256 maxBorrow = RebaseGoldilend(address(rebasegoldilend)).poolSize() / 10;
+    uint256 maxBorrow = glhoney.totalSupply() / 10;
     newBorrowAmount = bound(newBorrowAmount, 0, maxBorrow);
     newDuration = bound(newDuration, RebaseGoldilend(address(rebasegoldilend)).minDuration(), RebaseGoldilend(address(rebasegoldilend)).maxDuration());
 
-    if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + newBorrowAmount > RebaseGoldilend(address(rebasegoldilend)).poolSize() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
+    if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + newBorrowAmount > glhoney.totalSupply() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
     try RebaseGoldilend(address(rebasegoldilend)).renew(loanId, newDuration, newBorrowAmount, 1_000e18) {
       userTotalBorrowed[currentActor] += newBorrowAmount;
       ghost_renewSum += newBorrowAmount;

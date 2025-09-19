@@ -60,9 +60,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Outstanding debt of all unpaid loans
     uint256 public outstandingDebt;
 
-    /// @notice Size of lending pool
-    uint256 public poolSize;
-
     /// @notice Rate at which interest rate increases
     uint256 public slope;
 
@@ -128,21 +125,16 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
     /// @inheritdoc IRebaseGoldilend
     function deposit(uint256 amount) external {
-        if(poolSize == 0 && GoldilendDebtAsset(glDebtAsset).totalSupply() > 0) revert Dilution();
-        uint256 mintAmount = _glDebtAssetMintAmount(amount);
-        poolSize += amount;
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
-        GoldilendDebtAsset(glDebtAsset).mintglDebtAsset(msg.sender, mintAmount);
-        emit Deposit(msg.sender, amount, mintAmount);
+        GoldilendDebtAsset(glDebtAsset).mintglDebtAsset(msg.sender, amount);
+        emit Deposit(msg.sender, amount);
     }
 
     /// @inheritdoc IRebaseGoldilend
     function withdraw(uint256 amount) external {
-        uint256 withdrawAmount = _glDebtAssetWithdrawAmount(amount);
-        poolSize -= withdrawAmount;
         GoldilendDebtAsset(glDebtAsset).burnglDebtAsset(msg.sender, amount);
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, withdrawAmount);
-        emit Withdraw(msg.sender, withdrawAmount, amount);
+        SafeTransferLib.safeTransfer(debtAsset, msg.sender, amount);
+        emit Withdraw(msg.sender, amount);
     }
 
     /// @inheritdoc IRebaseGoldilend
@@ -155,15 +147,15 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) external {
         if(!borrowingActive) revert NotActive();
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-        uint256 _poolSize = poolSize;
+        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 fairValue = nftFairValues[collateralNFT];
         uint256 userLoansLength = userLoanAmount[msg.sender];
         uint256 _outstandingDebt = outstandingDebt;
-        if(borrowAmount > _poolSize / 10) revert InvalidLoanAmount();
+        if(borrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
         uint256 interest = _calculateInterest(borrowAmount, _outstandingDebt, duration);
         if(fairValue == 0) revert InvalidCollateral();
-        if(_outstandingDebt + borrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount + interest > fairValue || borrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
+        if(_outstandingDebt + borrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + interest > fairValue || borrowAmount > _glhoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
             collateralNFT: collateralNFT,
@@ -198,11 +190,11 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(userLoan.repaid || userLoan.liquidated) revert InvalidRenew();
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
         uint256 _outstandingDebt = outstandingDebt;
-        uint256 _poolSize = poolSize;
+        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 newInterest = _calculateInterest(userLoan.borrowedAmount + newBorrowAmount, _outstandingDebt, newDuration);
-        if(userLoan.borrowedAmount + newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();
-        if(_outstandingDebt + newBorrowAmount > _poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _poolSize - _outstandingDebt) revert BorrowLimitExceeded();
+        if(userLoan.borrowedAmount + newBorrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
+        if(_outstandingDebt + newBorrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _glhoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += newBorrowAmount;
         Loan storage newUserLoan = loans[msg.sender][userLoanId];
         newUserLoan.borrowedAmount += newBorrowAmount;
@@ -242,7 +234,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         loans[user][userLoanId].liquidated = true;
         loans[user][userLoanId].borrowedAmount = 0;
         outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
-        poolSize -= userLoan.borrowedAmount > poolSize ? poolSize : userLoan.borrowedAmount;
         IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
         emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
     }
@@ -265,19 +256,20 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         address collateralNFT
     ) external view returns (uint256) {
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-        if(borrowAmount > poolSize / 10) revert InvalidLoanAmount();
         if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
+        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        if(borrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
         uint256 fairValue = nftFairValues[collateralNFT];
         uint256 debt = outstandingDebt;
         uint256 _interest = _calculateInterest(borrowAmount, debt, duration);
-        if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount + _interest > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();
+        if(debt + borrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + _interest > fairValue || borrowAmount > _glhoneySupply - debt) revert BorrowLimitExceeded();
         return _interest;
     }
 
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                   INTERNAL VIEW FUNCTIONS                  */
+    /*                    INTERNAL VIEW FUNCTION                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/  
 
 
@@ -292,33 +284,9 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) internal view returns (uint256) {
         uint256 rate = protocolInterestRate;
         uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
-        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, poolSize) + INTEREST_PAYMENT_PERCENTAGE;
+        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, GoldilendDebtAsset(glDebtAsset).totalSupply()) + INTEREST_PAYMENT_PERCENTAGE;
         uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
         return FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
-    }
-
-    /// @notice Calculates the amount of Goldilend Debt Asset to mint
-    /// @param depositAmount Amount of the debt asset to deposit
-    /// @return mintAmount Total supply of the goldilend debt asset divided by the lending pool size multiplied by depsoitAmount
-    function _glDebtAssetMintAmount(uint256 depositAmount) internal view returns (uint256) {
-        uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
-        uint256 _poolSize = poolSize;
-        return _poolSize > 0 && supply > 0 ? FixedPointMathLib.mulWad(depositAmount, _glDebtAssetRatio(supply, _poolSize)) : depositAmount;
-    }
-
-    /// @notice Calculates the amount of debt asset to withdraw
-    /// @param burnAmount Amount of the Goldilend Debt Asset to burn 
-    /// @return withdrawAmount The burnAmount divided by the total supply of goldilend debt asset divided by the lending pool size
-    function _glDebtAssetWithdrawAmount(uint256 burnAmount) internal view returns (uint256) {
-        uint256 supply = GoldilendDebtAsset(glDebtAsset).totalSupply();
-        uint256 _poolSize = poolSize;
-        return FixedPointMathLib.divWad(burnAmount, _glDebtAssetRatio(supply, _poolSize));
-    }
-
-    /// @notice Calculates the current glDebtAsset ratio
-    /// @return gibgtRatio Total supply of glDebtAsset divided by the lending pool size
-    function _glDebtAssetRatio(uint256 supply, uint256 _poolSize) internal pure returns (uint256) {
-        return FixedPointMathLib.divWad(supply, _poolSize);
     }
 
 
@@ -374,13 +342,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     function recoverTokens(address token) external {
         if(msg.sender != multisig) revert NotMultisig();
         SafeTransferLib.safeTransfer(token, multisig, ERC20(token).balanceOf(address(this)));
-    }
-
-    /// @inheritdoc IRebaseGoldilend
-    function increaseglDebtAssetBacking(uint256 amount) external {
-        if(msg.sender != multisig) revert NotMultisig();
-        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
-        poolSize += amount;
     }
 
     /// @inheritdoc IRebaseGoldilend

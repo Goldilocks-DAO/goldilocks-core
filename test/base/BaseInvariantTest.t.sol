@@ -67,7 +67,7 @@ abstract contract BaseInvariantTest is BaseTest {
     return minted + glhoney.balanceOf(caller);
   }
   function assertMintedGlhoneyLtePoolSize(address account) external returns (address[] memory) {
-    assertLe(glhoney.balanceOf(account), rebasegoldilend.poolSize());
+    assertLe(glhoney.balanceOf(account), glhoney.totalSupply());
     return new address[](0);
   }
 

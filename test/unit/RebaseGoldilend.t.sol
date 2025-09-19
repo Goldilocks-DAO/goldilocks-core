@@ -84,13 +84,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(interest, rebaseInterest);
     }
 
-    function testDepositFailDilution() public {
-        vm.store(address(rebaseproxy), bytes32(uint256(5)), bytes32(uint256(0)));
-        vm.store(address(glhoney), bytes32(uint256(0x05345cdf77eb68f44c)), bytes32(uint256(2364e18)));
-        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.Dilution.selector));
-        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
-    }
-
     function testDepositSuccess() public dealHoneyForGoldilend {
         honey.approve(address(rebaseproxy), txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
@@ -98,7 +91,7 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(honey.balanceOf(address(this)), dealAmt - txAmount);
         assertEq(glhoney.balanceOf(address(this)), txAmount);
         assertEq(honey.balanceOf(address(rebaseproxy)), txAmount);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).poolSize(), txAmount);
+        assertEq(glhoney.totalSupply(), txAmount);
     }
 
     function testWithdrawSuccess() public dealHoneyForGoldilend {
@@ -109,7 +102,7 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(honey.balanceOf(address(this)), dealAmt);
         assertEq(glhoney.balanceOf(address(this)), 0);
         assertEq(honey.balanceOf(address(rebaseproxy)), 0);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).poolSize(), 0);
+        assertEq(glhoney.totalSupply(), 0);
     }
 
     function testBorrowFailActive() public {
@@ -399,22 +392,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).recoverTokens(address(honey));
 
         assertEq(honey.balanceOf(address(this)), 69);
-    }
-
-    function testIncreaseglDebtAssetBackingFailMultisig() public {
-        vm.prank(address(0x69));
-        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotMultisig.selector));
-        RebaseGoldilend(address(rebaseproxy)).increaseglDebtAssetBacking(69);
-    }
-
-    function testIncreaseglDebtAssetBackingSuccess() public {
-        deal(address(honey), address(this), 69);
-        honey.approve(address(rebaseproxy), 69);
-        RebaseGoldilend(address(rebaseproxy)).increaseglDebtAssetBacking(69);
-
-        assertEq(honey.balanceOf(address(this)), 0);
-        assertEq(honey.balanceOf(address(rebaseproxy)), 69);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).poolSize(), 69);
     }
 
     function testChangeValueFailMultisig() public {

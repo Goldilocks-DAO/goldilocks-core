@@ -37,7 +37,6 @@ interface IRebaseGoldilend {
   error AlreadyInitialized();
   error InvalidRenew();
   error MoreThanMaxInterest();
-  error Dilution();
   error OverPayment();
   error InvalidRepay();
 
@@ -45,8 +44,8 @@ interface IRebaseGoldilend {
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  event Deposit(address indexed user, uint256 amount, uint256 mintAmount);
-  event Withdraw(address indexed user, uint256 amount, uint256 burnAmount);
+  event Deposit(address indexed user, uint256 amount);
+  event Withdraw(address indexed user, uint256 amount);
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
   event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newInterest, uint256 newDuration);
   event Repay(address indexed user, uint256 userLoanId, uint256 amount);
@@ -162,11 +161,6 @@ interface IRebaseGoldilend {
   /// @dev Callable only by multisig
   /// @param token Address of token to recover
   function recoverTokens(address token) external;
-
-  /// @notice Allows multisig to increase backing of Goldilend Debt Asset by sending debt asset
-  /// @dev Callable only by multisig
-  /// @param amount Amount of debt asset to send
-  function increaseglDebtAssetBacking(uint256 amount) external;
 
   /// @notice Allows multisig to adjust the valuation of the NFTs to borrow against
   /// @dev Callable only by multisig
