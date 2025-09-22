@@ -45,6 +45,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Buffer period where borrowers are protected from liquidation
     uint256 public constant LOAN_GRACE_PERIOD = 1 days;
 
+    uint256 public constant AUCTION_PERIOD = 2 days;
+
     /// @notice Address of multisig
     address public multisig;
 
@@ -89,6 +91,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
     /// @notice Maps NFT to fair value
     mapping(address => uint256) public nftFairValues;
+
+    mapping(address => mapping(uint256 => Bid[])) public bids;
 
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -227,15 +231,70 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         emit Repay(msg.sender, userLoanId, repayAmount);
     }
 
+    // /// @inheritdoc IRebaseGoldilend
+    // function liquidate(address user, uint256 userLoanId) external {
+    //     Loan memory userLoan = loans[user][userLoanId];
+    //     if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.borrowedAmount == 0) revert Unliquidatable();
+    //     loans[user][userLoanId].liquidated = true;
+    //     loans[user][userLoanId].borrowedAmount = 0;
+    //     outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
+    //     IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
+    //     emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
+    // }
+
     /// @inheritdoc IRebaseGoldilend
-    function liquidate(address user, uint256 userLoanId) external {
-        Loan memory userLoan = loans[user][userLoanId];
-        if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.borrowedAmount == 0) revert Unliquidatable();
-        loans[user][userLoanId].liquidated = true;
-        loans[user][userLoanId].borrowedAmount = 0;
-        outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
-        IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
-        emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
+    function placeBid(address loanOriginator, uint256 loanId, uint256 bidAmount) external {
+        Loan memory userLoan = loans[loanOriginator][loanId];
+        if(userLoan.repaid || userLoan.liquidated) revert Unliquidatable();
+        if(block.timestamp <= userLoan.endDate + LOAN_GRACE_PERIOD) revert Unliquidatable();
+        if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD + AUCTION_PERIOD) revert AuctionEnded();
+        SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), bidAmount);
+        Bid memory newBid = Bid({
+            loanOriginator: loanOriginator,
+            loanId: loanId,
+            bidder: msg.sender,
+            bidAmount: bidAmount
+        });        
+        bids[loanOriginator][loanId].push(newBid);        
+        emit BidPlaced(loanOriginator, loanId, msg.sender, bidAmount);
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function closeAuction(address loanOriginator, uint256 loanId) external {
+        Loan memory userLoan = loans[loanOriginator][loanId];
+        if(userLoan.repaid || userLoan.liquidated) revert Unliquidatable();
+        if(block.timestamp <= userLoan.endDate + LOAN_GRACE_PERIOD + AUCTION_PERIOD) revert AuctionNotEnded();
+        Bid[] memory loanBids = bids[loanOriginator][loanId];
+        loans[loanOriginator][loanId].liquidated = true;
+        loans[loanOriginator][loanId].borrowedAmount = 0;
+        outstandingDebt -= userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
+        if(loanBids.length == 0) {
+            IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
+            emit AuctionClosed(loanOriginator, loanId, multisig, 0, true);
+        }
+        else {
+            uint256 highestBidIndex = 0;
+            uint256 highestBidAmount = loanBids[0].bidAmount;
+            uint256 loanBidsLength = loanBids.length;
+            for(uint256 i = 1; i < loanBidsLength; ++i) {
+                if(loanBids[i].bidAmount > highestBidAmount) {
+                    highestBidAmount = loanBids[i].bidAmount;
+                    highestBidIndex = i;
+                }
+            }
+            address winner = loanBids[highestBidIndex].bidder;
+            IERC721(userLoan.collateralNFT).transferFrom(address(this), winner, userLoan.collateralNFTId);
+            if(highestBidAmount > userLoan.borrowedAmount) {
+                SafeTransferLib.safeTransfer(debtAsset, multisig, highestBidAmount - userLoan.borrowedAmount);
+            }
+            for(uint256 i; i < loanBids.length; ++i) {
+                if(i != highestBidIndex) {
+                    SafeTransferLib.safeTransfer(debtAsset, loanBids[i].bidder, loanBids[i].bidAmount);
+                }
+            }
+            emit AuctionClosed(loanOriginator, loanId, winner, highestBidAmount, false);
+        }
+        emit Liquidation(msg.sender, loanOriginator, userLoan.borrowedAmount, loanId);
     }
 
 

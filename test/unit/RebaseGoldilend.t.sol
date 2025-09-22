@@ -244,29 +244,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 0);
     }
 
-    function testLiquidateFailUnliquidatable() public dealHoneyForGoldilend dealUserBeras {
-        honey.approve(address(rebaseproxy), txAmount);
-        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
-        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.Unliquidatable.selector));
-        RebaseGoldilend(address(rebaseproxy)).liquidate(address(this), 1);
-    }
-
-    function testLiquidateSuccess() public dealHoneyForGoldilend dealUserBeras {
-        honey.approve(address(rebaseproxy), txAmount);
-        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
-        vm.warp(block.timestamp + 69 days);
-        RebaseGoldilend(address(rebaseproxy)).liquidate(address(this), 1);
-        RebaseGoldilend.Loan memory userLoan = RebaseGoldilend(address(rebaseproxy)).getUserLoan(address(this), 1);
-
-        assertEq(userLoan.liquidated, true);
-        assertEq(userLoan.borrowedAmount, 0);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), 0);
-        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 0);
-        assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 1);
-    }
-
     function testRenewFailActive() public dealHoneyForGoldilend {
         honey.approve(address(rebaseproxy), txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);

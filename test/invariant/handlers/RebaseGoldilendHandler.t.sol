@@ -171,29 +171,6 @@ contract RebaseGoldilendHandler is BaseHandler {
     vm.stopPrank();
   }
 
-  function liquidate(
-    uint256 actorSeed,
-    uint256 targetSeed,
-    uint256 loanId
-  ) public useActor(actorSeed) countCall("liquidate") {
-    address target = randomActor(targetSeed);
-    if (target == currentActor) return;
-    if (!activeLoans[target][loanId]) return;
-    RebaseGoldilend.Loan memory loan = RebaseGoldilend(address(rebasegoldilend)).getUserLoan(target, loanId);
-    if (loan.borrowedAmount == 0 || loan.repaid || loan.liquidated) return;
-    if (block.timestamp < loan.endDate + RebaseGoldilend(address(rebasegoldilend)).LOAN_GRACE_PERIOD()) {
-      vm.warp(loan.endDate + RebaseGoldilend(address(rebasegoldilend)).LOAN_GRACE_PERIOD() + 1);
-    }
-
-    try RebaseGoldilend(address(rebasegoldilend)).liquidate(target, loanId) {
-      activeLoans[target][loanId] = false;
-      ghost_liquidateSum += loan.borrowedAmount;
-      ghost_collateralLiquidated++;
-    } catch {
-      // Liquidation failed, continue
-    }
-  }
-
   function approve(
     uint256 actorSeed,
     uint256 spenderSeed,

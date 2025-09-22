@@ -74,25 +74,6 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), borrowAmount - repayAmount);
     }
 
-    function testFuzzLiquidate(uint256 borrowAmount) public {
-        vm.assume(borrowAmount > 0 && borrowAmount < 1e17);
-        
-        INFT(address(bandbear)).mint(address(this));
-        IERC721(bandbear).setApprovalForAll(address(rebaseproxy), true);
-        
-        deal(address(honey), address(this), 1e30);
-        honey.approve(address(rebaseproxy), 1e30);
-        RebaseGoldilend(address(rebaseproxy)).deposit(1e30);
-        
-        RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 1_000e18, 1 days, address(bandbear), 1);
-        vm.warp(block.timestamp + 2 days);
-        
-        uint256 initialOutstandingDebt = RebaseGoldilend(address(rebaseproxy)).outstandingDebt();
-        RebaseGoldilend(address(rebaseproxy)).liquidate(address(this), 1);
-        
-        assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), initialOutstandingDebt - borrowAmount);
-    }
-
     function testFuzzMultipleDeposits(uint256[] calldata amounts) public {
         vm.assume(amounts.length > 0 && amounts.length <= 5);
         

@@ -16,16 +16,15 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     RebaseGoldilend(address(rebaseproxy)).deposit(500_000e18);
 
     rebasegoldilendHandler = new RebaseGoldilendHandler(address(rebaseproxy), glhoney, honey, bandbear);
-    bytes4[] memory rebasegoldilendSelectors = new bytes4[](9);
+    bytes4[] memory rebasegoldilendSelectors = new bytes4[](8);
     rebasegoldilendSelectors[0] = rebasegoldilendHandler.deposit.selector;
     rebasegoldilendSelectors[1] = rebasegoldilendHandler.withdraw.selector;
     rebasegoldilendSelectors[2] = rebasegoldilendHandler.borrow.selector;
     rebasegoldilendSelectors[3] = rebasegoldilendHandler.renew.selector;
     rebasegoldilendSelectors[4] = rebasegoldilendHandler.repay.selector;
-    rebasegoldilendSelectors[5] = rebasegoldilendHandler.liquidate.selector;
-    rebasegoldilendSelectors[6] = rebasegoldilendHandler.approve.selector;
-    rebasegoldilendSelectors[7] = rebasegoldilendHandler.transfer.selector;
-    rebasegoldilendSelectors[8] = rebasegoldilendHandler.transferFrom.selector;
+    rebasegoldilendSelectors[5] = rebasegoldilendHandler.approve.selector;
+    rebasegoldilendSelectors[6] = rebasegoldilendHandler.transfer.selector;
+    rebasegoldilendSelectors[7] = rebasegoldilendHandler.transferFrom.selector;
     
     targetSelector(FuzzSelector({
       addr: address(rebasegoldilendHandler),

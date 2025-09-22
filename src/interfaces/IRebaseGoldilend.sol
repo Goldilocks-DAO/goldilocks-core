@@ -20,6 +20,13 @@ interface IRebaseGoldilend {
     bool liquidated;
   }
 
+  struct Bid {
+    address loanOriginator;
+    uint256 loanId;
+    address bidder;
+    uint256 bidAmount;
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           ERRORS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -39,6 +46,8 @@ interface IRebaseGoldilend {
   error MoreThanMaxInterest();
   error OverPayment();
   error InvalidRepay();
+  error AuctionEnded();
+  error AuctionNotEnded();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
@@ -50,6 +59,8 @@ interface IRebaseGoldilend {
   event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newInterest, uint256 newDuration);
   event Repay(address indexed user, uint256 userLoanId, uint256 amount);
   event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount, uint256 loanId);
+  event BidPlaced(address indexed loanOriginator, uint256 loanId, address bidder, uint256 bidAmount);
+  event AuctionClosed(address indexed loanOriginator, uint256 loanId, address winner, uint256 winningBidAmount, bool multsigWon);
   event NewProtocolInterestRate(uint256 newProtocolInterestRate);
   event NewDurations(uint256 newMinDuration, uint256 newMaxDuration);
   event NewSlope(uint256 newSlope);
@@ -99,10 +110,20 @@ interface IRebaseGoldilend {
   /// @param userLoanId ID of loan to repay
   function repay(uint256 repayAmount, uint256 userLoanId) external;
 
-  /// @notice Liquidates overdue loans by paying debt asset to purchase collateral
-  /// @param user Owner of loan to be liquidated
-  /// @param userLoanId Loan to be liquidated
-  function liquidate(address user, uint256 userLoanId) external;
+  /// @notice Places a bid for a liquidatable loan auction
+  /// @param loanOriginator Originator of the liquidatable loan
+  /// @param loanId ID of the liquidatable loan
+  /// @param bidAmount Amount of debt asset to bid
+  function placeBid(
+    address loanOriginator,
+    uint256 loanId,
+    uint256 bidAmount
+  ) external;
+
+  /// @notice Close the liquidation auction
+  /// @param loanOriginator Originator of the liquidatable loan
+  /// @param loanId ID of the liquidatable loan
+  function closeAuction(address loanOriginator, uint256 loanId) external;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       VIEW FUNCTIONS                       */
