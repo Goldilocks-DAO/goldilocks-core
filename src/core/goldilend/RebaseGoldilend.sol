@@ -71,6 +71,12 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Maximum loan duration
     uint256 public maxDuration;
 
+    /// @notice Minimum renew duration
+    uint256 public renewMinDuration;
+
+    /// @notice Maximum renew duration
+    uint256 public renewMaxDuration;
+
     /// @notice Maximum utilization of protocol liquidity
     uint256 public maxUtilization;
 
@@ -189,13 +195,16 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 maxInterest
     ) external {
         if(!borrowingActive) revert NotActive();
-        if(newDuration < minDuration || newDuration > maxDuration) revert InvalidDuration();
+        if(newDuration < renewMinDuration || newDuration > renewMaxDuration) revert InvalidDuration();
         Loan memory userLoan = loans[msg.sender][userLoanId];
         if(userLoan.repaid || userLoan.liquidated) revert InvalidRenew();
+        if(userLoan.endDate - block.timestamp > 7 days) revert InvalidRenew();
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
         uint256 _outstandingDebt = outstandingDebt;
         uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
-        uint256 newInterest = _calculateInterest(userLoan.borrowedAmount + newBorrowAmount, _outstandingDebt, newDuration);
+        uint256 newEndDate = block.timestamp + newDuration;
+        uint256 oldEndDate = userLoan.endDate;
+        uint256 newInterest = _calculateInterest(userLoan.borrowedAmount, _outstandingDebt, newEndDate - oldEndDate) + newBorrowAmount > 0 ? _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration) : 0;
         if(userLoan.borrowedAmount + newBorrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
         if(_outstandingDebt + newBorrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _glhoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
@@ -204,9 +213,9 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         newUserLoan.borrowedAmount += newBorrowAmount;
         newUserLoan.interest += newInterest;
         newUserLoan.duration += newDuration;
-        newUserLoan.endDate = block.timestamp + newDuration;
+        newUserLoan.endDate = newEndDate;
         if(newInterest > maxInterest) revert MoreThanMaxInterest();
-        SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount - newInterest);
+        if(newBorrowAmount > 0) SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount - newInterest);
         SafeTransferLib.safeTransfer(debtAsset, multisig, newInterest);
         emit Renew(msg.sender, userLoanId, newBorrowAmount, newInterest, newDuration);
     }
@@ -348,6 +357,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 _protocolInterestRate,
         uint256 _minDuration,
         uint256 _maxDuration,
+        uint256 _renewMinDuration,
+        uint256 _renewMaxDuration,
         uint256 _slope,
         uint256 _maxUtilization
     ) public {
@@ -355,6 +366,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         protocolInterestRate = _protocolInterestRate;
         minDuration = _minDuration;
         maxDuration = _maxDuration;
+        renewMinDuration = _renewMinDuration;
+        renewMaxDuration = _renewMaxDuration;
         slope = _slope;
         maxUtilization = _maxUtilization;
         emit NewProtocolInterestRate(_protocolInterestRate);
@@ -375,13 +388,15 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 _protocolInterestRate,
         uint256 _minDuration,
         uint256 _maxDuration,
+        uint256 _renewMinDuration,
+        uint256 _renewMaxDuration,
         uint256 _slope,
         uint256 _maxUtilization
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
         if(parametersInitialized) revert AlreadyInitialized();
 
-        changeLendingParams(_protocolInterestRate, _minDuration, _maxDuration, _slope, _maxUtilization);
+        changeLendingParams(_protocolInterestRate, _minDuration, _maxDuration, _renewMinDuration, _renewMaxDuration, _slope, _maxUtilization);
         
         parametersInitialized = true;
     }

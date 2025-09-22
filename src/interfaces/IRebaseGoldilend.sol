@@ -148,12 +148,16 @@ interface IRebaseGoldilend {
   /// @param _protocolInterestRate New interest rate
   /// @param _minDuration New minimum duration
   /// @param _maxDuration New maximum duration
+  /// @param _renewMinDuration New minimum renew duration
+  /// @param _renewMaxDuration New maximum renew duration
   /// @param _slope New slope
   /// @param _maxUtilization New Max Utilization
   function changeLendingParams(
     uint256 _protocolInterestRate,
     uint256 _minDuration,
     uint256 _maxDuration,
+    uint256 _renewMinDuration,
+    uint256 _renewMaxDuration,
     uint256 _slope,
     uint256 _maxUtilization
   ) external;
@@ -168,12 +172,16 @@ interface IRebaseGoldilend {
   /// @param _protocolInterestRate Initial interest rate of protocol
   /// @param _minDuration Minimum loan duration
   /// @param _maxDuration Maximum loan duration
+  /// @param _minDuration Minimum renew duration
+  /// @param _maxDuration Maximum renew duration
   /// @param _slope Initial rate at which interest rate increases
   /// @param _maxUtilization Maximum amount of protocol debt based on pool size
   function initializeParameters(
     uint256 _protocolInterestRate,
     uint256 _minDuration,
     uint256 _maxDuration,
+    uint256 _renewMinDuration,
+    uint256 _renewMaxDuration,
     uint256 _slope,
     uint256 _maxUtilization
   ) external;
