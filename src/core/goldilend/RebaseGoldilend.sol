@@ -45,6 +45,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Buffer period where borrowers are protected from liquidation
     uint256 public constant LOAN_GRACE_PERIOD = 1 days;
 
+    /// @notice Period where bidders may place bids on liquidatable loans
     uint256 public constant AUCTION_PERIOD = 2 days;
 
     /// @notice Address of multisig
@@ -98,6 +99,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Maps NFT to fair value
     mapping(address => uint256) public nftFairValues;
 
+    /// @notice Maps loan originator to loan id to bids
     mapping(address => mapping(uint256 => Bid[])) public bids;
 
 
@@ -203,8 +205,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 _outstandingDebt = outstandingDebt;
         uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 newEndDate = block.timestamp + newDuration;
-        uint256 oldEndDate = userLoan.endDate;
-        uint256 newInterest = _calculateInterest(userLoan.borrowedAmount, _outstandingDebt, newEndDate - oldEndDate) + newBorrowAmount > 0 ? _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration) : 0;
+        uint256 newInterest = _calculateInterest(userLoan.borrowedAmount, _outstandingDebt, newEndDate - userLoan.endDate) + newBorrowAmount > 0 ? _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration) : 0;
         if(userLoan.borrowedAmount + newBorrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
         if(_outstandingDebt + newBorrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _glhoneySupply - _outstandingDebt) revert BorrowLimitExceeded();

@@ -377,6 +377,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
       2e17,
       1 days,
       365 days,
+      7 days,
+      30 days,
       2e18,
       90,
       80

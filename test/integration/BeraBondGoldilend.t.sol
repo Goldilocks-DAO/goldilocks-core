@@ -49,6 +49,8 @@ contract IntegrationBeraBondGoldilendTest is Test {
             2e17,
             1 days,
             365 days,
+            7 days,
+            30 days,
             2e18,
             90,
             80

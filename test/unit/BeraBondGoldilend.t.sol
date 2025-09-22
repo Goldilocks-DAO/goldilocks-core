@@ -30,13 +30,11 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
 
     function testDepositSuccess() public dealBeraForGoldilend {
         uint256 initialBeraBalance = address(this).balance;
-        uint256 initialPoolSize = BeraBondGoldilend(payable(address(berabondproxy))).poolSize();
         uint256 initialGlDebtSupply = glbera.totalSupply();
         
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
 
         assertEq(glbera.balanceOf(address(this)), txAmount);
-        assertEq(BeraBondGoldilend(payable(address(berabondproxy))).poolSize(), initialPoolSize + txAmount);
         assertEq(address(this).balance, initialBeraBalance - txAmount);
         assertEq(address(berabondproxy).balance, txAmount);
     }
@@ -49,7 +47,6 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: secondDeposit}();
         
         assertGt(glbera.balanceOf(address(this)), initialGlDebtBalance);
-        assertEq(BeraBondGoldilend(payable(address(berabondproxy))).poolSize(), txAmount + secondDeposit);
     }
 
     function testWithdrawFailTransfer() public {
@@ -65,12 +62,10 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
     function testWithdrawSuccess() public dealBeraForGoldilend {
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
         uint256 balanceAfterDeposit = address(this).balance;
-        uint256 initialPoolSize = BeraBondGoldilend(payable(address(berabondproxy))).poolSize();
         
         BeraBondGoldilend(payable(address(berabondproxy))).withdraw(txAmount);
 
         assertEq(glbera.balanceOf(address(this)), 0);
-        assertEq(BeraBondGoldilend(payable(address(berabondproxy))).poolSize(), initialPoolSize - txAmount);
         assertEq(address(this).balance, balanceAfterDeposit + txAmount);
         assertEq(address(berabondproxy).balance, 0);
     }
@@ -78,12 +73,10 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
     function testWithdrawPartial() public dealBeraForGoldilend {
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
         uint256 withdrawAmount = txAmount / 2;
-        uint256 initialPoolSize = BeraBondGoldilend(payable(address(berabondproxy))).poolSize();
         
         BeraBondGoldilend(payable(address(berabondproxy))).withdraw(withdrawAmount);
 
         assertEq(glbera.balanceOf(address(this)), txAmount - withdrawAmount);
-        assertEq(BeraBondGoldilend(payable(address(berabondproxy))).poolSize(), initialPoolSize - withdrawAmount);
     }
 
     function testGetUserLoan() public {
@@ -102,7 +95,7 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
     function testChangeLendingParamsFailNotMultisig() public {
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.NotMultisig.selector));
-        BeraBondGoldilend(payable(address(berabondproxy))).changeLendingParams(25e18, 2 days, 730 days, 3e18, 95, 85);
+        BeraBondGoldilend(payable(address(berabondproxy))).changeLendingParams(25e18, 2 days, 730 days, 7 days, 30 days, 3e18, 95, 85);
     }
 
     function testChangeLendingParamsSuccess() public {
@@ -124,7 +117,7 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
         vm.expectEmit(true, false, false, true);
         emit IBeraBondGoldilend.NewLTV(newLTV);
 
-        BeraBondGoldilend(payable(address(berabondproxy))).changeLendingParams(newInterestRate, newMinDuration, newMaxDuration, newSlope, newMaxUtilization, newLTV);
+        BeraBondGoldilend(payable(address(berabondproxy))).changeLendingParams(newInterestRate, newMinDuration, newMaxDuration, 7 days, 30 days, newSlope, newMaxUtilization, newLTV);
 
         assertEq(BeraBondGoldilend(payable(address(berabondproxy))).protocolInterestRate(), newInterestRate);
         assertEq(BeraBondGoldilend(payable(address(berabondproxy))).minDuration(), newMinDuration);
@@ -157,12 +150,12 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
     function testInitializeParametersFailNotMultisig() public {
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.NotMultisig.selector));
-        BeraBondGoldilend(payable(address(berabondproxy))).initializeParameters(25e18, 2 days, 730 days, 3e18, 95, 85);
+        BeraBondGoldilend(payable(address(berabondproxy))).initializeParameters(25e18, 2 days, 730 days, 7 days, 30 days, 3e18, 95, 85);
     }
 
     function testInitializeParametersFailAlreadyInitialized() public {
         vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.AlreadyInitialized.selector));
-        BeraBondGoldilend(payable(address(berabondproxy))).initializeParameters(25e18, 2 days, 730 days, 3e18, 95, 85);
+        BeraBondGoldilend(payable(address(berabondproxy))).initializeParameters(25e18, 2 days, 730 days, 7 days, 30 days, 3e18, 95, 85);
     }
 
     function testRecoverTokensFailNotMultisig() public {
@@ -177,29 +170,6 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
 
         assertEq(honey.balanceOf(address(this)), 69);
         assertEq(honey.balanceOf(address(berabondproxy)), 0);
-    }
-
-    function testIncreaseglDebtAssetBackingFailNotMultisig() public {
-        deal(address(0x69), 69);
-        vm.prank(address(0x69));
-        vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.NotMultisig.selector));
-        BeraBondGoldilend(payable(address(berabondproxy))).increaseglDebtAssetBacking{ value: 69 }();
-    }
-
-    function testIncreaseglDebtAssetBackingFailInvalidAmount() public {
-        vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.InvalidAmount.selector));
-        BeraBondGoldilend(payable(address(berabondproxy))).increaseglDebtAssetBacking{ value: 0 }();
-    }
-
-    function testIncreaseglDebtAssetBackingSuccess() public {
-        deal(address(this), 69);
-        uint256 initialPoolSize = BeraBondGoldilend(payable(address(berabondproxy))).poolSize();
-        
-        BeraBondGoldilend(payable(address(berabondproxy))).increaseglDebtAssetBacking{ value: 69 }();
-
-        assertEq(address(this).balance, 0);
-        assertEq(address(berabondproxy).balance, 69);
-        assertEq(BeraBondGoldilend(payable(address(berabondproxy))).poolSize(), initialPoolSize + 69);
     }
 
     function testUpgradeSuccess() public {

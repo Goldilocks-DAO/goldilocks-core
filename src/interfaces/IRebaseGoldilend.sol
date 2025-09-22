@@ -173,8 +173,8 @@ interface IRebaseGoldilend {
   /// @param _protocolInterestRate Initial interest rate of protocol
   /// @param _minDuration Minimum loan duration
   /// @param _maxDuration Maximum loan duration
-  /// @param _minDuration Minimum renew duration
-  /// @param _maxDuration Maximum renew duration
+  /// @param _renewMinDuration Minimum renew duration
+  /// @param _renewMaxDuration Maximum renew duration
   /// @param _slope Initial rate at which interest rate increases
   /// @param _maxUtilization Maximum amount of protocol debt based on pool size
   function initializeParameters(
