@@ -231,17 +231,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         emit Repay(msg.sender, userLoanId, repayAmount);
     }
 
-    // /// @inheritdoc IRebaseGoldilend
-    // function liquidate(address user, uint256 userLoanId) external {
-    //     Loan memory userLoan = loans[user][userLoanId];
-    //     if(block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.borrowedAmount == 0) revert Unliquidatable();
-    //     loans[user][userLoanId].liquidated = true;
-    //     loans[user][userLoanId].borrowedAmount = 0;
-    //     outstandingDebt -=  userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
-    //     IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
-    //     emit Liquidation(msg.sender, user, userLoan.borrowedAmount, userLoanId);
-    // }
-
     /// @inheritdoc IRebaseGoldilend
     function placeBid(address loanOriginator, uint256 loanId, uint256 bidAmount) external {
         Loan memory userLoan = loans[loanOriginator][loanId];
@@ -268,14 +257,14 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         loans[loanOriginator][loanId].liquidated = true;
         loans[loanOriginator][loanId].borrowedAmount = 0;
         outstandingDebt -= userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
-        if(loanBids.length == 0) {
+        uint256 loanBidsLength = loanBids.length;
+        if(loanBidsLength == 0) {
             IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
             emit AuctionClosed(loanOriginator, loanId, multisig, 0, true);
         }
         else {
             uint256 highestBidIndex = 0;
             uint256 highestBidAmount = loanBids[0].bidAmount;
-            uint256 loanBidsLength = loanBids.length;
             for(uint256 i = 1; i < loanBidsLength; ++i) {
                 if(loanBids[i].bidAmount > highestBidAmount) {
                     highestBidAmount = loanBids[i].bidAmount;
@@ -287,7 +276,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
             if(highestBidAmount > userLoan.borrowedAmount) {
                 SafeTransferLib.safeTransfer(debtAsset, multisig, highestBidAmount - userLoan.borrowedAmount);
             }
-            for(uint256 i; i < loanBids.length; ++i) {
+            for(uint256 i; i < loanBidsLength; ++i) {
                 if(i != highestBidIndex) {
                     SafeTransferLib.safeTransfer(debtAsset, loanBids[i].bidder, loanBids[i].bidAmount);
                 }
