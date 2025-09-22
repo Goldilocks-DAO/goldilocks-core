@@ -262,13 +262,22 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 1e18, 0);
     }
 
+    function testRebaseRenewFailInvalidMinDuration() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount + txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount + txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 3 days);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.InvalidRenew.selector));
+        RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 1e18, 1_000e18);
+    }
+
     function testRenewFailExpired() public dealHoneyForGoldilend dealUserBeras {
         honey.approve(address(rebaseproxy), txAmount + txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount + txAmount);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
-        vm.warp(6969696969);
+        vm.warp(16 days);
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.LoanExpired.selector));
-        RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 1e18, 0);
+        RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 10e18, 0);
     }
 
     function testRenewFailDuration() public dealHoneyForGoldilend {
@@ -282,8 +291,9 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         honey.approve(address(rebaseproxy), txAmount*2);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount*2);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 8 days);
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.InvalidLoanAmount.selector));
-        RebaseGoldilend(address(rebaseproxy)).renew(1, 6 days, 69000e18, 0);
+        RebaseGoldilend(address(rebaseproxy)).renew(1, 8 days, 69000e18, 0);
     }
 
     function testRenewFailBorrowLimit() public dealUserBeras {
@@ -292,13 +302,14 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).deposit(1_000_000e18);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, 1 days, address(bandbear),1);
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.BorrowLimitExceeded.selector));
-        RebaseGoldilend(address(rebaseproxy)).renew(1, 300 days, 49e18, 0);
+        RebaseGoldilend(address(rebaseproxy)).renew(1, 29 days, 49e18, 0);
     }
 
     function testRenewFailMoreThanMaxInterest() public dealHoneyForGoldilend dealUserBeras {
         honey.approve(address(rebaseproxy), txAmount + txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount + txAmount);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 8 days);
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.MoreThanMaxInterest.selector));
         RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 1e18, 0);
     }
@@ -307,17 +318,154 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         honey.approve(address(rebaseproxy), txAmount + txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount + txAmount);
         RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 8 days);
         RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 1e18, 1_000e18);
         RebaseGoldilend.Loan memory userLoan = RebaseGoldilend(address(rebaseproxy)).getUserLoan(address(this), 1);
 
         assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), 2e18);
         assertEq(userLoan.borrowedAmount, 2e18);
         assertEq(userLoan.interest, renewBorrowInterest + renewInterest);
-        assertEq(userLoan.duration, 28 days);
+        assertEq(userLoan.duration, 14 days);
         assertEq(userLoan.endDate, block.timestamp + 14 days);
         assertEq(honey.balanceOf(address(this)), dealAmt - 18e18);
         assertEq(honey.balanceOf(address(rebaseproxy)), 18e18);
+    }
 
+    function testZeroRenew() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount + txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount + txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 8 days);
+        RebaseGoldilend(address(rebaseproxy)).renew(1, goldilendDuration, 0, 1_000e18);
+        RebaseGoldilend.Loan memory userLoan = RebaseGoldilend(address(rebaseproxy)).getUserLoan(address(this), 1);
+
+        assertEq(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), 1e18);
+        assertEq(userLoan.borrowedAmount, 1e18);
+        assertLe(userLoan.interest, renewBorrowInterest + renewInterest);
+        assertEq(userLoan.duration, 14 days);
+        assertEq(userLoan.endDate, block.timestamp + 14 days);
+        assertEq(honey.balanceOf(address(this)), dealAmt - 19e18);
+        assertEq(honey.balanceOf(address(rebaseproxy)), 19e18);
+    }
+
+    function testPlaceBidFailUnliquidatable() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        honey.approve(address(rebaseproxy), 1e18);
+        RebaseGoldilend(address(rebaseproxy)).repay(1e18, 1);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.Unliquidatable.selector));
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 69);
+    }
+
+    function testPlaceBidFailUnliquidatableTimestamp() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 15 days);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.Unliquidatable.selector));
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 69);
+    }
+
+    function testPlaceBidFailAuctionEnded() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 20 days);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.AuctionEnded.selector));
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 69);
+    }
+
+    function testPlaceBidFailInsufficient() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 16 days);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.InsufficientBid.selector));
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 5e17);
+    }
+
+    function testPlaceBidSuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 16 days);
+        deal(address(honey), address(0xaabbcc), 10e18);
+        vm.startPrank(address(0xaabbcc));
+        honey.approve(address(rebaseproxy), 10e18);
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 10e18);
+        vm.stopPrank();
+    }
+
+    function testCloseAuctionFailUnliquidatable() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        honey.approve(address(rebaseproxy), 1e18);
+        RebaseGoldilend(address(rebaseproxy)).repay(1e18, 1);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.Unliquidatable.selector));
+        RebaseGoldilend(address(rebaseproxy)).closeAuction(address(this), 1);
+    }
+
+    function testCloseAuctionFailNotEnded() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(15 days);
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.AuctionNotEnded.selector));
+        RebaseGoldilend(address(rebaseproxy)).closeAuction(address(this), 1);
+    }
+
+    function testCloseAuctionSuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 16 days);
+        
+        deal(address(honey), address(0xabc), 2e18);
+        vm.startPrank(address(0xabc));
+        honey.approve(address(rebaseproxy), 2e18);
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 2e18);
+        vm.stopPrank();
+
+        deal(address(honey), address(0xaabbcc), 15e18);
+        vm.startPrank(address(0xaabbcc));
+        honey.approve(address(rebaseproxy), 10e18);
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 10e18);
+        vm.stopPrank();
+
+        deal(address(honey), address(0xaaabbbccc), 105e18);
+        vm.startPrank(address(0xaaabbbccc));
+        honey.approve(address(rebaseproxy), 100e18);
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 100e18);
+        vm.stopPrank();
+
+        deal(address(honey), address(0xaaaabbbbcccc), 1000e18);
+        vm.startPrank(address(0xaaaabbbbcccc));
+        honey.approve(address(rebaseproxy), 1000e18);
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 1000e18);
+        vm.stopPrank();
+
+        vm.warp(17 days + 2);
+        RebaseGoldilend(address(rebaseproxy)).closeAuction(address(this), 1);
+
+        assertEq(honey.balanceOf(address(0xabc)), 2e18);
+        assertEq(honey.balanceOf(address(0xaabbcc)), 15e18);
+        assertEq(honey.balanceOf(address(0xaaabbbccc)), 105e18);
+        assertEq(honey.balanceOf(address(0xaaaabbbbcccc)), 0);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(0xaaaabbbbcccc)), 1);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 0);
+    }
+
+    function testCloseAuctionNoBids() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(17 days + 2);
+        RebaseGoldilend(address(rebaseproxy)).closeAuction(address(this), 1);
+
+        assertEq(IERC721(address(bandbear)).balanceOf(address(this)), 1);
+        assertEq(IERC721(address(bandbear)).balanceOf(address(rebaseproxy)), 0);
     }
 
     function testChangeLendingParamsFailMultisig() public {

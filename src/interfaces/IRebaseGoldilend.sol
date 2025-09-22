@@ -48,6 +48,7 @@ interface IRebaseGoldilend {
   error InvalidRepay();
   error AuctionEnded();
   error AuctionNotEnded();
+  error InsufficientBid();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */

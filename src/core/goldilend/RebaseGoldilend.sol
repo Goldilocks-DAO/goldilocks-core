@@ -198,8 +198,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(newDuration < renewMinDuration || newDuration > renewMaxDuration) revert InvalidDuration();
         Loan memory userLoan = loans[msg.sender][userLoanId];
         if(userLoan.repaid || userLoan.liquidated) revert InvalidRenew();
-        if(userLoan.endDate - block.timestamp > 7 days) revert InvalidRenew();
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
+        if(userLoan.endDate - block.timestamp > renewMinDuration) revert InvalidRenew();
         uint256 _outstandingDebt = outstandingDebt;
         uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 newEndDate = block.timestamp + newDuration;
@@ -212,7 +212,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         Loan storage newUserLoan = loans[msg.sender][userLoanId];
         newUserLoan.borrowedAmount += newBorrowAmount;
         newUserLoan.interest += newInterest;
-        newUserLoan.duration += newDuration;
+        newUserLoan.duration = newDuration;
         newUserLoan.endDate = newEndDate;
         if(newInterest > maxInterest) revert MoreThanMaxInterest();
         if(newBorrowAmount > 0) SafeTransferLib.safeTransfer(debtAsset, msg.sender, newBorrowAmount - newInterest);
@@ -246,6 +246,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(userLoan.repaid || userLoan.liquidated) revert Unliquidatable();
         if(block.timestamp <= userLoan.endDate + LOAN_GRACE_PERIOD) revert Unliquidatable();
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD + AUCTION_PERIOD) revert AuctionEnded();
+        if(bidAmount <= userLoan.borrowedAmount) revert InsufficientBid();
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), bidAmount);
         Bid memory newBid = Bid({
             loanOriginator: loanOriginator,
