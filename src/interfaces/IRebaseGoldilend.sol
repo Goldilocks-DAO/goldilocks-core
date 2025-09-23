@@ -210,4 +210,8 @@ interface IRebaseGoldilend {
     uint256[] calldata _nftFairValues
   ) external;
 
+  /// @notice Allows multisig to withdraw surplus winning bids from liquidatable loan auctions
+  /// @dev Callable only by multisig
+  function withdrawSurplus() external;
+
 }

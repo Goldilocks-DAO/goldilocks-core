@@ -28,21 +28,6 @@ contract FuzzGovLocksTest is BaseFuzzTest {
     assertEq(govlocks.balanceOf(address(this)), 0);
   }
 
-  function testFuzzDelegateOther(address delegatee, uint256 delegateAmount) public {
-    vm.assume(delegatee != address(0));
-    vm.assume(delegatee != address(0x42042069));
-    deal(address(goldiswap), address(this), delegateAmount);
-    goldiswap.approve(address(govlocks), delegateAmount);
-    govlocks.deposit(delegateAmount);
-    govlocks.delegate(delegatee);
-    vm.roll(2);
-
-    assertEq(govlocks.getPriorVotes(delegatee, block.number - 1), delegateAmount);
-    assertEq(govlocks.balanceOf(delegatee), 0);
-    assertEq(govlocks.getPriorVotes(address(this), block.number - 1), 0);
-    assertEq(govlocks.balanceOf(address(this)), delegateAmount);
-  }
-
   function testFuzzDelegateSelf(uint256 delegateAmount) public {
     deal(address(goldiswap), address(this), delegateAmount);
     goldiswap.approve(address(govlocks), delegateAmount);

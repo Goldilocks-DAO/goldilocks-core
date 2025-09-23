@@ -83,7 +83,7 @@ interface IBeraBondGoldilend {
 
   /// @notice Borrows BERA against value of BeraBond
   /// @param borrowAmount Amount of BERA to borrow
-    /// @param maxInterest Maximum amount of interest paid by user
+  /// @param maxInterest Maximum amount of interest paid by user
   /// @param duration Duration of loan
   /// @param collateralNFT BeraBond to use as collateral
   /// @param collateralNFTId Token Id of BeraBond to use as collateral
@@ -120,6 +120,7 @@ interface IBeraBondGoldilend {
   ) external payable;
 
   /// @notice Close the liquidation auction
+  /// @dev This function will process even if the receiver will revert on receiving the native asset, BERA
   /// @param loanOriginator Originator of the liquidatable loan
   /// @param loanId ID of the liquidatable loan
   function closeAuction(address loanOriginator, uint256 loanId) external;
@@ -205,6 +206,10 @@ interface IBeraBondGoldilend {
   /// @dev Callable only by multisig
   /// @param token Address of token to recover
   function recoverTokens(address token) external;
+
+  /// @notice Allows multisig to withdraw surplus winning bids from liquidatable loan auctions
+  /// @dev Callable only by multisig
+  function withdrawSurplus() external;
 
   /// @notice Manages the delegation of the token bound account to a delegatee
   /// @param nft Address of BeraBond

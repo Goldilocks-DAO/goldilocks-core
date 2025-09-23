@@ -90,6 +90,9 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Indicates if contract beras are initialized
     bool public berasInitialized;
 
+    /// @notice Tracks surplus winning bids on liquidatable loan auctions
+    uint256 public auctionSurplus;
+
     /// @notice Maps users to total amount of their loans
     mapping(address => uint256) public userLoanAmount;
 
@@ -285,7 +288,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
             address winner = loanBids[highestBidIndex].bidder;
             IERC721(userLoan.collateralNFT).transferFrom(address(this), winner, userLoan.collateralNFTId);
             if(highestBidAmount > userLoan.borrowedAmount) {
-                SafeTransferLib.safeTransfer(debtAsset, multisig, highestBidAmount - userLoan.borrowedAmount);
+                auctionSurplus += highestBidAmount - userLoan.borrowedAmount;
             }
             for(uint256 i; i < loanBidsLength; ++i) {
                 if(i != highestBidIndex) {
@@ -434,6 +437,14 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
         berasInitialized = true;
         borrowingActive = true;
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function withdrawSurplus() external {
+        if(msg.sender != multisig) revert NotMultisig();
+        uint256 _auctionSurplus = auctionSurplus;
+        auctionSurplus = 0;
+        SafeTransferLib.safeTransfer(debtAsset, multisig, _auctionSurplus);
     }
 
 

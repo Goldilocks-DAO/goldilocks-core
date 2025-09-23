@@ -98,6 +98,9 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @notice Indicates if contract parameters are initialized
     bool public parametersInitialized;
 
+    /// @notice Tracks surplus winning bids on liquidatable loan auctions
+    uint256 public auctionSurplus;
+
     /// @notice Maps users to total amount of their loans
     mapping(address => uint256) public userLoanAmount;
 
@@ -311,13 +314,11 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
             address winner = loanBids[highestBidIndex].bidder;
             IERC721(userLoan.collateralNFT).transferFrom(address(this), winner, userLoan.collateralNFTId);
             if(highestBidAmount > userLoan.borrowedAmount) {
-                (bool success1, ) = payable(multisig).call{value: highestBidAmount - userLoan.borrowedAmount}("");
-                if(!success1) revert TransferFailed();
+                auctionSurplus += highestBidAmount - userLoan.borrowedAmount;
             }
             for(uint256 i; i < loanBidsLength; ++i) {
                 if(i != highestBidIndex) {
-                    (bool success2, ) = payable(loanBids[i].bidder).call{value: loanBids[i].bidAmount}("");
-                    if(!success2) revert TransferFailed();
+                    payable(loanBids[i].bidder).call{value: loanBids[i].bidAmount}("");
                 }
             }
             emit AuctionClosed(loanOriginator, loanId, winner, highestBidAmount, false);
@@ -491,6 +492,15 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         if(msg.sender != multisig) revert NotMultisig();
         uint256 balance = ERC20(token).balanceOf(address(this));
         SafeTransferLib.safeTransfer(token, multisig, balance);
+    }
+
+    /// @inheritdoc IBeraBondGoldilend
+    function withdrawSurplus() external {
+        if(msg.sender != multisig) revert NotMultisig();
+        uint256 _auctionSurplus = auctionSurplus;
+        auctionSurplus = 0;
+        (bool success, ) = payable(multisig).call{value: _auctionSurplus}("");
+        if(!success) revert TransferFailed();
     }
 
     /// @inheritdoc IBeraBondGoldilend

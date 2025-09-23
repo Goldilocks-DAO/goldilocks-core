@@ -579,6 +579,36 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values);
     }
 
+    function testWithdrawSurplusFailMultisig() public {
+        vm.prank(address(0xabc));
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotMultisig.selector));
+        RebaseGoldilend(address(rebaseproxy)).withdrawSurplus();
+    }
+
+    function testWithdrawSurplusSuccess() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 16 days);
+        
+        deal(address(honey), address(0xabc), 2e18);
+        vm.startPrank(address(0xabc));
+        honey.approve(address(rebaseproxy), 2e18);
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 2e18);
+        vm.stopPrank();
+
+        uint256 balBefore = honey.balanceOf(address(this));
+
+        vm.warp(17 days + 2);
+        RebaseGoldilend(address(rebaseproxy)).closeAuction(address(this), 1);
+        RebaseGoldilend(address(rebaseproxy)).withdrawSurplus();
+
+        uint256 balAfter = honey.balanceOf(address(this));
+
+        assertEq(balBefore + 1e18, balAfter);
+        assertEq(RebaseGoldilend(address(rebaseproxy)).auctionSurplus(), 0);
+    }
+
     function testUpgradeRebaseGoldilendFailOwner() public {
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(0x69)));
@@ -593,6 +623,5 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(TestUpgradeableRebaseGoldilend(address(rebaseproxy)).specialNumber(), 69);
         assertEq(TestUpgradeableRebaseGoldilend(address(rebaseproxy)).multisig(), address(this));
     }
-
     
 }
