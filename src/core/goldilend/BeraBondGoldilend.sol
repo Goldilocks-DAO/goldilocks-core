@@ -110,8 +110,8 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
     /// @notice Maps user address to IDs of BeraBonds in Goldilend
     mapping(address => uint256[]) public depositedBeraBondIDs;
 
-    /// @notice Maps loan originator to loan id to bids
-    mapping(address => mapping(uint256 => Bid[])) public bids;
+    /// @notice Maps loan originator to loan id to the highest bid
+    mapping(address => mapping(uint256 => Bid)) public highestBid;
 
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -278,14 +278,17 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         if(block.timestamp <= userLoan.endDate + LOAN_GRACE_PERIOD) revert Unliquidatable();
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD + AUCTION_PERIOD) revert AuctionEnded();
         if(msg.value <= userLoan.borrowedAmount) revert InsufficientBid();
-        Bid memory newBid = Bid({
-            loanOriginator: loanOriginator,
-            loanId: loanId,
-            bidder: msg.sender,
-            bidAmount: msg.value
-        });        
-        bids[loanOriginator][loanId].push(newBid);        
-        emit BidPlaced(loanOriginator, loanId, msg.sender, msg.value);
+        Bid memory currentHighestBid = highestBid[loanOriginator][loanId];
+        if(msg.value > currentHighestBid.bidAmount) {
+            highestBid[loanOriginator][loanId] = Bid({
+                loanOriginator: loanOriginator,
+                loanId: loanId,
+                bidder: msg.sender,
+                bidAmount: msg.value
+            });
+            if(currentHighestBid.bidAmount > 0) payable(currentHighestBid.bidder).call{value: currentHighestBid.bidAmount}("");
+            emit BidPlaced(loanOriginator, loanId, msg.sender, msg.value);
+        }  
     }
 
     /// @inheritdoc IBeraBondGoldilend
@@ -293,35 +296,21 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         Loan memory userLoan = loans[loanOriginator][loanId];
         if(userLoan.repaid || userLoan.liquidated) revert Unliquidatable();
         if(block.timestamp <= userLoan.endDate + LOAN_GRACE_PERIOD + AUCTION_PERIOD) revert AuctionNotEnded();
-        Bid[] memory loanBids = bids[loanOriginator][loanId];
+        Bid memory winningBid = highestBid[loanOriginator][loanId];
         loans[loanOriginator][loanId].liquidated = true;
         loans[loanOriginator][loanId].borrowedAmount = 0;
         outstandingDebt -= userLoan.borrowedAmount > outstandingDebt ? outstandingDebt : userLoan.borrowedAmount;
-        uint256 loanBidsLength = loanBids.length;
-        if(loanBidsLength == 0) {
+        if(winningBid.bidder == address(0)) {
             IERC721(userLoan.collateralNFT).transferFrom(address(this), multisig, userLoan.collateralNFTId);
             emit AuctionClosed(loanOriginator, loanId, multisig, 0, true);
         }
         else {
-            uint256 highestBidIndex = 0;
-            uint256 highestBidAmount = loanBids[0].bidAmount;
-            for(uint256 i = 1; i < loanBidsLength; ++i) {
-                if(loanBids[i].bidAmount > highestBidAmount) {
-                    highestBidAmount = loanBids[i].bidAmount;
-                    highestBidIndex = i;
-                }
-            }
-            address winner = loanBids[highestBidIndex].bidder;
+            address winner = winningBid.bidder;
             IERC721(userLoan.collateralNFT).transferFrom(address(this), winner, userLoan.collateralNFTId);
-            if(highestBidAmount > userLoan.borrowedAmount) {
-                auctionSurplus += highestBidAmount - userLoan.borrowedAmount;
+            if(winningBid.bidAmount > userLoan.borrowedAmount) {
+                auctionSurplus += winningBid.bidAmount - userLoan.borrowedAmount;
             }
-            for(uint256 i; i < loanBidsLength; ++i) {
-                if(i != highestBidIndex) {
-                    payable(loanBids[i].bidder).call{value: loanBids[i].bidAmount}("");
-                }
-            }
-            emit AuctionClosed(loanOriginator, loanId, winner, highestBidAmount, false);
+            emit AuctionClosed(loanOriginator, loanId, winner, winningBid.bidAmount, false);
         }
         emit Liquidation(msg.sender, loanOriginator, userLoan.borrowedAmount, loanId);
     }
