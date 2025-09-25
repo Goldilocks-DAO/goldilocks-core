@@ -288,7 +288,10 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
             });
             if(currentHighestBid.bidAmount > 0) payable(currentHighestBid.bidder).call{value: currentHighestBid.bidAmount}("");
             emit BidPlaced(loanOriginator, loanId, msg.sender, msg.value);
-        }  
+        }
+        else {
+            revert NotHighestBid();
+        }
     }
 
     /// @inheritdoc IBeraBondGoldilend

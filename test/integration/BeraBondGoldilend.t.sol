@@ -7,6 +7,7 @@ import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { ERC1967Proxy } from "../../lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { BeraBondGoldilend } from "../../src/core/goldilend/BeraBondGoldilend.sol";
+import { IBeraBondGoldilend } from "../../src/interfaces/IBeraBondGoldilend.sol";
 import { GoldilendDebtAsset } from "../../src/core/goldilend/GoldilendDebtAsset.sol";
 
 
@@ -89,6 +90,26 @@ contract IntegrationBeraBondGoldilendTest is Test {
         
         vm.expectRevert();
         uint256 id = BeraBondGoldilend(payable(address(berabondproxy))).depositedBeraBondIDs(rawdog, 0);
+    }
+
+    function testPlaceBidFailNotHighestBid() public  {
+        deal(rawdog, 5_000e18);
+        vm.startPrank(rawdog);
+        BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: 5_000e18}();
+        IERC721(berabond).setApprovalForAll(address(berabondproxy), true);
+        BeraBondGoldilend(payable(address(berabondproxy))).borrow(83e13, 1_000e18, 1209600, berabond, 6);
+        vm.stopPrank();
+        vm.warp(block.timestamp + 16 days);
+
+        deal(address(0xaabbcc), 10e18);
+        vm.startPrank(address(0xaabbcc));
+        BeraBondGoldilend(payable(address(berabondproxy))).placeBid{value: 10e18}(rawdog, 1);
+        vm.stopPrank();
+
+        deal(address(0xbbcc), 9e18);
+        vm.prank(address(0xbbcc));
+        vm.expectRevert(abi.encodeWithSelector(IBeraBondGoldilend.NotHighestBid.selector));
+        BeraBondGoldilend(payable(address(berabondproxy))).placeBid{value: 9e18}(rawdog, 1);
     }
 
     // function testBeraBondClaimYield() public {

@@ -385,6 +385,26 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 5e17);
     }
 
+    function testPlaceBidFailNotHighestBid() public dealHoneyForGoldilend dealUserBeras {
+        honey.approve(address(rebaseproxy), txAmount);
+        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
+        vm.warp(block.timestamp + 16 days);
+
+        deal(address(honey), address(0xaabbcc), 10e18);
+        vm.startPrank(address(0xaabbcc));
+        honey.approve(address(rebaseproxy), 10e18);
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 10e18);
+        vm.stopPrank();
+
+        deal(address(honey), address(0xbbcc), 9e18);
+        vm.prank(address(0xbbcc));
+        honey.approve(address(rebaseproxy), 9e18);
+        vm.prank(address(0xbbcc));
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotHighestBid.selector));
+        RebaseGoldilend(address(rebaseproxy)).placeBid(address(this), 1, 9e18);
+    }
+
     function testPlaceBidSuccess() public dealHoneyForGoldilend dealUserBeras {
         honey.approve(address(rebaseproxy), txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);

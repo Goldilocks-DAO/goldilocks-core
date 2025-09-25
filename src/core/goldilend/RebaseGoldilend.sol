@@ -263,6 +263,9 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
             if(currentHighestBid.bidAmount > 0) SafeTransferLib.safeTransfer(debtAsset, currentHighestBid.bidder, currentHighestBid.bidAmount);
             emit BidPlaced(loanOriginator, loanId, msg.sender, bidAmount);
         }
+        else {
+            revert NotHighestBid();
+        }
     }
 
     /// @inheritdoc IRebaseGoldilend

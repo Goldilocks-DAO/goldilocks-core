@@ -50,6 +50,7 @@ interface IBeraBondGoldilend {
   error AuctionEnded();
   error AuctionNotEnded();
   error InsufficientBid();
+  error NotHighestBid();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
