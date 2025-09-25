@@ -17,7 +17,7 @@ contract IntegrationBeraBondGoldilendTest is Test {
 
     BeraBondGoldilend berabondgoldilend;
     ERC1967Proxy berabondproxy;
-    GoldilendDebtAsset glbera;
+    GoldilendDebtAsset gbera;
 
     address rawdog = 0x8FE7E03B5b2E49E3386BE79f0834B4B6D08E095c;
     address bgt = 0x656b95E550C07a9ffe548bd4085c72418Ceb1dba;
@@ -28,7 +28,7 @@ contract IntegrationBeraBondGoldilendTest is Test {
         uint256 berachainFork = vm.createFork("https://rpc.berachain.com");
         vm.selectFork(berachainFork);
         vm.startPrank(rawdog);
-        GoldilendDebtAsset glberaComputed = GoldilendDebtAsset(rawdog.computeAddress(97));
+        GoldilendDebtAsset gberaComputed = GoldilendDebtAsset(rawdog.computeAddress(97));
 
         // deploy berabondgoldilend
         berabondgoldilend = new BeraBondGoldilend();
@@ -37,15 +37,15 @@ contract IntegrationBeraBondGoldilendTest is Test {
         bytes memory berabonddata = abi.encodeWithSelector(
             BeraBondGoldilend.initialize.selector,
             rawdog,
-            address(glberaComputed),
+            address(gberaComputed),
             bgt,
             berabond,
             registry
         );
         berabondproxy = new ERC1967Proxy(address(berabondgoldilend), berabonddata);
         address payable berabondproxyaddy = payable(address(berabondproxy));
-        glbera = new GoldilendDebtAsset("Goldilend Bera", "glBERA", address(berabondproxy));
-        assert(BeraBondGoldilend(berabondproxyaddy).glDebtAsset() == address(glbera));
+        gbera = new GoldilendDebtAsset("Goldilend Bera", "gBERA", address(berabondproxy));
+        assert(BeraBondGoldilend(berabondproxyaddy).glDebtAsset() == address(gbera));
         BeraBondGoldilend(berabondproxyaddy).initializeParameters(
             2e17,
             1 days,

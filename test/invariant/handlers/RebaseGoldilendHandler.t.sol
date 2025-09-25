@@ -12,7 +12,7 @@ import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC
 contract RebaseGoldilendHandler is BaseHandler {
 
   RebaseGoldilend public rebasegoldilend;
-  GoldilendDebtAsset public glhoney;
+  GoldilendDebtAsset public ghoney;
   Honey public honey;
   BandBear public bandbear;
 
@@ -35,9 +35,9 @@ contract RebaseGoldilendHandler is BaseHandler {
   mapping(address => uint256[]) public userNFTs;
   mapping(address => uint256) public userNFTCount;
 
-  constructor(address _rebaseproxy, GoldilendDebtAsset _glhoney, Honey _honey, BandBear _bandbear) {
+  constructor(address _rebaseproxy, GoldilendDebtAsset _ghoney, Honey _honey, BandBear _bandbear) {
     rebasegoldilend = RebaseGoldilend(_rebaseproxy);
-    glhoney = _glhoney;
+    ghoney = _ghoney;
     honey = _honey;
     bandbear = _bandbear;
     deal(address(honey), address(this), 100_000e18);
@@ -67,7 +67,7 @@ contract RebaseGoldilendHandler is BaseHandler {
   }
 
   function withdraw(uint256 actorSeed, uint256 amount) public useActor(actorSeed) countCall("withdraw") {
-    amount = bound(amount, 0, glhoney.balanceOf(currentActor));
+    amount = bound(amount, 0, ghoney.balanceOf(currentActor));
     if(amount == 0) ghost_zeroWithdraws++;
 
     vm.startPrank(currentActor);
@@ -93,13 +93,13 @@ contract RebaseGoldilendHandler is BaseHandler {
       nftId = userNFTCount[currentActor] - 1;
     }
     uint256 actualTokenId = userNFTs[currentActor][nftId];
-    uint256 maxBorrow = glhoney.totalSupply() / 10;
+    uint256 maxBorrow = ghoney.totalSupply() / 10;
     uint256 nftValue = RebaseGoldilend(address(rebasegoldilend)).nftFairValues(address(bandbear));
     borrowAmount = bound(borrowAmount, 0, maxBorrow);
     borrowAmount = bound(borrowAmount, 0, nftValue);
     duration = bound(duration, RebaseGoldilend(address(rebasegoldilend)).minDuration(), RebaseGoldilend(address(rebasegoldilend)).maxDuration());
 
-    if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + borrowAmount > glhoney.totalSupply() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
+    if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + borrowAmount > ghoney.totalSupply() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
     try RebaseGoldilend(address(rebasegoldilend)).borrow(borrowAmount, 1_000e18, duration, address(bandbear), actualTokenId) {
       userLoanCount[currentActor]++;
       uint256 loanId = userLoanCount[currentActor];
@@ -124,11 +124,11 @@ contract RebaseGoldilendHandler is BaseHandler {
     if (!activeLoans[currentActor][loanId]) return;
     RebaseGoldilend.Loan memory loan = RebaseGoldilend(address(rebasegoldilend)).getUserLoan(currentActor, loanId);
     if (loan.borrowedAmount == 0 || loan.repaid || loan.liquidated) return;
-    uint256 maxBorrow = glhoney.totalSupply() / 10;
+    uint256 maxBorrow = ghoney.totalSupply() / 10;
     newBorrowAmount = bound(newBorrowAmount, 0, maxBorrow);
     newDuration = bound(newDuration, RebaseGoldilend(address(rebasegoldilend)).minDuration(), RebaseGoldilend(address(rebasegoldilend)).maxDuration());
 
-    if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + newBorrowAmount > glhoney.totalSupply() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
+    if (RebaseGoldilend(address(rebasegoldilend)).outstandingDebt() + newBorrowAmount > ghoney.totalSupply() * RebaseGoldilend(address(rebasegoldilend)).maxUtilization() / 100) return;
     try RebaseGoldilend(address(rebasegoldilend)).renew(loanId, newDuration, newBorrowAmount, 1_000e18) {
       userTotalBorrowed[currentActor] += newBorrowAmount;
       ghost_renewSum += newBorrowAmount;
@@ -179,7 +179,7 @@ contract RebaseGoldilendHandler is BaseHandler {
     address spender = randomActor(spenderSeed);
 
     vm.prank(currentActor);
-    glhoney.approve(spender, amount);
+    ghoney.approve(spender, amount);
   }
 
   function transfer(
@@ -188,10 +188,10 @@ contract RebaseGoldilendHandler is BaseHandler {
     uint256 amount
   ) public useActor(actorSeed) countCall("transfer") {
     address to = randomActor(toSeed);
-    amount = bound(amount, 0, glhoney.balanceOf(currentActor));
+    amount = bound(amount, 0, ghoney.balanceOf(currentActor));
 
     vm.prank(currentActor);
-    glhoney.transfer(to, amount);
+    ghoney.transfer(to, amount);
   }
 
   function transferFrom(
@@ -205,18 +205,18 @@ contract RebaseGoldilendHandler is BaseHandler {
     address from = randomActor(fromSeed);
     address to = randomActor(toSeed);
 
-    amount = bound(amount, 0, glhoney.balanceOf(from));
+    amount = bound(amount, 0, ghoney.balanceOf(from));
 
     if(_approve) {
       vm.prank(from);
-      glhoney.approve(currentActor, amount);
+      ghoney.approve(currentActor, amount);
     }
     else {
-      amount = bound(amount, 0, glhoney.allowance(currentActor, from));
+      amount = bound(amount, 0, ghoney.allowance(currentActor, from));
     }  
 
     vm.prank(currentActor);
-    glhoney.transferFrom(from, to, amount);
+    ghoney.transferFrom(from, to, amount);
   }
 
   function sendHoney(address actor, uint256 amount) internal {

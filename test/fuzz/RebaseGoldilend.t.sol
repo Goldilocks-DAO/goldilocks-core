@@ -15,10 +15,10 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         honey.approve(address(rebaseproxy), depositAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(depositAmount);
 
-        assertEq(glhoney.balanceOf(address(this)), depositAmount);
+        assertEq(ghoney.balanceOf(address(this)), depositAmount);
         assertEq(honey.balanceOf(address(this)), 0);
         assertEq(honey.balanceOf(address(rebaseproxy)), depositAmount);
-        assertEq(glhoney.totalSupply(), depositAmount);
+        assertEq(ghoney.totalSupply(), depositAmount);
     }
 
     function testFuzzWithdraw(uint256 depositAmount, uint256 withdrawAmount) public {
@@ -30,10 +30,10 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         RebaseGoldilend(address(rebaseproxy)).deposit(depositAmount);
         RebaseGoldilend(address(rebaseproxy)).withdraw(withdrawAmount);
 
-        assertEq(glhoney.balanceOf(address(this)), depositAmount - withdrawAmount);
+        assertEq(ghoney.balanceOf(address(this)), depositAmount - withdrawAmount);
         assertEq(honey.balanceOf(address(this)), withdrawAmount);
         assertEq(honey.balanceOf(address(rebaseproxy)), depositAmount - withdrawAmount);
-        assertEq(glhoney.totalSupply(), depositAmount - withdrawAmount);
+        assertEq(ghoney.totalSupply(), depositAmount - withdrawAmount);
     }
 
     function testFuzzBorrow(uint256 borrowAmount, uint256 duration) public {
@@ -89,7 +89,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
             totalDeposited += amounts[i];
         }
         
-        assertEq(glhoney.totalSupply(), totalDeposited);
+        assertEq(ghoney.totalSupply(), totalDeposited);
     }
 
     function testFuzzMultipleBorrows(uint256 borrowAmount1, uint256 borrowAmount2) public {
@@ -164,7 +164,7 @@ contract FuzzRebaseGoldilendTest is BaseFuzzTest {
         
         RebaseGoldilend(address(rebaseproxy)).borrow(borrowAmount, 1_000e18, 30 days, address(bandbear), 1);
         
-        uint256 utilization = (RebaseGoldilend(address(rebaseproxy)).outstandingDebt() * 100) / glhoney.totalSupply();
+        uint256 utilization = (RebaseGoldilend(address(rebaseproxy)).outstandingDebt() * 100) / ghoney.totalSupply();
         assertLe(utilization, 90);
     }
 

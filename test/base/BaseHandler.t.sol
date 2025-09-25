@@ -58,7 +58,7 @@ library LibAddressSet {
 contract BaseHandler is Test {
 
   uint256 public locksMintAmount = 190_000_000e18;
-  uint256 public glHoneyMintAmount = 1_000_000e18;
+  uint256 public gHoneyMintAmount = 1_000_000e18;
 
   using LibAddressSet for LibAddressSet.AddressSet;
   LibAddressSet.AddressSet internal _actors;

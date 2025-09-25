@@ -30,11 +30,11 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
 
     function testDepositSuccess() public dealBeraForGoldilend {
         uint256 initialBeraBalance = address(this).balance;
-        uint256 initialGlDebtSupply = glbera.totalSupply();
+        uint256 initialGlDebtSupply = gbera.totalSupply();
         
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
 
-        assertEq(glbera.balanceOf(address(this)), txAmount);
+        assertEq(gbera.balanceOf(address(this)), txAmount);
         assertEq(address(this).balance, initialBeraBalance - txAmount);
         assertEq(address(berabondproxy).balance, txAmount);
     }
@@ -42,11 +42,11 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
     function testDepositWithExistingPool() public dealBeraForGoldilend {
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: txAmount}();
         uint256 secondDeposit = txAmount / 2;
-        uint256 initialGlDebtBalance = glbera.balanceOf(address(this));
+        uint256 initialGlDebtBalance = gbera.balanceOf(address(this));
         
         BeraBondGoldilend(payable(address(berabondproxy))).deposit{value: secondDeposit}();
         
-        assertGt(glbera.balanceOf(address(this)), initialGlDebtBalance);
+        assertGt(gbera.balanceOf(address(this)), initialGlDebtBalance);
     }
 
     function testWithdrawFailTransfer() public {
@@ -65,7 +65,7 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
         
         BeraBondGoldilend(payable(address(berabondproxy))).withdraw(txAmount);
 
-        assertEq(glbera.balanceOf(address(this)), 0);
+        assertEq(gbera.balanceOf(address(this)), 0);
         assertEq(address(this).balance, balanceAfterDeposit + txAmount);
         assertEq(address(berabondproxy).balance, 0);
     }
@@ -76,7 +76,7 @@ contract UnitBeraBondGoldilendTest is BaseUnitTest {
         
         BeraBondGoldilend(payable(address(berabondproxy))).withdraw(withdrawAmount);
 
-        assertEq(glbera.balanceOf(address(this)), txAmount - withdrawAmount);
+        assertEq(gbera.balanceOf(address(this)), txAmount - withdrawAmount);
     }
 
     function testGetUserLoan() public {

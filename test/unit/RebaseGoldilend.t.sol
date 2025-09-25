@@ -20,21 +20,21 @@ contract TestUpgradeableRebaseGoldilend is RebaseGoldilend {
 contract UnitRebaseGoldilendTest is BaseUnitTest {
 
     function testGoldilendDebtAssetName() public view {
-        assertEq(glhoney.name(), "Goldilend Honey");
+        assertEq(ghoney.name(), "Goldilend Honey");
     }
 
     function testGoldilendDebtAssetSymbol() public view {
-        assertEq(glhoney.symbol(), "glHONEY");
+        assertEq(ghoney.symbol(), "gHONEY");
     }
 
     function testMintglDebtAssetFailGoldilend() public {
         vm.expectRevert(abi.encodeWithSelector(GoldilendDebtAsset.NotGoldilend.selector));
-        glhoney.mintglDebtAsset(address(0x69), 69);
+        ghoney.mintglDebtAsset(address(0x69), 69);
     }
 
     function testBurnglDebtAssetFailGoldilend() public {
         vm.expectRevert(abi.encodeWithSelector(GoldilendDebtAsset.NotGoldilend.selector));
-        glhoney.burnglDebtAsset(address(0x69), 69);
+        ghoney.burnglDebtAsset(address(0x69), 69);
     }
 
     function testGetUserLoanSuccess() public dealHoneyForGoldilend dealUserBeras {
@@ -89,9 +89,9 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
 
         assertEq(honey.balanceOf(address(this)), dealAmt - txAmount);
-        assertEq(glhoney.balanceOf(address(this)), txAmount);
+        assertEq(ghoney.balanceOf(address(this)), txAmount);
         assertEq(honey.balanceOf(address(rebaseproxy)), txAmount);
-        assertEq(glhoney.totalSupply(), txAmount);
+        assertEq(ghoney.totalSupply(), txAmount);
     }
 
     function testWithdrawSuccess() public dealHoneyForGoldilend {
@@ -100,9 +100,9 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).withdraw(txAmount);
 
         assertEq(honey.balanceOf(address(this)), dealAmt);
-        assertEq(glhoney.balanceOf(address(this)), 0);
+        assertEq(ghoney.balanceOf(address(this)), 0);
         assertEq(honey.balanceOf(address(rebaseproxy)), 0);
-        assertEq(glhoney.totalSupply(), 0);
+        assertEq(ghoney.totalSupply(), 0);
     }
 
     function testBorrowFailActive() public {

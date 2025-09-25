@@ -181,11 +181,11 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
         uint256 maxBorrow = bgtBalance * LTV / 100;
         uint256 interest = _calculateInterest(borrowAmount, outstandingDebt, duration);
-        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        uint256 _gberaSupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         if(borrowAmount + interest > maxBorrow) revert InvalidLoanAmount();
-        if(borrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
-        if(outstandingDebt + borrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount > _glhoneySupply - outstandingDebt) revert BorrowLimitExceeded();
+        if(borrowAmount > _gberaSupply / 10) revert InvalidLoanAmount();
+        if(outstandingDebt + borrowAmount > _gberaSupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount > _gberaSupply - outstandingDebt) revert BorrowLimitExceeded();
         uint256 userLoansLength = userLoanAmount[msg.sender];
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
@@ -225,14 +225,14 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         if(userLoan.endDate - block.timestamp > renewMinDuration) revert InvalidRenew();
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
         uint256 _outstandingDebt = outstandingDebt;
-        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        uint256 _gberaSupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 newEndDate = block.timestamp + newDuration;
         uint256 newInterest = _calculateInterest(userLoan.borrowedAmount, _outstandingDebt, newEndDate - userLoan.endDate) + newBorrowAmount > 0 ? _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration) : 0;
         uint256 bgtBalance = _getTBABGTBalance(userLoan.collateralNFT, userLoan.collateralNFTId);
         if(userLoan.borrowedAmount + newBorrowAmount + newInterest > bgtBalance * LTV / 100) revert InvalidLoanAmount();
-        if(userLoan.borrowedAmount + newBorrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
-        if(_outstandingDebt + newBorrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(newBorrowAmount > _glhoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
+        if(userLoan.borrowedAmount + newBorrowAmount > _gberaSupply / 10) revert InvalidLoanAmount();
+        if(_outstandingDebt + newBorrowAmount > _gberaSupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(newBorrowAmount > _gberaSupply - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += newBorrowAmount;
         Loan storage newUserLoan = loans[msg.sender][userLoanId];
         newUserLoan.borrowedAmount += newBorrowAmount;
@@ -352,15 +352,15 @@ contract BeraBondGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable
         uint256 collateralNFTId
     ) external view returns (uint256) {
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
-        if(borrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
+        uint256 _gberaSupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        if(borrowAmount > _gberaSupply / 10) revert InvalidLoanAmount();
         if(collateralNFT != berabond) revert InvalidCollateral();
         uint256 bgtBalance = _getTBABGTBalance(collateralNFT, collateralNFTId);
         uint256 maxBorrow = bgtBalance * LTV / 100;
         uint256 debt = outstandingDebt;
         uint256 _interest = _calculateInterest(borrowAmount, debt, duration);
-        if(debt + borrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount + _interest > maxBorrow || borrowAmount > _glhoneySupply - debt) revert BorrowLimitExceeded();
+        if(debt + borrowAmount > _gberaSupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + _interest > maxBorrow || borrowAmount > _gberaSupply - debt) revert BorrowLimitExceeded();
         return _interest;
     }
 

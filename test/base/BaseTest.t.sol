@@ -130,10 +130,10 @@ abstract contract BaseTest is Test, IERC721Receiver {
   oriBGTYT oribgtyt;
   RebaseGoldilend rebasegoldilend;
   ERC1967Proxy rebaseproxy;
-  GoldilendDebtAsset glhoney;
+  GoldilendDebtAsset ghoney;
   BeraBondGoldilend berabondgoldilend;
   ERC1967Proxy berabondproxy;
-  GoldilendDebtAsset glbera;
+  GoldilendDebtAsset gbera;
 
   uint256 initialFSL = 1_140_000e18;
   uint256 initialPSL = 400_000e18;
@@ -153,8 +153,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(15));
     InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(18));
     Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(21));
-    GoldilendDebtAsset glhoneyComputed = GoldilendDebtAsset(address(this).computeAddress(24));
-    GoldilendDebtAsset glberaComputed = GoldilendDebtAsset(address(this).computeAddress(27));
+    GoldilendDebtAsset ghoneyComputed = GoldilendDebtAsset(address(this).computeAddress(24));
+    GoldilendDebtAsset gberaComputed = GoldilendDebtAsset(address(this).computeAddress(27));
 
     // deploy mock contracts
     bexlp = new BexLPToken();
@@ -337,11 +337,11 @@ abstract contract BaseTest is Test, IERC721Receiver {
       RebaseGoldilend.initialize.selector,
       address(this),
       address(honey),
-      address(glhoneyComputed)
+      address(ghoneyComputed)
     );
     rebaseproxy = new ERC1967Proxy(address(rebasegoldilend), rebasedata);
-    glhoney = new GoldilendDebtAsset("Goldilend Honey" , "glHONEY", address(rebaseproxy));
-    assert(RebaseGoldilend(address(rebaseproxy)).glDebtAsset() == address(glhoney));
+    ghoney = new GoldilendDebtAsset("Goldilend Honey" , "gHONEY", address(rebaseproxy));
+    assert(RebaseGoldilend(address(rebaseproxy)).glDebtAsset() == address(ghoney));
     address[] memory rebasenfts = new address[](1);
     rebasenfts[0] = address(bandbear);
     uint256[] memory rebasevalues = new uint256[](1);
@@ -364,15 +364,15 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bytes memory berabonddata = abi.encodeWithSelector(
       BeraBondGoldilend.initialize.selector,
       address(this),
-      address(glberaComputed),
+      address(gberaComputed),
       address(0),
       address(0),
       address(0)
     );
     berabondproxy = new ERC1967Proxy(address(berabondgoldilend), berabonddata);
     address payable berabondproxyaddy = payable(address(berabondproxy));
-    glbera = new GoldilendDebtAsset("Goldilend Bera", "glBERA", address(berabondproxy));
-    assert(BeraBondGoldilend(berabondproxyaddy).glDebtAsset() == address(glbera));
+    gbera = new GoldilendDebtAsset("Goldilend Bera", "gBERA", address(berabondproxy));
+    assert(BeraBondGoldilend(berabondproxyaddy).glDebtAsset() == address(gbera));
     BeraBondGoldilend(berabondproxyaddy).initializeParameters(
       2e17,
       1 days,

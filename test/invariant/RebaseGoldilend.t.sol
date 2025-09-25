@@ -15,7 +15,7 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     honey.approve(address(rebaseproxy), 1_000_000e18);
     RebaseGoldilend(address(rebaseproxy)).deposit(500_000e18);
 
-    rebasegoldilendHandler = new RebaseGoldilendHandler(address(rebaseproxy), glhoney, honey, bandbear);
+    rebasegoldilendHandler = new RebaseGoldilendHandler(address(rebaseproxy), ghoney, honey, bandbear);
     bytes4[] memory rebasegoldilendSelectors = new bytes4[](8);
     rebasegoldilendSelectors[0] = rebasegoldilendHandler.deposit.selector;
     rebasegoldilendSelectors[1] = rebasegoldilendHandler.withdraw.selector;
@@ -42,10 +42,10 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     assertTrue(address(rebasegoldilendHandler.rebasegoldilend()) != address(0));
   }
  
-  function invariant_glhoney_eq_deposited() public {
+  function invariant_ghoney_eq_deposited() public {
     uint256 sumOfMinted = rebasegoldilendHandler.reduceActors(
       0,
-      this.accumulateMintedGlhoney
+      this.accumulateMintedGhoney
     );
     assertEq(
       sumOfMinted,
@@ -53,36 +53,36 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     );
   }
 
-  function invariant_glhoney_supply_consistency() public {
-    assertGe(glhoney.totalSupply(), 0, "glHONEY supply should be >= 0");
-    if (glhoney.totalSupply() > 0) {
-      assertGt(glhoney.totalSupply(), 0, "glHONEY supply should be positive when pool size is positive");
+  function invariant_ghoney_supply_consistency() public {
+    assertGe(ghoney.totalSupply(), 0, "gHONEY supply should be >= 0");
+    if (ghoney.totalSupply() > 0) {
+      assertGt(ghoney.totalSupply(), 0, "gHONEY supply should be positive when pool size is positive");
     }
   }
 
-  function invariant_glhoney_accounting() public {
+  function invariant_ghoney_accounting() public {
     uint256 totalMinted = rebasegoldilendHandler.ghost_depositSum() - rebasegoldilendHandler.ghost_withdrawSum();
-    uint256 actualSupply = glhoney.totalSupply();
+    uint256 actualSupply = ghoney.totalSupply();
     uint256 initialDeposit = 500_000e18;
     uint256 expectedTotalMinted = totalMinted + initialDeposit;
     uint256 tolerance = expectedTotalMinted / 1000; // 0.1% tolerance
     
-    assertGe(actualSupply, expectedTotalMinted - tolerance, "glHONEY supply should be close to net deposits");
-    assertLe(actualSupply, expectedTotalMinted + tolerance, "glHONEY supply should be close to net deposits");
+    assertGe(actualSupply, expectedTotalMinted - tolerance, "gHONEY supply should be close to net deposits");
+    assertLe(actualSupply, expectedTotalMinted + tolerance, "gHONEY supply should be close to net deposits");
   }
 
-  function invariant_individual_glhoney_balances() public {
-    rebasegoldilendHandler.forEachActor(this.assertIndividualGlhoneyBalanceValid);
+  function invariant_individual_ghoney_balances() public {
+    rebasegoldilendHandler.forEachActor(this.assertIndividualgHONEYBalanceValid);
   }
 
   function invariant_pool_size_consistency() public {
-    assertGe(glhoney.totalSupply(), 0);
-    assertLe(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), glhoney.totalSupply());
+    assertGe(ghoney.totalSupply(), 0);
+    assertLe(RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), ghoney.totalSupply());
     
-    if (glhoney.totalSupply() > 0) {
+    if (ghoney.totalSupply() > 0) {
       assertLe(
         RebaseGoldilend(address(rebaseproxy)).outstandingDebt(), 
-        glhoney.totalSupply() * RebaseGoldilend(address(rebaseproxy)).maxUtilization() / 100
+        ghoney.totalSupply() * RebaseGoldilend(address(rebaseproxy)).maxUtilization() / 100
       );
     }
   }
@@ -100,7 +100,7 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     
     assertLe(
       RebaseGoldilend(address(rebaseproxy)).outstandingDebt(),
-      glhoney.totalSupply()
+      ghoney.totalSupply()
     );
   }
 
@@ -212,7 +212,7 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     for (uint256 i = 1; i <= rebasegoldilendHandler.userLoanCount(actor); i++) {
       RebaseGoldilend.Loan memory loan = RebaseGoldilend(address(rebaseproxy)).getUserLoan(actor, i);
       if (loan.borrowedAmount > 0) {
-        assertLe(loan.borrowedAmount, glhoney.totalSupply() / 10, "Loan amount exceeds limit");
+        assertLe(loan.borrowedAmount, ghoney.totalSupply() / 10, "Loan amount exceeds limit");
       }
     }
     return new address[](0);
@@ -244,11 +244,11 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     return new address[](0);
   }
 
-  function assertIndividualGlhoneyBalanceValid(address actor) external returns (address[] memory) {
-    uint256 balance = glhoney.balanceOf(actor);
-    uint256 totalSupply = glhoney.totalSupply();
+  function assertIndividualgHONEYBalanceValid(address actor) external returns (address[] memory) {
+    uint256 balance = ghoney.balanceOf(actor);
+    uint256 totalSupply = ghoney.totalSupply();
     
-    assertLe(balance, totalSupply, "Individual glHONEY balance should not exceed total supply");
+    assertLe(balance, totalSupply, "Individual gHONEY balance should not exceed total supply");
     if (totalSupply > 0) {
       assertLe(balance, totalSupply, "Individual balance should not exceed total supply");
     }

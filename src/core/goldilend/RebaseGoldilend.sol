@@ -162,15 +162,15 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) external {
         if(!borrowingActive) revert NotActive();
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        uint256 _ghoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 fairValue = nftFairValues[collateralNFT];
         uint256 userLoansLength = userLoanAmount[msg.sender];
         uint256 _outstandingDebt = outstandingDebt;
-        if(borrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
+        if(borrowAmount > _ghoneySupply / 10) revert InvalidLoanAmount();
         uint256 interest = _calculateInterest(borrowAmount, _outstandingDebt, duration);
         if(fairValue == 0) revert InvalidCollateral();
-        if(_outstandingDebt + borrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount + interest > fairValue || borrowAmount > _glhoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
+        if(_outstandingDebt + borrowAmount > _ghoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + interest > fairValue || borrowAmount > _ghoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
             collateralNFT: collateralNFT,
@@ -206,12 +206,12 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();
         if(userLoan.endDate - block.timestamp > renewMinDuration) revert InvalidRenew();
         uint256 _outstandingDebt = outstandingDebt;
-        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        uint256 _ghoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 newEndDate = block.timestamp + newDuration;
         uint256 newInterest = _calculateInterest(userLoan.borrowedAmount, _outstandingDebt, newEndDate - userLoan.endDate) + newBorrowAmount > 0 ? _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration) : 0;
-        if(userLoan.borrowedAmount + newBorrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
-        if(_outstandingDebt + newBorrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _glhoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
+        if(userLoan.borrowedAmount + newBorrowAmount > _ghoneySupply / 10) revert InvalidLoanAmount();
+        if(_outstandingDebt + newBorrowAmount > _ghoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _ghoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += newBorrowAmount;
         Loan storage newUserLoan = loans[msg.sender][userLoanId];
         newUserLoan.borrowedAmount += newBorrowAmount;
@@ -311,13 +311,13 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) external view returns (uint256) {
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
         if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
-        uint256 _glhoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
-        if(borrowAmount > _glhoneySupply / 10) revert InvalidLoanAmount();
+        uint256 _ghoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        if(borrowAmount > _ghoneySupply / 10) revert InvalidLoanAmount();
         uint256 fairValue = nftFairValues[collateralNFT];
         uint256 debt = outstandingDebt;
         uint256 _interest = _calculateInterest(borrowAmount, debt, duration);
-        if(debt + borrowAmount > _glhoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(borrowAmount + _interest > fairValue || borrowAmount > _glhoneySupply - debt) revert BorrowLimitExceeded();
+        if(debt + borrowAmount > _ghoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
+        if(borrowAmount + _interest > fairValue || borrowAmount > _ghoneySupply - debt) revert BorrowLimitExceeded();
         return _interest;
     }
 
