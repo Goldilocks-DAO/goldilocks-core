@@ -541,7 +541,7 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         assertEq(honey.balanceOf(address(this)), 69);
     }
 
-    function testChangeValueFailMultisig() public {
+    function testChangeUnvestedWeightsFailMultisig() public {
         address[] memory nfts = new address[](2);
         nfts[0] = address(bondbear);
         nfts[1] = address(bandbear);
@@ -550,30 +550,30 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         values[1] = 50;
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotMultisig.selector));
-        RebaseGoldilend(address(rebaseproxy)).changeValue(nfts, values);
+        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values);
     }
 
-    function testChangeValueFailArray() public {
+    function testChangeUnvestedWeightsFailArray() public {
         address[] memory nfts = new address[](2);
         nfts[0] = address(bondbear);
         nfts[1] = address(bandbear);
         uint256[] memory values = new uint256[](1);
         values[0] = 50;
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.ArrayMismatch.selector));
-        RebaseGoldilend(address(rebaseproxy)).changeValue(nfts, values);
+        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values);
     }
 
-    function testChangeValueSuccess() public {
+    function testChangeUnvestedWeightsSuccess() public {
         address[] memory nfts = new address[](2);
         nfts[0] = address(bondbear);
         nfts[1] = address(bandbear);
         uint256[] memory values = new uint256[](2);
         values[0] = 50;
         values[1] = 50;
-        RebaseGoldilend(address(rebaseproxy)).changeValue(nfts, values);    
+        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values);    
 
-        assertEq(RebaseGoldilend(address(rebaseproxy)).nftFairValues(address(bondbear)), 50);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).nftFairValues(address(bandbear)), 50);
+        assertEq(RebaseGoldilend(address(rebaseproxy)).unvestedWeights(address(bondbear)), 50);
+        assertEq(RebaseGoldilend(address(rebaseproxy)).unvestedWeights(address(bandbear)), 50);
     }
 
     function testInitializeBerasFailMultisig() public {

@@ -171,7 +171,7 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
 
   function invariant_nft_fair_values() public {
     if (RebaseGoldilend(address(rebaseproxy)).berasInitialized()) {
-      uint256 bandbearValue = RebaseGoldilend(address(rebaseproxy)).nftFairValues(address(bandbear));
+      uint256 bandbearValue = RebaseGoldilend(address(rebaseproxy)).unvestedWeights(address(bandbear));
       assertGt(bandbearValue, 0, "BandBear NFT should have a fair value set");
     }
   }

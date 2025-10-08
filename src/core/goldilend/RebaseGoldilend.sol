@@ -27,6 +27,8 @@ import { OwnableUpgradeable } from "../../../lib/openzeppelin-contracts-upgradea
 import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import { IRebaseGoldilend } from "../../interfaces/IRebaseGoldilend.sol";
 import { GoldilendDebtAsset } from "./GoldilendDebtAsset.sol";
+import { IPythUpgradable } from "../../interfaces/IPythUpgradable.sol";
+import { IStreamingNFT } from "../../interfaces/IStreamingNFT.sol";
 
 
 /// @title RebaseGoldilend 
@@ -99,8 +101,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Maps users to loans
     mapping(address => mapping(uint256 => Loan)) public loans;
 
-    /// @notice Maps NFT to fair value
-    mapping(address => uint256) public nftFairValues;
+    /// @notice Maps RebaseBera to unvested weight
+    mapping(address => uint256) public unvestedWeights;
 
     /// @notice Maps loan originator to loan id to the highest bid
     mapping(address => mapping(uint256 => Bid)) public highestBid;
@@ -163,12 +165,11 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(!borrowingActive) revert NotActive();
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
         uint256 _ghoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
-        uint256 fairValue = nftFairValues[collateralNFT];
         uint256 userLoansLength = userLoanAmount[msg.sender];
         uint256 _outstandingDebt = outstandingDebt;
         if(borrowAmount > _ghoneySupply / 10) revert InvalidLoanAmount();
         uint256 interest = _calculateInterest(borrowAmount, _outstandingDebt, duration);
-        if(fairValue == 0) revert InvalidCollateral();
+        uint256 fairValue = _calculateFairValue();
         if(_outstandingDebt + borrowAmount > _ghoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(borrowAmount + interest > fairValue || borrowAmount > _ghoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += borrowAmount;
@@ -211,7 +212,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 newInterest = _calculateInterest(userLoan.borrowedAmount, _outstandingDebt, newEndDate - userLoan.endDate) + newBorrowAmount > 0 ? _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration) : 0;
         if(userLoan.borrowedAmount + newBorrowAmount > _ghoneySupply / 10) revert InvalidLoanAmount();
         if(_outstandingDebt + newBorrowAmount > _ghoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
-        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > nftFairValues[userLoan.collateralNFT] || newBorrowAmount > _ghoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
+        if(userLoan.borrowedAmount + newBorrowAmount + newInterest > _calculateFairValue() || newBorrowAmount > _ghoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
         outstandingDebt += newBorrowAmount;
         Loan storage newUserLoan = loans[msg.sender][userLoanId];
         newUserLoan.borrowedAmount += newBorrowAmount;
@@ -310,15 +311,18 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         address collateralNFT
     ) external view returns (uint256) {
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
-        if(nftFairValues[collateralNFT] == 0) revert InvalidCollateral();
         uint256 _ghoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         if(borrowAmount > _ghoneySupply / 10) revert InvalidLoanAmount();
-        uint256 fairValue = nftFairValues[collateralNFT];
+        uint256 fairValue = _calculateFairValue();
         uint256 debt = outstandingDebt;
         uint256 _interest = _calculateInterest(borrowAmount, debt, duration);
         if(debt + borrowAmount > _ghoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(borrowAmount + _interest > fairValue || borrowAmount > _ghoneySupply - debt) revert BorrowLimitExceeded();
         return _interest;
+    }
+
+    function calculateFairValue() external view returns (uint256) {
+        return _calculateFairValue();
     }
 
 
@@ -341,6 +345,26 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, GoldilendDebtAsset(glDebtAsset).totalSupply()) + INTEREST_PAYMENT_PERCENTAGE;
         uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
         return FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
+    }
+
+    function _calculateFairValue() internal view returns (uint256) {
+        address bitStreaming = 0x979EFC29797884c3342143eA7b91E55342F2f408;
+        address priceFeed = 0x2880aB155794e7179c9eE2e38200202908C17B43;
+        bytes32 priceFeedId = 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265;
+        IPythUpgradable.Price memory beraPriceResult = IPythUpgradable(priceFeed).getPrice(priceFeedId);
+        uint256 beraPrice = uint256(uint64(beraPriceResult.price));
+
+        uint256 vest;
+        uint256 cliff = IStreamingNFT(bitStreaming).cliffUnlockAmount();
+        uint256 vestedRewards = IStreamingNFT(bitStreaming).vestedRewards();
+        if(block.timestamp + 1 days < cliff) {
+            vest = cliff + vestedRewards;
+        }
+        else {
+            vest = vestedRewards;
+        }
+
+        return vest * beraPrice * unvestedWeights[address(0x69)];
     }
 
 
@@ -405,27 +429,27 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     }
 
     /// @inheritdoc IRebaseGoldilend
-    function changeValue(
-        address[] calldata _nfts,
-        uint256[] calldata _nftFairValues
+    function changeUnvestedWeights(
+        address[] calldata _beras,
+        uint256[] calldata _weights
     ) public {
         if(msg.sender != multisig) revert NotMultisig();
-        if(_nfts.length != _nftFairValues.length) revert ArrayMismatch();
-        uint256 nftFairValuesLength = _nftFairValues.length;
-        for(uint256 i; i < nftFairValuesLength; ++i) {
-            nftFairValues[_nfts[i]] = _nftFairValues[i];
+        if(_beras.length != _weights.length) revert ArrayMismatch();
+        uint256 weightsLength = _weights.length;
+        for(uint256 i; i < weightsLength; ++i) {
+            unvestedWeights[_beras[i]] = _weights[i];
         }
     }
 
     /// @inheritdoc IRebaseGoldilend
     function initializeBeras(
-        address[] calldata _nfts,
-        uint256[] calldata _nftFairValues
+        address[] calldata _beras,
+        uint256[] calldata _weights
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
         if(berasInitialized) revert AlreadyInitialized();
         
-        changeValue(_nfts, _nftFairValues);
+        changeUnvestedWeights(_beras, _weights);
 
         berasInitialized = true;
         borrowingActive = true;

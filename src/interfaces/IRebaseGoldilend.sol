@@ -193,22 +193,22 @@ interface IRebaseGoldilend {
   /// @param token Address of token to recover
   function recoverTokens(address token) external;
 
-  /// @notice Allows multisig to adjust the valuation of the NFTs to borrow against
+  /// @notice Allows multisig to adjust the unvested bera valuation weights
   /// @dev Callable only by multisig
-  /// @param _nfts NFTs that are able to be borrowed against
-  /// @param _nftFairValues Percentage each NFT is valued as a porportion of the total valuation
-  function changeValue(
-    address[] calldata _nfts,
-    uint256[] calldata _nftFairValues
+  /// @param _beras Rebase bera collection addresses that are able to be borrowed against
+  /// @param _weights Percentage each bera is weighted as a porportion of the total unvested bera
+  function changeUnvestedWeights(
+    address[] calldata _beras,
+    uint256[] calldata _weights
   ) external;
 
-  /// @notice Allows multisig to initalize bera nft fair values
+  /// @notice Allows multisig to initalize unvested bera valuation weights
   /// @dev Callable only by multisig
-  /// @param _nfts Bera nft addresses
-  /// @param _nftFairValues Bera nft fair values
+  /// @param _beras Bera nft addresses
+  /// @param _weights Bera nft unvested bera weights
   function initializeBeras(
-    address[] calldata _nfts,
-    uint256[] calldata _nftFairValues
+    address[] calldata _beras,
+    uint256[] calldata _weights
   ) external;
 
   /// @notice Allows multisig to withdraw surplus winning bids from liquidatable loan auctions

@@ -94,7 +94,7 @@ contract RebaseGoldilendHandler is BaseHandler {
     }
     uint256 actualTokenId = userNFTs[currentActor][nftId];
     uint256 maxBorrow = ghoney.totalSupply() / 10;
-    uint256 nftValue = RebaseGoldilend(address(rebasegoldilend)).nftFairValues(address(bandbear));
+    uint256 nftValue = RebaseGoldilend(address(rebasegoldilend)).unvestedWeights(address(bandbear));
     borrowAmount = bound(borrowAmount, 0, maxBorrow);
     borrowAmount = bound(borrowAmount, 0, nftValue);
     duration = bound(duration, RebaseGoldilend(address(rebasegoldilend)).minDuration(), RebaseGoldilend(address(rebasegoldilend)).maxDuration());
