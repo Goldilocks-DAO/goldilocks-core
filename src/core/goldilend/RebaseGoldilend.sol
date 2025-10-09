@@ -101,8 +101,11 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Maps users to loans
     mapping(address => mapping(uint256 => Loan)) public loans;
 
-    /// @notice Maps RebaseBera to unvested weight
+    /// @notice Maps rebase bera to unvested weight
     mapping(address => uint256) public unvestedWeights;
+
+    /// @notice Maps rebase bera to streaming contract address
+    mapping(address => address) public streamingAddresses;
 
     /// @notice Maps loan originator to loan id to the highest bid
     mapping(address => mapping(uint256 => Bid)) public highestBid;
@@ -164,6 +167,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) external {
         if(!borrowingActive) revert NotActive();
         if(duration < minDuration || duration > maxDuration) revert InvalidDuration();
+        if(unvestedWeights[collateralNFT] == 0) revert InvalidCollateral(); 
         uint256 _ghoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
         uint256 userLoansLength = userLoanAmount[msg.sender];
         uint256 _outstandingDebt = outstandingDebt;
@@ -321,8 +325,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         return _interest;
     }
 
-    function calculateFairValue() external view returns (uint256) {
-        return _calculateFairValue();
+    function calculateFairValue(address rebaseBera) external view returns (uint256) {
+        return _calculateFairValue(rebaseBera);
     }
 
 
@@ -347,24 +351,42 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         return FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     }
 
-    function _calculateFairValue() internal view returns (uint256) {
-        address bitStreaming = 0x979EFC29797884c3342143eA7b91E55342F2f408;
+    function _calculateFairValue(address rebaseBera) internal view returns (uint256) {
+        // address bitStreaming = 0x979EFC29797884c3342143eA7b91E55342F2f408;
+        // address bandStreaming = 0xaf30baa667Ce52c1fE5702A0F8CE9A31f0d751B6;
+        // address babyStreaming = 0x14E5930aD47Bfc9E7977547e263D5C3A090b777f;
+        // address booStreaming = 0x1229414CFEE4dEC0B488377B62e96B4094B6258C;
+        // address bondStreaming = 0xa63b5bc4Bab6593ACc78ef103fcb44A191BAe836;
+        // address bongStreaming = 0x1E54B85B3632F75E96Cc8d4FcB11BA7f0Ca69213;
+
         address priceFeed = 0x2880aB155794e7179c9eE2e38200202908C17B43;
         bytes32 priceFeedId = 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265;
         IPythUpgradable.Price memory beraPriceResult = IPythUpgradable(priceFeed).getPrice(priceFeedId);
         uint256 beraPrice = uint256(uint64(beraPriceResult.price));
 
         uint256 vest;
-        uint256 cliff = IStreamingNFT(bitStreaming).cliffUnlockAmount();
-        uint256 vestedRewards = IStreamingNFT(bitStreaming).vestedRewards();
-        if(block.timestamp + 1 days < cliff) {
-            vest = cliff + vestedRewards;
+        uint256 vestingDuration = 730 days;
+        address streamingAddress = streamingAddresses[rebaseBera];
+        uint256 cliffEnd = IStreamingNFT(streamingAddress).cliffEndTimestamp();
+        uint256 cliffAmount = IStreamingNFT(streamingAddress).cliffUnlockAmount();
+        uint256 vestedRewards = IStreamingNFT(streamingAddress).vestedRewards();
+        if(block.timestamp + 1 days < cliffEnd) {
+            vest = cliffAmount + vestedRewards;
         }
         else {
-            vest = vestedRewards;
+            uint256 timeSinceCliff = block.timestamp - cliffEnd;
+            if(timeSinceCliff >= vestingDuration) {
+                vest = 0;
+            }
+            else {
+                uint256 elapsedPortion = FixedPointMathLib.divWad(timeSinceCliff, vestingDuration);
+                uint256 remainingPortion = 1e18 - elapsedPortion;
+                vest = FixedPointMathLib.mulWad(remainingPortion, vestedRewards);
+            }
         }
 
-        return vest * beraPrice * unvestedWeights[address(0x69)];
+        uint256 formattedBeraPrice = beraPrice * (1e18 - beraPriceResult.expo);
+        return FixedPointMathLib.mulWad(vest, formattedBeraPrice) * unvestedWeights[rebaseBera] / 100;
     }
 
 
@@ -431,25 +453,29 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @inheritdoc IRebaseGoldilend
     function changeUnvestedWeights(
         address[] calldata _beras,
-        uint256[] calldata _weights
+        uint256[] calldata _weights,
+        address[] calldata _streams
     ) public {
         if(msg.sender != multisig) revert NotMultisig();
         if(_beras.length != _weights.length) revert ArrayMismatch();
+        if(_beras.length != _streams.length) revert ArrayMismatch();
         uint256 weightsLength = _weights.length;
         for(uint256 i; i < weightsLength; ++i) {
             unvestedWeights[_beras[i]] = _weights[i];
+            streamingAddresses[_beras[i]] = _streams[i];
         }
     }
 
     /// @inheritdoc IRebaseGoldilend
     function initializeBeras(
         address[] calldata _beras,
-        uint256[] calldata _weights
+        uint256[] calldata _weights,
+        address[] calldata _streams
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
         if(berasInitialized) revert AlreadyInitialized();
         
-        changeUnvestedWeights(_beras, _weights);
+        changeUnvestedWeights(_beras, _weights, _streams);
 
         berasInitialized = true;
         borrowingActive = true;

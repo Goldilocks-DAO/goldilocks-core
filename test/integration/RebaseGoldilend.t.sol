@@ -50,6 +50,11 @@ contract IntegrationRebaseGoldilendTest is Test {
             2e18,
             90
         );
+        address[] memory rebasenfts = new address[](1);
+        rebasenfts[0] = address(bandbear);
+        uint256[] memory rebasevalues = new uint256[](1);
+        rebasevalues[0] = 50e18;
+        RebaseGoldilend(address(rebaseproxy)).initializeBeras(rebasenfts, rebasevalues);
         vm.stopPrank();
     }
 

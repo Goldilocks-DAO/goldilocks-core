@@ -197,18 +197,22 @@ interface IRebaseGoldilend {
   /// @dev Callable only by multisig
   /// @param _beras Rebase bera collection addresses that are able to be borrowed against
   /// @param _weights Percentage each bera is weighted as a porportion of the total unvested bera
+  /// @param _streams Rebase bera streaming contract addresses
   function changeUnvestedWeights(
     address[] calldata _beras,
-    uint256[] calldata _weights
+    uint256[] calldata _weights,
+    address[] calldata _streams
   ) external;
 
   /// @notice Allows multisig to initalize unvested bera valuation weights
   /// @dev Callable only by multisig
-  /// @param _beras Bera nft addresses
-  /// @param _weights Bera nft unvested bera weights
+  /// @param _beras Rebase bera addresses
+  /// @param _weights Rebase bera unvested bera weights
+  /// @param _streams Rebase bera streaming contract addresses
   function initializeBeras(
     address[] calldata _beras,
-    uint256[] calldata _weights
+    uint256[] calldata _weights,
+    address[] calldata _streams
   ) external;
 
   /// @notice Allows multisig to withdraw surplus winning bids from liquidatable loan auctions
