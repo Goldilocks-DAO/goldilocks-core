@@ -144,6 +144,13 @@ abstract contract BaseTest is Test, IERC721Receiver {
   uint256 locksAmount = 100_000e18;
   address apdao = 0xAe8b5e58E423750a68BbB37ccaaD399deF93D24D;
 
+  address bitStreaming = 0x979EFC29797884c3342143eA7b91E55342F2f408;
+  address bandStreaming = 0xaf30baa667Ce52c1fE5702A0F8CE9A31f0d751B6;
+  address babyStreaming = 0x14E5930aD47Bfc9E7977547e263D5C3A090b777f;
+  address booStreaming = 0x1229414CFEE4dEC0B488377B62e96B4094B6258C;
+  address bondStreaming = 0xa63b5bc4Bab6593ACc78ef103fcb44A191BAe836;
+  address bongStreaming = 0x1E54B85B3632F75E96Cc8d4FcB11BA7f0Ca69213;
+
   function setUp() public virtual {}
 
   function deployProtocol() public {
@@ -346,6 +353,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
     rebasenfts[0] = address(bandbear);
     uint256[] memory rebasevalues = new uint256[](1);
     rebasevalues[0] = 50e18;
+    address[] memory rebasestreams = new address[](1);
+    rebasestreams[0] = bandStreaming;
     RebaseGoldilend(address(rebaseproxy)).initializeParameters(
       2e17,
       1 days,
@@ -355,7 +364,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
       2e18,
       90
     );
-    RebaseGoldilend(address(rebaseproxy)).initializeBeras(rebasenfts, rebasevalues);
+    RebaseGoldilend(address(rebaseproxy)).initializeBeras(rebasenfts, rebasevalues, rebasestreams);
 
     // deploy berabondgoldilend
     berabondgoldilend = new BeraBondGoldilend();

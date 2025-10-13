@@ -548,9 +548,12 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         uint256[] memory values = new uint256[](2);
         values[0] = 50;
         values[1] = 50;
+        address[] memory streams = new address[](2);
+        streams[0] = address(0x69);
+        streams[1] = address(0x69);
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotMultisig.selector));
-        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values);
+        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values, streams);
     }
 
     function testChangeUnvestedWeightsFailArray() public {
@@ -559,8 +562,11 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         nfts[1] = address(bandbear);
         uint256[] memory values = new uint256[](1);
         values[0] = 50;
+        address[] memory streams = new address[](2);
+        streams[0] = address(0x69);
+        streams[1] = address(0x69);
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.ArrayMismatch.selector));
-        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values);
+        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values, streams);
     }
 
     function testChangeUnvestedWeightsSuccess() public {
@@ -570,7 +576,10 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         uint256[] memory values = new uint256[](2);
         values[0] = 50;
         values[1] = 50;
-        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values);    
+        address[] memory streams = new address[](2);
+        streams[0] = address(0x69);
+        streams[1] = address(0x69);
+        RebaseGoldilend(address(rebaseproxy)).changeUnvestedWeights(nfts, values, streams);    
 
         assertEq(RebaseGoldilend(address(rebaseproxy)).unvestedWeights(address(bondbear)), 50);
         assertEq(RebaseGoldilend(address(rebaseproxy)).unvestedWeights(address(bandbear)), 50);
@@ -583,9 +592,12 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         uint256[] memory values = new uint256[](2);
         values[0] = 50;
         values[1] = 50;
+        address[] memory streams = new address[](2);
+        streams[0] = address(0x69);
+        streams[1] = address(0x69);
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotMultisig.selector));
-        RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values);
+        RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values, streams);
     }
 
     function testInitializeBerasFailAlready() public {
@@ -595,8 +607,11 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         uint256[] memory values = new uint256[](2);
         values[0] = 50;
         values[1] = 50;
+        address[] memory streams = new address[](2);
+        streams[0] = address(0x69);
+        streams[1] = address(0x69);
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.AlreadyInitialized.selector));
-        RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values);
+        RebaseGoldilend(address(rebaseproxy)).initializeBeras(nfts, values, streams);
     }
 
     function testWithdrawSurplusFailMultisig() public {
