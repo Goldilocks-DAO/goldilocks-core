@@ -33,6 +33,7 @@ interface IRebaseGoldilend {
 
   error NotMultisig();
   error NotActive();
+  error NotTimelock();
   error ArrayMismatch();
   error InvalidDuration();
   error InvalidLoanAmount();
@@ -148,19 +149,24 @@ interface IRebaseGoldilend {
   /// @notice Allows multisig to adjust the protocol lending parameters
   /// @dev Callable only by multisig
   /// @param _protocolInterestRate New interest rate
+  /// @param _slope New slope
+  function changeLendingParams(
+    uint256 _protocolInterestRate,
+    uint256 _slope
+  ) external;
+
+  /// @notice Allows timelock to adjust the protocol governance lending parameters
+  /// @dev Callable only by timelock
   /// @param _minDuration New minimum duration
   /// @param _maxDuration New maximum duration
   /// @param _renewMinDuration New minimum renew duration
   /// @param _renewMaxDuration New maximum renew duration
-  /// @param _slope New slope
   /// @param _maxUtilization New Max Utilization
-  function changeLendingParams(
-    uint256 _protocolInterestRate,
+  function changeGovParams(
     uint256 _minDuration,
     uint256 _maxDuration,
     uint256 _renewMinDuration,
     uint256 _renewMaxDuration,
-    uint256 _slope,
     uint256 _maxUtilization
   ) external;
 

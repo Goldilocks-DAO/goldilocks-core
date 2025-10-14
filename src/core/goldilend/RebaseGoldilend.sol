@@ -53,6 +53,9 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Address of multisig
     address public multisig;
 
+    /// @notice Address of timelock
+    address public timelock;
+
     /// @notice Address of the Debt Asset
     address public debtAsset;
 
@@ -123,16 +126,19 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
     /// @notice Initializer of the contract
     /// @param _multisig Address of the multisig
+    /// @param _timelock Address of the timelock
     /// @param _debtAsset Address of the Debt Asset
     /// @param _glDebtAsset Address of Goldilend Debt Asset
     function initialize(
         address _multisig,
+        address _timelock,
         address _debtAsset,
         address _glDebtAsset
     ) public initializer {
         __Ownable_init(_multisig);
         __UUPSUpgradeable_init();
         multisig = _multisig;
+        timelock = _timelock;
         debtAsset = _debtAsset;
         glDebtAsset = _glDebtAsset;
     }
@@ -392,32 +398,54 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @inheritdoc IRebaseGoldilend
     function changeLendingParams(
         uint256 _protocolInterestRate,
+        uint256 _slope
+    ) public {
+        if(msg.sender != multisig) revert NotMultisig();
+        protocolInterestRate = _protocolInterestRate;
+        slope = _slope;
+        emit NewProtocolInterestRate(_protocolInterestRate);
+        emit NewSlope(_slope);
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function changeGovParams(
         uint256 _minDuration,
         uint256 _maxDuration,
         uint256 _renewMinDuration,
         uint256 _renewMaxDuration,
-        uint256 _slope,
         uint256 _maxUtilization
-    ) public {
-        if(msg.sender != multisig) revert NotMultisig();
-        protocolInterestRate = _protocolInterestRate;
+    ) external {
+        if(msg.sender != timelock) revert NotTimelock();
+        _changeGovParams(
+            _minDuration,
+            _maxDuration,
+            _renewMinDuration,
+            _renewMaxDuration,
+            _maxUtilization
+        );
+    }
+
+    /// @notice Adjusts the protocol governance lending parameters
+    /// @param _minDuration New minimum duration
+    /// @param _maxDuration New maximum duration
+    /// @param _renewMinDuration New minimum renew duration
+    /// @param _renewMaxDuration New maximum renew duration
+    /// @param _maxUtilization New Max Utilization
+    function _changeGovParams(
+        uint256 _minDuration,
+        uint256 _maxDuration,
+        uint256 _renewMinDuration,
+        uint256 _renewMaxDuration,
+        uint256 _maxUtilization
+    ) internal {
         minDuration = _minDuration;
         maxDuration = _maxDuration;
         renewMinDuration = _renewMinDuration;
         renewMaxDuration = _renewMaxDuration;
-        slope = _slope;
         maxUtilization = _maxUtilization;
-        emit NewProtocolInterestRate(_protocolInterestRate);
         emit NewDurations(_minDuration, _maxDuration);
-        emit NewSlope(_slope);
         emit NewMaxUtilization(_maxUtilization);
-    }
-
-    /// @inheritdoc IRebaseGoldilend
-    function changeBorrowingActive(bool _borrowingActive) external {
-        if(msg.sender != multisig) revert NotMultisig();
-        borrowingActive = _borrowingActive;
-        emit NewBorrowingActive(_borrowingActive);
+        
     }
 
     /// @inheritdoc IRebaseGoldilend
@@ -433,9 +461,23 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         if(msg.sender != multisig) revert NotMultisig();
         if(parametersInitialized) revert AlreadyInitialized();
 
-        changeLendingParams(_protocolInterestRate, _minDuration, _maxDuration, _renewMinDuration, _renewMaxDuration, _slope, _maxUtilization);
+        changeLendingParams(_protocolInterestRate, _slope);
+        _changeGovParams(
+            _minDuration,
+            _maxDuration,
+            _renewMinDuration,
+            _renewMaxDuration,
+            _maxUtilization
+        );
         
         parametersInitialized = true;
+    }
+
+    /// @inheritdoc IRebaseGoldilend
+    function changeBorrowingActive(bool _borrowingActive) external {
+        if(msg.sender != multisig) revert NotMultisig();
+        borrowingActive = _borrowingActive;
+        emit NewBorrowingActive(_borrowingActive);
     }
 
     /// @inheritdoc IRebaseGoldilend

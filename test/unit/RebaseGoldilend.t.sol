@@ -491,18 +491,14 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
     function testChangeLendingParamsFailMultisig() public {
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotMultisig.selector));
-        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(69, 69, 69, 69, 69, 69, 69);
+        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(69, 69);
     }
 
     function testChangeLendingParamsSuccess() public {
-        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(69, 69, 69, 69, 69, 69, 69);
+        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(69, 69);
 
         assertEq(RebaseGoldilend(address(rebaseproxy)).protocolInterestRate(), 69);
         assertEq(RebaseGoldilend(address(rebaseproxy)).slope(), 69);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).minDuration(), 69);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).maxDuration(), 69);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).renewMinDuration(), 69);
-        assertEq(RebaseGoldilend(address(rebaseproxy)).renewMaxDuration(), 69);
     }
 
     function testChangeBorrowingActiveFailMultisig() public {

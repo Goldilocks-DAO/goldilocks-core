@@ -343,6 +343,7 @@ abstract contract BaseTest is Test, IERC721Receiver {
     bytes memory rebasedata = abi.encodeWithSelector(
       RebaseGoldilend.initialize.selector,
       address(this),
+      address(timelock),
       address(honey),
       address(ghoneyComputed)
     );
