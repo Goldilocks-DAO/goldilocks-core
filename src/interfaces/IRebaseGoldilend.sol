@@ -150,9 +150,17 @@ interface IRebaseGoldilend {
   /// @dev Callable only by multisig
   /// @param _protocolInterestRate New interest rate
   /// @param _slope New slope
+  /// @param _pythPriceFeed New pyth price feed address
+  /// @param _beraPythPriceFeedId New bera pyth price feed id
+  /// @param _interestPaymentPercentage New interest payment percentage
+  /// @param _utilizationRatioMultiplier New utilization ratio multiplier
   function changeLendingParams(
     uint256 _protocolInterestRate,
-    uint256 _slope
+    uint256 _slope,
+    address _pythPriceFeed,
+    bytes32 _beraPythPriceFeedId,
+    uint256 _interestPaymentPercentage,
+    uint256 _utilizationRatioMultiplier
   ) external;
 
   /// @notice Allows timelock to adjust the protocol governance lending parameters
@@ -178,19 +186,27 @@ interface IRebaseGoldilend {
   /// @notice Allows multisig to initialize the protocol parameters
   /// @dev Callable only by multisig
   /// @param _protocolInterestRate Initial interest rate of protocol
+  /// @param _slope Initial rate at which interest rate increases
+  /// @param _pythPriceFeed New pyth price feed address
+  /// @param _beraPythPriceFeedId New bera pyth price feed id
+  /// @param _interestPaymentPercentage New interest payment percentage
+  /// @param _utilizationRatioMultiplier New utilization ratio multiplier
   /// @param _minDuration Minimum loan duration
   /// @param _maxDuration Maximum loan duration
   /// @param _renewMinDuration Minimum renew duration
   /// @param _renewMaxDuration Maximum renew duration
-  /// @param _slope Initial rate at which interest rate increases
   /// @param _maxUtilization Maximum amount of protocol debt based on pool size
   function initializeParameters(
     uint256 _protocolInterestRate,
+    uint256 _slope,
+    address _pythPriceFeed,
+    bytes32 _beraPythPriceFeedId,
+    uint256 _interestPaymentPercentage,
+    uint256 _utilizationRatioMultiplier,
     uint256 _minDuration,
     uint256 _maxDuration,
     uint256 _renewMinDuration,
     uint256 _renewMaxDuration,
-    uint256 _slope,
     uint256 _maxUtilization
   ) external;
 

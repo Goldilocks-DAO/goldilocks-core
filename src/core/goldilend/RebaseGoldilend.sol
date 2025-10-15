@@ -41,9 +41,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-    /// @notice Value for calculating interest payment on loans
-    uint256 public constant INTEREST_PAYMENT_PERCENTAGE = 75e16;
-
     /// @notice Buffer period where borrowers are protected from liquidation
     uint256 public constant LOAN_GRACE_PERIOD = 1 days;
 
@@ -67,6 +64,12 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
     /// @notice ID of the bera price feed
     bytes32 public beraPythPriceFeedId;
+
+    /// @notice Value for calculating interest payment on loans
+    uint256 public interestPaymentPercentage;
+
+    /// @notice Value used to multiply utilization ratio in interest calculation
+    uint256 public utilizationRatioMultiplier;
 
     /// @notice Interest rate of protocol
     uint256 public protocolInterestRate;
@@ -359,13 +362,13 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) internal view returns (uint256) {
         uint256 rate = protocolInterestRate;
         uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
-        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, FixedPointMathLib.mulWad(GoldilendDebtAsset(glDebtAsset).totalSupply(), 2)) + INTEREST_PAYMENT_PERCENTAGE;
+        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, FixedPointMathLib.mulWad(GoldilendDebtAsset(glDebtAsset).totalSupply(), utilizationRatioMultiplier)) + interestPaymentPercentage;
         uint256 interestRate = FixedPointMathLib.mulWad(ratio, rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), durationPortion));
         return FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     }
 
     function _calculateFairValue(address rebaseBera) internal view returns (uint256) {
-        IPythUpgradable.Price memory beraPriceResult = IPythUpgradable(0x2880aB155794e7179c9eE2e38200202908C17B43).getPrice(0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265);
+        IPythUpgradable.Price memory beraPriceResult = IPythUpgradable(pythPriceFeed).getPrice(beraPythPriceFeedId);
         uint256 beraPrice = uint256(uint64(beraPriceResult.price));
 
         uint256 vest;
@@ -402,11 +405,19 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @inheritdoc IRebaseGoldilend
     function changeLendingParams(
         uint256 _protocolInterestRate,
-        uint256 _slope
+        uint256 _slope,
+        address _pythPriceFeed,
+        bytes32 _beraPythPriceFeedId,
+        uint256 _interestPaymentPercentage,
+        uint256 _utilizationRatioMultiplier
     ) public {
         if(msg.sender != multisig) revert NotMultisig();
         protocolInterestRate = _protocolInterestRate;
         slope = _slope;
+        pythPriceFeed = _pythPriceFeed;
+        beraPythPriceFeedId = _beraPythPriceFeedId;
+        interestPaymentPercentage = _interestPaymentPercentage;
+        utilizationRatioMultiplier = _utilizationRatioMultiplier;
         emit NewProtocolInterestRate(_protocolInterestRate);
         emit NewSlope(_slope);
     }
@@ -455,17 +466,28 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @inheritdoc IRebaseGoldilend
     function initializeParameters(
         uint256 _protocolInterestRate,
+        uint256 _slope,
+        address _pythPriceFeed,
+        bytes32 _beraPythPriceFeedId,
+        uint256 _interestPaymentPercentage,
+        uint256 _utilizationRatioMultiplier,
         uint256 _minDuration,
         uint256 _maxDuration,
         uint256 _renewMinDuration,
         uint256 _renewMaxDuration,
-        uint256 _slope,
         uint256 _maxUtilization
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
         if(parametersInitialized) revert AlreadyInitialized();
 
-        changeLendingParams(_protocolInterestRate, _slope);
+        changeLendingParams(
+            _protocolInterestRate,
+            _slope,
+            _pythPriceFeed,
+            _beraPythPriceFeedId,
+            _interestPaymentPercentage,
+            _utilizationRatioMultiplier
+        );
         _changeGovParams(
             _minDuration,
             _maxDuration,
