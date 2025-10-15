@@ -42,7 +42,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
 
     /// @notice Value for calculating interest payment on loans
-    uint256 public constant INTEREST_PAYMENT_PERCENTAGE = 5e17;
+    uint256 public constant INTEREST_PAYMENT_PERCENTAGE = 75e16;
 
     /// @notice Buffer period where borrowers are protected from liquidation
     uint256 public constant LOAN_GRACE_PERIOD = 1 days;
@@ -61,6 +61,12 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
     /// @notice Address of Goldilend Debt Asset
     address public glDebtAsset;
+
+    /// @notice Address of Pyth price feed
+    address public pythPriceFeed;
+
+    /// @notice ID of the bera price feed
+    bytes32 public beraPythPriceFeedId;
 
     /// @notice Interest rate of protocol
     uint256 public protocolInterestRate;
@@ -353,15 +359,13 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) internal view returns (uint256) {
         uint256 rate = protocolInterestRate;
         uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
-        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, GoldilendDebtAsset(glDebtAsset).totalSupply()) + INTEREST_PAYMENT_PERCENTAGE;
-        uint256 interestRate = rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), FixedPointMathLib.mulWad(ratio, durationPortion));
+        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, FixedPointMathLib.mulWad(GoldilendDebtAsset(glDebtAsset).totalSupply(), 2)) + INTEREST_PAYMENT_PERCENTAGE;
+        uint256 interestRate = FixedPointMathLib.mulWad(ratio, rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), durationPortion));
         return FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     }
 
     function _calculateFairValue(address rebaseBera) internal view returns (uint256) {
-        address priceFeed = 0x2880aB155794e7179c9eE2e38200202908C17B43;
-        bytes32 priceFeedId = 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265;
-        IPythUpgradable.Price memory beraPriceResult = IPythUpgradable(priceFeed).getPrice(priceFeedId);
+        IPythUpgradable.Price memory beraPriceResult = IPythUpgradable(0x2880aB155794e7179c9eE2e38200202908C17B43).getPrice(0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265);
         uint256 beraPrice = uint256(uint64(beraPriceResult.price));
 
         uint256 vest;

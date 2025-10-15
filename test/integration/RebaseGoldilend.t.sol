@@ -23,6 +23,11 @@ contract IntegrationRebaseGoldilendTest is Test {
     address honey = 0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce;
 
     address bitbears = 0x72D876D9cdf4001b836f8E47254d0551EdA2eebB;
+    address bandbears = 0x7711B2Eb2451259dbF211e30157ceB7CFeb79a19;
+    address babybears = 0xDDeAf391c4be2d01ca52aBb8C159a06820ef078C;
+    address boobears = 0xf49ec5db255854C4a567de5AB3826c9AAbaFc7cF;
+    address bondbears = 0xA0CF472E6132F6B822a944f6F31aA7b261c7c375;
+    address bongbears = 0x141De07E5D4C4759EC9301DA106115D4841f66cD;
 
     address bitStreaming = 0x979EFC29797884c3342143eA7b91E55342F2f408;
     address bandStreaming = 0xaf30baa667Ce52c1fE5702A0F8CE9A31f0d751B6;
@@ -44,6 +49,7 @@ contract IntegrationRebaseGoldilendTest is Test {
         bytes memory rebasedata = abi.encodeWithSelector(
             RebaseGoldilend.initialize.selector,
             rawdog,
+            rawdog,
             honey,
             address(ghoneyComputed)
         );
@@ -59,18 +65,34 @@ contract IntegrationRebaseGoldilendTest is Test {
             2e18,
             90
         );
-        address[] memory rebasenfts = new address[](1);
+        address[] memory rebasenfts = new address[](6);
         rebasenfts[0] = address(bitbears);
-        uint256[] memory rebasevalues = new uint256[](1);
-        rebasevalues[0] = 20;
-        address[] memory rebasestreams = new address[](1);
+        rebasenfts[1] = address(bandbears);
+        rebasenfts[2] = address(babybears);
+        rebasenfts[3] = address(boobears);
+        rebasenfts[4] = address(bondbears);
+        rebasenfts[5] = address(bongbears);
+        uint256[] memory rebasevalues = new uint256[](6);
+        rebasevalues[0] = 30;
+        rebasevalues[1] = 20;
+        rebasevalues[2] = 20;
+        rebasevalues[3] = 20;
+        rebasevalues[4] = 20;
+        rebasevalues[5] = 20;
+        address[] memory rebasestreams = new address[](6);
         rebasestreams[0] = bitStreaming;
+        rebasestreams[1] = bandStreaming;
+        rebasestreams[2] = babyStreaming;
+        rebasestreams[3] = booStreaming;
+        rebasestreams[4] = bondStreaming;
+        rebasestreams[5] = bongStreaming;
         RebaseGoldilend(address(rebaseproxy)).initializeBeras(rebasenfts, rebasevalues, rebasestreams);
         vm.stopPrank();
     }
 
     function testFairValue() public {
-        // vm.warp(1770386400 + 180 days);
+        console.log(block.timestamp);
+        vm.warp(1770386400 + 365 days);
         uint256 fairValueNum = RebaseGoldilend(address(rebaseproxy)).calculateFairValue(bitbears);
 
         console.log(fairValueNum);

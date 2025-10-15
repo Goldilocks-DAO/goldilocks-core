@@ -28,7 +28,7 @@ contract IntegrationBeraBondGoldilendTest is Test {
         uint256 berachainFork = vm.createFork("https://rpc.berachain.com");
         vm.selectFork(berachainFork);
         vm.startPrank(rawdog);
-        GoldilendDebtAsset gberaComputed = GoldilendDebtAsset(rawdog.computeAddress(97));
+        GoldilendDebtAsset gberaComputed = GoldilendDebtAsset(rawdog.computeAddress(98));
 
         // deploy berabondgoldilend
         berabondgoldilend = new BeraBondGoldilend();
