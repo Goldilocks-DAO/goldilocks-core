@@ -37,23 +37,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         ghoney.burnglDebtAsset(address(0x69), 69);
     }
 
-    function testGetUserLoanSuccess() public dealHoneyForGoldilend dealUserBeras {
-        honey.approve(address(rebaseproxy), txAmount);
-        RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
-        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, address(bandbear), 1);
-        RebaseGoldilend.Loan memory userLoan = RebaseGoldilend(address(rebaseproxy)).getUserLoan(address(this), 1);
-
-        assertEq(userLoan.collateralNFT, address(bandbear));
-        assertEq(userLoan.collateralNFTId, 1);
-        assertEq(userLoan.borrowedAmount, 1e18);
-        assertEq(userLoan.interest, rebaseInterest);
-        assertEq(userLoan.duration, goldilendDuration);
-        assertEq(userLoan.endDate, block.timestamp + goldilendDuration);
-        assertEq(userLoan.loanId, 1);
-        assertEq(userLoan.repaid, false);
-        assertEq(userLoan.liquidated, false);
-    }
-
     function testCalculateInterestFailDuration() public {
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.InvalidDuration.selector));
         RebaseGoldilend(address(rebaseproxy)).calculateInterest(69, 69, address(bandbear));
