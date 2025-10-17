@@ -163,6 +163,11 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
 
     /// @inheritdoc IRebaseGoldilend
     function deposit(uint256 amount) external {
+        uint256 _ghoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();
+        uint256 newghoneySupply = _ghoneySupply + amount;
+        if(_ghoneySupply > liquidityThreshold) {
+            if(FixedPointMathLib.divWad(outstandingDebt, newghoneySupply) < minUtilization) revert MinUtilizationExceeded();
+        }
         SafeTransferLib.safeTransferFrom(debtAsset, msg.sender, address(this), amount);
         GoldilendDebtAsset(glDebtAsset).mintglDebtAsset(msg.sender, amount);
         emit Deposit(msg.sender, amount);
@@ -194,9 +199,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 fairValue = _calculateFairValue(collateralNFT);
         if(_outstandingDebt + borrowAmount > _ghoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(borrowAmount + interest > fairValue || borrowAmount > _ghoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
-        if(_ghoneySupply > liquidityThreshold) {
-            if(FixedPointMathLib.divWad(_outstandingDebt + borrowAmount, _ghoneySupply) < minUtilization) revert MinUtilizationExceeded();
-        }
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
             collateralNFT: collateralNFT,
