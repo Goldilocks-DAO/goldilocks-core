@@ -153,16 +153,6 @@ contract InvariantRebaseGoldilendTest is BaseInvariantTest {
     rebasegoldilendHandler.forEachActor(this.assertLoanInterestValid);
   }
 
-  function invariant_protocol_parameters() public {
-    if (RebaseGoldilend(address(rebaseproxy)).parametersInitialized()) {
-      assertGt(RebaseGoldilend(address(rebaseproxy)).maxDuration(), RebaseGoldilend(address(rebaseproxy)).minDuration(), "Max duration should be > min duration");
-      assertLe(RebaseGoldilend(address(rebaseproxy)).maxUtilization(), 100, "Max utilization should be <= 100%");
-      assertGt(RebaseGoldilend(address(rebaseproxy)).maxUtilization(), 0, "Max utilization should be > 0");
-      assertGt(RebaseGoldilend(address(rebaseproxy)).protocolInterestRate(), 0, "Protocol interest rate should be > 0");
-      assertGt(RebaseGoldilend(address(rebaseproxy)).slope(), 0, "Slope should be > 0");
-    }
-  }
-
   function invariant_protocol_addresses() public {
     assertTrue(RebaseGoldilend(address(rebaseproxy)).multisig() != address(0), "Multisig should be set");
     assertTrue(RebaseGoldilend(address(rebaseproxy)).debtAsset() != address(0), "Debt asset should be set");

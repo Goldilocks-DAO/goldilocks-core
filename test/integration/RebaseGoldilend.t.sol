@@ -77,13 +77,17 @@ contract IntegrationRebaseGoldilendTest is Test {
         rebaseproxy = new ERC1967Proxy(address(rebasegoldilend), rebasedata);
         ghoney = new GoldilendDebtAsset("Goldilend Honey", "gHONEY", address(rebaseproxy));
         assert(RebaseGoldilend(address(rebaseproxy)).glDebtAsset() == address(ghoney));
-        RebaseGoldilend(address(rebaseproxy)).initializeParameters(
+        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(
             2e17,
             2e18,
             0x2880aB155794e7179c9eE2e38200202908C17B43,
             0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265,
             75e16,
             2,
+            5e17,
+            100_000e18
+        );
+        RebaseGoldilend(address(rebaseproxy)).initializeGovParams(
             1 days,
             365 days,
             7 days,

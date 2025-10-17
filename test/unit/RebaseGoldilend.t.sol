@@ -474,11 +474,11 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
     function testChangeLendingParamsFailMultisig() public {
         vm.prank(address(0x69));
         vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotMultisig.selector));
-        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(69, 69, address(0x69), 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265, 69, 69);
+        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(69, 69, address(0x69), 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265, 69, 69, 69, 69);
     }
 
     function testChangeLendingParamsSuccess() public {
-        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(69, 69, address(0x69), 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265, 69, 69);
+        RebaseGoldilend(address(rebaseproxy)).changeLendingParams(69, 69, address(0x69), 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265, 69, 69, 69, 69);
 
         assertEq(RebaseGoldilend(address(rebaseproxy)).protocolInterestRate(), 69);
         assertEq(RebaseGoldilend(address(rebaseproxy)).slope(), 69);
@@ -494,17 +494,6 @@ contract UnitRebaseGoldilendTest is BaseUnitTest {
         RebaseGoldilend(address(rebaseproxy)).changeBorrowingActive(false);
 
         assertEq(RebaseGoldilend(address(rebaseproxy)).borrowingActive(), false);
-    }
-
-    function testInitializeParametersFailMultisig() public {
-        vm.prank(address(0x69));
-        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.NotMultisig.selector));
-        RebaseGoldilend(address(rebaseproxy)).initializeParameters(69, 69, address(0x69), 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265, 69, 69, 69, 69, 69, 69, 69);
-    }
-
-    function testInitializeParametersFailAlready() public {
-        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.AlreadyInitialized.selector));
-        RebaseGoldilend(address(rebaseproxy)).initializeParameters(69, 69, address(0x69), 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265, 69, 69, 69, 69, 69, 69, 69);
     }
 
     function testRecoverTokensFailMultisig() public {

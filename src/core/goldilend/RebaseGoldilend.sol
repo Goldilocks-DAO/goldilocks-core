@@ -95,11 +95,14 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     /// @notice Maximum utilization of protocol liquidity
     uint256 public maxUtilization;
 
+    /// @notice Minimum utilization of protocol liquidity
+    uint256 public minUtilization;
+
+    /// @notice Threshold of protocol liquidity to enfore minimum utilization
+    uint256 public liquidityThreshold;
+
     /// @notice Boolean value if borrowing is active
     bool public borrowingActive;
-
-    /// @notice Indicates if contract parameters are initialized
-    bool public parametersInitialized;
 
     /// @notice Indicates if contract beras are initialized
     bool public berasInitialized;
@@ -191,6 +194,9 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 fairValue = _calculateFairValue(collateralNFT);
         if(_outstandingDebt + borrowAmount > _ghoneySupply * maxUtilization / 100) revert MaxUtilizationExceeded();
         if(borrowAmount + interest > fairValue || borrowAmount > _ghoneySupply - _outstandingDebt) revert BorrowLimitExceeded();
+        if(_ghoneySupply > liquidityThreshold) {
+            if(FixedPointMathLib.divWad(_outstandingDebt + borrowAmount, _ghoneySupply) < minUtilization) revert MinUtilizationExceeded();
+        }
         outstandingDebt += borrowAmount;
         Loan memory loan = Loan({
             collateralNFT: collateralNFT,
@@ -409,7 +415,9 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         address _pythPriceFeed,
         bytes32 _beraPythPriceFeedId,
         uint256 _interestPaymentPercentage,
-        uint256 _utilizationRatioMultiplier
+        uint256 _utilizationRatioMultiplier,
+        uint256 _minUtilization,
+        uint256 _liquidityThreshold
     ) public {
         if(msg.sender != multisig) revert NotMultisig();
         protocolInterestRate = _protocolInterestRate;
@@ -418,6 +426,8 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         beraPythPriceFeedId = _beraPythPriceFeedId;
         interestPaymentPercentage = _interestPaymentPercentage;
         utilizationRatioMultiplier = _utilizationRatioMultiplier;
+        minUtilization = _minUtilization;
+        liquidityThreshold = _liquidityThreshold;
         emit NewProtocolInterestRate(_protocolInterestRate);
         emit NewSlope(_slope);
     }
@@ -464,13 +474,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     }
 
     /// @inheritdoc IRebaseGoldilend
-    function initializeParameters(
-        uint256 _protocolInterestRate,
-        uint256 _slope,
-        address _pythPriceFeed,
-        bytes32 _beraPythPriceFeedId,
-        uint256 _interestPaymentPercentage,
-        uint256 _utilizationRatioMultiplier,
+    function initializeGovParams(
         uint256 _minDuration,
         uint256 _maxDuration,
         uint256 _renewMinDuration,
@@ -478,16 +482,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         uint256 _maxUtilization
     ) external {
         if(msg.sender != multisig) revert NotMultisig();
-        if(parametersInitialized) revert AlreadyInitialized();
-
-        changeLendingParams(
-            _protocolInterestRate,
-            _slope,
-            _pythPriceFeed,
-            _beraPythPriceFeedId,
-            _interestPaymentPercentage,
-            _utilizationRatioMultiplier
-        );
         _changeGovParams(
             _minDuration,
             _maxDuration,
@@ -495,8 +489,6 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
             _renewMaxDuration,
             _maxUtilization
         );
-        
-        parametersInitialized = true;
     }
 
     /// @inheritdoc IRebaseGoldilend

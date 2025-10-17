@@ -356,13 +356,17 @@ abstract contract BaseTest is Test, IERC721Receiver {
     rebasevalues[0] = 50e18;
     address[] memory rebasestreams = new address[](1);
     rebasestreams[0] = bandStreaming;
-    RebaseGoldilend(address(rebaseproxy)).initializeParameters(
+    RebaseGoldilend(address(rebaseproxy)).changeLendingParams(
       2e17,
       2e18,
       0x2880aB155794e7179c9eE2e38200202908C17B43,
       0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265,
       75e16,
       2,
+      5e17,
+      100_000e18
+    );
+    RebaseGoldilend(address(rebaseproxy)).initializeGovParams(
       1 days,
       365 days,
       7 days,
