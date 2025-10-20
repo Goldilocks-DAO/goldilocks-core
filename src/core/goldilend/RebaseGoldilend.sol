@@ -370,7 +370,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
     ) internal view returns (uint256) {
         uint256 rate = protocolInterestRate;
         uint256 durationPortion = FixedPointMathLib.divWad(duration, 365 days);
-        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, FixedPointMathLib.mulWad(GoldilendDebtAsset(glDebtAsset).totalSupply(), utilizationRatioMultiplier)) + interestPaymentPercentage;
+        uint256 ratio = FixedPointMathLib.divWad(debt + borrowAmount, GoldilendDebtAsset(glDebtAsset).totalSupply() * utilizationRatioMultiplier) + interestPaymentPercentage;
         uint256 interestRate = FixedPointMathLib.mulWad(ratio, rate + FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(slope, rate), durationPortion));
         return FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     }
