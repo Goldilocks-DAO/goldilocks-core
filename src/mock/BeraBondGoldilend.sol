@@ -17,18 +17,18 @@ pragma solidity ^0.8.22;
 // ==============================================================================================
 
 
-import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
-import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
-import { ERC20 } from "../../../lib/solady/src/tokens/ERC20.sol";
-import { IERC721 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import { IERC721Receiver } from "../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import { Initializable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import { UUPSUpgradeable } from "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
-import { IBeraBondNFT } from "../../interfaces/IBeraBondNFT.sol";
-import { IGl00DelegationRegistry } from "../../interfaces/IGl00DelegationRegistry.sol";
-import { GoldilendDebtAsset } from "./GoldilendDebtAsset.sol";
-import { IBeraBondGoldilend } from "../../interfaces/IBeraBondGoldilend.sol";
+import { FixedPointMathLib } from "../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "../../lib/solady/src/utils/SafeTransferLib.sol";
+import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
+import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { IERC721Receiver } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import { Initializable } from "../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "../../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import { IBeraBondNFT } from "../interfaces/IBeraBondNFT.sol";
+import { IGl00DelegationRegistry } from "../interfaces/IGl00DelegationRegistry.sol";
+import { GoldilendDebtAsset } from "../core/goldilend/GoldilendDebtAsset.sol";
+import { IBeraBondGoldilend } from "../interfaces/IBeraBondGoldilend.sol";
 
 
 /// @title BeraBondGoldilend 

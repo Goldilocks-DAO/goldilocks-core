@@ -9,7 +9,7 @@ import { ERC1967Proxy } from "../../lib/openzeppelin-contracts/contracts/proxy/E
 import { Goldiswap } from "../../src/core/goldiswap/Goldiswap.sol";
 import { Goldilocked } from "../../src/core/goldiswap/Goldilocked.sol";
 import { RebaseGoldilend } from "../../src/core/goldilend/RebaseGoldilend.sol";
-import { BeraBondGoldilend } from "../../src/core/goldilend/BeraBondGoldilend.sol";
+import { BeraBondGoldilend } from "../../src/mock/BeraBondGoldilend.sol";
 import { GoldilendDebtAsset } from "../../src/core/goldilend/GoldilendDebtAsset.sol";
 import { Goldivault } from "../../src/core/goldivault/Goldivault.sol";
 import { Goldivault4626 } from "../../src/core/goldivault/Goldivault4626.sol";

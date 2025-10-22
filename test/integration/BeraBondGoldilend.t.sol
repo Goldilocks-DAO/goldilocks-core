@@ -6,7 +6,7 @@ import { console } from "../../lib/forge-std/src/console.sol";
 import { LibRLP } from "../../lib/solady/src/utils/LibRLP.sol";
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { ERC1967Proxy } from "../../lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { BeraBondGoldilend } from "../../src/core/goldilend/BeraBondGoldilend.sol";
+import { BeraBondGoldilend } from "../../src/mock/BeraBondGoldilend.sol";
 import { IBeraBondGoldilend } from "../../src/interfaces/IBeraBondGoldilend.sol";
 import { GoldilendDebtAsset } from "../../src/core/goldilend/GoldilendDebtAsset.sol";
 

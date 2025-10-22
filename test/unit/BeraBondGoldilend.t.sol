@@ -6,7 +6,7 @@ import { OwnableUpgradeable } from "../../lib/openzeppelin-contracts-upgradeable
 import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { BaseUnitTest } from "../base/BaseUnitTest.t.sol";
 import { IBeraBondGoldilend } from "../../src/interfaces/IBeraBondGoldilend.sol";
-import { BeraBondGoldilend } from "../../src/core/goldilend/BeraBondGoldilend.sol";
+import { BeraBondGoldilend } from "../../src/mock/BeraBondGoldilend.sol";
 import { GoldilendDebtAsset } from "../../src/core/goldilend/GoldilendDebtAsset.sol";
 
 contract TestUpgradeableBeraBondGoldilend is BeraBondGoldilend {
