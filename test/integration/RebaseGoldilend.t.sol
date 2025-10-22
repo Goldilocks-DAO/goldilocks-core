@@ -143,6 +143,52 @@ contract IntegrationRebaseGoldilendTest is Test {
         assertEq(userLoan.liquidated, false);
     }
 
+    function testICalculateInterestFailMaxUtilizationExceeded() public prankAnon {
+        honey.approve(address(rebaseproxy), 1000e18);
+        RebaseGoldilend(address(rebaseproxy)).deposit(1000e18);
+
+        address user2 = address(0xbeef);
+        deal(address(honey), user2, 10000e18);
+
+        uint256[] memory nftIds = new uint256[](10);
+        nftIds[0] = 106;
+        nftIds[1] = 116;
+        nftIds[2] = 76;
+        nftIds[3] = 37;
+        nftIds[4] = 63;
+        nftIds[5] = 11;
+        nftIds[6] = 113;
+        nftIds[7] = 13;
+        nftIds[8] = 77;
+        nftIds[9] = 4;
+
+        for(uint256 i = 0; i < 10; i++) {
+            vm.mockCall(
+                bondbears,
+                abi.encodeWithSelector(IERC721.ownerOf.selector, nftIds[i]),
+                abi.encode(user2)
+            );
+            vm.mockCall(
+                bondbears,
+                abi.encodeWithSelector(IERC721.transferFrom.selector, user2, address(rebaseproxy), nftIds[i]),
+                abi.encode()
+            );
+        }
+
+        vm.startPrank(user2);
+        IERC721(bondbears).setApprovalForAll(address(rebaseproxy), true);
+        honey.approve(address(rebaseproxy), 10000e18);
+
+        for(uint256 i = 0; i < 10; i++) {
+            RebaseGoldilend(address(rebaseproxy)).borrow(90e18, 1_000e18, goldilendDuration, bondbears, nftIds[i]);
+        }
+
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.MaxUtilizationExceeded.selector));
+        RebaseGoldilend(address(rebaseproxy)).calculateInterest(90e18, goldilendDuration, bondbears);
+
+        vm.stopPrank();
+    }
+
     function testICalculateInterestFailBorrowLimit() public prankAnon {
         honey.approve(address(rebaseproxy), 5_000_000e18);
         RebaseGoldilend(address(rebaseproxy)).deposit(5_000_000e18);
@@ -156,6 +202,53 @@ contract IntegrationRebaseGoldilendTest is Test {
         uint256 interest = RebaseGoldilend(address(rebaseproxy)).calculateInterest(1e18, goldilendDuration, bondbears);
 
         assertEq(interest, rebaseIInterest);
+    }
+
+    function testBorrowFailMaxUtilizationExceeded() public prankAnon {
+        honey.approve(address(rebaseproxy), 1000e18);
+        RebaseGoldilend(address(rebaseproxy)).deposit(1000e18);
+
+        address user2 = address(0xbeef);
+        deal(address(honey), user2, 10000e18);
+
+        uint256[] memory nftIds = new uint256[](11);
+        nftIds[0] = 106;
+        nftIds[1] = 116;
+        nftIds[2] = 76;
+        nftIds[3] = 37;
+        nftIds[4] = 63;
+        nftIds[5] = 11;
+        nftIds[6] = 113;
+        nftIds[7] = 13;
+        nftIds[8] = 77;
+        nftIds[9] = 4;
+        nftIds[10] = 88;
+
+        for(uint256 i = 0; i < 11; i++) {
+            vm.mockCall(
+                bondbears,
+                abi.encodeWithSelector(IERC721.ownerOf.selector, nftIds[i]),
+                abi.encode(user2)
+            );
+            vm.mockCall(
+                bondbears,
+                abi.encodeWithSelector(IERC721.transferFrom.selector, user2, address(rebaseproxy), nftIds[i]),
+                abi.encode()
+            );
+        }
+
+        vm.startPrank(user2);
+        IERC721(bondbears).setApprovalForAll(address(rebaseproxy), true);
+        honey.approve(address(rebaseproxy), 10000e18);
+
+        for(uint256 i = 0; i < 10; i++) {
+            RebaseGoldilend(address(rebaseproxy)).borrow(90e18, 1_000e18, goldilendDuration, bondbears, nftIds[i]);
+        }
+
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.MaxUtilizationExceeded.selector));
+        RebaseGoldilend(address(rebaseproxy)).borrow(90e18, 1_000e18, goldilendDuration, bondbears, nftIds[10]);
+
+        vm.stopPrank();
     }
 
     function testBorrowFailBorrowLimit() public prankAnon {
@@ -422,6 +515,57 @@ contract IntegrationRebaseGoldilendTest is Test {
         assertEq(RebaseGoldilend(address(rebaseproxy)).auctionSurplus(), 0);
     }
 
+    function testRenewFailMaxUtilizationExceeded() public prankAnon {
+        honey.approve(address(rebaseproxy), 1000e18);
+        RebaseGoldilend(address(rebaseproxy)).deposit(1000e18);
+
+        address user2 = address(0xbeef);
+        deal(address(honey), user2, 10000e18);
+
+        uint256[] memory nftIds = new uint256[](11);
+        nftIds[0] = 106;
+        nftIds[1] = 116;
+        nftIds[2] = 76;
+        nftIds[3] = 37;
+        nftIds[4] = 63;
+        nftIds[5] = 11;
+        nftIds[6] = 113;
+        nftIds[7] = 13;
+        nftIds[8] = 77;
+        nftIds[9] = 4;
+        nftIds[10] = 88;
+
+        for(uint256 i = 0; i < 11; i++) {
+            vm.mockCall(
+                bondbears,
+                abi.encodeWithSelector(IERC721.ownerOf.selector, nftIds[i]),
+                abi.encode(user2)
+            );
+            vm.mockCall(
+                bondbears,
+                abi.encodeWithSelector(IERC721.transferFrom.selector, user2, address(rebaseproxy), nftIds[i]),
+                abi.encode()
+            );
+        }
+
+        vm.startPrank(user2);
+        IERC721(bondbears).setApprovalForAll(address(rebaseproxy), true);
+        honey.approve(address(rebaseproxy), 10000e18);
+
+        for(uint256 i = 0; i < 9; i++) {
+            RebaseGoldilend(address(rebaseproxy)).borrow(90e18, 1_000e18, goldilendDuration, bondbears, nftIds[i]);
+        }
+
+        RebaseGoldilend(address(rebaseproxy)).borrow(1e18, 1_000e18, goldilendDuration, bondbears, nftIds[9]);
+
+        vm.warp(block.timestamp + 8 days);
+
+        vm.expectRevert(abi.encodeWithSelector(IRebaseGoldilend.MaxUtilizationExceeded.selector));
+        RebaseGoldilend(address(rebaseproxy)).renew(10, goldilendDuration, 90e18, 1_000e18);
+
+        vm.stopPrank();
+    }
+
     function testRebaseRenewFailInvalid() public prankAnon {
         honey.approve(address(rebaseproxy), txAmount);
         RebaseGoldilend(address(rebaseproxy)).deposit(txAmount);
@@ -509,6 +653,26 @@ contract IntegrationRebaseGoldilendTest is Test {
         assertEq(userLoan.endDate, block.timestamp + 14 days);
         assertEq(honey.balanceOf(anon), dealAmt - txAmount - txAmount + 1e18 - userLoan.interest);
         assertEq(honey.balanceOf(address(rebaseproxy)), 19e18);
+    }
+
+    function testCalculateFairValueBeforeCliffEnd() public view {
+        uint256 fairValue = RebaseGoldilend(address(rebaseproxy)).calculateFairValue(bondbears);
+
+        assertGt(fairValue, 0);
+    }
+
+    function testCalculateFairValueAfterVestingComplete() public {
+        vm.warp(block.timestamp + 1000 days);
+        uint256 fairValue = RebaseGoldilend(address(rebaseproxy)).calculateFairValue(bondbears);
+
+        assertEq(fairValue, 0);
+    }
+
+    function testCalculateFairValueDuringVesting() public {
+        vm.warp(block.timestamp + 365 days);
+        uint256 fairValue = RebaseGoldilend(address(rebaseproxy)).calculateFairValue(bondbears);
+
+        assertGt(fairValue, 0);
     }
 
 }

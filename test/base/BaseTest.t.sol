@@ -27,6 +27,8 @@ import { BondBear } from "../../src/mock/BondBear.sol";
 import { BandBear } from "../../src/mock/BandBear.sol";
 import { iBGTVault } from "../../src/mock/iBGTVault.sol";
 import { BexLPVault } from "../../src/mock/BexLPVault.sol";
+import { MockPyth } from "../../src/mock/MockPyth.sol";
+import { MockStreamingNFT } from "../../src/mock/MockStreamingNFT.sol";
 
 contract InfraredBexLPGoldivault is Goldivault {
   constructor(
@@ -134,6 +136,9 @@ abstract contract BaseTest is Test, IERC721Receiver {
   BeraBondGoldilend berabondgoldilend;
   ERC1967Proxy berabondproxy;
   GoldilendDebtAsset gbera;
+  MockPyth mockPyth;
+  MockStreamingNFT mockBandStream;
+  MockStreamingNFT mockBondStream;
 
   uint256 initialFSL = 1_140_000e18;
   uint256 initialPSL = 400_000e18;
@@ -151,6 +156,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
   address bondStreaming = 0xa63b5bc4Bab6593ACc78ef103fcb44A191BAe836;
   address bongStreaming = 0x1E54B85B3632F75E96Cc8d4FcB11BA7f0Ca69213;
 
+  address realPythAddress = 0x2880aB155794e7179c9eE2e38200202908C17B43;
+
   function setUp() public virtual {}
 
   function deployProtocol() public {
@@ -160,8 +167,8 @@ abstract contract BaseTest is Test, IERC721Receiver {
     Goldilocked goldilockedComputed = Goldilocked(address(this).computeAddress(15));
     InfraredBexLPGoldivault goldivaultComputed = InfraredBexLPGoldivault(address(this).computeAddress(18));
     Goldivault4626 oribgtgoldivaultComputed = Goldivault4626(address(this).computeAddress(21));
-    GoldilendDebtAsset ghoneyComputed = GoldilendDebtAsset(address(this).computeAddress(24));
-    GoldilendDebtAsset gberaComputed = GoldilendDebtAsset(address(this).computeAddress(27));
+    GoldilendDebtAsset ghoneyComputed = GoldilendDebtAsset(address(this).computeAddress(27));
+    GoldilendDebtAsset gberaComputed = GoldilendDebtAsset(address(this).computeAddress(30));
 
     // deploy mock contracts
     bexlp = new BexLPToken();
@@ -336,6 +343,19 @@ abstract contract BaseTest is Test, IERC721Receiver {
     assert(oribgtot.vault() == address(oribgtgoldivault));
     assert(oribgtot.decimals() == ERC20(ibgt).decimals());
 
+    // deploy mock pyth and streaming contracts
+    mockPyth = new MockPyth();
+    mockBandStream = new MockStreamingNFT(
+      1795164192871205100000,
+      8975799422428794900000,
+      block.timestamp + 365 days
+    );
+    mockBondStream = new MockStreamingNFT(
+      1795164192871205100000,
+      8975799422428794900000,
+      block.timestamp + 365 days
+    );
+
     // deploy rebasegoldilend
     rebasegoldilend = new RebaseGoldilend();
 
@@ -350,16 +370,19 @@ abstract contract BaseTest is Test, IERC721Receiver {
     rebaseproxy = new ERC1967Proxy(address(rebasegoldilend), rebasedata);
     ghoney = new GoldilendDebtAsset("Goldilend Honey" , "gHONEY", address(rebaseproxy));
     assert(RebaseGoldilend(address(rebaseproxy)).glDebtAsset() == address(ghoney));
-    address[] memory rebasenfts = new address[](1);
+    address[] memory rebasenfts = new address[](2);
     rebasenfts[0] = address(bandbear);
-    uint256[] memory rebasevalues = new uint256[](1);
-    rebasevalues[0] = 50e18;
-    address[] memory rebasestreams = new address[](1);
-    rebasestreams[0] = bandStreaming;
+    rebasenfts[1] = address(bondbear);
+    uint256[] memory rebasevalues = new uint256[](2);
+    rebasevalues[0] = 20;
+    rebasevalues[1] = 20;
+    address[] memory rebasestreams = new address[](2);
+    rebasestreams[0] = address(mockBandStream);
+    rebasestreams[1] = address(mockBondStream);
     RebaseGoldilend(address(rebaseproxy)).changeLendingParams(
       2e17,
       2e18,
-      0x2880aB155794e7179c9eE2e38200202908C17B43,
+      address(mockPyth),
       0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265,
       75e16,
       2,

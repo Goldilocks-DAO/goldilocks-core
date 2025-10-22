@@ -143,6 +143,9 @@ interface IRebaseGoldilend {
     address collateralNFT
   ) external view returns (uint256);
 
+  /// @notice Returns the fair value of a bera NFT based on unvested BERA tokens
+  function calculateFairValue(address rebaseBera) external view returns (uint256);
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    PERMISSIONED FUNCTIONS                  */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

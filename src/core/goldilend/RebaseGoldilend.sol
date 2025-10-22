@@ -349,6 +349,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         return _interest;
     }
 
+    /// @inheritdoc IRebaseGoldilend
     function calculateFairValue(address rebaseBera) external view returns (uint256) {
         return _calculateFairValue(rebaseBera);
     }
@@ -375,6 +376,9 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
         return FixedPointMathLib.mulWad(FixedPointMathLib.mulWad(interestRate, borrowAmount), durationPortion);
     }
 
+    /// @notice Calculates the fair value of a bera NFT based on its unvested bera
+    /// @param rebaseBera Address of the bera NFT to be valued
+    /// @return fairValue Fair value of NFT
     function _calculateFairValue(address rebaseBera) internal view returns (uint256) {
         IPythUpgradable.Price memory beraPriceResult = IPythUpgradable(pythPriceFeed).getPrice(beraPythPriceFeedId);
         uint256 beraPrice = uint256(uint64(beraPriceResult.price));

@@ -11,7 +11,7 @@ import { IBeraBondGoldilend } from "../../src/interfaces/IBeraBondGoldilend.sol"
 import { GoldilendDebtAsset } from "../../src/core/goldilend/GoldilendDebtAsset.sol";
 
 
-contract IntegrationBeraBondGoldilendTest is Test {
+contract MockIntegrationBeraBondGoldilendTest is Test {
 
     using LibRLP for address;
 
