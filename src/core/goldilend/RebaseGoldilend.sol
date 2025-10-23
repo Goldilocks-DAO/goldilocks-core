@@ -317,7 +317,7 @@ contract RebaseGoldilend is Initializable, OwnableUpgradeable, UUPSUpgradeable, 
             }
             emit AuctionClosed(loanOriginator, loanId, winner, winningBid.bidAmount, false);
         }
-        emit Liquidation(msg.sender, loanOriginator, userLoan.borrowedAmount, loanId);
+        emit Liquidation(loanOriginator, winner, userLoan.borrowedAmount, loanId);
     }
 
 

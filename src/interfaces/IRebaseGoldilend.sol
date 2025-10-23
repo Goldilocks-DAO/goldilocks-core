@@ -62,7 +62,7 @@ interface IRebaseGoldilend {
   event Borrow(address indexed user, uint256 loanID, uint256 borrowAmount, uint256 interestAmount, uint256 expiration, address collateral, uint256 collateralID);
   event Renew(address indexed user, uint256 loanId, uint256 newBorrowAmount, uint256 newInterest, uint256 newDuration);
   event Repay(address indexed user, uint256 userLoanId, uint256 amount);
-  event Liquidation(address indexed borrower, address indexed liquidator, uint256 amount, uint256 loanId);
+  event Liquidation(address indexed loanOriginator, address indexed liquidator, uint256 amount, uint256 loanId);
   event BidPlaced(address indexed loanOriginator, uint256 loanId, address bidder, uint256 bidAmount);
   event AuctionClosed(address indexed loanOriginator, uint256 loanId, address winner, uint256 winningBidAmount, bool multsigWon);
   event NewProtocolInterestRate(uint256 newProtocolInterestRate);
